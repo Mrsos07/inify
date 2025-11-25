@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - Newra Estate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+    {% include 'dashboard/partials/sidebar.html' %}
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>مرحباً، {{ user_first_name }} 👋</h1>
+                <p>إليك نظرة عامة على نشاطك اليوم</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openModal('addPropertyModal')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    إضافة عقار
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon">🏠</div>
+                    <span class="stat-change positive">+12%</span>
+                </div>
+                <div class="stat-value">{{ properties_count }}</div>
+                <div class="stat-label">إجمالي العقارات</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon">👥</div>
+                    <span class="stat-change positive">+8%</span>
+                </div>
+                <div class="stat-value">{{ leads_count }}</div>
+                <div class="stat-label">العملاء المحتملين</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon">💬</div>
+                </div>
+                <div class="stat-value">{{ conversations_count }}</div>
+                <div class="stat-label">المحادثات</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon">👁️</div>
+                </div>
+                <div class="stat-value">{{ views_count }}</div>
+                <div class="stat-label">المشاهدات</div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3>العقارات الأخيرة</h3>
+                    <a href="/dashboard/properties/">عرض الكل</a>
+                </div>
+                <div class="properties-table">
+                    {% for property in recent_properties %}
+                    <div class="property-row">
+                        <div class="property-image">🏠</div>
+                        <div class="property-info">
+                            <h4>{{ property.title }}</h4>
+                            <p>{{ property.city }} - {{ property.bedrooms }} غرف</p>
+                        </div>
+                        <div class="property-price">{{ property.price_display }}</div>
+                        <span class="property-status active">نشط</span>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">
+                        <p>لا توجد عقارات بعد</p>
+                        <button class="btn btn-primary" onclick="openModal('addPropertyModal')">إضافة عقار جديد</button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div>
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <h3>آخر العملاء</h3>
+                        <a href="/dashboard/leads/">عرض الكل</a>
+                    </div>
+                    {% for lead in recent_leads %}
+                    <div class="lead-item">
+                        <div class="lead-avatar">{{ lead.initials }}</div>
+                        <div class="lead-info">
+                            <h4>{{ lead.name }}</h4>
+                            <p>{{ lead.phone }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state"><p>لا يوجد عملاء بعد</p></div>
+                    {% endfor %}
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h3>إجراءات سريعة</h3></div>
+                    <div class="quick-actions">
+                        <a href="#" class="quick-action" onclick="openModal('addPropertyModal')">
+                            <div class="quick-action-icon">🏠</div><span>إضافة عقار</span>
+                        </a>
+                        <a href="/chat/demo/" class="quick-action">
+                            <div class="quick-action-icon">💬</div><span>تجربة الشات</span>
+                        </a>
+                        <a href="/dashboard/settings/" class="quick-action">
+                            <div class="quick-action-icon">⚙️</div><span>الإعدادات</span>
+                        </a>
+                        <a href="/admin/" class="quick-action">
+                            <div class="quick-action-icon">🔧</div><span>لوحة الإدارة</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include 'dashboard/partials/property_modal.html' %}
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+# Newra Estate AI - Dependencies
+# The New Era of Intelligence
+
+# Django Core
+Django>=4.2,<5.0
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0
+django-filter>=23.5
+
+# Database
+psycopg2-binary>=2.9.9
+
+# AI & ML
+openai>=1.12.0
+tiktoken>=0.5.2
+
+# Supabase (Vector Store)
+supabase>=2.3.0
+
+# Environment & Config
+python-dotenv>=1.0.0
+python-decouple>=3.8
+
+# HTTP & Async
+httpx>=0.26.0
+aiohttp>=3.9.0
+requests>=2.31.0
+
+# Security
+PyJWT>=2.8.0
+cryptography>=41.0.0
+
+# Static Files
+whitenoise>=6.6.0
+
+# Image Processing
+Pillow>=10.2.0
+
+# Utilities
+python-dateutil>=2.8.2
+pytz>=2024.1
+
+# Production Server
+gunicorn>=21.2.0
+uvicorn>=0.27.0
+
+# Development
+django-debug-toolbar>=4.2.0
+
+# Testing
+pytest>=8.0.0
+pytest-django>=4.7.0
+pytest-asyncio>=0.23.0

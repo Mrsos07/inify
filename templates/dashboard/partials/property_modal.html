@@ -1,0 +1,103 @@
+<div class="modal-overlay" id="addPropertyModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>إضافة عقار جديد</h2>
+            <button class="modal-close" onclick="closeModal('addPropertyModal')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <form id="addPropertyForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>عنوان العقار</label>
+                    <input type="text" name="title" placeholder="مثال: فيلا فاخرة في حي النرجس" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>نوع العقار</label>
+                        <select name="property_type" required>
+                            <option value="">اختر النوع</option>
+                            <option value="apartment">شقة</option>
+                            <option value="villa">فيلا</option>
+                            <option value="duplex">دوبلكس</option>
+                            <option value="land">أرض</option>
+                            <option value="office">مكتب</option>
+                            <option value="shop">محل تجاري</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>الحالة</label>
+                        <select name="status" required>
+                            <option value="for_sale">للبيع</option>
+                            <option value="for_rent">للإيجار</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>السعر (ريال)</label>
+                        <input type="number" name="price" placeholder="500000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>المساحة (م²)</label>
+                        <input type="number" name="size" placeholder="250" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>عدد الغرف</label>
+                        <input type="number" name="bedrooms" placeholder="4" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>عدد الحمامات</label>
+                        <input type="number" name="bathrooms" placeholder="3" min="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>المدينة</label>
+                        <select name="city" required>
+                            <option value="">اختر المدينة</option>
+                            <option value="الرياض">الرياض</option>
+                            <option value="جدة">جدة</option>
+                            <option value="مكة">مكة المكرمة</option>
+                            <option value="المدينة">المدينة المنورة</option>
+                            <option value="الدمام">الدمام</option>
+                            <option value="الخبر">الخبر</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>الحي</label>
+                        <input type="text" name="neighborhood" placeholder="حي النرجس">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>الوصف</label>
+                    <textarea name="description" placeholder="وصف تفصيلي للعقار..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>صور العقار</label>
+                    <div class="image-upload" onclick="document.getElementById('propertyImages').click()">
+                        <div class="image-upload-icon">📷</div>
+                        <p>اضغط لرفع الصور أو اسحبها هنا</p>
+                        <input type="file" id="propertyImages" name="images" multiple accept="image/*">
+                    </div>
+                    <div class="image-preview" id="imagePreview"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addPropertyModal')">إلغاء</button>
+                <button type="submit" class="btn btn-primary">حفظ العقار</button>
+            </div>
+        </form>
+    </div>
+</div>

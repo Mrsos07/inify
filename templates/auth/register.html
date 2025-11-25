@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب - Newra Estate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #000;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
+            background: #fff;
+            border-radius: 18px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo svg {
+            width: 44px;
+            height: 44px;
+        }
+
+        .auth-header h1 {
+            color: #fff;
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .auth-header p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .auth-card {
+            background: #111;
+            border-radius: 16px;
+            padding: 28px;
+            border: 1px solid #222;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #fff;
+        }
+
+        .form-group input::placeholder {
+            color: #555;
+        }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .form-group select option {
+            background: #111;
+        }
+
+        .password-strength {
+            margin-top: 8px;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s, background 0.3s;
+        }
+
+        .terms {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #888;
+            font-size: 13px;
+        }
+
+        .terms input {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            accent-color: #fff;
+        }
+
+        .terms a {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .terms a:hover {
+            text-decoration: underline;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.02);
+            opacity: 0.9;
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .auth-footer a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .back-home {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            color: #888;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-home:hover {
+            color: #fff;
+        }
+
+        .error-message,
+        .success-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .error-message {
+            background: #ff000020;
+            border: 1px solid #ff0000;
+            color: #ff6b6b;
+        }
+
+        .success-message {
+            background: #00ff0020;
+            border: 1px solid #00ff00;
+            color: #6bff6b;
+        }
+
+        .error-message.show,
+        .success-message.show {
+            display: block;
+        }
+
+        @media (max-width: 500px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        الرئيسية
+    </a>
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="logo">
+                <svg viewBox="0 0 100 100" fill="none">
+                    <!-- Main circle (ring) -->
+                    <circle cx="30" cy="28" r="18" stroke="#000" stroke-width="7" fill="none"/>
+                    <!-- Small dot inside circle -->
+                    <circle cx="30" cy="28" r="5" fill="#000"/>
+                    <!-- Diagonal connecting line -->
+                    <line x1="44" y1="42" x2="60" y2="62" stroke="#000" stroke-width="7" stroke-linecap="round"/>
+                    <!-- Bottom node -->
+                    <circle cx="66" cy="70" r="12" fill="#000"/>
+                </svg>
+            </div>
+            <h1>إنشاء حساب جديد</h1>
+            <p>ابدأ رحلتك مع Newra Estate</p>
+        </div>
+
+        <div class="auth-card">
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            
+            <form id="registerForm" method="post">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>الاسم الأول</label>
+                        <input type="text" name="first_name" placeholder="أحمد" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الاسم الأخير</label>
+                        <input type="text" name="last_name" placeholder="محمد" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" name="email" placeholder="example@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>رقم الجوال</label>
+                    <input type="tel" name="phone" placeholder="05xxxxxxxx" required>
+                </div>
+
+                <div class="form-group">
+                    <label>اسم الشركة (اختياري)</label>
+                    <input type="text" name="company_name" placeholder="اسم شركتك العقارية">
+                </div>
+
+                <div class="form-group">
+                    <label>المدينة</label>
+                    <select name="city" required>
+                        <option value="">اختر المدينة</option>
+                        <option value="riyadh">الرياض</option>
+                        <option value="jeddah">جدة</option>
+                        <option value="makkah">مكة المكرمة</option>
+                        <option value="madinah">المدينة المنورة</option>
+                        <option value="dammam">الدمام</option>
+                        <option value="khobar">الخبر</option>
+                        <option value="other">أخرى</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" name="password" id="password" placeholder="8 أحرف على الأقل" required minlength="8">
+                    <div class="password-strength">
+                        <div class="password-strength-bar" id="strengthBar"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>تأكيد كلمة المرور</label>
+                    <input type="password" name="password_confirm" placeholder="أعد كتابة كلمة المرور" required>
+                </div>
+
+                <label class="terms">
+                    <input type="checkbox" name="terms" required>
+                    <span>أوافق على <a href="#">شروط الاستخدام</a> و <a href="#">سياسة الخصوصية</a></span>
+                </label>
+
+                <button type="submit" class="submit-btn" id="submitBtn">إنشاء الحساب</button>
+            </form>
+        </div>
+
+        <div class="auth-footer">
+            لديك حساب بالفعل؟ <a href="/auth/login/">تسجيل الدخول</a>
+        </div>
+    </div>
+
+    <script>
+        // Password strength indicator
+        const passwordInput = document.getElementById('password');
+        const strengthBar = document.getElementById('strengthBar');
+
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            
+            if (password.length >= 8) strength += 25;
+            if (password.match(/[a-z]/)) strength += 25;
+            if (password.match(/[A-Z]/)) strength += 25;
+            if (password.match(/[0-9]/)) strength += 25;
+            
+            strengthBar.style.width = strength + '%';
+            
+            if (strength <= 25) {
+                strengthBar.style.background = '#ff4444';
+            } else if (strength <= 50) {
+                strengthBar.style.background = '#ffaa00';
+            } else if (strength <= 75) {
+                strengthBar.style.background = '#aaff00';
+            } else {
+                strengthBar.style.background = '#00ff00';
+            }
+        });
+
+        // Form submission
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Validate passwords match
+            if (formData.get('password') !== formData.get('password_confirm')) {
+                errorDiv.textContent = 'كلمات المرور غير متطابقة';
+                errorDiv.classList.add('show');
+                successDiv.classList.remove('show');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'جاري إنشاء الحساب...';
+            
+            try {
+                const response = await fetch('/auth/register/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    successDiv.textContent = 'تم إنشاء الحساب بنجاح! جاري التحويل...';
+                    successDiv.classList.add('show');
+                    errorDiv.classList.remove('show');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/dashboard/';
+                    }, 1500);
+                } else {
+                    errorDiv.textContent = data.error || 'حدث خطأ أثناء إنشاء الحساب';
+                    errorDiv.classList.add('show');
+                    successDiv.classList.remove('show');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'إنشاء الحساب';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'حدث خطأ، يرجى المحاولة مرة أخرى';
+                errorDiv.classList.add('show');
+                successDiv.classList.remove('show');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'إنشاء الحساب';
+            }
+        });
+    </script>
+</body>
+</html>

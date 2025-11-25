@@ -1,0 +1,16 @@
+# -*- coding: utf-8 -*-
+"""
+Chat URLs - روابط المحادثات
+"""
+
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import ChatViewSet, PublicChatView
+
+router = DefaultRouter()
+router.register(r'conversations', ChatViewSet, basename='conversation')
+
+urlpatterns = [
+    path('', include(router.urls)),
+    path('public/', PublicChatView.as_view(), name='public-chat'),
+]
