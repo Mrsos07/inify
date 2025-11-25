@@ -13,6 +13,7 @@ psycopg2-binary>=2.9.9
 # AI & ML
 openai>=1.12.0
 tiktoken>=0.5.2
+google-generativeai>=0.4.0
 
 # Supabase (Vector Store)
 supabase>=2.3.0

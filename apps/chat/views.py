@@ -17,6 +17,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import Conversation, Message, ConversationSummary
 from .serializers import ConversationSerializer, MessageSerializer
 from services.ai_service import NewraAIService
+from services.rag_service import RAGService
+from services.gemini_service import GeminiService
 
 logger = logging.getLogger(__name__)
 
@@ -173,15 +175,39 @@ class PublicChatView(View):
                 content=message
             )
             
-            # الحصول على رد AI
-            ai_service = NewraAIService(agent=agent)
-            messages = conversation.get_messages_for_ai()
+            # استخدام RAG مع Gemini للبحث الذكي
+            rag_service = RAGService()
+            gemini_service = GeminiService(agent=agent)
             
-            response = ai_service.chat(
-                messages=messages,
-                conversation_context=conversation.context,
-                language=conversation.language
-            )
+            # الحصول على سياق العقارات
+            properties_context = rag_service.get_property_context(str(agent.id), message)
+            
+            # الحصول على تاريخ المحادثة
+            chat_history = [
+                {'role': msg.role, 'content': msg.content}
+                for msg in conversation.messages.order_by('created_at')[:10]
+            ]
+            
+            # توليد الرد باستخدام Gemini مع RAG
+            if gemini_service.is_available:
+                response = gemini_service.chat_with_context(
+                    user_message=message,
+                    properties_context=properties_context,
+                    chat_history=chat_history
+                )
+            else:
+                # استخدام OpenAI كبديل
+                ai_service = NewraAIService(agent=agent)
+                messages = conversation.get_messages_for_ai()
+                response = ai_service.chat(
+                    messages=messages,
+                    conversation_context=conversation.context,
+                    language=conversation.language
+                )
+            
+            # الحصول على العقارات المقترحة
+            rag_response = rag_service.generate_property_response(str(agent.id), message)
+            suggested_properties = rag_response.get('suggested_properties', [])
             
             # حفظ رد المساعد
             assistant_message = Message.objects.create(
@@ -190,7 +216,7 @@ class PublicChatView(View):
                 content=response['content'],
                 tool_calls=response.get('tool_calls'),
                 tool_results=response.get('tool_results'),
-                model_used=response.get('model', ''),
+                model_used=response.get('model', 'gemini-1.5-flash'),
                 tokens_used=response.get('tokens', {}).get('total', 0)
             )
             
@@ -198,19 +224,12 @@ class PublicChatView(View):
             conversation.messages_count = conversation.messages.count()
             conversation.save()
             
-            # استخراج العقارات المقترحة من نتائج الأدوات
-            suggested_properties = []
-            if response.get('tool_results'):
-                for result in response['tool_results']:
-                    if 'properties' in result.get('result', {}):
-                        suggested_properties = result['result']['properties']
-                        break
-            
             return JsonResponse({
                 'conversation_id': str(conversation.id),
                 'response': response['content'],
                 'suggested_properties': suggested_properties,
-                'message_id': str(assistant_message.id)
+                'message_id': str(assistant_message.id),
+                'has_properties': len(suggested_properties) > 0
             })
             
         except json.JSONDecodeError:
