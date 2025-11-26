@@ -1,0 +1,1203 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}العقارات - Newra Estate{% endblock %}
+
+{% block extra_css %}
+<style>
+    .properties-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    
+    .properties-header h1 {
+        font-size: 24px;
+        font-weight: 600;
+        color: #181f29;
+    }
+    
+    .btn-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #0f4c75 0%, #3282b8 100%);
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(15, 76, 117, 0.3);
+    }
+    
+    /* Properties Grid */
+    .properties-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 24px;
+    }
+    
+    .property-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(24, 31, 41, 0.08);
+        transition: all 0.3s;
+    }
+    
+    .property-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(24, 31, 41, 0.12);
+    }
+    
+    .property-media {
+        position: relative;
+        height: 220px;
+        overflow: hidden;
+    }
+    
+    .property-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .property-media .no-image {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #e8f4f8 0%, #d0e8f0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f4c75;
+    }
+    
+    .property-media .no-image svg {
+        width: 48px;
+        height: 48px;
+        opacity: 0.5;
+    }
+    
+    .property-badges {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        gap: 8px;
+    }
+    
+    .badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .badge-status {
+        background: rgba(255, 255, 255, 0.95);
+        color: #181f29;
+    }
+    
+    .badge-featured {
+        background: #fbbf24;
+        color: #181f29;
+    }
+    
+    .media-count {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        display: flex;
+        gap: 8px;
+    }
+    
+    .media-count span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+    
+    .media-count svg {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .property-content {
+        padding: 20px;
+    }
+    
+    .property-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #181f29;
+        margin-bottom: 8px;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .property-location {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 16px;
+    }
+    
+    .property-location svg {
+        width: 16px;
+        height: 16px;
+        color: #0f4c75;
+    }
+    
+    .property-details {
+        display: flex;
+        gap: 16px;
+        padding: 16px 0;
+        border-top: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
+        margin-bottom: 16px;
+    }
+    
+    .property-detail {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #64748b;
+    }
+    
+    .property-detail svg {
+        width: 16px;
+        height: 16px;
+        color: #0f4c75;
+    }
+    
+    .property-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .property-price {
+        font-size: 20px;
+        font-weight: 700;
+        color: #0f4c75;
+    }
+    
+    .property-price span {
+        font-size: 13px;
+        font-weight: 400;
+        color: #64748b;
+    }
+    
+    .property-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-action:hover {
+        background: #e2e8f0;
+    }
+    
+    .btn-action svg {
+        width: 18px;
+        height: 18px;
+        color: #64748b;
+    }
+    
+    .btn-action.edit:hover svg {
+        color: #0f4c75;
+    }
+    
+    .btn-action.delete:hover svg {
+        color: #ef4444;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: 16px;
+    }
+    
+    .empty-state svg {
+        width: 80px;
+        height: 80px;
+        color: #cbd5e1;
+        margin-bottom: 24px;
+    }
+    
+    .empty-state h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #181f29;
+        margin-bottom: 8px;
+    }
+    
+    .empty-state p {
+        color: #64748b;
+        margin-bottom: 24px;
+    }
+    
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-overlay.active {
+        display: flex;
+    }
+    
+    .modal {
+        background: white;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .modal-header h2 {
+        font-size: 20px;
+        font-weight: 600;
+    }
+    
+    .modal-close {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group.full-width {
+        grid-column: span 2;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #181f29;
+        margin-bottom: 8px;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #0f4c75;
+    }
+    
+    .form-group textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    /* Media Upload */
+    .media-section {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid #f1f5f9;
+    }
+    
+    .media-section h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+    
+    .upload-area {
+        border: 2px dashed #e2e8f0;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .upload-area:hover {
+        border-color: #0f4c75;
+        background: #f8fafc;
+    }
+    
+    .upload-area svg {
+        width: 48px;
+        height: 48px;
+        color: #94a3b8;
+        margin-bottom: 12px;
+    }
+    
+    .upload-area p {
+        color: #64748b;
+        font-size: 14px;
+    }
+    
+    .upload-area span {
+        color: #0f4c75;
+        font-weight: 600;
+    }
+    
+    .media-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+    }
+    
+    .media-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .media-item img,
+    .media-item video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .media-item .remove-btn {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 24px;
+        height: 24px;
+        background: rgba(239, 68, 68, 0.9);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .media-item .primary-badge {
+        position: absolute;
+        bottom: 6px;
+        left: 6px;
+        padding: 4px 8px;
+        background: #0f4c75;
+        color: white;
+        font-size: 10px;
+        border-radius: 4px;
+    }
+    
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 24px;
+        border-top: 1px solid #f1f5f9;
+    }
+    
+    .btn-cancel {
+        padding: 12px 24px;
+        background: #f1f5f9;
+        color: #64748b;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .btn-save {
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #0f4c75 0%, #3282b8 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    /* Tabs */
+    .tabs {
+        display: flex;
+        gap: 4px;
+        background: #f1f5f9;
+        padding: 4px;
+        border-radius: 10px;
+        margin-bottom: 24px;
+    }
+    
+    .tab {
+        flex: 1;
+        padding: 10px 16px;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .tab.active {
+        background: white;
+        color: #181f29;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    @media (max-width: 768px) {
+        .properties-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-group.full-width {
+            grid-column: span 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="properties-header">
+    <h1>العقارات</h1>
+    <button class="btn-add" onclick="openModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <path d="M12 5v14M5 12h14"/>
+        </svg>
+        إضافة عقار
+    </button>
+</div>
+
+{% if properties %}
+<div class="properties-grid">
+    {% for property in properties %}
+    <div class="property-card" data-id="{{ property.id }}">
+        <div class="property-media">
+            {% if property.images.first %}
+            <img src="{{ property.images.first.image.url }}" alt="{{ property.title }}">
+            {% else %}
+            <div class="no-image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+            </div>
+            {% endif %}
+            
+            <div class="property-badges">
+                <span class="badge badge-status">{{ property.get_status_display }}</span>
+                {% if property.is_featured %}
+                <span class="badge badge-featured">مميز</span>
+                {% endif %}
+            </div>
+            
+            <div class="media-count">
+                {% if property.images.count > 0 %}
+                <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    {{ property.images.count }}
+                </span>
+                {% endif %}
+                {% if property.videos.count > 0 %}
+                <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="23 7 16 12 23 17 23 7"/>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                    </svg>
+                    {{ property.videos.count }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="property-content">
+            <h3 class="property-title">{{ property.title }}</h3>
+            <div class="property-location">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                </svg>
+                {{ property.city }}{% if property.neighborhood %}, {{ property.neighborhood }}{% endif %}
+            </div>
+            
+            <div class="property-details">
+                <div class="property-detail">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    </svg>
+                    {{ property.size }} م²
+                </div>
+                {% if property.bedrooms > 0 %}
+                <div class="property-detail">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 4v16M22 4v16M6 4v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4"/>
+                        <path d="M2 14h20"/>
+                    </svg>
+                    {{ property.bedrooms }} غرف
+                </div>
+                {% endif %}
+                {% if property.bathrooms > 0 %}
+                <div class="property-detail">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1z"/>
+                        <path d="M6 12V5a2 2 0 0 1 2-2h3"/>
+                    </svg>
+                    {{ property.bathrooms }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="property-footer">
+                <div class="property-price">
+                    {{ property.price|floatformat:0 }}
+                    <span>{% if property.status == 'for_rent' %}ريال/شهرياً{% else %}ريال{% endif %}</span>
+                </div>
+                <div class="property-actions">
+                    <button class="btn-action edit" onclick="editProperty('{{ property.id }}')" title="تعديل">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </button>
+                    <button class="btn-action delete" onclick="deleteProperty('{{ property.id }}')" title="حذف">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    <h3>لا توجد عقارات</h3>
+    <p>ابدأ بإضافة عقاراتك ليتمكن الشات بوت من عرضها للعملاء</p>
+    <button class="btn-add" onclick="openModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <path d="M12 5v14M5 12h14"/>
+        </svg>
+        إضافة عقار
+    </button>
+</div>
+{% endif %}
+
+<!-- Property Modal -->
+<div class="modal-overlay" id="propertyModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">إضافة عقار جديد</h2>
+            <button class="modal-close" onclick="closeModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        
+        <form id="propertyForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="property_id" id="propertyId">
+            
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button type="button" class="tab active" data-tab="basic">المعلومات الأساسية</button>
+                    <button type="button" class="tab" data-tab="details">التفاصيل</button>
+                    <button type="button" class="tab" data-tab="media">الصور والفيديو</button>
+                </div>
+                
+                <!-- Basic Info Tab -->
+                <div class="tab-content active" id="tab-basic">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>عنوان العقار *</label>
+                            <input type="text" name="title" id="title" required placeholder="مثال: شقة فاخرة في حي النرجس">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>نوع العقار *</label>
+                            <select name="property_type" id="property_type" required>
+                                <option value="apartment">شقة</option>
+                                <option value="villa">فيلا</option>
+                                <option value="office">مكتب</option>
+                                <option value="land">أرض</option>
+                                <option value="commercial">تجاري</option>
+                                <option value="duplex">دوبلكس</option>
+                                <option value="studio">استوديو</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>حالة العرض *</label>
+                            <select name="status" id="status" required>
+                                <option value="for_sale">للبيع</option>
+                                <option value="for_rent">للإيجار</option>
+                                <option value="reserved">محجوز</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>السعر (ريال) *</label>
+                            <input type="number" name="price" id="price" required min="0" placeholder="500000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>المساحة (م²) *</label>
+                            <input type="number" name="size" id="size" required min="0" step="0.01" placeholder="150">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>المدينة *</label>
+                            <input type="text" name="city" id="city" required placeholder="الرياض">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>الحي</label>
+                            <input type="text" name="neighborhood" id="neighborhood" placeholder="النرجس">
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label>الوصف</label>
+                            <textarea name="description" id="description" placeholder="وصف تفصيلي للعقار..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Details Tab -->
+                <div class="tab-content" id="tab-details">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>غرف النوم</label>
+                            <input type="number" name="bedrooms" id="bedrooms" min="0" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>الحمامات</label>
+                            <input type="number" name="bathrooms" id="bathrooms" min="0" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>غرف المعيشة</label>
+                            <input type="number" name="living_rooms" id="living_rooms" min="0" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>عدد الطوابق</label>
+                            <input type="number" name="floors" id="floors" min="1" value="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>رقم الطابق</label>
+                            <input type="number" name="floor_number" id="floor_number" min="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>مواقف السيارات</label>
+                            <input type="number" name="parking_spaces" id="parking_spaces" min="0" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>حالة التأثيث</label>
+                            <select name="furnishing" id="furnishing">
+                                <option value="unfurnished">غير مفروش</option>
+                                <option value="semi_furnished">نصف مفروش</option>
+                                <option value="furnished">مفروش</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>سنة البناء</label>
+                            <input type="number" name="year_built" id="year_built" min="1900" max="2030">
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label>العنوان التفصيلي</label>
+                            <textarea name="address" id="address" placeholder="العنوان الكامل..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" name="is_featured" id="is_featured">
+                                عقار مميز
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" name="is_negotiable" id="is_negotiable" checked>
+                                قابل للتفاوض
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Media Tab -->
+                <div class="tab-content" id="tab-media">
+                    <div class="media-section">
+                        <h3>صور العقار</h3>
+                        <div class="upload-area" id="imageUploadArea">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            <p>اسحب الصور هنا أو <span>اختر من جهازك</span></p>
+                            <p style="font-size: 12px; color: #94a3b8;">PNG, JPG, WEBP - حد أقصى 10 صور</p>
+                        </div>
+                        <input type="file" id="imageInput" name="images" multiple accept="image/*" style="display: none;">
+                        <div class="media-preview" id="imagePreview"></div>
+                    </div>
+                    
+                    <div class="media-section">
+                        <h3>فيديوهات العقار</h3>
+                        <div class="upload-area" id="videoUploadArea">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="23 7 16 12 23 17 23 7"/>
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                            </svg>
+                            <p>اسحب الفيديوهات هنا أو <span>اختر من جهازك</span></p>
+                            <p style="font-size: 12px; color: #94a3b8;">MP4, MOV, WEBM - حد أقصى 5 فيديوهات</p>
+                        </div>
+                        <input type="file" id="videoInput" name="videos" multiple accept="video/*" style="display: none;">
+                        <div class="media-preview" id="videoPreview"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal()">إلغاء</button>
+                <button type="submit" class="btn-save">حفظ العقار</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            this.classList.add('active');
+            document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+        });
+    });
+    
+    // Modal functions
+    function openModal() {
+        document.getElementById('propertyModal').classList.add('active');
+        document.getElementById('modalTitle').textContent = 'إضافة عقار جديد';
+        document.getElementById('propertyForm').reset();
+        document.getElementById('propertyId').value = '';
+        document.getElementById('imagePreview').innerHTML = '';
+        document.getElementById('videoPreview').innerHTML = '';
+    }
+    
+    function closeModal() {
+        document.getElementById('propertyModal').classList.remove('active');
+    }
+    
+    // Image upload
+    const imageUploadArea = document.getElementById('imageUploadArea');
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    let selectedImages = [];
+    
+    imageUploadArea.addEventListener('click', () => imageInput.click());
+    
+    imageUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        imageUploadArea.style.borderColor = '#0f4c75';
+    });
+    
+    imageUploadArea.addEventListener('dragleave', () => {
+        imageUploadArea.style.borderColor = '#e2e8f0';
+    });
+    
+    imageUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        imageUploadArea.style.borderColor = '#e2e8f0';
+        handleImages(e.dataTransfer.files);
+    });
+    
+    imageInput.addEventListener('change', (e) => handleImages(e.target.files));
+    
+    function handleImages(files) {
+        Array.from(files).forEach((file, index) => {
+            if (selectedImages.length >= 10) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                selectedImages.push(file);
+                const div = document.createElement('div');
+                div.className = 'media-item';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="">
+                    <button type="button" class="remove-btn" onclick="removeImage(${selectedImages.length - 1})">×</button>
+                    ${selectedImages.length === 1 ? '<span class="primary-badge">رئيسية</span>' : ''}
+                `;
+                imagePreview.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    function removeImage(index) {
+        selectedImages.splice(index, 1);
+        renderImagePreview();
+    }
+    
+    function renderImagePreview() {
+        imagePreview.innerHTML = '';
+        selectedImages.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'media-item';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="">
+                    <button type="button" class="remove-btn" onclick="removeImage(${index})">×</button>
+                    ${index === 0 ? '<span class="primary-badge">رئيسية</span>' : ''}
+                `;
+                imagePreview.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    // Video upload
+    const videoUploadArea = document.getElementById('videoUploadArea');
+    const videoInput = document.getElementById('videoInput');
+    const videoPreview = document.getElementById('videoPreview');
+    let selectedVideos = [];
+    
+    videoUploadArea.addEventListener('click', () => videoInput.click());
+    
+    videoUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        videoUploadArea.style.borderColor = '#0f4c75';
+    });
+    
+    videoUploadArea.addEventListener('dragleave', () => {
+        videoUploadArea.style.borderColor = '#e2e8f0';
+    });
+    
+    videoUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        videoUploadArea.style.borderColor = '#e2e8f0';
+        handleVideos(e.dataTransfer.files);
+    });
+    
+    videoInput.addEventListener('change', (e) => handleVideos(e.target.files));
+    
+    function handleVideos(files) {
+        Array.from(files).forEach(file => {
+            if (selectedVideos.length >= 5) return;
+            
+            selectedVideos.push(file);
+            const div = document.createElement('div');
+            div.className = 'media-item';
+            div.innerHTML = `
+                <video src="${URL.createObjectURL(file)}"></video>
+                <button type="button" class="remove-btn" onclick="removeVideo(${selectedVideos.length - 1})">×</button>
+            `;
+            videoPreview.appendChild(div);
+        });
+    }
+    
+    function removeVideo(index) {
+        selectedVideos.splice(index, 1);
+        renderVideoPreview();
+    }
+    
+    function renderVideoPreview() {
+        videoPreview.innerHTML = '';
+        selectedVideos.forEach((file, index) => {
+            const div = document.createElement('div');
+            div.className = 'media-item';
+            div.innerHTML = `
+                <video src="${URL.createObjectURL(file)}"></video>
+                <button type="button" class="remove-btn" onclick="removeVideo(${index})">×</button>
+            `;
+            videoPreview.appendChild(div);
+        });
+    }
+    
+    // Form submission
+    document.getElementById('propertyForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        // Add images
+        selectedImages.forEach((file, index) => {
+            formData.append('images', file);
+            if (index === 0) formData.append('primary_image_index', '0');
+        });
+        
+        // Add videos
+        selectedVideos.forEach(file => {
+            formData.append('videos', file);
+        });
+        
+        try {
+            const response = await fetch('/api/properties/save/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                closeModal();
+                location.reload();
+            } else {
+                alert(data.error || 'حدث خطأ أثناء الحفظ');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        }
+    });
+    
+    // Edit property
+    async function editProperty(id) {
+        try {
+            const response = await fetch(`/api/properties/${id}/`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const property = data.property;
+                
+                document.getElementById('propertyId').value = property.id;
+                document.getElementById('modalTitle').textContent = 'تعديل العقار';
+                
+                // Fill form fields
+                document.getElementById('title').value = property.title;
+                document.getElementById('property_type').value = property.property_type;
+                document.getElementById('status').value = property.status;
+                document.getElementById('price').value = property.price;
+                document.getElementById('size').value = property.size;
+                document.getElementById('city').value = property.city;
+                document.getElementById('neighborhood').value = property.neighborhood || '';
+                document.getElementById('description').value = property.description || '';
+                document.getElementById('bedrooms').value = property.bedrooms;
+                document.getElementById('bathrooms').value = property.bathrooms;
+                document.getElementById('living_rooms').value = property.living_rooms;
+                document.getElementById('floors').value = property.floors;
+                document.getElementById('floor_number').value = property.floor_number || '';
+                document.getElementById('parking_spaces').value = property.parking_spaces;
+                document.getElementById('furnishing').value = property.furnishing;
+                document.getElementById('year_built').value = property.year_built || '';
+                document.getElementById('address').value = property.address || '';
+                document.getElementById('is_featured').checked = property.is_featured;
+                document.getElementById('is_negotiable').checked = property.is_negotiable;
+                
+                // Show existing images
+                imagePreview.innerHTML = '';
+                if (property.images) {
+                    property.images.forEach((img, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'media-item';
+                        div.dataset.existingId = img.id;
+                        div.innerHTML = `
+                            <img src="${img.url}" alt="">
+                            <button type="button" class="remove-btn" onclick="removeExistingImage('${img.id}', this)">×</button>
+                            ${img.is_primary ? '<span class="primary-badge">رئيسية</span>' : ''}
+                        `;
+                        imagePreview.appendChild(div);
+                    });
+                }
+                
+                // Show existing videos
+                videoPreview.innerHTML = '';
+                if (property.videos) {
+                    property.videos.forEach(vid => {
+                        const div = document.createElement('div');
+                        div.className = 'media-item';
+                        div.dataset.existingId = vid.id;
+                        div.innerHTML = `
+                            <video src="${vid.url}"></video>
+                            <button type="button" class="remove-btn" onclick="removeExistingVideo('${vid.id}', this)">×</button>
+                        `;
+                        videoPreview.appendChild(div);
+                    });
+                }
+                
+                document.getElementById('propertyModal').classList.add('active');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('حدث خطأ في تحميل بيانات العقار');
+        }
+    }
+    
+    async function removeExistingImage(id, btn) {
+        if (confirm('هل تريد حذف هذه الصورة؟')) {
+            try {
+                await fetch(`/api/properties/images/${id}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                btn.closest('.media-item').remove();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    }
+    
+    async function removeExistingVideo(id, btn) {
+        if (confirm('هل تريد حذف هذا الفيديو؟')) {
+            try {
+                await fetch(`/api/properties/videos/${id}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                btn.closest('.media-item').remove();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    }
+    
+    // Delete property
+    async function deleteProperty(id) {
+        if (confirm('هل أنت متأكد من حذف هذا العقار؟')) {
+            try {
+                const response = await fetch(`/api/properties/${id}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.querySelector(`.property-card[data-id="${id}"]`).remove();
+                } else {
+                    alert(data.error || 'حدث خطأ أثناء الحذف');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('حدث خطأ في الاتصال');
+            }
+        }
+    }
+    
+    // Close modal on outside click
+    document.getElementById('propertyModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+</script>
+{% endblock %}

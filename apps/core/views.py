@@ -222,6 +222,34 @@ def dashboard_view(request):
 
 
 @login_required(login_url='/auth/login/')
+def properties_view(request):
+    """صفحة العقارات"""
+    from apps.agents.models import Agent
+    from apps.properties.models import Property
+    
+    user = request.user
+    
+    try:
+        agent = user.agent_profile
+    except Agent.DoesNotExist:
+        agent = Agent.objects.create(
+            user=user,
+            email=user.email or '',
+            phone='',
+            city=''
+        )
+    
+    properties = Property.objects.filter(agent=agent, is_active=True).prefetch_related('images', 'videos')
+    
+    context = {
+        'properties': properties,
+        'active_page': 'properties'
+    }
+    
+    return render(request, 'dashboard/properties.html', context)
+
+
+@login_required(login_url='/auth/login/')
 def bot_settings_view(request):
     """صفحة إعدادات الوكيل الذكي"""
     from apps.agents.models import Agent

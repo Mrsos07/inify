@@ -205,22 +205,31 @@ class RAGService:
         
         return "\n".join(response_parts)
     
-    def get_property_details_with_images(self, property_id: int) -> Dict[str, Any]:
-        """الحصول على تفاصيل عقار مع صوره"""
+    def get_property_details_with_media(self, property_id) -> Dict[str, Any]:
+        """الحصول على تفاصيل عقار مع صوره وفيديوهاته"""
         from apps.properties.models import Property
+        import uuid
         
         try:
+            # تحويل property_id إلى UUID إذا كان string
+            if isinstance(property_id, str):
+                try:
+                    property_id = uuid.UUID(property_id)
+                except ValueError:
+                    pass
+            
             prop = Property.objects.get(id=property_id)
             images = prop.images.all()
+            videos = prop.videos.all()
             
             return {
-                'id': prop.id,
+                'id': str(prop.id),
                 'title': prop.title,
                 'type': prop.get_property_type_display(),
                 'status': prop.get_status_display(),
-                'price': prop.price,
+                'price': float(prop.price),
                 'price_display': f"{prop.price:,.0f} ريال",
-                'size': prop.size,
+                'size': float(prop.size),
                 'bedrooms': prop.bedrooms,
                 'bathrooms': prop.bathrooms,
                 'city': prop.city,
@@ -229,23 +238,30 @@ class RAGService:
                 'description': prop.description,
                 'images': [
                     {
+                        'id': str(img.id),
                         'url': img.image.url if img.image else None,
                         'is_primary': img.is_primary,
-                        'caption': img.caption
+                        'alt_text': img.alt_text
                     }
                     for img in images
                 ],
-                'amenities': [a.name for a in prop.amenities.all()],
-                'features': {
-                    'has_parking': prop.has_parking,
-                    'has_pool': prop.has_pool,
-                    'has_garden': prop.has_garden,
-                    'has_elevator': prop.has_elevator,
-                    'is_furnished': prop.is_furnished,
-                }
+                'videos': [
+                    {
+                        'id': str(vid.id),
+                        'url': vid.video.url if vid.video else None,
+                        'title': vid.title,
+                        'thumbnail': vid.thumbnail.url if vid.thumbnail else None
+                    }
+                    for vid in videos
+                ],
+                'amenities': [a.get_amenity_display() for a in prop.amenities.all()],
             }
         except Property.DoesNotExist:
             return None
+    
+    def get_property_details_with_images(self, property_id) -> Dict[str, Any]:
+        """الحصول على تفاصيل عقار مع صوره (للتوافق مع الكود القديم)"""
+        return self.get_property_details_with_media(property_id)
     
     def generate_property_response(self, agent_id, user_message: str) -> Dict[str, Any]:
         """

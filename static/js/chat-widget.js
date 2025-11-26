@@ -213,12 +213,30 @@
 
             let html = `<div class="bubble">${this.escapeHtml(content).replace(/\n/g, '<br>')}</div>`;
             
-            // Add property cards
+            // Add property cards with images and videos
             if (properties && properties.length > 0) {
                 properties.forEach(prop => {
+                    // Get primary image or first image
+                    let primaryImage = prop.primary_image;
+                    if (!primaryImage && prop.images && prop.images.length > 0) {
+                        const primary = prop.images.find(img => img.is_primary);
+                        primaryImage = primary ? primary.url : prop.images[0].url;
+                    }
+                    
+                    // Check for videos
+                    const hasVideos = prop.videos && prop.videos.length > 0;
+                    const imageCount = prop.images ? prop.images.length : 0;
+                    const videoCount = prop.videos ? prop.videos.length : 0;
+                    
                     html += `
                         <div class="newra-property-card" data-id="${prop.id}">
-                            ${prop.primary_image ? `<div class="image" style="background-image: url('${prop.primary_image}')"></div>` : ''}
+                            <div class="media-container">
+                                ${primaryImage ? `<div class="image" style="background-image: url('${primaryImage}')"></div>` : '<div class="no-image">🏠</div>'}
+                                <div class="media-badges">
+                                    ${imageCount > 0 ? `<span class="badge">📷 ${imageCount}</span>` : ''}
+                                    ${videoCount > 0 ? `<span class="badge">🎬 ${videoCount}</span>` : ''}
+                                </div>
+                            </div>
                             <div class="content">
                                 <div class="title">${this.escapeHtml(prop.title)}</div>
                                 <div class="price">${prop.price_display || prop.price}</div>
@@ -228,6 +246,7 @@
                                     <span>🚿 ${prop.bathrooms}</span>
                                 </div>
                                 <div class="location">📍 ${prop.city}${prop.neighborhood ? ' - ' + prop.neighborhood : ''}</div>
+                                ${hasVideos ? '<div class="has-video">🎥 يتوفر فيديو للعقار</div>' : ''}
                             </div>
                         </div>
                     `;

@@ -244,6 +244,32 @@ class PropertyImage(models.Model):
         return f"صورة {self.property.title}"
 
 
+class PropertyVideo(models.Model):
+    """فيديوهات العقار"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    property = models.ForeignKey(
+        Property,
+        on_delete=models.CASCADE,
+        related_name='videos',
+        verbose_name='العقار'
+    )
+    video = models.FileField(upload_to='properties/videos/', verbose_name='الفيديو')
+    thumbnail = models.ImageField(upload_to='properties/thumbnails/', blank=True, null=True, verbose_name='صورة مصغرة')
+    title = models.CharField(max_length=200, blank=True, verbose_name='عنوان الفيديو')
+    duration = models.PositiveIntegerField(null=True, blank=True, verbose_name='المدة (ثواني)')
+    order = models.PositiveIntegerField(default=0, verbose_name='الترتيب')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'فيديو عقار'
+        verbose_name_plural = 'فيديوهات العقارات'
+        ordering = ['order', 'created_at']
+    
+    def __str__(self):
+        return f"فيديو {self.property.title}"
+
+
 class PropertyDocument(models.Model):
     """مستندات العقار"""
     
