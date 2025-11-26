@@ -13,8 +13,8 @@ import json
 
 
 def home(request):
-    """الصفحة الرئيسية"""
-    return render(request, 'home.html')
+    """الصفحة الرئيسية - Landing Page"""
+    return render(request, 'landing.html')
 
 
 def chat_demo(request):
