@@ -40,20 +40,35 @@ class GeminiService:
             logger.warning("Gemini API key not configured")
     
     def get_system_prompt(self) -> str:
-        """الحصول على System Prompt للعقارات"""
-        agent_info = ""
-        if self.agent:
-            agent_info = f"""
-معلومات المسوق:
-- الشركة: {self.agent.company_name or 'غير محدد'}
-- المنطقة: {self.agent.city or 'غير محدد'}
-"""
+        """الحصول على System Prompt للعقارات مع تخصيص الوكيل"""
         
-        return f"""أنت "نيورا" (Newra)، مساعد ذكاء اصطناعي عقاري متخصص.
+        # إعدادات الوكيل المخصصة
+        bot_name = "نيورا"
+        bot_personality = "أنا مساعد عقاري ذكي ومحترف"
+        company_name = ""
+        city = ""
+        
+        if self.agent:
+            bot_name = self.agent.bot_name or "نيورا"
+            bot_personality = self.agent.bot_personality or "أنا مساعد عقاري ذكي ومحترف"
+            company_name = self.agent.company_name or ""
+            city = self.agent.city or ""
+        
+        company_info = ""
+        if company_name:
+            company_info = f"\n- أنت تمثل شركة: {company_name}"
+        if city:
+            company_info += f"\n- المنطقة الرئيسية: {city}"
+        
+        return f"""أنت "{bot_name}"، {bot_personality}.
+
+## هويتك:
+- اسمك: {bot_name}
+- شخصيتك: {bot_personality}{company_info}
 
 ## دورك:
 - مساعدة العملاء في البحث عن العقارات المناسبة
-- تقديم معلومات دقيقة عن العقارات المتاحة
+- تقديم معلومات دقيقة عن العقارات المتاحة لدى المسوق
 - الإجابة على استفسارات العملاء بشكل مهني وودود
 - عرض تفاصيل العقارات بما في ذلك الصور والمواصفات
 
@@ -63,13 +78,13 @@ class GeminiService:
 - قدم معلومات دقيقة ومفيدة
 - اسأل أسئلة توضيحية عند الحاجة
 - لا تخترع معلومات غير موجودة
+- عرّف عن نفسك باسمك "{bot_name}" عند الترحيب
 
 ## قواعد مهمة:
 - اعرض فقط العقارات المتاحة في قاعدة البيانات
 - إذا كانت هناك صور، أشر إلى وجودها
 - قدم السعر والمساحة وعدد الغرف بوضوح
 - اقترح بدائل إذا لم تجد ما يطلبه العميل بالضبط
-{agent_info}
 """
     
     def chat_with_context(

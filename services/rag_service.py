@@ -25,19 +25,29 @@ class RAGService:
         
         self.embedding_model = 'models/embedding-001'
     
-    def get_property_context(self, agent_id: str, query: str) -> str:
+    def get_property_context(self, agent_id, query: str) -> str:
         """
         استرجاع سياق العقارات المناسبة للاستعلام
         """
         from apps.properties.models import Property
         from apps.agents.models import Agent
+        import uuid
+        
+        properties = None
         
         try:
+            # تحويل agent_id إلى UUID إذا كان string
+            if isinstance(agent_id, str):
+                try:
+                    agent_id = uuid.UUID(agent_id)
+                except ValueError:
+                    pass
+            
             agent = Agent.objects.get(id=agent_id)
             properties = Property.objects.filter(agent=agent, is_active=True)
             
             if not properties.exists():
-                return "لا توجد عقارات متاحة حالياً."
+                return "لا توجد عقارات متاحة حالياً. يمكنني مساعدتك عندما يتم إضافة عقارات جديدة."
             
             # تحويل العقارات إلى نص للسياق
             properties_context = self._format_properties_for_context(properties)
@@ -50,10 +60,12 @@ class RAGService:
                 return self._simple_search(query, properties)
                 
         except Agent.DoesNotExist:
-            return "لم يتم العثور على المسوق."
+            return "مرحباً! كيف يمكنني مساعدتك في البحث عن عقار؟"
         except Exception as e:
             print(f"RAG Error: {e}")
-            return self._simple_search(query, properties) if 'properties' in locals() else ""
+            if properties is not None:
+                return self._simple_search(query, properties)
+            return "مرحباً! أنا نيورا، مساعدك العقاري. كيف يمكنني مساعدتك؟"
     
     def _format_properties_for_context(self, properties) -> str:
         """تنسيق العقارات كسياق نصي"""
@@ -235,14 +247,22 @@ class RAGService:
         except Property.DoesNotExist:
             return None
     
-    def generate_property_response(self, agent_id: str, user_message: str) -> Dict[str, Any]:
+    def generate_property_response(self, agent_id, user_message: str) -> Dict[str, Any]:
         """
         توليد رد شامل يتضمن النص والعقارات المقترحة
         """
         from apps.properties.models import Property
         from apps.agents.models import Agent
+        import uuid
         
         try:
+            # تحويل agent_id إلى UUID إذا كان string
+            if isinstance(agent_id, str):
+                try:
+                    agent_id = uuid.UUID(agent_id)
+                except ValueError:
+                    pass
+            
             agent = Agent.objects.get(id=agent_id)
             properties = Property.objects.filter(agent=agent, is_active=True)
             

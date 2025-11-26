@@ -49,12 +49,19 @@
 
         <div class="nav-section">
             <div class="nav-section-title">الإعدادات</div>
-            <a href="/dashboard/settings/" class="nav-item">
+            <a href="/dashboard/bot-settings/" class="nav-item {% if active_page == 'bot_settings' %}active{% endif %}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73v.27h1a7 7 0 0 1 7 7h.27c.34-.6.99-1 1.73-1a2 2 0 1 1 0 4c-.74 0-1.39-.4-1.73-1H20a7 7 0 0 1-7 7v.27c.6.34 1 .99 1 1.73a2 2 0 1 1-4 0c0-.74.4-1.39 1-1.73V20a7 7 0 0 1-7-7h-.27c-.34.6-.99 1-1.73 1a2 2 0 1 1 0-4c.74 0 1.39.4 1.73 1H4a7 7 0 0 1 7-7v-.27c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+                إعدادات الوكيل
+            </a>
+            <a href="/dashboard/settings/" class="nav-item {% if active_page == 'settings' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
                 </svg>
-                الإعدادات
+                الإعدادات العامة
             </a>
             <a href="/auth/logout/" class="nav-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

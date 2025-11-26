@@ -35,9 +35,15 @@ class Agent(models.Model):
     profile_image = models.ImageField(upload_to='agents/profiles/', blank=True, verbose_name='الصورة الشخصية')
     
     # إعدادات البوت
-    bot_name = models.CharField(max_length=100, default='Newra AI', verbose_name='اسم البوت')
+    bot_name = models.CharField(max_length=100, default='نيورا', verbose_name='اسم الوكيل')
+    bot_title = models.CharField(max_length=200, default='مساعدك العقاري الذكي', verbose_name='وصف الوكيل')
+    bot_personality = models.TextField(
+        default='أنا مساعد عقاري ذكي ومحترف، أساعدك في العثور على العقار المناسب.',
+        verbose_name='شخصية الوكيل',
+        help_text='مثال: أنا سعود، مساعدك في شركة روشن العقارية'
+    )
     bot_welcome_message = models.TextField(
-        default='مرحباً! أنا مساعد Newra Estate لمساعدتك في اختيار العقار المناسب. هل تبحث عن شراء أم استئجار عقار؟',
+        default='مرحباً! 👋 كيف يمكنني مساعدتك اليوم في البحث عن عقارك المثالي؟',
         verbose_name='رسالة الترحيب'
     )
     bot_language = models.CharField(
@@ -46,6 +52,7 @@ class Agent(models.Model):
         default='ar',
         verbose_name='لغة البوت'
     )
+    bot_color = models.CharField(max_length=7, default='#000000', verbose_name='لون البوت')
     
     # إعدادات الإشعارات
     notify_email = models.BooleanField(default=True, verbose_name='إشعارات البريد')

@@ -19,9 +19,41 @@ def home(request):
 
 def chat_demo(request):
     """صفحة تجربة الشات"""
-    context = {
-        'agent_id': request.GET.get('agent_id', ''),
-    }
+    from apps.agents.models import Agent
+    
+    # الحصول على agent_id من URL أو استخدام أول agent متاح
+    agent_id = request.GET.get('agent_id', '')
+    agent = None
+    
+    if agent_id:
+        try:
+            agent = Agent.objects.get(id=agent_id, is_active=True)
+        except (Agent.DoesNotExist, ValueError):
+            agent = None
+    
+    if not agent:
+        # استخدام أول agent نشط
+        agent = Agent.objects.filter(is_active=True).first()
+    
+    if agent:
+        context = {
+            'agent_id': str(agent.id),
+            'bot_name': agent.bot_name or 'نيورا',
+            'bot_title': agent.bot_title or 'المساعد العقاري الذكي',
+            'bot_welcome_message': agent.bot_welcome_message or 'مرحباً! 👋 كيف يمكنني مساعدتك؟',
+            'bot_color': agent.bot_color or '#000000',
+            'company_name': agent.company_name or '',
+        }
+    else:
+        context = {
+            'agent_id': '',
+            'bot_name': 'نيورا',
+            'bot_title': 'المساعد العقاري الذكي',
+            'bot_welcome_message': 'مرحباً! 👋 كيف يمكنني مساعدتك؟',
+            'bot_color': '#000000',
+            'company_name': '',
+        }
+    
     return render(request, 'chat/widget.html', context)
 
 
@@ -187,3 +219,41 @@ def dashboard_view(request):
     }
     
     return render(request, 'dashboard/index.html', context)
+
+
+@login_required(login_url='/auth/login/')
+def bot_settings_view(request):
+    """صفحة إعدادات الوكيل الذكي"""
+    from apps.agents.models import Agent
+    
+    user = request.user
+    
+    # Get or create agent profile
+    try:
+        agent = user.agent_profile
+    except Agent.DoesNotExist:
+        agent = Agent.objects.create(
+            user=user,
+            email=user.email or '',
+            phone='',
+            city=''
+        )
+    
+    if request.method == 'POST':
+        # Update bot settings
+        agent.bot_name = request.POST.get('bot_name', agent.bot_name)
+        agent.bot_title = request.POST.get('bot_title', agent.bot_title)
+        agent.bot_personality = request.POST.get('bot_personality', agent.bot_personality)
+        agent.bot_welcome_message = request.POST.get('bot_welcome_message', agent.bot_welcome_message)
+        agent.bot_color = request.POST.get('bot_color', agent.bot_color)
+        agent.bot_language = request.POST.get('bot_language', agent.bot_language)
+        agent.save()
+        
+        return JsonResponse({'status': 'success'})
+    
+    context = {
+        'agent': agent,
+        'active_page': 'bot_settings'
+    }
+    
+    return render(request, 'dashboard/bot_settings.html', context)

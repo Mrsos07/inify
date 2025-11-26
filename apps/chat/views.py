@@ -5,6 +5,7 @@ Chat Views - واجهات برمجة المحادثات
 
 import json
 import logging
+from django.conf import settings
 from django.http import JsonResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -237,9 +238,12 @@ class PublicChatView(View):
                 'error': 'بيانات JSON غير صالحة'
             }, status=400)
         except Exception as e:
-            logger.error(f"Public chat error: {str(e)}")
+            logger.error(f"Public chat error: {str(e)}", exc_info=True)
+            import traceback
+            traceback.print_exc()
             return JsonResponse({
-                'error': 'حدث خطأ في معالجة الطلب'
+                'error': 'حدث خطأ في معالجة الطلب',
+                'details': str(e) if settings.DEBUG else None
             }, status=500)
     
     def _get_client_ip(self, request):

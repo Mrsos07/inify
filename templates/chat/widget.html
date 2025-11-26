@@ -358,19 +358,19 @@
 <body>
     <div class="chat-container">
         <!-- Header -->
-        <div class="chat-header">
+        <div class="chat-header" style="background: {{ bot_color|default:'#000000' }};">
             <div class="logo">
                 <!-- Newra Logo SVG -->
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="35" cy="30" r="18" stroke="#000" stroke-width="6" fill="none"/>
-                    <circle cx="35" cy="30" r="6" fill="#000"/>
-                    <line x1="35" y1="48" x2="35" y2="70" stroke="#000" stroke-width="6" stroke-linecap="round"/>
-                    <circle cx="35" cy="78" r="8" fill="#000"/>
+                    <circle cx="30" cy="28" r="18" stroke="#fff" stroke-width="7" fill="none"/>
+                    <circle cx="30" cy="28" r="5" fill="#fff"/>
+                    <line x1="44" y1="42" x2="60" y2="62" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+                    <circle cx="66" cy="70" r="12" fill="#fff"/>
                 </svg>
             </div>
             <div class="chat-header-info">
-                <h1>Newra Estate <span class="status-indicator"></span></h1>
-                <p>المساعد العقاري الذكي</p>
+                <h1>{{ bot_name|default:'نيورا' }} <span class="status-indicator"></span></h1>
+                <p>{{ bot_title|default:'المساعد العقاري الذكي' }}</p>
             </div>
         </div>
 
@@ -378,11 +378,7 @@
         <div class="chat-messages" id="chatMessages">
             <!-- Welcome Message -->
             <div class="message bot">
-                <div class="message-content">مرحباً! 👋
-
-أنا مساعد Newra Estate لمساعدتك في اختيار العقار المناسب.
-
-هل تبحث عن شراء أم استئجار عقار؟</div>
+                <div class="message-content">{{ bot_welcome_message|default:'مرحباً! 👋 كيف يمكنني مساعدتك؟' }}</div>
                 <span class="message-time">الآن</span>
             </div>
 

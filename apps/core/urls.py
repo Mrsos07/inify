@@ -18,4 +18,5 @@ urlpatterns = [
     
     # Dashboard
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('dashboard/bot-settings/', views.bot_settings_view, name='bot-settings'),
 ]
