@@ -44,6 +44,8 @@ class LeadDetailSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     source_display = serializers.CharField(source='get_source_display', read_only=True)
     urgency_display = serializers.CharField(source='get_urgency_display', read_only=True)
+    looking_for_display = serializers.SerializerMethodField()
+    budget_display = serializers.SerializerMethodField()
     interested_properties = serializers.SerializerMethodField()
     activities = LeadActivitySerializer(many=True, read_only=True)
     viewing_appointments = serializers.SerializerMethodField()
@@ -53,6 +55,7 @@ class LeadDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'phone', 'email', 'whatsapp', 'status', 'status_display',
             'source', 'source_display', 'urgency', 'urgency_display', 'looking_for',
+            'looking_for_display', 'budget_display',
             'property_type_preference', 'city_preference', 'neighborhood_preference',
             'budget_min', 'budget_max', 'bedrooms_min', 'bathrooms_min', 'size_min',
             'special_requirements', 'preferred_contact_method', 'preferred_contact_time',
@@ -60,17 +63,47 @@ class LeadDetailSerializer(serializers.ModelSerializer):
             'viewing_appointments', 'created_at', 'updated_at', 'last_contact_at'
         ]
     
+    def get_looking_for_display(self, obj):
+        mapping = {'buy': 'شراء', 'rent': 'إيجار', 'both': 'شراء أو إيجار'}
+        return mapping.get(obj.looking_for, obj.looking_for)
+    
+    def get_budget_display(self, obj):
+        if obj.budget_min and obj.budget_max:
+            return f"{obj.budget_min:,.0f} - {obj.budget_max:,.0f} ريال"
+        elif obj.budget_max:
+            return f"حتى {obj.budget_max:,.0f} ريال"
+        elif obj.budget_min:
+            return f"من {obj.budget_min:,.0f} ريال"
+        return None
+    
     def get_interested_properties(self, obj):
-        return [
-            {
+        properties = []
+        for p in obj.interested_properties.all():
+            # Get primary image
+            image_url = None
+            primary_image = p.images.filter(is_primary=True).first()
+            if primary_image and primary_image.image:
+                image_url = primary_image.image.url
+            elif p.images.exists():
+                first_image = p.images.first()
+                if first_image and first_image.image:
+                    image_url = first_image.image.url
+            
+            properties.append({
                 'id': str(p.id),
                 'title': p.title,
-                'price': p.get_price_display(),
+                'price': float(p.price),
+                'price_display': f"{p.price:,.0f} ريال",
                 'city': p.city,
-                'type': p.get_property_type_display()
-            }
-            for p in obj.interested_properties.all()
-        ]
+                'neighborhood': p.neighborhood,
+                'type': p.get_property_type_display(),
+                'status': p.get_status_display(),
+                'bedrooms': p.bedrooms,
+                'bathrooms': p.bathrooms,
+                'size': float(p.size),
+                'image': image_url
+            })
+        return properties
     
     def get_viewing_appointments(self, obj):
         return [

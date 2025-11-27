@@ -210,6 +210,60 @@ class PublicChatView(View):
             rag_response = rag_service.generate_property_response(str(agent.id), message)
             suggested_properties = rag_response.get('suggested_properties', [])
             
+            # تحليل الرسالة لجمع بيانات العملاء
+            from services.lead_capture_service import lead_capture_service
+            
+            lead_created = None
+            bot_collect_leads = getattr(agent, 'bot_collect_leads', True)
+            
+            if bot_collect_leads:
+                # تحليل رسالة المستخدم
+                analysis = lead_capture_service.analyze_message(message, chat_history)
+                
+                logger.info(f"Lead analysis: phone={analysis.get('phone')}, has_contact={analysis.get('has_contact_info')}")
+                
+                # إذا أعطى العميل رقم جواله، أنشئ lead
+                if analysis.get('phone'):
+                    # الحصول على العقار المهتم به من المحادثة السابقة
+                    interested_property_id = None
+                    if suggested_properties:
+                        interested_property_id = suggested_properties[0].get('id')
+                    
+                    # البحث عن العقار في تاريخ المحادثة إذا لم يكن موجوداً
+                    if not interested_property_id:
+                        # جلب آخر عقار تم عرضه في المحادثة
+                        from apps.properties.models import Property
+                        props = Property.objects.filter(agent=agent, is_active=True)
+                        if props.exists():
+                            interested_property_id = str(props.first().id)
+                    
+                    logger.info(f"Creating lead: phone={analysis.get('phone')}, property={interested_property_id}")
+                    
+                    try:
+                        lead = lead_capture_service.create_lead_from_conversation(
+                            agent_id=str(agent.id),
+                            conversation_id=str(conversation.id),
+                            extracted_info={
+                                'phone': analysis.get('phone'),
+                                'email': analysis.get('email'),
+                                'name': analysis.get('name') or 'عميل مهتم',
+                                'interest_level': 'high'
+                            },
+                            interested_property_id=interested_property_id
+                        )
+                        
+                        if lead:
+                            lead_created = {
+                                'id': str(lead.id),
+                                'name': lead.name,
+                                'phone': lead.phone
+                            }
+                            logger.info(f"Lead created successfully: {lead.id}")
+                        else:
+                            logger.error(f"Failed to create lead for phone: {analysis.get('phone')}")
+                    except Exception as e:
+                        logger.error(f"Exception creating lead: {e}")
+            
             # حفظ رد المساعد
             assistant_message = Message.objects.create(
                 conversation=conversation,
@@ -225,13 +279,19 @@ class PublicChatView(View):
             conversation.messages_count = conversation.messages.count()
             conversation.save()
             
-            return JsonResponse({
+            response_data = {
                 'conversation_id': str(conversation.id),
                 'response': response['content'],
                 'suggested_properties': suggested_properties,
                 'message_id': str(assistant_message.id),
-                'has_properties': len(suggested_properties) > 0
-            })
+                'has_properties': len(suggested_properties) > 0,
+                'show_media': rag_response.get('show_media', False)
+            }
+            
+            if lead_created:
+                response_data['lead_created'] = lead_created
+            
+            return JsonResponse(response_data)
             
         except json.JSONDecodeError:
             return JsonResponse({

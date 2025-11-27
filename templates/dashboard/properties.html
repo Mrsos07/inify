@@ -1,10 +1,12 @@
-{% extends 'dashboard/base.html' %}
-{% load static %}
-
-{% block title %}العقارات - Newra Estate{% endblock %}
-
-{% block extra_css %}
-<style>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>العقارات - Newra Estate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <style>
     .properties-header {
         display: flex;
         justify-content: space-between;
@@ -147,6 +149,7 @@
         margin-bottom: 8px;
         display: -webkit-box;
         -webkit-line-clamp: 1;
+        line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
@@ -544,9 +547,11 @@
         }
     }
 </style>
-{% endblock %}
-
-{% block content %}
+</head>
+<body>
+    {% include 'dashboard/partials/sidebar.html' %}
+    
+    <main class="main-content">
 <div class="properties-header">
     <h1>العقارات</h1>
     <button class="btn-add" onclick="openModal()">
@@ -871,9 +876,8 @@
         </form>
     </div>
 </div>
-{% endblock %}
+    </main>
 
-{% block extra_js %}
 <script>
     // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
@@ -894,6 +898,13 @@
         document.getElementById('propertyId').value = '';
         document.getElementById('imagePreview').innerHTML = '';
         document.getElementById('videoPreview').innerHTML = '';
+        selectedImages = [];
+        selectedVideos = [];
+        // Reset to first tab
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector('.tab[data-tab="basic"]').classList.add('active');
+        document.getElementById('tab-basic').classList.add('active');
     }
     
     function closeModal() {
@@ -1030,6 +1041,11 @@
     document.getElementById('propertyForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
+        const saveBtn = document.querySelector('.btn-save');
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = 'جاري الحفظ...';
+        saveBtn.disabled = true;
+        
         const formData = new FormData(this);
         
         // Add images
@@ -1043,34 +1059,63 @@
             formData.append('videos', file);
         });
         
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        
         try {
-            const response = await fetch('/api/properties/save/', {
+            const response = await fetch('/api/v1/properties/save/', {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    'X-CSRFToken': csrfToken ? csrfToken.value : ''
                 }
             });
             
-            const data = await response.json();
+            const text = await response.text();
+            
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                alert('خطأ في الاستجابة من السيرفر');
+                console.error('Response:', text);
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+                return;
+            }
             
             if (data.success) {
+                alert('تم حفظ العقار بنجاح!');
                 closeModal();
                 location.reload();
             } else {
                 alert(data.error || 'حدث خطأ أثناء الحفظ');
             }
         } catch (error) {
+            alert('حدث خطأ في الاتصال بالسيرفر: ' + (error.message || 'خطأ غير معروف'));
             console.error('Error:', error);
-            alert('حدث خطأ في الاتصال');
+        } finally {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
         }
     });
     
     // Edit property
     async function editProperty(id) {
+        console.log('Editing property:', id);
         try {
-            const response = await fetch(`/api/properties/${id}/`);
-            const data = await response.json();
+            const response = await fetch(`/api/v1/properties/detail/${id}/`);
+            console.log('Edit response status:', response.status);
+            const text = await response.text();
+            console.log('Edit response text:', text);
+            
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                alert('خطأ في الاستجابة: ' + text.substring(0, 200));
+                return;
+            }
             
             if (data.success) {
                 const property = data.property;
@@ -1133,15 +1178,16 @@
                 document.getElementById('propertyModal').classList.add('active');
             }
         } catch (error) {
-            console.error('Error:', error);
-            alert('حدث خطأ في تحميل بيانات العقار');
+            console.error('Edit property error:', error);
+            console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+            alert('حدث خطأ في تحميل بيانات العقار: ' + (error.message || 'خطأ غير معروف'));
         }
     }
     
     async function removeExistingImage(id, btn) {
         if (confirm('هل تريد حذف هذه الصورة؟')) {
             try {
-                await fetch(`/api/properties/images/${id}/delete/`, {
+                await fetch(`/api/v1/properties/images/${id}/delete/`, {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -1149,7 +1195,8 @@
                 });
                 btn.closest('.media-item').remove();
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Remove image error:', error);
+                alert('حدث خطأ في حذف الصورة');
             }
         }
     }
@@ -1157,7 +1204,7 @@
     async function removeExistingVideo(id, btn) {
         if (confirm('هل تريد حذف هذا الفيديو؟')) {
             try {
-                await fetch(`/api/properties/videos/${id}/delete/`, {
+                await fetch(`/api/v1/properties/videos/${id}/delete/`, {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -1165,23 +1212,39 @@
                 });
                 btn.closest('.media-item').remove();
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Remove video error:', error);
+                alert('حدث خطأ في حذف الفيديو');
             }
         }
     }
     
     // Delete property
     async function deleteProperty(id) {
+        console.log('Deleting property:', id);
         if (confirm('هل أنت متأكد من حذف هذا العقار؟')) {
             try {
-                const response = await fetch(`/api/properties/${id}/delete/`, {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+                console.log('CSRF Token for delete:', csrfToken ? 'found' : 'not found');
+                
+                const response = await fetch(`/api/v1/properties/detail/${id}/delete/`, {
                     method: 'POST',
                     headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        'X-CSRFToken': csrfToken ? csrfToken.value : ''
                     }
                 });
                 
-                const data = await response.json();
+                console.log('Delete response status:', response.status);
+                const text = await response.text();
+                console.log('Delete response text:', text);
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    alert('خطأ في الاستجابة: ' + text.substring(0, 200));
+                    return;
+                }
                 
                 if (data.success) {
                     document.querySelector(`.property-card[data-id="${id}"]`).remove();
@@ -1189,8 +1252,9 @@
                     alert(data.error || 'حدث خطأ أثناء الحذف');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert('حدث خطأ في الاتصال');
+                console.error('Delete property error:', error);
+                console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+                alert('حدث خطأ في الاتصال: ' + (error.message || 'خطأ غير معروف'));
             }
         }
     }
@@ -1200,4 +1264,5 @@
         if (e.target === this) closeModal();
     });
 </script>
-{% endblock %}
+</body>
+</html>

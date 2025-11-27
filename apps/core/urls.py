@@ -19,5 +19,10 @@ urlpatterns = [
     # Dashboard
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('dashboard/properties/', views.properties_view, name='properties'),
+    path('dashboard/leads/', views.leads_view, name='leads'),
+    path('dashboard/conversations/', views.conversations_view, name='conversations'),
     path('dashboard/bot-settings/', views.bot_settings_view, name='bot-settings'),
+    
+    # Test
+    path('test/add-property/', views.test_add_property, name='test-add-property'),
 ]

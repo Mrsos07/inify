@@ -297,6 +297,69 @@
                                 <textarea name="bot_welcome_message" id="botWelcome" 
                                           placeholder="الرسالة التي تظهر عند بدء المحادثة">{{ agent.bot_welcome_message }}</textarea>
                             </div>
+                    </div>
+                    
+                    <!-- إعدادات الذكاء الاصطناعي -->
+                    <div class="settings-card">
+                        <h2>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+                                <path d="M12 2a10 10 0 0 1 10 10"/>
+                                <circle cx="12" cy="12" r="6"/>
+                            </svg>
+                            تعليمات الوكيل الذكي (System Prompt)
+                        </h2>
+                        
+                        <div class="form-group">
+                            <label>تعليمات مخصصة للوكيل</label>
+                            <textarea name="bot_system_prompt" id="botSystemPrompt" 
+                                      style="min-height: 200px;"
+                                      placeholder="أضف تعليمات مخصصة للوكيل الذكي...
+
+مثال:
+- إذا أبدى العميل اهتماماً بعقار، اسأله عن رقم جواله للتواصل
+- ركز على عقارات منطقة الرياض
+- لا تذكر أسعار المنافسين
+- اعرض مميزات العقار بشكل جذاب">{{ agent.bot_system_prompt }}</textarea>
+                            <div class="hint">
+                                هذه التعليمات ستوجه الوكيل الذكي في كيفية التعامل مع العملاء. 
+                                الوكيل سيتبع هذه التعليمات بالإضافة للتعليمات الأساسية.
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" name="bot_collect_leads" id="botCollectLeads" 
+                                       {% if agent.bot_collect_leads %}checked{% endif %}
+                                       style="width: 20px; height: 20px;">
+                                <span>جمع بيانات العملاء المهتمين تلقائياً</span>
+                            </label>
+                            <div class="hint">
+                                عند التفعيل، سيقوم الوكيل بطلب رقم الجوال من العملاء المهتمين وإضافتهم تلقائياً لقائمة العملاء المحتملين
+                            </div>
+                        </div>
+                        
+                        <div class="ai-tips" style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 12px; padding: 16px; margin-top: 16px;">
+                            <h4 style="color: #0369a1; margin: 0 0 12px 0; font-size: 14px;">💡 نصائح لتعليمات فعّالة:</h4>
+                            <ul style="margin: 0; padding-right: 20px; color: #0369a1; font-size: 13px; line-height: 1.8;">
+                                <li>حدد متى يجب على الوكيل طلب رقم الجوال</li>
+                                <li>اذكر المميزات التي يجب التركيز عليها</li>
+                                <li>حدد أسلوب الرد (رسمي، ودود، مختصر)</li>
+                                <li>اذكر المعلومات التي لا يجب مشاركتها</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- إعدادات المظهر -->
+                    <div class="settings-card">
+                        <h2>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 16v-4"/>
+                                <path d="M12 8h.01"/>
+                            </svg>
+                            مظهر الشات
+                        </h2>
                             
                             <div class="form-row">
                                 <div class="form-group">

@@ -46,6 +46,16 @@ class Agent(models.Model):
         default='مرحباً! 👋 كيف يمكنني مساعدتك اليوم في البحث عن عقارك المثالي؟',
         verbose_name='رسالة الترحيب'
     )
+    bot_system_prompt = models.TextField(
+        blank=True,
+        verbose_name='تعليمات الوكيل (System Prompt)',
+        help_text='تعليمات مخصصة للوكيل الذكي. مثال: اسأل العميل عن رقم جواله إذا أبدى اهتمامه'
+    )
+    bot_collect_leads = models.BooleanField(
+        default=True,
+        verbose_name='جمع بيانات العملاء',
+        help_text='السماح للوكيل بجمع بيانات العملاء المهتمين تلقائياً'
+    )
     bot_language = models.CharField(
         max_length=5,
         choices=[('ar', 'العربية'), ('en', 'English')],

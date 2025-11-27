@@ -145,71 +145,90 @@ class PublicPropertyViewSet(viewsets.ReadOnlyModelViewSet):
 
 # ============ API Views for Dashboard ============
 
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
 @login_required
 def save_property(request):
     """حفظ أو تحديث عقار"""
+    print(f"=== save_property called ===")
+    print(f"Method: {request.method}")
+    print(f"User: {request.user}")
+    print(f"Is authenticated: {request.user.is_authenticated}")
+    
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
     
     try:
         agent = request.user.agent_profile
-    except:
+        print(f"Agent found: {agent}")
+    except Exception as e:
+        print(f"Agent error: {e}")
         return JsonResponse({'success': False, 'error': 'لا يوجد حساب مسوق'}, status=400)
     
-    property_id = request.POST.get('property_id')
+    try:
+        property_id = request.POST.get('property_id')
+        
+        # إنشاء أو تحديث العقار
+        if property_id and property_id.strip():
+            try:
+                property_obj = Property.objects.get(id=property_id, agent=agent)
+            except Property.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
+        else:
+            property_obj = Property(agent=agent)
+        
+        # تحديث البيانات
+        property_obj.title = request.POST.get('title', '')
+        property_obj.property_type = request.POST.get('property_type', 'apartment')
+        property_obj.status = request.POST.get('status', 'for_sale')
+        property_obj.price = float(request.POST.get('price') or 0)
+        property_obj.size = float(request.POST.get('size') or 0)
+        property_obj.city = request.POST.get('city', '')
+        property_obj.neighborhood = request.POST.get('neighborhood', '')
+        property_obj.description = request.POST.get('description', '')
+        property_obj.bedrooms = int(request.POST.get('bedrooms') or 0)
+        property_obj.bathrooms = int(request.POST.get('bathrooms') or 0)
+        property_obj.living_rooms = int(request.POST.get('living_rooms') or 0)
+        property_obj.floors = int(request.POST.get('floors') or 1)
+        floor_number = request.POST.get('floor_number')
+        property_obj.floor_number = int(floor_number) if floor_number and floor_number.strip() else None
+        property_obj.parking_spaces = int(request.POST.get('parking_spaces') or 0)
+        property_obj.furnishing = request.POST.get('furnishing', 'unfurnished')
+        year_built = request.POST.get('year_built')
+        property_obj.year_built = int(year_built) if year_built and year_built.strip() else None
+        property_obj.address = request.POST.get('address', '')
+        property_obj.is_featured = request.POST.get('is_featured') == 'on'
+        property_obj.is_negotiable = request.POST.get('is_negotiable') == 'on'
+        
+        property_obj.save()
+        
+        # رفع الصور
+        images = request.FILES.getlist('images')
+        for i, image in enumerate(images):
+            PropertyImage.objects.create(
+                property=property_obj,
+                image=image,
+                is_primary=(i == 0 and not property_obj.images.filter(is_primary=True).exists()),
+                order=property_obj.images.count()
+            )
+        
+        # رفع الفيديوهات
+        videos = request.FILES.getlist('videos')
+        for video in videos:
+            PropertyVideo.objects.create(
+                property=property_obj,
+                video=video,
+                order=property_obj.videos.count()
+            )
+        
+        return JsonResponse({'success': True, 'property_id': str(property_obj.id)})
     
-    # إنشاء أو تحديث العقار
-    if property_id:
-        try:
-            property_obj = Property.objects.get(id=property_id, agent=agent)
-        except Property.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
-    else:
-        property_obj = Property(agent=agent)
-    
-    # تحديث البيانات
-    property_obj.title = request.POST.get('title', '')
-    property_obj.property_type = request.POST.get('property_type', 'apartment')
-    property_obj.status = request.POST.get('status', 'for_sale')
-    property_obj.price = float(request.POST.get('price', 0))
-    property_obj.size = float(request.POST.get('size', 0))
-    property_obj.city = request.POST.get('city', '')
-    property_obj.neighborhood = request.POST.get('neighborhood', '')
-    property_obj.description = request.POST.get('description', '')
-    property_obj.bedrooms = int(request.POST.get('bedrooms', 0))
-    property_obj.bathrooms = int(request.POST.get('bathrooms', 0))
-    property_obj.living_rooms = int(request.POST.get('living_rooms', 0))
-    property_obj.floors = int(request.POST.get('floors', 1))
-    property_obj.floor_number = int(request.POST.get('floor_number', 0)) if request.POST.get('floor_number') else None
-    property_obj.parking_spaces = int(request.POST.get('parking_spaces', 0))
-    property_obj.furnishing = request.POST.get('furnishing', 'unfurnished')
-    property_obj.year_built = int(request.POST.get('year_built', 0)) if request.POST.get('year_built') else None
-    property_obj.address = request.POST.get('address', '')
-    property_obj.is_featured = request.POST.get('is_featured') == 'on'
-    property_obj.is_negotiable = request.POST.get('is_negotiable') == 'on'
-    
-    property_obj.save()
-    
-    # رفع الصور
-    images = request.FILES.getlist('images')
-    for i, image in enumerate(images):
-        PropertyImage.objects.create(
-            property=property_obj,
-            image=image,
-            is_primary=(i == 0 and not property_obj.images.filter(is_primary=True).exists()),
-            order=property_obj.images.count()
-        )
-    
-    # رفع الفيديوهات
-    videos = request.FILES.getlist('videos')
-    for video in videos:
-        PropertyVideo.objects.create(
-            property=property_obj,
-            video=video,
-            order=property_obj.videos.count()
-        )
-    
-    return JsonResponse({'success': True, 'property_id': str(property_obj.id)})
+    except Exception as e:
+        import traceback
+        print(f"Save property error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @login_required
@@ -265,6 +284,7 @@ def get_property(request, property_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
+@csrf_exempt
 @login_required
 def delete_property(request, property_id):
     """حذف عقار"""
@@ -282,6 +302,7 @@ def delete_property(request, property_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
+@csrf_exempt
 @login_required
 def delete_property_image(request, image_id):
     """حذف صورة عقار"""
@@ -297,6 +318,7 @@ def delete_property_image(request, image_id):
         return JsonResponse({'success': False, 'error': 'الصورة غير موجودة'}, status=404)
 
 
+@csrf_exempt
 @login_required
 def delete_property_video(request, video_id):
     """حذف فيديو عقار"""

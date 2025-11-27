@@ -12,17 +12,20 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register(r'', PropertyViewSet, basename='property')
+router.register(r'list', PropertyViewSet, basename='property')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    # Dashboard API - يجب أن تكون أولاً
+    path('save/', save_property, name='save-property'),
+    path('detail/<uuid:property_id>/', get_property, name='get-property'),
+    path('detail/<uuid:property_id>/delete/', delete_property, name='delete-property'),
+    path('images/<uuid:image_id>/delete/', delete_property_image, name='delete-property-image'),
+    path('videos/<uuid:video_id>/delete/', delete_property_video, name='delete-property-video'),
+    
+    # Public API
     path('public/', PublicPropertyViewSet.as_view({'get': 'list'}), name='public-properties'),
     path('public/<uuid:pk>/', PublicPropertyViewSet.as_view({'get': 'retrieve'}), name='public-property-detail'),
     
-    # Dashboard API
-    path('save/', save_property, name='save-property'),
-    path('<uuid:property_id>/', get_property, name='get-property'),
-    path('<uuid:property_id>/delete/', delete_property, name='delete-property'),
-    path('images/<uuid:image_id>/delete/', delete_property_image, name='delete-property-image'),
-    path('videos/<uuid:video_id>/delete/', delete_property_video, name='delete-property-video'),
+    # REST API
+    path('', include(router.urls)),
 ]

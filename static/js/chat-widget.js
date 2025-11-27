@@ -202,7 +202,7 @@
         }
 
         // Add message to chat
-        addMessage(content, type, properties = null) {
+        addMessage(content, type, properties = null, showMedia = false) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `newra-message ${type}`;
             
@@ -216,6 +216,8 @@
             // Add property cards with images and videos
             if (properties && properties.length > 0) {
                 properties.forEach(prop => {
+                    if (!prop) return;
+                    
                     // Get primary image or first image
                     let primaryImage = prop.primary_image;
                     if (!primaryImage && prop.images && prop.images.length > 0) {
@@ -238,18 +240,52 @@
                                 </div>
                             </div>
                             <div class="content">
-                                <div class="title">${this.escapeHtml(prop.title)}</div>
-                                <div class="price">${prop.price_display || prop.price}</div>
+                                <div class="title">${this.escapeHtml(prop.title || '')}</div>
+                                <div class="price">${prop.price_display || (prop.price ? prop.price.toLocaleString() + ' ريال' : '')}</div>
                                 <div class="details">
-                                    <span>📐 ${prop.size_display || prop.size + ' م²'}</span>
-                                    <span>🛏️ ${prop.bedrooms}</span>
-                                    <span>🚿 ${prop.bathrooms}</span>
+                                    <span>📐 ${prop.size ? prop.size + ' م²' : ''}</span>
+                                    <span>🛏️ ${prop.bedrooms || 0}</span>
+                                    <span>🚿 ${prop.bathrooms || 0}</span>
                                 </div>
-                                <div class="location">📍 ${prop.city}${prop.neighborhood ? ' - ' + prop.neighborhood : ''}</div>
+                                <div class="location">📍 ${prop.city || ''}${prop.neighborhood ? ' - ' + prop.neighborhood : ''}</div>
                                 ${hasVideos ? '<div class="has-video">🎥 يتوفر فيديو للعقار</div>' : ''}
                             </div>
-                        </div>
                     `;
+                    
+                    // Show media gallery if requested
+                    if (showMedia && (imageCount > 0 || videoCount > 0)) {
+                        html += `<div class="media-gallery">`;
+                        
+                        // Show all images
+                        if (prop.images && prop.images.length > 0) {
+                            html += `<div class="gallery-section"><div class="gallery-title">📷 الصور (${prop.images.length})</div><div class="gallery-items">`;
+                            prop.images.forEach((img, idx) => {
+                                if (img && img.url) {
+                                    html += `<div class="gallery-item image-item" data-image-url="${img.url}" data-image-index="${idx}">
+                                        <img src="${img.url}" alt="صورة ${idx + 1}" loading="lazy">
+                                    </div>`;
+                                }
+                            });
+                            html += `</div></div>`;
+                        }
+                        
+                        // Show all videos
+                        if (prop.videos && prop.videos.length > 0) {
+                            html += `<div class="gallery-section"><div class="gallery-title">🎬 الفيديوهات (${prop.videos.length})</div><div class="gallery-items">`;
+                            prop.videos.forEach((vid, idx) => {
+                                if (vid && vid.url) {
+                                    html += `<div class="gallery-item video-item" data-video-url="${vid.url}">
+                                        <video src="${vid.url}" preload="metadata"></video>
+                                    </div>`;
+                                }
+                            });
+                            html += `</div></div>`;
+                        }
+                        
+                        html += `</div>`;
+                    }
+                    
+                    html += `</div>`;
                 });
             }
             
@@ -260,14 +296,78 @@
             
             // Bind property card clicks
             messageDiv.querySelectorAll('.newra-property-card').forEach(card => {
-                card.addEventListener('click', () => {
+                card.addEventListener('click', (e) => {
+                    // Don't trigger if clicking on media gallery
+                    if (e.target.closest('.media-gallery')) return;
+                    
                     const title = card.querySelector('.title').textContent;
-                    this.elements.input.value = `أريد معرفة المزيد عن: ${title}`;
+                    this.elements.input.value = `أريد صور وفيديو عقار: ${title}`;
                     this.sendMessage();
                 });
             });
             
+            // Bind image clicks for fullscreen view
+            messageDiv.querySelectorAll('.gallery-item.image-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const imageUrl = item.dataset.imageUrl;
+                    if (imageUrl) {
+                        this.showImageViewer(imageUrl);
+                    }
+                });
+            });
+            
+            // Bind video clicks for play
+            messageDiv.querySelectorAll('.gallery-item.video-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const video = item.querySelector('video');
+                    if (video) {
+                        if (video.paused) {
+                            video.play();
+                            video.controls = true;
+                        } else {
+                            video.pause();
+                        }
+                    }
+                });
+            });
+            
             this.scrollToBottom();
+        }
+        
+        // Show fullscreen image viewer
+        showImageViewer(imageUrl) {
+            // Create overlay if not exists
+            let overlay = document.getElementById('newraImageViewer');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'newraImageViewer';
+                overlay.className = 'image-viewer-overlay';
+                overlay.innerHTML = `
+                    <button class="image-viewer-close">✕</button>
+                    <img src="" alt="صورة العقار">
+                `;
+                document.body.appendChild(overlay);
+                
+                // Close on click
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay || e.target.classList.contains('image-viewer-close')) {
+                        overlay.classList.remove('active');
+                    }
+                });
+                
+                // Close on escape
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        overlay.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Set image and show
+            overlay.querySelector('img').src = imageUrl;
+            overlay.classList.add('active');
         }
 
         // Send message
@@ -302,7 +402,7 @@
                 
                 if (response.ok) {
                     this.conversationId = data.conversation_id;
-                    this.addMessage(data.response, 'bot', data.suggested_properties);
+                    this.addMessage(data.response, 'bot', data.suggested_properties, data.show_media);
                 } else {
                     this.addMessage('عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.', 'bot');
                 }

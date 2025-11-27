@@ -2,17 +2,19 @@
 """
 RAG Service - خدمة استرجاع المعلومات المعززة بالذكاء الاصطناعي
 باستخدام Gemini للبحث الذكي في العقارات
+وكيل ذكاء اصطناعي عقاري متكامل
 """
 
 import os
 import json
+import re
 import google.generativeai as genai
 from typing import List, Dict, Any, Optional
 from django.conf import settings
 
 
 class RAGService:
-    """خدمة RAG للبحث الذكي في العقارات"""
+    """خدمة RAG للبحث الذكي في العقارات - وكيل ذكاء اصطناعي"""
     
     def __init__(self):
         # تكوين Gemini
@@ -24,16 +26,40 @@ class RAGService:
             self.model = None
         
         self.embedding_model = 'models/embedding-001'
+        
+        # كلمات مفتاحية لطلب الصور والفيديوهات
+        self.media_keywords = [
+            'صور', 'صورة', 'صوره', 'صورها', 'صورته', 'صورتها',
+            'فيديو', 'فيديوهات', 'مقطع', 'مقاطع',
+            'أرني', 'أريني', 'ارني', 'اريني', 'شوفني', 'وريني', 'ورني',
+            'عرض', 'اعرض', 'اعرضها', 'اعرضه',
+            'شكل', 'شكله', 'شكلها', 'منظر', 'مناظر',
+            'شاهد', 'أشاهد', 'اشاهد', 'مشاهدة', 'شوف', 'اشوف', 'أشوف',
+            'وين الصور', 'فين الصور', 'ابي اشوف', 'ابغى اشوف',
+            'images', 'photos', 'video', 'show', 'view', 'picture'
+        ]
+        
+        # كلمات مفتاحية لطلب عرض العقارات
+        self.property_request_keywords = [
+            'عقار', 'عقارات', 'شقة', 'شقق', 'فيلا', 'فلل', 'دوبلكس',
+            'أرض', 'اراضي', 'مكتب', 'مكاتب', 'محل', 'محلات',
+            'ابحث', 'أبحث', 'ادور', 'أدور', 'دور', 'بحث',
+            'عندكم', 'عندك', 'متوفر', 'متاح', 'موجود',
+            'للبيع', 'للايجار', 'للإيجار', 'تمليك', 'ايجار', 'إيجار',
+            'اشتري', 'أشتري', 'استأجر', 'أستأجر',
+            'وش عندكم', 'ايش عندكم', 'شو عندكم',
+            'ابغى', 'أبغى', 'ابي', 'أبي', 'اريد', 'أريد',
+            'property', 'apartment', 'villa', 'rent', 'buy'
+        ]
     
     def get_property_context(self, agent_id, query: str) -> str:
         """
         استرجاع سياق العقارات المناسبة للاستعلام
+        يُرجع بيانات العقارات فقط (ليس رداً كاملاً)
         """
         from apps.properties.models import Property
         from apps.agents.models import Agent
         import uuid
-        
-        properties = None
         
         try:
             # تحويل agent_id إلى UUID إذا كان string
@@ -47,25 +73,16 @@ class RAGService:
             properties = Property.objects.filter(agent=agent, is_active=True)
             
             if not properties.exists():
-                return "لا توجد عقارات متاحة حالياً. يمكنني مساعدتك عندما يتم إضافة عقارات جديدة."
+                return "لا توجد عقارات متاحة حالياً لدى هذا المسوق."
             
-            # تحويل العقارات إلى نص للسياق
-            properties_context = self._format_properties_for_context(properties)
-            
-            # إذا كان Gemini متاح، استخدمه للبحث الذكي
-            if self.model and self.api_key:
-                return self._smart_search(query, properties_context, properties)
-            else:
-                # بحث بسيط بدون Gemini
-                return self._simple_search(query, properties)
+            # تحويل العقارات إلى نص للسياق (بيانات فقط)
+            return self._format_properties_for_context(properties)
                 
         except Agent.DoesNotExist:
-            return "مرحباً! كيف يمكنني مساعدتك في البحث عن عقار؟"
+            return "لا يوجد مسوق بهذا المعرف."
         except Exception as e:
             print(f"RAG Error: {e}")
-            if properties is not None:
-                return self._simple_search(query, properties)
-            return "مرحباً! أنا نيورا، مساعدك العقاري. كيف يمكنني مساعدتك؟"
+            return "حدث خطأ في استرجاع العقارات."
     
     def _format_properties_for_context(self, properties) -> str:
         """تنسيق العقارات كسياق نصي"""
@@ -263,9 +280,36 @@ class RAGService:
         """الحصول على تفاصيل عقار مع صوره (للتوافق مع الكود القديم)"""
         return self.get_property_details_with_media(property_id)
     
+    def _wants_media(self, query: str) -> bool:
+        """التحقق إذا كان المستخدم يطلب صور أو فيديوهات"""
+        query_lower = query.lower()
+        return any(keyword in query_lower for keyword in self.media_keywords)
+    
+    def _wants_properties(self, query: str) -> bool:
+        """التحقق إذا كان المستخدم يطلب عرض العقارات"""
+        query_lower = query.lower()
+        return any(keyword in query_lower for keyword in self.property_request_keywords)
+    
+    def _extract_property_reference(self, query: str, properties) -> Optional[Any]:
+        """استخراج العقار المشار إليه في الاستعلام"""
+        query_lower = query.lower()
+        
+        for prop in properties:
+            # البحث بالعنوان
+            if prop.title and prop.title.lower() in query_lower:
+                return prop
+            # البحث بكلمات من العنوان
+            if prop.title:
+                title_words = prop.title.split()
+                matches = sum(1 for word in title_words if len(word) > 3 and word.lower() in query_lower)
+                if matches >= 2:
+                    return prop
+        
+        return None
+    
     def generate_property_response(self, agent_id, user_message: str) -> Dict[str, Any]:
         """
-        توليد رد شامل يتضمن النص والعقارات المقترحة
+        توليد رد شامل يتضمن النص والعقارات المقترحة مع الصور والفيديوهات
         """
         from apps.properties.models import Property
         from apps.agents.models import Agent
@@ -280,7 +324,16 @@ class RAGService:
                     pass
             
             agent = Agent.objects.get(id=agent_id)
-            properties = Property.objects.filter(agent=agent, is_active=True)
+            properties = Property.objects.filter(agent=agent, is_active=True).prefetch_related('images', 'videos')
+            
+            # التحقق إذا كان المستخدم يطلب صور أو فيديوهات
+            wants_media = self._wants_media(user_message)
+            
+            # التحقق إذا كان المستخدم يطلب عرض العقارات
+            wants_properties = self._wants_properties(user_message)
+            
+            # البحث عن عقار محدد مشار إليه
+            referenced_property = self._extract_property_reference(user_message, properties)
             
             # البحث عن العقارات المناسبة
             context = self.get_property_context(agent_id, user_message)
@@ -288,22 +341,98 @@ class RAGService:
             # استخراج العقارات المقترحة
             suggested_properties = self._extract_matching_properties(user_message, properties)
             
+            # إذا كان يطلب صور/فيديو لعقار محدد
+            if wants_media and referenced_property:
+                property_details = self.get_property_details_with_media(referenced_property.id)
+                if property_details:
+                    # بناء رد يتضمن معلومات الصور والفيديوهات
+                    media_response = self._build_media_response(property_details)
+                    return {
+                        'text_response': media_response,
+                        'suggested_properties': [property_details],
+                        'has_properties': True,
+                        'show_media': True
+                    }
+            
+            # إذا كان يطلب صور/فيديو بشكل عام
+            if wants_media and suggested_properties:
+                properties_with_media = []
+                for p in suggested_properties[:3]:
+                    details = self.get_property_details_with_media(p.id)
+                    if details and (details.get('images') or details.get('videos')):
+                        properties_with_media.append(details)
+                
+                if properties_with_media:
+                    return {
+                        'text_response': "إليك العقارات مع الصور والفيديوهات المتاحة:",
+                        'suggested_properties': properties_with_media,
+                        'has_properties': True,
+                        'show_media': True
+                    }
+            
+            # عرض العقارات فقط إذا طلب العميل ذلك
+            if wants_properties or wants_media:
+                # إذا لم يتم العثور على عقارات مقترحة، استخدم جميع العقارات
+                if not suggested_properties:
+                    suggested_properties = list(properties[:3])
+                
+                # أرسل تفاصيل العقارات مع الصور
+                properties_with_details = []
+                for p in suggested_properties[:3]:
+                    details = self.get_property_details_with_media(p.id)
+                    if details:
+                        properties_with_details.append(details)
+                
+                return {
+                    'text_response': context,
+                    'suggested_properties': properties_with_details,
+                    'has_properties': len(properties_with_details) > 0,
+                    'show_media': wants_media or any(p.get('images') for p in properties_with_details)
+                }
+            
+            # إذا لم يطلب عقارات، لا ترسل بطاقات
             return {
                 'text_response': context,
-                'suggested_properties': [
-                    self.get_property_details_with_images(p.id) 
-                    for p in suggested_properties[:3]
-                ],
-                'has_properties': len(suggested_properties) > 0
+                'suggested_properties': [],
+                'has_properties': False,
+                'show_media': False
             }
             
         except Exception as e:
             print(f"Error generating response: {e}")
+            import traceback
+            traceback.print_exc()
             return {
                 'text_response': "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.",
                 'suggested_properties': [],
-                'has_properties': False
+                'has_properties': False,
+                'show_media': False
             }
+    
+    def _build_media_response(self, property_details: Dict) -> str:
+        """بناء رد يتضمن معلومات الصور والفيديوهات"""
+        response_parts = [f"إليك تفاصيل عقار: **{property_details['title']}**\n"]
+        
+        images = property_details.get('images', [])
+        videos = property_details.get('videos', [])
+        
+        if images:
+            response_parts.append(f"📷 يتوفر {len(images)} صور للعقار")
+        
+        if videos:
+            response_parts.append(f"🎬 يتوفر {len(videos)} فيديو للعقار")
+        
+        response_parts.append(f"\n💰 السعر: {property_details.get('price_display', property_details.get('price'))}")
+        response_parts.append(f"📐 المساحة: {property_details.get('size')} م²")
+        response_parts.append(f"🛏️ الغرف: {property_details.get('bedrooms')} | 🚿 الحمامات: {property_details.get('bathrooms')}")
+        response_parts.append(f"📍 الموقع: {property_details.get('neighborhood', '')}, {property_details.get('city', '')}")
+        
+        if property_details.get('description'):
+            response_parts.append(f"\n📝 الوصف: {property_details['description'][:200]}...")
+        
+        response_parts.append("\n\nيمكنك مشاهدة الصور والفيديوهات أدناه 👇")
+        
+        return "\n".join(response_parts)
     
     def _extract_matching_properties(self, query: str, properties) -> List:
         """استخراج العقارات المطابقة للاستعلام"""
