@@ -4,44 +4,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Newra Estate - وكيل عقاري ذكي مدعوم بالذكاء الاصطناعي</title>
-    <meta name="description" content="Newra Estate - ذكاء عقاري متكيّف يساعد الشركات العقارية على البيع والنمو">
+    <title>Inify Estate - وكيل عقاري ذكي مدعوم بالذكاء الاصطناعي</title>
+    <meta name="description" content="Inify Estate - ذكاء عقاري متكيّف يساعد الشركات العقارية على البيع والنمو">
     
-    <!-- Fonts: Chillax + Inter (Brand Guidelines) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- BalooBhaijaan2 Arabic Font -->
+    <style>
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Medium.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-ExtraBold.ttf') format('truetype');
+            font-weight: 800;
+            font-style: normal;
+            font-display: swap;
+        }
+    </style>
     
     <style>
         /**
-         * Newra Estate Landing Page
+         * Inify Estate Landing Page
          * Following Brand Book Ver 1.1 Nov 2025
          * =====================================
          */
         
         /* CSS Variables - Brand Colors */
         :root {
-            /* Core Colors - Page 23 */
-            --midnight-black: #181f29;
+            /* Core Colors */
+            --midnight-black: #0A1628;
             --pearl-white: #F8F8F8;
             
-            /* Newra Estate Spectrum (Blue to Cyan) - Page 22 */
-            --estate-dark: #1a1a2e;
-            --estate-blue-dark: #16213e;
-            --estate-blue: #0f4c75;
-            --estate-cyan: #3282b8;
-            --estate-cyan-light: #4fa3c7;
-            --estate-light-blue: #bbe1fa;
+            /* Inify Estate Spectrum (Blue to Cyan) */
+            --estate-dark: #0A1628;
+            --estate-blue-dark: #1E3A5F;
+            --estate-blue: #2E5A8B;
+            --estate-blue-mid: #4A90A4;
+            --estate-cyan: #6BB8C9;
+            --estate-cyan-light: #8DD4E3;
+            --estate-light-blue: #BBE1FA;
             
             /* Gradients */
-            --gradient-hero: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f4c75 60%, #3282b8 100%);
-            --gradient-button: linear-gradient(135deg, #0f4c75 0%, #3282b8 100%);
+            --gradient-hero: linear-gradient(160deg, #0A1628 0%, #1E3A5F 40%, #2E5A8B 100%);
+            --gradient-button: linear-gradient(135deg, #4A90A4 0%, #6BB8C9 100%);
+            --gradient-button-hover: linear-gradient(135deg, #2E5A8B 0%, #4A90A4 100%);
             --gradient-subtle: linear-gradient(180deg, #F8F8F8 0%, #e8f4f8 100%);
+            --gradient-accent: linear-gradient(135deg, #6BB8C9 0%, #8DD4E3 100%);
             
             /* Typography */
-            --font-display: 'Inter', 'Cairo', sans-serif;
-            --font-body: 'Inter', 'Cairo', sans-serif;
+            --font-display: 'BalooBhaijaan2', 'Segoe UI', sans-serif;
+            --font-body: 'BalooBhaijaan2', 'Segoe UI', sans-serif;
             
             /* Spacing */
             --container-max: 1200px;
@@ -157,17 +193,19 @@
             gap: 8px;
             padding: 12px 24px;
             background: var(--gradient-button);
-            color: white;
+            color: var(--midnight-black);
             font-size: 14px;
             font-weight: 600;
             text-decoration: none;
             border-radius: 50px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s;
         }
         
         .header-cta:hover {
+            background: var(--gradient-button-hover);
+            color: var(--pearl-white);
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(15, 76, 117, 0.3);
+            box-shadow: 0 8px 24px rgba(107, 184, 201, 0.35);
         }
         
         /* ==================== Hero Section ==================== */
@@ -336,7 +374,7 @@
             line-height: 1.7;
         }
         
-        /* ==================== What is Newra Estate ==================== */
+        /* ==================== What is Inify Estate ==================== */
         .about-section {
             background: var(--gradient-subtle);
         }
@@ -715,7 +753,7 @@
         <div class="header-inner">
             <!-- Logo with clear space -->
             <a href="/" class="header-logo">
-                <!-- Newra Icon in Square Container (Brand Book 2.3-2.4) -->
+                <!-- Inify Icon in Square Container (Brand Book 2.3-2.4) -->
                 <svg class="logo-icon" viewBox="0 0 100 100" fill="none">
                     <!-- Square Container with rounded corners -->
                     <rect x="5" y="5" width="90" height="90" rx="20" fill="#181f29"/>
@@ -755,7 +793,7 @@
     <section class="hero">
         <!-- Background Pattern - Logo as subtle element (Page 34-35) -->
         <div class="hero-bg-pattern">
-            <!-- Newra Icon as background pattern (Brand Book 5.2) -->
+            <!-- Inify Icon as background pattern (Brand Book 5.2) -->
             <svg viewBox="0 0 100 100" fill="none">
                 <circle cx="38" cy="35" r="15" stroke="white" stroke-width="3" fill="none"/>
                 <circle cx="38" cy="35" r="4" fill="white"/>
@@ -804,16 +842,16 @@
         </div>
     </section>
     
-    <!-- What is Newra Estate -->
+    <!-- What is Inify Estate -->
     <section class="section about-section" id="about">
         <div class="container">
             <div class="about-grid">
                 <div class="about-content">
                     <div class="section-header">
-                        <span class="section-label">ما هي Newra Estate</span>
+                        <span class="section-label">ما هي Inify Estate</span>
                         <h2 class="section-title">وكيل عقاري ذكي يعمل من أجلك</h2>
                         <p class="section-description">
-                            Newra Estate هو نظام ذكاء اصطناعي متخصص في العقارات، 
+                            Inify Estate هو نظام ذكاء اصطناعي متخصص في العقارات، 
                             يتكامل مع بياناتك ويتفاعل مع عملائك بشكل طبيعي ومهني.
                             يفهم استفساراتهم، يعرض العقارات المناسبة، ويجمع بيانات العملاء المحتملين.
                         </p>
@@ -833,7 +871,7 @@
                                     </svg>
                                 </div>
                                 <div class="bubble">
-                                    مرحباً! أنا نيورا، مساعدك العقاري. كيف يمكنني مساعدتك اليوم؟
+                                    مرحباً! أنا Inify، مساعدك العقاري. كيف يمكنني مساعدتك اليوم؟
                                 </div>
                             </div>
                             <div class="chat-message user">
@@ -866,7 +904,7 @@
         <div class="container">
             <div class="section-header">
                 <span class="section-label">المميزات</span>
-                <h2 class="section-title">لماذا تختار Newra Estate؟</h2>
+                <h2 class="section-title">لماذا تختار Inify Estate؟</h2>
                 <p class="section-description">
                     مميزات متقدمة تساعدك على تحويل المحادثات إلى صفقات ناجحة
                 </p>
@@ -1015,7 +1053,7 @@
             <div class="cta-content">
                 <h2 class="cta-title">جاهز لتحويل طريقة بيعك للعقارات؟</h2>
                 <p class="cta-description">
-                    انضم لمئات المسوقين العقاريين الذين يستخدمون Newra Estate 
+                    انضم لمئات المسوقين العقاريين الذين يستخدمون Inify Estate 
                     لزيادة مبيعاتهم وتوفير وقتهم.
                 </p>
                 <a href="/auth/register/" class="btn btn-primary">
@@ -1033,7 +1071,7 @@
         <div class="container">
             <div class="footer-top">
                 <div class="footer-logo">
-                    <!-- Newra Icon (Brand Book) -->
+                    <!-- Inify Icon (Brand Book) -->
                     <svg width="32" height="32" viewBox="0 0 100 100" fill="none">
                         <circle cx="38" cy="35" r="15" stroke="white" stroke-width="5" fill="none"/>
                         <circle cx="38" cy="35" r="4" fill="white"/>
@@ -1055,7 +1093,7 @@
                     <div class="footer-column">
                         <h4>الشركة</h4>
                         <ul>
-                            <li><a href="#">عن Newra</a></li>
+                            <li><a href="#">عن Inify</a></li>
                             <li><a href="#">المدونة</a></li>
                             <li><a href="#contact">تواصل معنا</a></li>
                         </ul>
@@ -1072,7 +1110,7 @@
             </div>
             
             <div class="footer-bottom">
-                <p>© 2025 Newra. The New Era of Intelligence.</p>
+                <p>© 2025 Inify. The New Era of Intelligence.</p>
                 <div class="footer-legal">
                     <a href="#">سياسة الخصوصية</a>
                     <a href="#">الشروط والأحكام</a>

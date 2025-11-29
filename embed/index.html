@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الشات بوت - Inify</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <style>
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+            --border: rgba(107, 184, 201, 0.15);
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .chat-header {
+            padding: 16px 24px;
+            background: rgba(30, 58, 95, 0.6);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .agent-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .agent-info h1 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .agent-info span {
+            font-size: 13px;
+            color: var(--cyan-light);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Messages */
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.bot {
+            background: rgba(30, 58, 95, 0.6);
+            border: 1px solid var(--border);
+            align-self: flex-start;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            align-self: flex-end;
+            border-bottom-left-radius: 6px;
+        }
+
+        .message.typing {
+            display: flex;
+            gap: 6px;
+            padding: 18px 22px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--cyan);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+
+        /* Property Cards */
+        .properties-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .property-card {
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .property-image {
+            height: 160px;
+            background: var(--dark-blue);
+            position: relative;
+        }
+
+        .property-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .property-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
+            color: var(--midnight);
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        .property-content {
+            padding: 16px;
+        }
+
+        .property-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .property-location {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .property-details {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--cyan-light);
+        }
+
+        .property-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--cyan);
+            margin-top: 12px;
+        }
+
+        /* Input */
+        .chat-input-container {
+            padding: 16px 24px;
+            background: rgba(30, 58, 95, 0.4);
+            border-top: 1px solid var(--border);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 8px 16px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--pearl);
+            font-family: inherit;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(107, 184, 201, 0.3);
+        }
+
+        .send-btn svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--midnight);
+        }
+
+        /* Powered by */
+        .powered-by {
+            text-align: center;
+            padding: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .powered-by a {
+            color: var(--cyan);
+            text-decoration: none;
+        }
+
+        /* Error state */
+        .error-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .error-title {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .error-message {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        /* Gallery Modal */
+        .gallery-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-modal.show {
+            display: flex;
+        }
+
+        .gallery-close {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .gallery-image {
+            max-width: 90%;
+            max-height: 80vh;
+            border-radius: 12px;
+        }
+
+        .gallery-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .gallery-nav.prev { right: 20px; }
+        .gallery-nav.next { left: 20px; }
+
+        .gallery-counter {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chatContainer">
+        <!-- Will be populated by JavaScript -->
+    </div>
+
+    <!-- Gallery Modal -->
+    <div class="gallery-modal" id="galleryModal">
+        <button class="gallery-close" onclick="closeGallery()">×</button>
+        <button class="gallery-nav prev" onclick="prevImage()">❮</button>
+        <img class="gallery-image" id="galleryImage" src="" alt="">
+        <button class="gallery-nav next" onclick="nextImage()">❯</button>
+        <div class="gallery-counter" id="galleryCounter"></div>
+    </div>
+
+    <script src="/static/js/auth.js"></script>
+    <script>
+        // Get agent ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const agentId = urlParams.get('agent');
+        
+        // Gemini API configuration
+        const GEMINI_API_KEY = 'AIzaSyBhZHxjT0IXBzj0g4b26l5xfX4TLpmbjLI';
+        const GEMINI_MODEL = 'gemini-2.0-flash';
+        
+        let agentSettings = null;
+        let properties = [];
+        let conversationHistory = [];
+        let lastSearchedProperties = [];
+        let currentGalleryImages = [];
+        let currentGalleryIndex = 0;
+
+        // Initialize
+        async function init() {
+            const container = document.getElementById('chatContainer');
+            
+            if (!agentId) {
+                showError('لم يتم تحديد الوكيل', 'يرجى التأكد من صحة الرابط');
+                return;
+            }
+            
+            // Load agent settings and properties
+            const loaded = loadAgentData(agentId);
+            
+            if (!loaded) {
+                showError('الوكيل غير موجود', 'لم يتم العثور على بيانات هذا الوكيل');
+                return;
+            }
+            
+            // Render chat interface
+            renderChat();
+        }
+
+        // Load agent data from localStorage
+        function loadAgentData(id) {
+            // Try to find user with this ID
+            const users = JSON.parse(localStorage.getItem('newra_users') || '[]');
+            const user = users.find(u => String(u.id) === String(id));
+            
+            if (!user) return false;
+            
+            // Load agent settings
+            const settingsKey = `newra_agent_settings_${id}`;
+            agentSettings = JSON.parse(localStorage.getItem(settingsKey) || '{}');
+            
+            // Set defaults if not configured
+            if (!agentSettings.agentName) {
+                agentSettings = {
+                    agentName: user.company || 'Inify',
+                    agentDescription: 'وكيل عقاري ذكي',
+                    welcomeMessage: 'مرحباً! 👋 كيف يمكنني مساعدتك اليوم؟',
+                    agentIcon: '🤖',
+                    systemPrompt: 'أنت وكيل عقاري ذكي. ساعد العملاء في البحث عن العقارات المناسبة.',
+                    enableRAG: true,
+                    ragResults: '5'
+                };
+            }
+            
+            // Load properties
+            const propertiesKey = `newra_properties_${id}`;
+            const allProperties = JSON.parse(localStorage.getItem(propertiesKey) || '[]');
+            // Filter only available properties
+            properties = allProperties.filter(p => !p.status || p.status === 'available');
+            
+            // Update page title
+            document.title = `${agentSettings.agentName} - شات بوت`;
+            
+            return true;
+        }
+
+        // Show error state
+        function showError(title, message) {
+            document.getElementById('chatContainer').innerHTML = `
+                <div class="error-container">
+                    <div class="error-icon">😕</div>
+                    <h2 class="error-title">${title}</h2>
+                    <p class="error-message">${message}</p>
+                </div>
+            `;
+        }
+
+        // Render chat interface
+        function renderChat() {
+            const container = document.getElementById('chatContainer');
+            container.innerHTML = `
+                <div class="chat-header">
+                    <div class="agent-avatar">${agentSettings.agentIcon || '🤖'}</div>
+                    <div class="agent-info">
+                        <h1>${agentSettings.agentName}</h1>
+                        <span><span class="status-dot"></span> متصل الآن</span>
+                    </div>
+                </div>
+                
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot">${agentSettings.welcomeMessage}</div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="اكتب رسالتك هنا..." onkeypress="handleKeyPress(event)">
+                        <button class="send-btn" onclick="sendMessage()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="powered-by">
+                    مدعوم بواسطة <a href="/" target="_blank">Inify</a>
+                </div>
+            `;
+            
+            // Add welcome message to history
+            conversationHistory.push({
+                role: 'assistant',
+                content: agentSettings.welcomeMessage
+            });
+        }
+
+        // Handle key press
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            input.value = '';
+            
+            // Add user message
+            addMessage(message, 'user');
+            conversationHistory.push({ role: 'user', content: message });
+            
+            // Show typing indicator
+            showTyping();
+            
+            try {
+                const response = await getAIResponse(message);
+                hideTyping();
+                addMessage(response, 'bot');
+                conversationHistory.push({ role: 'assistant', content: response });
+            } catch (error) {
+                hideTyping();
+                addMessage('عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.', 'bot');
+            }
+        }
+
+        // Add message to chat
+        function addMessage(content, type) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            if (type === 'bot' && lastSearchedProperties.length > 0) {
+                // Check if response mentions properties
+                const hasProperties = content.includes('عقار') || content.includes('شقة') || 
+                                     content.includes('فيلا') || content.includes('أرض') ||
+                                     content.includes('متاح') || content.includes('وجدت');
+                
+                if (hasProperties) {
+                    messageDiv.innerHTML = content + generatePropertyCards();
+                    lastSearchedProperties = [];
+                } else {
+                    messageDiv.textContent = content;
+                }
+            } else {
+                messageDiv.textContent = content;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Show typing indicator
+        function showTyping() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot typing';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Hide typing indicator
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        // Get AI response
+        async function getAIResponse(userMessage) {
+            const systemPrompt = buildSystemPrompt(userMessage);
+            
+            const messages = [
+                { role: 'user', parts: [{ text: systemPrompt }] },
+                ...conversationHistory.slice(-10).map(msg => ({
+                    role: msg.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: msg.content }]
+                })),
+                { role: 'user', parts: [{ text: userMessage }] }
+            ];
+            
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: messages,
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 1024
+                        }
+                    })
+                }
+            );
+            
+            const data = await response.json();
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || 'عذراً، لم أتمكن من الرد.';
+        }
+
+        // Build system prompt with RAG
+        function buildSystemPrompt(userQuery) {
+            // Search for relevant properties
+            const relevantProperties = searchProperties(userQuery);
+            lastSearchedProperties = relevantProperties.slice(0, parseInt(agentSettings.ragResults) || 5);
+            
+            let prompt = agentSettings.systemPrompt || 'أنت وكيل عقاري ذكي.';
+            prompt += `\n\nاسمك: ${agentSettings.agentName}`;
+            
+            if (agentSettings.enableRAG && properties.length > 0) {
+                prompt += '\n\nالعقارات المتاحة:\n';
+                lastSearchedProperties.forEach((p, i) => {
+                    prompt += `\n${i + 1}. ${p.title}`;
+                    prompt += `\n   النوع: ${p.typeLabel || p.type}`;
+                    prompt += `\n   الموقع: ${p.cityLabel || p.city}${p.district ? ' - ' + p.district : ''}`;
+                    prompt += `\n   السعر: ${formatPrice(p.price)} ريال`;
+                    if (p.area) prompt += `\n   المساحة: ${p.area} م²`;
+                    if (p.bedrooms) prompt += `\n   الغرف: ${p.bedrooms}`;
+                    if (p.location_url) prompt += `\n   رابط الموقع: ${p.location_url}`;
+                    prompt += '\n';
+                });
+            }
+            
+            prompt += '\n\nقواعد مهمة:';
+            prompt += '\n- كن ودوداً ومهنياً';
+            prompt += '\n- قدم معلومات دقيقة فقط من العقارات المتاحة';
+            prompt += '\n- إذا لم تجد عقاراً مناسباً، اقترح بدائل أو اسأل عن تفضيلات أخرى';
+            prompt += '\n- إذا سأل العميل عن الموقع أو المكان أو اللوكيشن أو كيف يوصل للعقار، أرسل له رابط Google Maps إذا كان متوفراً';
+            
+            return prompt;
+        }
+
+        // Search properties
+        function searchProperties(query) {
+            if (!query || properties.length === 0) return properties;
+            
+            const q = query.toLowerCase();
+            const keywords = q.split(/\s+/);
+            
+            return properties.filter(p => {
+                const searchText = `${p.title} ${p.type} ${p.typeLabel} ${p.city} ${p.cityLabel} ${p.district} ${p.description}`.toLowerCase();
+                return keywords.some(k => searchText.includes(k));
+            }).slice(0, 5);
+        }
+
+        // Generate property cards HTML
+        function generatePropertyCards() {
+            if (lastSearchedProperties.length === 0) return '';
+            
+            return `
+                <div class="properties-container">
+                    ${lastSearchedProperties.map((p, i) => `
+                        <div class="property-card">
+                            ${p.mainImage ? `
+                                <div class="property-image" onclick="openGallery(${i})">
+                                    <img src="${p.mainImage}" alt="${p.title}">
+                                    <span class="property-badge">${p.listing_type === 'sale' ? 'للبيع' : 'للإيجار'}</span>
+                                </div>
+                            ` : ''}
+                            <div class="property-content">
+                                <div class="property-title">${p.title}</div>
+                                <div class="property-location">📍 ${p.cityLabel || p.city}${p.district ? ' - ' + p.district : ''}</div>
+                                <div class="property-details">
+                                    ${p.area ? `<span>📐 ${p.area} م²</span>` : ''}
+                                    ${p.bedrooms ? `<span>🛏️ ${p.bedrooms} غرف</span>` : ''}
+                                    ${p.bathrooms ? `<span>🚿 ${p.bathrooms} حمام</span>` : ''}
+                                </div>
+                                <div class="property-price">${formatPrice(p.price)} ريال</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Format price
+        function formatPrice(price) {
+            if (!price) return '0';
+            return parseInt(price).toLocaleString('ar-SA');
+        }
+
+        // Gallery functions
+        function openGallery(propertyIndex) {
+            const property = lastSearchedProperties[propertyIndex];
+            if (!property) return;
+            
+            currentGalleryImages = property.images || [property.mainImage];
+            currentGalleryIndex = 0;
+            
+            showGalleryImage();
+            document.getElementById('galleryModal').classList.add('show');
+        }
+
+        function closeGallery() {
+            document.getElementById('galleryModal').classList.remove('show');
+        }
+
+        function showGalleryImage() {
+            document.getElementById('galleryImage').src = currentGalleryImages[currentGalleryIndex];
+            document.getElementById('galleryCounter').textContent = 
+                `${currentGalleryIndex + 1} / ${currentGalleryImages.length}`;
+        }
+
+        function nextImage() {
+            currentGalleryIndex = (currentGalleryIndex + 1) % currentGalleryImages.length;
+            showGalleryImage();
+        }
+
+        function prevImage() {
+            currentGalleryIndex = (currentGalleryIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length;
+            showGalleryImage();
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (!document.getElementById('galleryModal').classList.contains('show')) return;
+            
+            if (e.key === 'Escape') closeGallery();
+            if (e.key === 'ArrowLeft') nextImage();
+            if (e.key === 'ArrowRight') prevImage();
+        });
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>

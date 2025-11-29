@@ -102,7 +102,7 @@
     /* Font Families */
     --font-display: 'Chillax', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-arabic: 'Cairo', 'Inter', sans-serif;
+    --font-arabic: 'BalooBhaijaan2', 'Segoe UI', sans-serif;
     
     /* Font Sizes - Hierarchy */
     --text-xs: 0.75rem;      /* 12px */
@@ -753,9 +753,7 @@ p {
     text-align: right;
 }
 
-[dir="rtl"] .header-logo {
-    /* Logo stays on the right in RTL */
-}
+/* Logo stays on the right in RTL - no additional styles needed */
 
 [dir="rtl"] .hero-content,
 [dir="rtl"] .section-header {

@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>العملاء المحتملين - Inify</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+            --card-bg: rgba(30, 58, 95, 0.4);
+            --border: rgba(107, 184, 201, 0.15);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            min-height: 100vh;
+        }
+
+        /* Premium Background */
+        .premium-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0A1628 0%, #0d1f35 25%, #122a45 50%, #0d1f35 75%, #0A1628 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(107, 184, 201, 0.4) 0%, transparent 70%);
+            top: -200px;
+            right: -200px;
+            animation: float1 20s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(74, 144, 164, 0.35) 0%, transparent 70%);
+            bottom: -150px;
+            left: -150px;
+            animation: float2 25s ease-in-out infinite;
+        }
+        .orb-3 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+            top: 40%;
+            right: 20%;
+            animation: float3 18s ease-in-out infinite;
+        }
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-50px, 50px) scale(1.1); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, -30px) scale(1.05); }
+        }
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+            50% { transform: translate(-30px, 30px) scale(1.1); opacity: 0.3; }
+        }
+        .grid-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: linear-gradient(rgba(107, 184, 201, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(107, 184, 201, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(10, 22, 40, 0.4) 100%);
+        }
+
+        .header {
+            padding: 20px 40px;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-right { display: flex; align-items: center; gap: 20px; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo svg { width: 40px; height: 40px; }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 15px;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
+
+        .header-btn {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 { font-size: 28px; }
+        .page-header p { color: var(--text-muted); margin-top: 4px; }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .stat-card .stat-label {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .stat-card.new .stat-icon { background: rgba(34, 197, 94, 0.2); }
+        .stat-card.interested .stat-icon { background: rgba(107, 184, 201, 0.2); }
+        .stat-card.contacted .stat-icon { background: rgba(245, 158, 11, 0.2); }
+        .stat-card.converted .stat-icon { background: rgba(168, 85, 247, 0.2); }
+
+        .clients-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h2 { font-size: 18px; }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+        }
+
+        .search-box input {
+            padding: 10px 16px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--pearl);
+            font-family: inherit;
+            width: 250px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--cyan);
+        }
+
+        .filter-select {
+            padding: 10px 16px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--pearl);
+            font-family: inherit;
+        }
+
+        .clients-table {
+            width: 100%;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 160px;
+            padding: 16px 24px;
+            background: rgba(10, 22, 40, 0.4);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .client-row {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 160px;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .client-row:hover {
+            background: rgba(107, 184, 201, 0.05);
+        }
+
+        .client-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .client-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--midnight);
+        }
+
+        .client-name { font-weight: 600; }
+        .client-email { font-size: 13px; color: var(--text-muted); }
+
+        .client-phone {
+            font-size: 14px;
+            direction: ltr;
+            text-align: right;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-badge.new {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+        }
+
+        .status-badge.interested {
+            background: rgba(107, 184, 201, 0.15);
+            color: var(--cyan-light);
+        }
+
+        .status-badge.contacted {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+        }
+
+        .status-badge.converted {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+        }
+
+        .interest-tag {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .client-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--pearl);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+        }
+
+        .action-btn.whatsapp {
+            background: rgba(37, 211, 102, 0.1);
+            border-color: rgba(37, 211, 102, 0.3);
+            color: #25D366;
+        }
+
+        .action-btn.whatsapp:hover {
+            background: rgba(37, 211, 102, 0.2);
+            border-color: #25D366;
+        }
+
+        .action-btn.delete:hover {
+            border-color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .empty-state .icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+        }
+
+        /* Client Detail Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 22, 40, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: var(--dark-blue);
+            border-radius: 24px;
+            width: 600px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 { font-size: 20px; }
+
+        .close-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--pearl);
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .modal-body { padding: 24px; }
+
+        .detail-group {
+            margin-bottom: 20px;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+        }
+
+        .conversation-preview {
+            background: rgba(10, 22, 40, 0.4);
+            border-radius: 12px;
+            padding: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .conversation-preview .msg {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .conversation-preview .msg.user {
+            background: rgba(107, 184, 201, 0.2);
+            margin-right: 20%;
+        }
+
+        .conversation-preview .msg.bot {
+            background: rgba(30, 58, 95, 0.6);
+            margin-left: 20%;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .table-header, .client-row {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+            .table-header > *:nth-child(n+4),
+            .client-row > *:nth-child(n+4) { display: none; }
+        }
+
+        @media (max-width: 768px) {
+            .main-content { padding: 20px; }
+            .stats-row { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+        }
+        
+        .header-btn.logout {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .header-btn.logout:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Premium Background Elements -->
+    <div class="premium-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="grid-pattern"></div>
+    <div class="vignette"></div>
+
+    <script>
+        const session = JSON.parse(localStorage.getItem('newra_session') || '{}');
+        if (!session.loggedIn) window.location.href = '/login/';
+        function logout() {
+            localStorage.removeItem('newra_session');
+            window.location.href = '/';
+        }
+    </script>
+
+    <header class="header">
+        <div class="header-right">
+            <a href="/" class="logo">
+                <img src="/static/logo-full.svg" alt="Inify" style="height: 32px; filter: invert(1);">
+            </a>
+            <nav class="nav-links">
+                <a href="/dashboard/">لوحة التحكم</a>
+                <a href="/properties/">العقارات</a>
+                <a href="/chat/">المحادثات</a>
+                <a href="/clients/" class="active">العملاء</a>
+                <a href="/profile/">حسابي</a>
+            </nav>
+        </div>
+        <button onclick="logout()" class="header-btn logout">تسجيل الخروج</button>
+    </header>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>👥 العملاء المحتملين</h1>
+                <p>قائمة العملاء الذين تواصلوا عبر الشات بوت</p>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card new">
+                <div class="stat-icon">🆕</div>
+                <div class="stat-value" id="newCount">0</div>
+                <div class="stat-label">عملاء جدد</div>
+            </div>
+            <div class="stat-card interested">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-value" id="interestedCount">0</div>
+                <div class="stat-label">مهتمين</div>
+            </div>
+            <div class="stat-card contacted">
+                <div class="stat-icon">📞</div>
+                <div class="stat-value" id="contactedCount">0</div>
+                <div class="stat-label">تم التواصل</div>
+            </div>
+            <div class="stat-card converted">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value" id="convertedCount">0</div>
+                <div class="stat-label">تم التحويل</div>
+            </div>
+        </div>
+
+        <div class="clients-section">
+            <div class="section-header">
+                <h2>قائمة العملاء</h2>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="بحث بالاسم أو الهاتف...">
+                    <select class="filter-select" id="statusFilter">
+                        <option value="">جميع الحالات</option>
+                        <option value="new">جديد</option>
+                        <option value="interested">مهتم</option>
+                        <option value="contacted">تم التواصل</option>
+                        <option value="converted">تم التحويل</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-header">
+                <span>العميل</span>
+                <span>الهاتف</span>
+                <span>الحالة</span>
+                <span>الاهتمام</span>
+                <span>التاريخ</span>
+                <span>إجراءات</span>
+            </div>
+
+            <div id="clientsList">
+                <!-- Clients will be loaded here -->
+            </div>
+
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="icon">👥</div>
+                <h3>لا يوجد عملاء بعد</h3>
+                <p>سيظهر العملاء هنا عندما يتواصلون عبر الشات بوت ويتركون بياناتهم</p>
+                <a href="/chat/" class="btn btn-primary">تجربة الشات بوت</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Client Detail Modal -->
+    <div class="modal-overlay" id="clientModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>تفاصيل العميل</h3>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Details loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/auth.js"></script>
+    <script>
+        // التحقق من تسجيل الدخول
+        if (!InifyAuth.requireAuth()) {
+            // سيتم إعادة التوجيه
+        }
+
+        // تحميل العملاء الخاصين بالمستخدم
+        let clients = InifyAuth.getClients();
+
+        // Update stats
+        function updateStats() {
+            const counts = {
+                new: clients.filter(c => c.status === 'new').length,
+                interested: clients.filter(c => c.status === 'interested').length,
+                contacted: clients.filter(c => c.status === 'contacted').length,
+                converted: clients.filter(c => c.status === 'converted').length
+            };
+            
+            document.getElementById('newCount').textContent = counts.new;
+            document.getElementById('interestedCount').textContent = counts.interested;
+            document.getElementById('contactedCount').textContent = counts.contacted;
+            document.getElementById('convertedCount').textContent = counts.converted;
+        }
+
+        // Get status label
+        function getStatusLabel(status) {
+            const labels = {
+                'new': 'جديد',
+                'interested': 'مهتم',
+                'contacted': 'تم التواصل',
+                'converted': 'تم التحويل'
+            };
+            return labels[status] || status;
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
+        }
+
+        // Get initials
+        function getInitials(name) {
+            if (!name) return '؟';
+            return name.split(' ').map(n => n[0]).join('').substring(0, 2);
+        }
+
+        // Render clients
+        function renderClients(filter = '', statusFilter = '') {
+            const listEl = document.getElementById('clientsList');
+            const emptyState = document.getElementById('emptyState');
+            
+            let filtered = clients;
+            
+            if (filter) {
+                const f = filter.toLowerCase();
+                filtered = filtered.filter(c => 
+                    (c.name && c.name.toLowerCase().includes(f)) ||
+                    (c.phone && c.phone.includes(f))
+                );
+            }
+            
+            if (statusFilter) {
+                filtered = filtered.filter(c => c.status === statusFilter);
+            }
+            
+            if (filtered.length === 0) {
+                listEl.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            listEl.innerHTML = filtered.map(client => `
+                <div class="client-row">
+                    <div class="client-info">
+                        <div class="client-avatar">${getInitials(client.name)}</div>
+                        <div>
+                            <div class="client-name">${client.name || 'عميل جديد'}</div>
+                            <div class="client-email">${client.email || '-'}</div>
+                        </div>
+                    </div>
+                    <div class="client-phone">${client.phone || '-'}</div>
+                    <div>
+                        <span class="status-badge ${client.status}">${getStatusLabel(client.status)}</span>
+                    </div>
+                    <div class="interest-tag">${client.interest || '-'}</div>
+                    <div style="font-size: 13px; color: var(--text-muted);">${formatDate(client.createdAt)}</div>
+                    <div class="client-actions">
+                        ${client.phone ? `
+                        <button class="action-btn whatsapp" onclick="openWhatsApp('${client.phone}')" title="واتساب">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            </svg>
+                        </button>
+                        ` : ''}
+                        <button class="action-btn" onclick="viewClient('${client.id}')" title="عرض">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn" onclick="updateStatus('${client.id}')" title="تحديث الحالة">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 11 12 14 22 4"/>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn delete" onclick="deleteClient('${client.id}')" title="حذف">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // View client details
+        function viewClient(id) {
+            const client = clients.find(c => c.id === id);
+            if (!client) return;
+            
+            const modal = document.getElementById('clientModal');
+            const body = document.getElementById('modalBody');
+            
+            const conversationHtml = client.conversation && client.conversation.length > 0
+                ? client.conversation.map(msg => `
+                    <div class="msg ${msg.role}">${msg.content}</div>
+                `).join('')
+                : '<p style="color: var(--text-muted);">لا توجد محادثة محفوظة</p>';
+            
+            body.innerHTML = `
+                <div class="detail-group">
+                    <div class="detail-label">الاسم</div>
+                    <div class="detail-value">${client.name || 'غير محدد'}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">رقم الهاتف</div>
+                    <div class="detail-value" style="direction: ltr; text-align: right;">${client.phone || 'غير محدد'}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">البريد الإلكتروني</div>
+                    <div class="detail-value">${client.email || 'غير محدد'}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">الاهتمام</div>
+                    <div class="detail-value">${client.interest || 'غير محدد'}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">الحالة</div>
+                    <div class="detail-value"><span class="status-badge ${client.status}">${getStatusLabel(client.status)}</span></div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">تاريخ التسجيل</div>
+                    <div class="detail-value">${new Date(client.createdAt).toLocaleString('ar-SA')}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">ملخص المحادثة</div>
+                    <div class="conversation-preview">${conversationHtml}</div>
+                </div>
+            `;
+            
+            modal.classList.add('show');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('clientModal').classList.remove('show');
+        }
+
+        // Open WhatsApp chat
+        function openWhatsApp(phone) {
+            // تنظيف رقم الهاتف
+            let cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            // إذا بدأ بـ 0، استبدله بـ 966
+            if (cleanPhone.startsWith('0')) {
+                cleanPhone = '966' + cleanPhone.substring(1);
+            }
+            
+            // إذا لم يبدأ بـ 966، أضفها
+            if (!cleanPhone.startsWith('966')) {
+                cleanPhone = '966' + cleanPhone;
+            }
+            
+            // فتح واتساب
+            const whatsappUrl = `https://wa.me/${cleanPhone}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // Update client status
+        function updateStatus(id) {
+            const statuses = ['new', 'interested', 'contacted', 'converted'];
+            const client = clients.find(c => c.id === id);
+            if (!client) return;
+            
+            const currentIndex = statuses.indexOf(client.status);
+            const nextIndex = (currentIndex + 1) % statuses.length;
+            client.status = statuses[nextIndex];
+            
+            InifyAuth.setClients(clients);
+            renderClients();
+            updateStats();
+        }
+
+        // Delete client
+        function deleteClient(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا العميل؟')) return;
+            
+            clients = clients.filter(c => c.id !== id);
+            InifyAuth.setClients(clients);
+            renderClients();
+            updateStats();
+        }
+
+        // Search and filter
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            renderClients(e.target.value, document.getElementById('statusFilter').value);
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', (e) => {
+            renderClients(document.getElementById('searchInput').value, e.target.value);
+        });
+
+        // Click outside modal to close
+        document.getElementById('clientModal').addEventListener('click', (e) => {
+            if (e.target.id === 'clientModal') closeModal();
+        });
+
+        // Initial render
+        renderClients();
+        updateStats();
+    </script>
+</body>
+</html>

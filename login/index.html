@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - Inify</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <style>
+        /* Chillax Font - English */
+        @font-face {
+            font-family: 'Chillax';
+            src: url('/static/Chillax-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Chillax';
+            src: url('/static/Chillax-Medium.woff2') format('woff2');
+            font-weight: 500;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Chillax';
+            src: url('/static/Chillax-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-display: swap;
+        }
+        
+        /* BalooBhaijaan2 Font - Arabic */
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Medium.ttf') format('truetype');
+            font-weight: 500;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-display: swap;
+        }
+        
+        .en { font-family: 'Chillax', sans-serif; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue: #2E5A8B;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', 'Chillax', 'Segoe UI', sans-serif;
+            background: var(--midnight);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Premium Background */
+        .premium-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0A1628 0%, #0d1f35 25%, #122a45 50%, #0d1f35 75%, #0A1628 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .orb-1 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(107, 184, 201, 0.4) 0%, transparent 70%);
+            top: -150px;
+            right: -150px;
+            animation: float1 20s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, transparent 70%);
+            bottom: -100px;
+            left: -100px;
+            animation: float2 25s ease-in-out infinite;
+        }
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-50px, 50px) scale(1.1); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, -30px) scale(1.05); }
+        }
+        .grid-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: linear-gradient(rgba(107, 184, 201, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(107, 184, 201, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(10, 22, 40, 0.5) 100%);
+        }
+
+        .back-home {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s;
+        }
+
+        .back-home:hover {
+            color: var(--cyan);
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(145deg, var(--pearl) 0%, #e0f0f5 100%);
+            border-radius: 24px;
+            margin: 0 auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 15px 50px rgba(107, 184, 201, 0.2);
+        }
+
+        .logo svg {
+            width: 55px;
+            height: 55px;
+        }
+
+        .auth-header h1 {
+            color: var(--pearl);
+            font-size: 30px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .auth-header p {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .auth-card {
+            background: rgba(30, 58, 95, 0.4);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid rgba(107, 184, 201, 0.15);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--pearl);
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 16px 18px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid rgba(107, 184, 201, 0.2);
+            border-radius: 14px;
+            color: var(--pearl);
+            font-family: inherit;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 3px rgba(107, 184, 201, 0.15);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(248, 248, 248, 0.4);
+        }
+
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-muted);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .remember-me input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--cyan);
+        }
+
+        .forgot-link {
+            color: var(--cyan);
+            font-size: 14px;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .forgot-link:hover {
+            color: var(--cyan-light);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--blue-mid) 0%, var(--cyan) 100%);
+            color: var(--midnight);
+            border: none;
+            border-radius: 14px;
+            font-family: inherit;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(107, 184, 201, 0.3);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(107, 184, 201, 0.2);
+        }
+
+        .divider span {
+            padding: 0 20px;
+        }
+
+        .social-login {
+            display: flex;
+            gap: 14px;
+        }
+
+        .social-btn {
+            flex: 1;
+            padding: 14px;
+            background: rgba(10, 22, 40, 0.5);
+            border: 1px solid rgba(107, 184, 201, 0.15);
+            border-radius: 12px;
+            color: var(--pearl);
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .social-btn:hover {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+        }
+
+        .social-btn.google-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .social-btn.google-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #4285f4;
+        }
+
+        .social-btn.google-btn svg path:nth-child(1) { fill: #4285f4; }
+        .social-btn.google-btn svg path:nth-child(2) { fill: #34a853; }
+        .social-btn.google-btn svg path:nth-child(3) { fill: #fbbc05; }
+        .social-btn.google-btn svg path:nth-child(4) { fill: #ea4335; }
+
+        .loading-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: var(--cyan);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .auth-footer a {
+            color: var(--cyan);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-footer a:hover {
+            color: var(--cyan-light);
+        }
+
+        .error-message {
+            background: rgba(255, 100, 100, 0.15);
+            border: 1px solid rgba(255, 100, 100, 0.4);
+            color: #ff8080;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 30px 24px;
+            }
+            
+            .auth-header h1 {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Premium Background Elements -->
+    <div class="premium-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="grid-pattern"></div>
+    <div class="vignette"></div>
+
+    <a href="/" class="back-home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        الرئيسية
+    </a>
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="logo">
+                <img src="/static/logo-icon.png" alt="Inify" style="width: 80px; height: 80px;">
+            </div>
+            <h1>مرحباً بعودتك</h1>
+            <p>سجل دخولك للوصول إلى لوحة التحكم</p>
+        </div>
+
+        <div class="auth-card">
+            <div class="error-message" id="errorMessage"></div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" name="email" placeholder="أدخل البريد الإلكتروني" required>
+                </div>
+
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" name="password" placeholder="أدخل كلمة المرور" required>
+                </div>
+
+                <div class="remember-forgot">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember">
+                        تذكرني
+                    </label>
+                    <a href="#" class="forgot-link">نسيت كلمة المرور؟</a>
+                </div>
+
+                <button type="submit" class="submit-btn">تسجيل الدخول</button>
+            </form>
+
+            <div class="divider">
+                <span>أو</span>
+            </div>
+
+            <div class="social-login">
+                <button class="social-btn google-btn" type="button" id="googleLoginBtn" onclick="signInWithGoogle()">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    <span>الدخول بحساب Google</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="auth-footer">
+            ليس لديك حساب؟ <a href="/register/">إنشاء حساب جديد</a>
+        </div>
+    </div>
+
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <script src="/static/js/auth.js"></script>
+    <script>
+        // Google OAuth Client ID
+        const GOOGLE_CLIENT_ID = '565275286491-bmm87qkcpu3itj0pvtnjb2kijr1subtr.apps.googleusercontent.com';
+
+        // التحقق إذا كان مسجل دخول بالفعل
+        if (InifyAuth.isLoggedIn()) {
+            window.location.href = '/dashboard/';
+        }
+
+        // تسجيل الدخول العادي
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = this.querySelector('input[name="email"]').value;
+            const password = this.querySelector('input[name="password"]').value;
+            
+            const result = InifyAuth.login(email, password);
+            
+            if (result.success) {
+                InifyAuth.migrateOldData();
+                window.location.href = '/dashboard/';
+            } else {
+                alert(result.error);
+            }
+        });
+
+        // تسجيل الدخول بحساب Google
+        function signInWithGoogle() {
+            const btn = document.getElementById('googleLoginBtn');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<div class="loading-spinner"></div><span>جاري التحميل...</span>';
+            btn.disabled = true;
+
+            // التحقق من تحميل مكتبة Google
+            if (typeof google === 'undefined' || !google.accounts) {
+                // إذا لم تكن المكتبة محملة، استخدم طريقة بديلة
+                simulateGoogleLogin(btn, originalContent);
+                return;
+            }
+
+            try {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleGoogleResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        // إذا لم يظهر النافذة المنبثقة، استخدم OAuth redirect
+                        initiateGoogleOAuth();
+                    }
+                });
+            } catch (error) {
+                console.error('Google Sign-In Error:', error);
+                simulateGoogleLogin(btn, originalContent);
+            }
+        }
+
+        // معالجة استجابة Google
+        function handleGoogleResponse(response) {
+            const btn = document.getElementById('googleLoginBtn');
+            
+            if (response.credential) {
+                // فك تشفير JWT token للحصول على بيانات المستخدم
+                const payload = parseJwt(response.credential);
+                
+                // إنشاء/تسجيل دخول المستخدم
+                const result = InifyAuth.googleLogin({
+                    email: payload.email,
+                    name: payload.name,
+                    picture: payload.picture,
+                    googleId: payload.sub
+                });
+
+                if (result.success) {
+                    window.location.href = '/dashboard/';
+                } else {
+                    alert(result.error || 'حدث خطأ في تسجيل الدخول');
+                    resetGoogleButton(btn);
+                }
+            } else {
+                alert('فشل تسجيل الدخول بحساب Google');
+                resetGoogleButton(btn);
+            }
+        }
+
+        // فك تشفير JWT
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        }
+
+        // OAuth redirect method
+        function initiateGoogleOAuth() {
+            const redirectUri = window.location.origin + '/login/';
+            const scope = 'email profile';
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
+            window.location.href = authUrl;
+        }
+
+        // محاكاة تسجيل الدخول بـ Google (للتطوير المحلي)
+        function simulateGoogleLogin(btn, originalContent) {
+            // للتطوير: إنشاء حساب تجريبي
+            setTimeout(() => {
+                const mockGoogleUser = {
+                    email: 'user@gmail.com',
+                    name: 'مستخدم Google',
+                    picture: '',
+                    googleId: 'google_' + Date.now()
+                };
+
+                const result = InifyAuth.googleLogin(mockGoogleUser);
+
+                if (result.success) {
+                    window.location.href = '/dashboard/';
+                } else {
+                    alert(result.error || 'حدث خطأ في تسجيل الدخول');
+                    resetGoogleButton(btn);
+                }
+            }, 1500);
+        }
+
+        // إعادة تعيين زر Google
+        function resetGoogleButton(btn) {
+            btn.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span>الدخول بحساب Google</span>
+            `;
+            btn.disabled = false;
+        }
+
+        // التحقق من وجود access_token في URL (بعد OAuth redirect)
+        window.addEventListener('load', function() {
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                const params = new URLSearchParams(hash.substring(1));
+                const accessToken = params.get('access_token');
+                
+                if (accessToken) {
+                    // الحصول على بيانات المستخدم من Google
+                    fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                        headers: { 'Authorization': 'Bearer ' + accessToken }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        const result = InifyAuth.googleLogin({
+                            email: data.email,
+                            name: data.name,
+                            picture: data.picture,
+                            googleId: data.id
+                        });
+
+                        if (result.success) {
+                            window.location.href = '/dashboard/';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching user info:', error);
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

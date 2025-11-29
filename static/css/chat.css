@@ -4,36 +4,63 @@
  * Premium Design v2.0
  */
 
+/* BalooBhaijaan2 Arabic Font */
+@font-face {
+    font-family: 'BalooBhaijaan2';
+    src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'BalooBhaijaan2';
+    src: url('/static/BalooBhaijaan2-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'BalooBhaijaan2';
+    src: url('/static/BalooBhaijaan2-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'BalooBhaijaan2';
+    src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-display: swap;
+}
+
 :root {
-    --newra-black: #0a0a0a;
-    --newra-white: #ffffff;
-    --newra-gray-50: #fafafa;
-    --newra-gray-100: #f5f5f5;
-    --newra-gray-200: #e5e5e5;
-    --newra-gray-300: #d4d4d4;
-    --newra-gray-400: #a3a3a3;
-    --newra-gray-500: #737373;
-    --newra-gray-600: #525252;
-    --newra-gray-700: #404040;
-    --newra-gray-800: #262626;
-    --newra-gray-900: #171717;
+    /* Newra Brand Colors - Blue to Cyan Spectrum */
+    --newra-black: #0A1628;
+    --newra-white: #F8F8F8;
+    --newra-gray-50: #f8f9fa;
+    --newra-gray-100: #e8f4f8;
+    --newra-gray-200: #d1e9f0;
+    --newra-gray-300: #b8dce8;
+    --newra-gray-400: #8cc4d6;
+    --newra-gray-500: #5ea8bc;
+    --newra-gray-600: #3d8a9e;
+    --newra-gray-700: #2d6a7e;
+    --newra-gray-800: #1E3A5F;
+    --newra-gray-900: #0A1628;
     
-    --newra-primary: #0f4c75;
-    --newra-primary-light: #1a6ba8;
-    --newra-accent: #00d4aa;
-    --newra-accent-light: #00f5c4;
-    --newra-gradient: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f4c75 100%);
-    --newra-gradient-accent: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+    --newra-primary: #2E5A8B;
+    --newra-primary-light: #4A90A4;
+    --newra-accent: #6BB8C9;
+    --newra-accent-light: #8DD4E3;
+    --newra-gradient: linear-gradient(160deg, #0A1628 0%, #1E3A5F 40%, #2E5A8B 100%);
+    --newra-gradient-accent: linear-gradient(135deg, #4A90A4 0%, #6BB8C9 100%);
     
     --chat-width: 420px;
     --chat-height: 650px;
     --border-radius: 24px;
     --border-radius-md: 16px;
     --border-radius-sm: 12px;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.12);
-    --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.2);
-    --shadow-glow: 0 0 40px rgba(0, 212, 170, 0.3);
+    --shadow-sm: 0 2px 8px rgba(10, 22, 40, 0.08);
+    --shadow-md: 0 8px 30px rgba(10, 22, 40, 0.15);
+    --shadow-lg: 0 20px 60px rgba(10, 22, 40, 0.25);
+    --shadow-glow: 0 0 40px rgba(107, 184, 201, 0.3);
     
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -71,7 +98,7 @@
 
 .newra-chat-button:hover {
     transform: scale(1.1) rotate(5deg);
-    box-shadow: var(--shadow-lg), 0 0 60px rgba(0, 212, 170, 0.5);
+    box-shadow: var(--shadow-lg), 0 0 60px rgba(107, 184, 201, 0.5);
 }
 
 .newra-chat-button:hover::before {
