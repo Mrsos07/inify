@@ -446,6 +446,40 @@
             color: var(--midnight);
         }
 
+        /* Property Links */
+        .property-link {
+            display: inline-block;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, rgba(74, 144, 164, 0.2), rgba(107, 184, 201, 0.2));
+            border: 1px solid var(--cyan);
+            border-radius: 8px;
+            color: var(--cyan);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 2px;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .property-link:hover {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            transform: translateY(-1px);
+        }
+
+        .requirement-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(107, 184, 201, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--cyan-light);
+            font-size: 12px;
+        }
+
         /* Client Detail Modal */
         .modal-overlay {
             display: none;
@@ -580,7 +614,7 @@
     <header class="header">
         <div class="header-right">
             <a href="/" class="logo">
-                <img src="/static/logo-full.svg" alt="Inify" style="height: 32px; filter: invert(1);">
+                <img src="/static/logo-full.png" alt="Inify" style="height: 32px;">
             </a>
             <nav class="nav-links">
                 <a href="/dashboard/">لوحة التحكم</a>
@@ -722,6 +756,92 @@
             return name.split(' ').map(n => n[0]).join('').substring(0, 2);
         }
 
+        // Get interest display with clickable properties
+        function getInterestDisplay(client) {
+            // Check for interested properties first
+            if (client.interestedProperties && client.interestedProperties.length > 0) {
+                return client.interestedProperties.map(p => 
+                    `<span class="property-link" onclick="viewProperty('${p.id}')" title="${p.title}">${p.title}</span>`
+                ).join('');
+            }
+            
+            // Fallback to requirements
+            if (client.requirements) {
+                const req = client.requirements;
+                const parts = [];
+                if (req.type) parts.push(req.type);
+                if (req.listingType) parts.push(req.listingType === 'rent' ? 'إيجار' : 'شراء');
+                if (req.city) parts.push(req.city);
+                if (parts.length > 0) {
+                    return `<span class="requirement-tag">${parts.join('، ')}</span>`;
+                }
+            }
+            
+            // Fallback to interest field
+            return client.interest || '-';
+        }
+
+        // View property details
+        function viewProperty(propertyId) {
+            const properties = InifyAuth.getProperties();
+            const property = properties.find(p => String(p.id) === String(propertyId));
+            
+            if (property) {
+                // Open property modal or redirect
+                showPropertyModal(property);
+            } else {
+                alert('العقار غير موجود أو تم حذفه');
+            }
+        }
+
+        // Show property modal
+        function showPropertyModal(property) {
+            const modal = document.getElementById('clientModal');
+            const body = document.getElementById('modalBody');
+            
+            body.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    ${property.mainImage ? `<img src="${property.mainImage}" style="max-width: 100%; max-height: 200px; border-radius: 12px; margin-bottom: 15px;">` : ''}
+                    <h3 style="font-size: 18px; margin-bottom: 10px;">${property.title}</h3>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">النوع</div>
+                    <div class="detail-value">${property.typeLabel || property.type || '-'}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">الموقع</div>
+                    <div class="detail-value">${property.cityLabel || property.city || '-'}${property.district ? ' - ' + property.district : ''}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">السعر</div>
+                    <div class="detail-value" style="color: var(--cyan); font-weight: bold;">${parseInt(property.price || 0).toLocaleString('ar-SA')} ريال</div>
+                </div>
+                ${property.area ? `
+                <div class="detail-group">
+                    <div class="detail-label">المساحة</div>
+                    <div class="detail-value">${property.area} م²</div>
+                </div>
+                ` : ''}
+                ${property.bedrooms ? `
+                <div class="detail-group">
+                    <div class="detail-label">غرف النوم</div>
+                    <div class="detail-value">${property.bedrooms}</div>
+                </div>
+                ` : ''}
+                ${property.description ? `
+                <div class="detail-group">
+                    <div class="detail-label">الوصف</div>
+                    <div class="detail-value">${property.description}</div>
+                </div>
+                ` : ''}
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="/properties/" class="btn btn-primary" style="display: inline-block; padding: 10px 24px; background: linear-gradient(135deg, var(--blue-mid), var(--cyan)); color: var(--midnight); border-radius: 10px; text-decoration: none; font-weight: 600;">عرض في صفحة العقارات</a>
+                </div>
+            `;
+            
+            modal.classList.add('show');
+        }
+
         // Render clients
         function renderClients(filter = '', statusFilter = '') {
             const listEl = document.getElementById('clientsList');
@@ -761,7 +881,7 @@
                     <div>
                         <span class="status-badge ${client.status}">${getStatusLabel(client.status)}</span>
                     </div>
-                    <div class="interest-tag">${client.interest || '-'}</div>
+                    <div class="interest-tag">${getInterestDisplay(client)}</div>
                     <div style="font-size: 13px; color: var(--text-muted);">${formatDate(client.createdAt)}</div>
                     <div class="client-actions">
                         ${client.phone ? `
@@ -796,7 +916,7 @@
 
         // View client details
         function viewClient(id) {
-            const client = clients.find(c => c.id === id);
+            const client = clients.find(c => String(c.id) === String(id));
             if (!client) return;
             
             const modal = document.getElementById('clientModal');
@@ -807,6 +927,31 @@
                     <div class="msg ${msg.role}">${msg.content}</div>
                 `).join('')
                 : '<p style="color: var(--text-muted);">لا توجد محادثة محفوظة</p>';
+            
+            // Build interested properties HTML
+            let propertiesHtml = '<p style="color: var(--text-muted);">لا توجد عقارات محددة</p>';
+            if (client.interestedProperties && client.interestedProperties.length > 0) {
+                propertiesHtml = client.interestedProperties.map(p => 
+                    `<div class="property-link" onclick="viewProperty('${p.id}')" style="display: block; max-width: 100%; margin: 5px 0; padding: 10px;">
+                        <strong>${p.title}</strong>
+                        ${p.price ? `<br><span style="color: var(--cyan);">${parseInt(p.price).toLocaleString('ar-SA')} ريال</span>` : ''}
+                    </div>`
+                ).join('');
+            }
+            
+            // Build requirements HTML
+            let requirementsHtml = '';
+            if (client.requirements) {
+                const req = client.requirements;
+                const parts = [];
+                if (req.city) parts.push(`المدينة: ${req.city}`);
+                if (req.type) parts.push(`النوع: ${req.type}`);
+                if (req.listingType) parts.push(`الطلب: ${req.listingType === 'rent' ? 'إيجار' : 'شراء'}`);
+                if (req.bedrooms) parts.push(`الغرف: ${req.bedrooms}`);
+                if (parts.length > 0) {
+                    requirementsHtml = parts.join(' | ');
+                }
+            }
             
             body.innerHTML = `
                 <div class="detail-group">
@@ -821,9 +966,15 @@
                     <div class="detail-label">البريد الإلكتروني</div>
                     <div class="detail-value">${client.email || 'غير محدد'}</div>
                 </div>
+                ${requirementsHtml ? `
                 <div class="detail-group">
-                    <div class="detail-label">الاهتمام</div>
-                    <div class="detail-value">${client.interest || 'غير محدد'}</div>
+                    <div class="detail-label">متطلبات العميل</div>
+                    <div class="detail-value"><span class="requirement-tag">${requirementsHtml}</span></div>
+                </div>
+                ` : ''}
+                <div class="detail-group">
+                    <div class="detail-label">العقارات المهتم بها</div>
+                    <div class="detail-value">${propertiesHtml}</div>
                 </div>
                 <div class="detail-group">
                     <div class="detail-label">الحالة</div>
@@ -870,7 +1021,7 @@
         // Update client status
         function updateStatus(id) {
             const statuses = ['new', 'interested', 'contacted', 'converted'];
-            const client = clients.find(c => c.id === id);
+            const client = clients.find(c => String(c.id) === String(id));
             if (!client) return;
             
             const currentIndex = statuses.indexOf(client.status);
@@ -886,7 +1037,7 @@
         function deleteClient(id) {
             if (!confirm('هل أنت متأكد من حذف هذا العميل؟')) return;
             
-            clients = clients.filter(c => c.id !== id);
+            clients = clients.filter(c => String(c.id) !== String(id));
             InifyAuth.setClients(clients);
             renderClients();
             updateStats();

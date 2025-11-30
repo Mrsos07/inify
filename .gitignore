@@ -77,3 +77,7 @@ coverage.xml
 
 # Node (if any frontend)
 node_modules/
+
+# Config files with API keys
+config.js
+config.local.js

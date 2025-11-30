@@ -323,14 +323,33 @@
             text-overflow: ellipsis;
         }
 
+        .conversation-badges {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
         .conversation-badge {
             padding: 4px 8px;
-            background: rgba(34, 197, 94, 0.2);
-            color: #4ade80;
             font-size: 11px;
             border-radius: 6px;
-            margin-top: 8px;
             display: inline-block;
+        }
+
+        .conversation-badge.phone {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+        }
+
+        .conversation-badge.property {
+            background: rgba(107, 184, 201, 0.2);
+            color: var(--cyan);
+        }
+
+        .conversation-badge.msgs {
+            background: rgba(168, 85, 247, 0.2);
+            color: #a855f7;
         }
 
         .quick-actions-grid {
@@ -516,7 +535,7 @@
     <header class="header">
         <div class="header-right">
             <a href="/" class="logo">
-                <img src="/static/logo-full.svg" alt="Inify" style="height: 32px; filter: invert(1);">
+                <img src="/static/logo-full.png" alt="Inify" style="height: 32px;">
             </a>
             <nav class="nav-links">
                 <a href="/dashboard/">لوحة التحكم</a>
@@ -610,8 +629,24 @@
                     </div>
                 </div>
 
+                <div class="card" style="margin-bottom: 20px;">
+                    <div class="card-header">
+                        <h3>🔗 رابط الشات بوت</h3>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p style="color: var(--text-muted); margin-bottom: 12px;">شارك هذا الرابط مع عملائك:</p>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="embedLink" readonly style="flex: 1; padding: 12px; background: rgba(10, 22, 40, 0.6); border: 1px solid var(--border); border-radius: 10px; color: var(--pearl); font-family: inherit;">
+                            <button onclick="copyEmbedLink()" style="padding: 12px 20px; background: linear-gradient(135deg, var(--blue-mid), var(--cyan)); border: none; border-radius: 10px; color: var(--midnight); font-weight: 600; cursor: pointer;">نسخ</button>
+                        </div>
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            <a id="embedPreviewLink" href="#" target="_blank" style="padding: 10px 16px; background: rgba(107, 184, 201, 0.1); border: 1px solid var(--cyan); border-radius: 8px; color: var(--cyan); text-decoration: none; font-size: 13px;">معاينة ↗</a>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="test-chat-section">
-                    <h3>🔗 معاينة الشات بوت</h3>
+                    <h3>🤖 تجربة سريعة</h3>
                     <div class="chat-embed-preview">
                         <div class="chat-embed-header">
                             <div class="chat-embed-avatar" id="previewAvatar">🤖</div>
@@ -633,11 +668,17 @@
         </div>
     </main>
 
+    <script src="/static/js/auth.js"></script>
     <script>
-        // Load data
-        const clients = JSON.parse(localStorage.getItem('newra_clients') || '[]');
-        const conversations = JSON.parse(localStorage.getItem('newra_conversations') || '[]');
-        const agentSettings = JSON.parse(localStorage.getItem('newra_agent_settings') || '{}');
+        // التحقق من تسجيل الدخول
+        if (!InifyAuth.requireAuth()) {
+            // سيتم إعادة التوجيه
+        }
+
+        // Load data using InifyAuth - خاصة بالمستخدم
+        const clients = InifyAuth.getClients();
+        const agentSettings = InifyAuth.getAgentSettings();
+        const userId = InifyAuth.getSession().id;
 
         // Apply agent settings to preview
         if (agentSettings.agentName) {
@@ -646,15 +687,31 @@
         if (agentSettings.agentIcon) {
             document.getElementById('previewAvatar').textContent = agentSettings.agentIcon;
         }
+        // Show avatar image if available
+        if (agentSettings.useAvatarImage && agentSettings.agentAvatar) {
+            document.getElementById('previewAvatar').innerHTML = `<img src="${agentSettings.agentAvatar}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+        }
 
         // Update stats
         function updateStats() {
-            document.getElementById('totalConversations').textContent = conversations.length;
+            // Count clients with conversations
+            const clientsWithConversations = clients.filter(c => c.conversation && c.conversation.length > 0);
+            
+            // Total conversations (clients who interacted)
+            document.getElementById('totalConversations').textContent = clientsWithConversations.length;
+            
+            // Total clients
             document.getElementById('totalClients').textContent = clients.length;
+            
+            // Clients who left phone numbers
             document.getElementById('phoneLeads').textContent = clients.filter(c => c.phone).length;
             
-            const totalMessages = conversations.reduce((sum, c) => sum + (c.messageCount || 0), 0);
-            const avgMsg = conversations.length > 0 ? Math.round(totalMessages / conversations.length) : 0;
+            // Average messages per conversation
+            let totalMessages = 0;
+            clientsWithConversations.forEach(c => {
+                totalMessages += c.conversation ? c.conversation.length : 0;
+            });
+            const avgMsg = clientsWithConversations.length > 0 ? Math.round(totalMessages / clientsWithConversations.length) : 0;
             document.getElementById('avgMessages').textContent = avgMsg;
         }
 
@@ -676,12 +733,32 @@
             return name.split(' ').map(n => n[0]).join('').substring(0, 2);
         }
 
+        // Get interest summary
+        function getInterestSummary(client) {
+            // Check for interested properties
+            if (client.interestedProperties && client.interestedProperties.length > 0) {
+                return client.interestedProperties.map(p => p.title).join('، ');
+            }
+            
+            // Check for requirements
+            if (client.requirements) {
+                const req = client.requirements;
+                const parts = [];
+                if (req.type) parts.push(req.type);
+                if (req.listingType) parts.push(req.listingType === 'rent' ? 'إيجار' : 'شراء');
+                if (req.city) parts.push(req.city);
+                if (parts.length > 0) return parts.join('، ');
+            }
+            
+            return client.interest || 'استفسار عام';
+        }
+
         // Render conversations
         function renderConversations() {
             const listEl = document.getElementById('conversationsList');
             const emptyState = document.getElementById('emptyConversations');
             
-            // Combine clients and conversations for display
+            // Sort clients by date
             const allItems = [...clients].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
             
             if (allItems.length === 0) {
@@ -699,8 +776,12 @@
                             <span class="conversation-name">${item.name || 'عميل جديد'}</span>
                             <span class="conversation-time">${timeAgo(item.createdAt)}</span>
                         </div>
-                        <div class="conversation-preview">${item.interest || 'استفسار عام'}</div>
-                        ${item.phone ? '<span class="conversation-badge">📞 ترك رقمه</span>' : ''}
+                        <div class="conversation-preview">${getInterestSummary(item)}</div>
+                        <div class="conversation-badges">
+                            ${item.phone ? '<span class="conversation-badge phone">📞 ترك رقمه</span>' : ''}
+                            ${item.interestedProperties && item.interestedProperties.length > 0 ? '<span class="conversation-badge property">🏠 مهتم بعقار</span>' : ''}
+                            ${item.conversation && item.conversation.length > 0 ? `<span class="conversation-badge msgs">💬 ${item.conversation.length} رسالة</span>` : ''}
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -736,7 +817,33 @@
             if (e.key === 'Enter') sendPreviewMessage();
         });
 
+        // Set embed link
+        function setEmbedLink() {
+            const baseUrl = window.location.origin;
+            const embedUrl = `${baseUrl}/embed/?agent=${userId}`;
+            document.getElementById('embedLink').value = embedUrl;
+            document.getElementById('embedPreviewLink').href = embedUrl;
+        }
+
+        // Copy embed link
+        function copyEmbedLink() {
+            const input = document.getElementById('embedLink');
+            input.select();
+            document.execCommand('copy');
+            
+            // Show feedback
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'تم النسخ ✓';
+            btn.style.background = 'linear-gradient(135deg, #22c55e, #4ade80)';
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = 'linear-gradient(135deg, var(--blue-mid), var(--cyan))';
+            }, 2000);
+        }
+
         // Initial render
+        setEmbedLink();
         renderConversations();
         updateStats();
     </script>

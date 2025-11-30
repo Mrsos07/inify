@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>المحادثة - Inify</title>
     
+    <!-- 🔒 Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     
@@ -956,6 +962,7 @@
         </button>
     </div>
 
+    <script src="/config.js"></script>
     <script src="/static/js/auth.js"></script>
     <script>
         // DOM Elements
@@ -1101,13 +1108,23 @@ ${p.description ? '- الوصف: ' + p.description : ''}
                 allPropertiesText = properties.map((p, i) => {
                     const listingType = p.listing_type === 'sale' ? 'للبيع' : 'للإيجار';
                     const price = Number(p.price).toLocaleString('ar-SA');
+                    // تحديد نوع السعر للإيجار
+                    let priceLabel = '';
+                    if (p.listing_type === 'rent') {
+                        priceLabel = p.price_type === 'yearly' ? '/سنوي' : '/شهري';
+                    }
+                    // عدد الدفعات
+                    const paymentInfo = p.listing_type === 'rent' && p.payment_count ? 
+                        `   عدد الدفعات: ${p.payment_count === '1' ? 'دفعة واحدة' : p.payment_count + ' دفعات'}` : '';
+                    
                     return `【عقار ${i+1}】
    الاسم: ${p.title}
    النوع: ${p.typeLabel || p.type}
    العرض: ${listingType}
    المدينة: ${p.cityLabel || p.city}
    الحي: ${p.district || '-'}
-   السعر: ${price} ريال${p.listing_type === 'rent' ? '/شهر' : ''}
+   السعر: ${price} ريال${priceLabel}
+${paymentInfo}
    المساحة: ${p.area || '-'} م²
    الغرف: ${p.bedrooms || '-'}
    الحمامات: ${p.bathrooms || '-'}
@@ -1139,6 +1156,12 @@ ${allPropertiesText}
 5. قدم معلومات إضافية مفيدة (قرب الخدمات، المدارس، المستشفيات)
 6. إذا سأل عن الموقع، أرسل رابط Google Maps إذا متوفر
 
+⚠️ مهم جداً - دقة معلومات السعر:
+- اذكر نوع السعر بدقة كما هو مكتوب (شهري أو سنوي)
+- إذا كان السعر سنوي، قل "إيجاره السنوي" وليس "الشهري"
+- إذا كان السعر شهري، قل "إيجاره الشهري"
+- اذكر عدد الدفعات إن وجد (دفعة واحدة، دفعتين، إلخ)
+
 📞 طلب بيانات التواصل:
 - لا تطلب رقم الجوال في أول رد أبداً
 - انتظر حتى يسأل العميل 2-3 أسئلة عن العقار
@@ -1158,9 +1181,9 @@ ${allPropertiesText}
 - ردود طويلة ومملة`;
         }
 
-        // Default Gemini API Key
-        const GEMINI_API_KEY = 'AIzaSyBhZHxjT0IXBzj0g4b26l5xfX4TLpmbjLI';
-        const GEMINI_MODEL = 'gemini-3-pro-preview';
+        // 🔒 Gemini API configuration - loaded from secure config
+        const GEMINI_API_KEY = typeof CONFIG !== 'undefined' ? CONFIG.GEMINI_API_KEY : '';
+        const GEMINI_MODEL = typeof CONFIG !== 'undefined' ? CONFIG.GEMINI_MODEL : 'gemini-2.5-pro-preview-05-06';
         
         // Main AI call function - routes to appropriate provider
         async function callAI(userMessage) {
@@ -1175,8 +1198,10 @@ ${allPropertiesText}
         
         // Call Gemini API
         async function callGeminiAPI(userMessage) {
+            // 🔒 Load API key from secure config
             const apiKey = GEMINI_API_KEY;
-            const model = agentSettings.model || GEMINI_MODEL;
+            // Always use the default model to avoid expired/invalid model issues
+            const model = GEMINI_MODEL;
             
             const systemPrompt = buildSystemPrompt(userMessage);
             
@@ -1313,7 +1338,9 @@ ${allPropertiesText}
                 amenitiesHTML = `<div class="property-amenities">${property.amenities.slice(0, 4).map(a => `<span class="amenity-tag">${getAmenityIcon(a)}</span>`).join('')}</div>`;
             }
             
-            return `<div class="property-card-mini"><div class="property-image" ${property.mainImage ? `style="background-image: url('${property.mainImage}')"` : ''}>${!property.mainImage ? '🏠' : ''}<span class="property-badge">${property.listing_type === 'sale' ? 'للبيع' : 'للإيجار'}</span>${imageCount > 1 ? `<span class="image-count">📷 ${imageCount}</span>` : ''}${hasImages ? `<button class="view-images-btn" onclick="openChatGallery(${index})">عرض الصور</button>` : ''}</div><div class="property-info"><div class="property-title">${property.title}</div><div class="property-location">📍 ${property.cityLabel}${property.district ? ' - ' + property.district : ''}</div><div class="property-details">${property.bedrooms ? '<span>🛏️ ' + property.bedrooms + ' غرف</span>' : ''}${property.bathrooms ? '<span>🚿 ' + property.bathrooms + ' حمام</span>' : ''}${property.area ? '<span>📐 ' + property.area + ' م²</span>' : ''}</div><div class="property-price">${Number(property.price).toLocaleString('ar-SA')} <span>ريال${property.listing_type === 'rent' ? '/شهر' : ''}</span></div>${amenitiesHTML}</div></div>`;
+            const priceLabel = property.listing_type === 'rent' ? (property.price_type === 'yearly' ? '/سنوي' : '/شهري') : '';
+            const paymentInfo = property.listing_type === 'rent' && property.payment_count && property.payment_count !== '1' ? `<small style="display:block;font-size:10px;color:#9ca3af;margin-top:2px;">💳 ${property.payment_count} دفعات</small>` : '';
+            return `<div class="property-card-mini"><div class="property-image" ${property.mainImage ? `style="background-image: url('${property.mainImage}')"` : ''}>${!property.mainImage ? '🏠' : ''}<span class="property-badge">${property.listing_type === 'sale' ? 'للبيع' : 'للإيجار'}</span>${imageCount > 1 ? `<span class="image-count">📷 ${imageCount}</span>` : ''}${hasImages ? `<button class="view-images-btn" onclick="openChatGallery(${index})">عرض الصور</button>` : ''}</div><div class="property-info"><div class="property-title">${property.title}</div><div class="property-location">📍 ${property.cityLabel}${property.district ? ' - ' + property.district : ''}</div><div class="property-details">${property.bedrooms ? '<span>🛏️ ' + property.bedrooms + ' غرف</span>' : ''}${property.bathrooms ? '<span>🚿 ' + property.bathrooms + ' حمام</span>' : ''}${property.area ? '<span>📐 ' + property.area + ' م²</span>' : ''}</div><div class="property-price">${Number(property.price).toLocaleString('ar-SA')} <span>ريال${priceLabel}</span>${paymentInfo}</div>${amenitiesHTML}</div></div>`;
         }
 
         // Get amenity icon
@@ -1381,9 +1408,24 @@ ${allPropertiesText}
         // Store last searched properties for display
         let lastSearchedProperties = [];
 
-        // Format message text (convert markdown-like to HTML)
+        // 🔒 XSS Protection - تنظيف النص
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, char => map[char]);
+        }
+
+        // Format message text (convert markdown-like to HTML) - with XSS protection
         function formatMessage(text) {
-            return text
+            // First escape HTML to prevent XSS
+            let safe = escapeHtml(text);
+            return safe
                 // Bold: **text** or *text*
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*(.+?)\*/g, '<strong>$1</strong>')

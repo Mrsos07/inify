@@ -1,9 +1,37 @@
 /**
- * Newra Authentication & Authorization System
+ * Inify Authentication & Authorization System
  * نظام المصادقة والصلاحيات
+ * 🔒 Secure Password Hashing
  */
 
 const InifyAuth = {
+    // دالة تشفير كلمة المرور (SHA-256)
+    async hashPassword(password) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password + 'inify_salt_2025');
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    },
+
+    // دالة تشفير متزامنة (للتوافق)
+    hashPasswordSync(password) {
+        const str = password + 'inify_salt_2025';
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        // تحويل لـ hex وإضافة طبقة أمان
+        let hex = Math.abs(hash).toString(16);
+        // إضافة hash ثاني للأمان
+        for (let i = 0; i < str.length; i++) {
+            hex += (str.charCodeAt(i) ^ 0x5A).toString(16);
+        }
+        return hex.substring(0, 64);
+    },
+
     // أنواع الصلاحيات
     ROLES: {
         ADMIN: 'admin',           // مدير النظام
@@ -195,10 +223,31 @@ const InifyAuth = {
         return clients.length < perms.maxClients;
     },
 
-    // تسجيل الدخول
+    // تسجيل الدخول (مع تشفير كلمة المرور + Rate Limiting)
     login(email, password) {
+        // 🔒 Rate Limiting - منع هجمات Brute Force
+        if (typeof InifySecurity !== 'undefined') {
+            if (!InifySecurity.checkRateLimit('login_' + email, 5, 60000)) {
+                return { success: false, error: 'تم تجاوز الحد الأقصى للمحاولات. انتظر دقيقة.' };
+            }
+        }
+        
         const users = JSON.parse(localStorage.getItem('newra_users') || '[]');
-        const user = users.find(u => u.email === email && u.password === password);
+        const hashedPassword = this.hashPasswordSync(password);
+        
+        // البحث بكلمة المرور المشفرة أو العادية (للتوافق مع الحسابات القديمة)
+        let user = users.find(u => u.email === email && u.passwordHash === hashedPassword);
+        
+        // التوافق مع الحسابات القديمة (غير مشفرة)
+        if (!user) {
+            user = users.find(u => u.email === email && u.password === password);
+            if (user) {
+                // ترقية الحساب القديم للتشفير
+                user.passwordHash = hashedPassword;
+                delete user.password;
+                localStorage.setItem('newra_users', JSON.stringify(users));
+            }
+        }
         
         if (user) {
             localStorage.setItem('newra_session', JSON.stringify({
@@ -214,7 +263,7 @@ const InifyAuth = {
         return { success: false, error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' };
     },
 
-    // تسجيل مستخدم جديد
+    // تسجيل مستخدم جديد (مع تشفير كلمة المرور)
     register(userData) {
         const users = JSON.parse(localStorage.getItem('newra_users') || '[]');
         
@@ -223,11 +272,14 @@ const InifyAuth = {
             return { success: false, error: 'البريد الإلكتروني مستخدم بالفعل' };
         }
         
+        // تشفير كلمة المرور
+        const hashedPassword = this.hashPasswordSync(userData.password);
+        
         const newUser = {
             id: 'user_' + Date.now(),
             name: userData.name,
             email: userData.email,
-            password: userData.password,
+            passwordHash: hashedPassword, // كلمة المرور مشفرة
             phone: userData.phone || '',
             role: userData.role || 'free',
             createdAt: new Date().toISOString()

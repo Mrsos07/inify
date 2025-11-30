@@ -498,10 +498,14 @@
     <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
+    <script src="/config.js"></script>
+    <script src="/static/js/security.js"></script>
     <script src="/static/js/auth.js"></script>
     <script>
-        // Google OAuth Client ID
-        const GOOGLE_CLIENT_ID = '565275286491-bmm87qkcpu3itj0pvtnjb2kijr1subtr.apps.googleusercontent.com';
+        // 🔒 Google OAuth Client ID - loaded from secure config
+        const GOOGLE_CLIENT_ID = typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_CLIENT_ID 
+            ? CONFIG.GOOGLE_CLIENT_ID 
+            : '';
 
         // التحقق إذا كان مسجل دخول بالفعل
         if (InifyAuth.isLoggedIn()) {

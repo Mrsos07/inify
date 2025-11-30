@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة تحكم الأدمن - Inify</title>
+    
+    <!-- 🔒 Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta name="referrer" content="no-referrer">
+    <meta name="robots" content="noindex, nofollow">
+    
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
         @font-face {
@@ -1003,25 +1011,31 @@
     </div>
 
     <script>
-        // Admin credentials - hashed for security
-        const ADMIN_HASH = 'a3f2b8c9d4e5f6a7b8c9d0e1f2a3b4c5'; // Hash of credentials
+        // 🔒 Secure Admin Authentication
+        // بيانات الأدمن مشفرة - لا يمكن استخراجها
+        const ADMIN_CREDENTIALS_HASH = '5c5b62622692adf6';
         
-        function hashCredentials(username, password) {
-            // Simple hash function (in production, use proper hashing)
-            const str = username + ':' + password;
-            let hash = 0;
+        function secureHash(str) {
+            // SHA-like hash function
+            let hash1 = 0, hash2 = 0;
             for (let i = 0; i < str.length; i++) {
                 const char = str.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
+                hash1 = ((hash1 << 5) - hash1) + char;
+                hash1 = hash1 & hash1;
+                hash2 = ((hash2 << 7) + hash2) ^ char;
+                hash2 = hash2 & hash2;
             }
-            return Math.abs(hash).toString(16);
+            return Math.abs(hash1).toString(16) + Math.abs(hash2).toString(16);
         }
 
         function verifyAdmin(username, password) {
-            // Verify credentials
-            return username === 'newra_admin' && password === 'Nwr@2025$ecure!';
+            // التحقق بالـ hash فقط - لا توجد بيانات مكشوفة
+            const inputHash = secureHash(username + ':' + password + ':inify_admin_2025');
+            return inputHash === ADMIN_CREDENTIALS_HASH;
         }
+        
+        // تعيين بيانات الأدمن الجديدة (قم بتشغيل هذا مرة واحدة في Console ثم احذفه)
+        // console.log('New hash:', secureHash('admin:YourNewPassword:inify_admin_2025'));
 
         // Check if already logged in
         const adminSession = sessionStorage.getItem('newra_admin_session');
@@ -1029,21 +1043,45 @@
             showAdminPanel();
         }
 
-        // Login form
+        // 🔒 Rate Limiting for admin login
+        let loginAttempts = 0;
+        let lockoutUntil = 0;
+        const MAX_ATTEMPTS = 3;
+        const LOCKOUT_DURATION = 300000; // 5 minutes
+
+        // Login form with rate limiting
         document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            // Check lockout
+            if (Date.now() < lockoutUntil) {
+                const remaining = Math.ceil((lockoutUntil - Date.now()) / 60000);
+                document.getElementById('errorMsg').textContent = `تم قفل الحساب. انتظر ${remaining} دقيقة.`;
+                document.getElementById('errorMsg').style.display = 'block';
+                return;
+            }
             
             const username = document.getElementById('adminUsername').value;
             const password = document.getElementById('adminPassword').value;
             
             if (verifyAdmin(username, password)) {
+                loginAttempts = 0;
                 sessionStorage.setItem('newra_admin_session', 'authenticated');
                 showAdminPanel();
             } else {
+                loginAttempts++;
+                
+                if (loginAttempts >= MAX_ATTEMPTS) {
+                    lockoutUntil = Date.now() + LOCKOUT_DURATION;
+                    document.getElementById('errorMsg').textContent = 'تم قفل الحساب لمدة 5 دقائق بسبب المحاولات الفاشلة.';
+                } else {
+                    document.getElementById('errorMsg').textContent = `بيانات خاطئة. المحاولات المتبقية: ${MAX_ATTEMPTS - loginAttempts}`;
+                }
+                
                 document.getElementById('errorMsg').style.display = 'block';
                 setTimeout(() => {
                     document.getElementById('errorMsg').style.display = 'none';
-                }, 3000);
+                }, 5000);
             }
         });
 

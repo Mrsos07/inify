@@ -1445,7 +1445,7 @@
     <header class="header">
         <div class="header-right">
             <a href="/" class="logo">
-                <img src="/static/logo-full.svg" alt="Inify" style="height: 32px; filter: invert(1);">
+                <img src="/static/logo-full.png" alt="Inify" style="height: 32px;">
             </a>
             <nav class="nav-links">
                 <a href="/dashboard/">لوحة التحكم</a>
@@ -1565,6 +1565,22 @@
                         <div class="form-group">
                             <label>السعر (ريال) *</label>
                             <input type="number" name="price" placeholder="0" required>
+                        </div>
+                        <div class="form-group" id="priceTypeGroup" style="display: none;">
+                            <label>نوع السعر *</label>
+                            <select name="price_type" id="priceTypeSelect">
+                                <option value="monthly">شهري</option>
+                                <option value="yearly">سنوي</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="paymentCountGroup" style="display: none;">
+                            <label>عدد الدفعات</label>
+                            <select name="payment_count" id="paymentCountSelect">
+                                <option value="1">دفعة واحدة</option>
+                                <option value="2">دفعتين</option>
+                                <option value="3">3 دفعات</option>
+                                <option value="4">4 دفعات</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>المساحة (م²)</label>
@@ -2087,6 +2103,25 @@
             if (e.target.id === 'publishModal') closePublishModal();
         });
 
+        // 🏷️ Show/hide rent options based on listing type
+        const listingTypeSelect = document.querySelector('[name="listing_type"]');
+        const priceTypeGroup = document.getElementById('priceTypeGroup');
+        const paymentCountGroup = document.getElementById('paymentCountGroup');
+        
+        function toggleRentOptions() {
+            const isRent = listingTypeSelect.value === 'rent';
+            priceTypeGroup.style.display = isRent ? 'block' : 'none';
+            paymentCountGroup.style.display = isRent ? 'block' : 'none';
+            if (!isRent) {
+                document.getElementById('priceTypeSelect').value = 'monthly';
+                document.getElementById('paymentCountSelect').value = '1';
+            }
+        }
+        
+        listingTypeSelect.addEventListener('change', toggleRentOptions);
+        // Initial check
+        toggleRentOptions();
+
         // Image upload
         const imageUploadArea = document.getElementById('imageUploadArea');
         const imageInput = document.getElementById('imageInput');
@@ -2185,6 +2220,8 @@
                 type: formData.get('type'),
                 typeLabel: typeLabels[formData.get('type')] || formData.get('type'),
                 listing_type: formData.get('listing_type'),
+                price_type: formData.get('price_type') || 'monthly',
+                payment_count: formData.get('payment_count') || '1',
                 status: formData.get('status') || 'available',
                 description: formData.get('description'),
                 city: formData.get('city'),
@@ -2264,7 +2301,8 @@
                         </div>
                         <div class="property-footer">
                             <div class="property-price">
-                                ${formatPrice(property.price)} <span>ريال${property.listing_type === 'rent' ? '/شهر' : ''}</span>
+                                ${formatPrice(property.price)} <span>ريال${property.listing_type === 'rent' ? (property.price_type === 'yearly' ? '/سنوي' : '/شهري') : ''}</span>
+                                ${property.listing_type === 'rent' && property.payment_count && property.payment_count !== '1' ? `<small style="display:block;font-size:11px;color:var(--text-muted);margin-top:2px;">💳 ${property.payment_count} دفعات</small>` : ''}
                             </div>
                             <div class="property-actions">
                                 <button class="property-action-btn publish-btn" title="نشر على المنصات" onclick="openPublishModal(${property.id})">
@@ -2436,11 +2474,16 @@
             form.querySelector('[name="address"]').value = property.address || '';
             form.querySelector('[name="location_url"]').value = property.location_url || '';
             form.querySelector('[name="price"]').value = property.price || '';
+            form.querySelector('[name="price_type"]').value = property.price_type || 'monthly';
+            form.querySelector('[name="payment_count"]').value = property.payment_count || '1';
             form.querySelector('[name="area"]').value = property.area || '';
             form.querySelector('[name="bedrooms"]').value = property.bedrooms || '';
             form.querySelector('[name="bathrooms"]').value = property.bathrooms || '';
             form.querySelector('[name="year_built"]').value = property.year_built || '';
             form.querySelector('[name="floor"]').value = property.floor || '';
+            
+            // Show/hide rent options based on listing type
+            toggleRentOptions();
             
             // Set amenities
             document.querySelectorAll('.amenity-label').forEach(label => {
