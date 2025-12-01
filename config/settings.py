@@ -33,6 +33,8 @@ if not DEBUG:
 
 # Admin Key (should be in .env)
 ADMIN_SECRET_KEY = os.getenv('ADMIN_SECRET_KEY', 'change-this-in-production')
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', '')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = [

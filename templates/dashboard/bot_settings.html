@@ -1010,7 +1010,7 @@
     <header class="header">
         <div class="header-right">
             <a href="/dashboard/" class="logo">
-                <img src="/static/logo-full.png" alt="Inify" style="height: 32px;">
+                <img src="/static/images/inify-logo.png" alt="Inify" style="height: 32px;">
             </a>
             <nav class="nav-links">
                 <a href="/dashboard/">لوحة التحكم</a>
@@ -1024,6 +1024,7 @@
     </header>
 
     <main class="main-content">
+        {% csrf_token %}
         <div class="page-header">
             <h1>⚙️ الإعدادات</h1>
             <p>إدارة إعدادات حسابك والوكيل الذكي والمنصات المتصلة</p>
@@ -1615,9 +1616,18 @@
             phoneNumberId: ''
         };
 
-        // تحميل الإعدادات الخاصة بالمستخدم
+        // تحميل الإعدادات من Django أولاً ثم localStorage
+        const djangoSettings = {
+            agentName: '{{ agent.bot_name|default:"Inify"|escapejs }}',
+            agentDescription: '{{ agent.bot_title|default:"وكيل عقاري ذكي"|escapejs }}',
+            welcomeMessage: '{{ agent.bot_welcome_message|default:"مرحباً! 👋 أنا وكيلك العقاري الذكي. كيف يمكنني مساعدتك اليوم؟"|escapejs }}',
+            primaryColor: '{{ agent.bot_color|default:"#6BB8C9"|escapejs }}',
+            companyInfo: '{{ agent.bot_system_prompt|default:""|escapejs }}'
+        };
+        
         let savedSettings = JSON.parse(localStorage.getItem('newra_agent_settings_' + agentId) || '{}');
-        let settings = Object.keys(savedSettings).length > 0 ? savedSettings : defaultSettings;
+        // دمج الإعدادات: Django أولاً، ثم localStorage، ثم الافتراضية
+        let settings = {...defaultSettings, ...djangoSettings, ...savedSettings};
 
         // Load settings into form
         function loadSettings() {
@@ -1786,7 +1796,7 @@
         }
 
         // Save settings
-        function saveSettings() {
+        async function saveSettings() {
             settings = {
                 agentName: document.getElementById('agentName').value || defaultSettings.agentName,
                 agentDescription: document.getElementById('agentDescription').value,
@@ -1823,13 +1833,39 @@
                 phoneNumberId: document.getElementById('phoneNumberId').value
             };
             
-            // حفظ الإعدادات الخاصة بالمستخدم
-            localStorage.setItem('newra_agent_settings_' + agentId, JSON.stringify(settings));
-            
-            // Show success toast
-            const toast = document.getElementById('successToast');
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            // حفظ الإعدادات في قاعدة البيانات
+            try {
+                const formData = new FormData();
+                formData.append('bot_name', settings.agentName);
+                formData.append('bot_title', settings.agentDescription);
+                formData.append('bot_welcome_message', settings.welcomeMessage);
+                formData.append('bot_color', settings.primaryColor);
+                formData.append('bot_system_prompt', settings.companyInfo || '');
+                
+                const response = await fetch('/dashboard/bot-settings/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    }
+                });
+                
+                if (response.ok) {
+                    // حفظ نسخة محلية للتحميل السريع
+                    localStorage.setItem('newra_agent_settings_' + agentId, JSON.stringify(settings));
+                    
+                    // Show success toast
+                    const toast = document.getElementById('successToast');
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 3000);
+                } else {
+                    alert('حدث خطأ في حفظ الإعدادات');
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                // Fallback to localStorage
+                localStorage.setItem('newra_agent_settings_' + agentId, JSON.stringify(settings));
+            }
             
             updatePreview();
             updateEmbedCode();
@@ -1990,7 +2026,7 @@
 
         // ============ Platforms Connection ============
         function loadPlatformsStatus() {
-            const platforms = JSON.parse(localStorage.getItem('newra_platforms') || '{}');
+            const platforms = JSON.parse(localStorage.getItem('newra_platforms_' + agentId) || '{}');
             let connectedCount = 0;
             
             ['bayut', 'haraj', 'aqar', 'twitter', 'instagram'].forEach(platform => {
@@ -2018,13 +2054,13 @@
         }
 
         function connectPlatform(platform) {
-            const platforms = JSON.parse(localStorage.getItem('newra_platforms') || '{}');
+            const platforms = JSON.parse(localStorage.getItem('newra_platforms_' + agentId) || '{}');
             
             if (platforms[platform]) {
                 // Disconnect
                 if (confirm('هل تريد إلغاء ربط هذه المنصة؟')) {
                     delete platforms[platform];
-                    localStorage.setItem('newra_platforms', JSON.stringify(platforms));
+                    localStorage.setItem('newra_platforms_' + agentId, JSON.stringify(platforms));
                     loadPlatformsStatus();
                     showCopyToast('✓ تم إلغاء الربط');
                 }
@@ -2044,7 +2080,7 @@
                         connected: true,
                         connectedAt: new Date().toISOString()
                     };
-                    localStorage.setItem('newra_platforms', JSON.stringify(platforms));
+                    localStorage.setItem('newra_platforms_' + agentId, JSON.stringify(platforms));
                     loadPlatformsStatus();
                     showCopyToast(`✓ تم ربط ${platformNames[platform]} بنجاح!`);
                 }

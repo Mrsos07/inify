@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شروط الاستخدام - Inify</title>
+    
+    <style>
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', 'Segoe UI', sans-serif;
+            background: linear-gradient(160deg, var(--midnight) 0%, var(--dark-blue) 100%);
+            min-height: 100vh;
+            color: var(--pearl);
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 30px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--cyan);
+            text-decoration: none;
+            font-size: 15px;
+            margin-bottom: 40px;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: var(--cyan-light);
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .page-header img {
+            height: 60px;
+            margin-bottom: 20px;
+        }
+
+        .page-header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .content-card {
+            background: rgba(30, 58, 95, 0.4);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 50px;
+            border: 1px solid rgba(107, 184, 201, 0.15);
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section h2 {
+            font-size: 22px;
+            color: var(--cyan);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section p {
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+
+        .section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .section ul li {
+            color: var(--text-muted);
+            padding: 10px 0;
+            padding-right: 25px;
+            position: relative;
+            font-size: 15px;
+        }
+
+        .section ul li::before {
+            content: '✓';
+            position: absolute;
+            right: 0;
+            color: var(--cyan);
+        }
+
+        .update-date {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(107, 184, 201, 0.2);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px;
+            }
+            
+            .content-card {
+                padding: 30px 25px;
+            }
+            
+            .page-header h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/register" class="back-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            العودة للتسجيل
+        </a>
+
+        <div class="page-header">
+            <img src="/static/images/inify-logo.png" alt="Inify">
+            <h1>شروط الاستخدام</h1>
+            <p>يرجى قراءة هذه الشروط بعناية قبل استخدام منصة Inify</p>
+        </div>
+
+        <div class="content-card">
+            <div class="section">
+                <h2>📋 مقدمة</h2>
+                <p>مرحباً بك في منصة Inify للذكاء الاصطناعي العقاري. باستخدامك لخدماتنا، فإنك توافق على الالتزام بهذه الشروط والأحكام. إذا كنت لا توافق على أي جزء من هذه الشروط، يرجى عدم استخدام المنصة.</p>
+            </div>
+
+            <div class="section">
+                <h2>🎯 الخدمات المقدمة</h2>
+                <p>توفر منصة Inify الخدمات التالية:</p>
+                <ul>
+                    <li>وكيل ذكاء اصطناعي للتسويق العقاري</li>
+                    <li>إدارة العقارات والعملاء المحتملين</li>
+                    <li>شات بوت ذكي للتواصل مع العملاء</li>
+                    <li>تحليلات وإحصائيات متقدمة</li>
+                    <li>تكامل مع منصات التواصل الاجتماعي</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>👤 حساب المستخدم</h2>
+                <p>عند إنشاء حساب في Inify، أنت مسؤول عن:</p>
+                <ul>
+                    <li>تقديم معلومات صحيحة ودقيقة</li>
+                    <li>الحفاظ على سرية كلمة المرور</li>
+                    <li>جميع الأنشطة التي تتم من خلال حسابك</li>
+                    <li>إبلاغنا فوراً عن أي استخدام غير مصرح به</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>⚠️ الاستخدام المحظور</h2>
+                <p>يُحظر استخدام المنصة في:</p>
+                <ul>
+                    <li>أي نشاط غير قانوني أو احتيالي</li>
+                    <li>انتهاك حقوق الملكية الفكرية</li>
+                    <li>نشر محتوى مسيء أو ضار</li>
+                    <li>محاولة اختراق أو تعطيل الخدمة</li>
+                    <li>إرسال رسائل مزعجة (Spam)</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>💳 الاشتراكات والدفع</h2>
+                <p>تخضع الاشتراكات المدفوعة للشروط التالية:</p>
+                <ul>
+                    <li>الأسعار قابلة للتغيير مع إشعار مسبق</li>
+                    <li>التجديد التلقائي ما لم يتم الإلغاء</li>
+                    <li>لا يوجد استرداد للفترات المستخدمة</li>
+                    <li>يمكن الإلغاء في أي وقت</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🔒 حماية البيانات</h2>
+                <p>نلتزم بحماية بياناتك وفقاً لسياسة الخصوصية الخاصة بنا. نحن نستخدم تقنيات تشفير متقدمة ولا نشارك بياناتك مع أطراف ثالثة دون موافقتك.</p>
+            </div>
+
+            <div class="section">
+                <h2>📞 التواصل معنا</h2>
+                <p>لأي استفسارات حول شروط الاستخدام، يمكنك التواصل معنا عبر:</p>
+                <ul>
+                    <li>البريد الإلكتروني: support@inify.ai</li>
+                    <li>الدعم الفني داخل المنصة</li>
+                </ul>
+            </div>
+
+            <div class="update-date">
+                آخر تحديث: ديسمبر 2025
+            </div>
+        </div>
+    </div>
+</body>
+</html>

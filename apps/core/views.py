@@ -146,6 +146,16 @@ def settings_view(request):
     return render(request, 'settings.html')
 
 
+def terms_view(request):
+    """صفحة شروط الاستخدام"""
+    return render(request, 'terms.html')
+
+
+def privacy_view(request):
+    """صفحة سياسة الخصوصية"""
+    return render(request, 'privacy.html')
+
+
 @csrf_exempt
 def login_view(request):
     """صفحة تسجيل الدخول"""
@@ -337,6 +347,7 @@ def properties_view(request):
     
     context = {
         'properties': properties,
+        'agent_id': str(agent.id),
         'active_page': 'properties'
     }
     
@@ -614,16 +625,11 @@ def save_global_settings(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
     
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
     try:
         data = json.loads(request.body)
-        
-        # التحقق من كلمة مرور الأدمن (من البيئة)
-        from django.conf import settings as django_settings
-        admin_key = data.get('adminKey', '')
-        expected_key = getattr(django_settings, 'ADMIN_SECRET_KEY', 'inify_admin_2025')
-        if admin_key != expected_key:
-            return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
-        
         settings = GlobalSettings.get_settings()
         
         # تحديث الإعدادات
@@ -658,18 +664,66 @@ def save_global_settings(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
+def check_admin_access(request):
+    """التحقق من صلاحية الأدمن"""
+    from django.conf import settings as django_settings
+    expected_key = getattr(django_settings, 'ADMIN_SECRET_KEY', 'inify_admin_2025')
+    
+    # التحقق من المفتاح في: query params, body, headers
+    admin_key = request.GET.get('key', '')
+    
+    if not admin_key and request.method == 'POST':
+        try:
+            import json
+            data = json.loads(request.body)
+            admin_key = data.get('adminKey', '')
+        except:
+            pass
+    
+    if not admin_key:
+        admin_key = request.META.get('HTTP_X_ADMIN_KEY', '')
+    
+    # التحقق من session الأدمن
+    if not admin_key and request.session.get('is_admin_authenticated'):
+        return True
+    
+    return admin_key == expected_key
+
+
+@csrf_exempt
+def admin_login(request):
+    """تسجيل دخول الأدمن وحفظ الـ session"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        username = data.get('username', '')
+        password = data.get('password', '')
+        
+        # التحقق من بيانات الأدمن (من Django settings)
+        from django.conf import settings as django_settings
+        admin_username = getattr(django_settings, 'ADMIN_USERNAME', '')
+        admin_password = getattr(django_settings, 'ADMIN_PASSWORD', '')
+        
+        if admin_username and admin_password and username == admin_username and password == admin_password:
+            # حفظ الـ session
+            request.session['is_admin_authenticated'] = True
+            request.session['admin_username'] = username
+            return JsonResponse({'success': True, 'message': 'تم تسجيل الدخول بنجاح'})
+        else:
+            return JsonResponse({'success': False, 'error': 'بيانات الدخول غير صحيحة'}, status=401)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
 def get_all_users(request):
     """الحصول على جميع المستخدمين (للأدمن)"""
     from apps.agents.models import Agent
     from django.contrib.auth.models import User
     
-    # 🔒 التحقق من صلاحية الأدمن
-    admin_key = request.GET.get('key', '') or request.headers.get('X-Admin-Key', '')
-    from django.conf import settings as django_settings
-    expected_key = getattr(django_settings, 'ADMIN_SECRET_KEY', 'inify_admin_2025')
-    
-    if admin_key != expected_key:
-        return JsonResponse({'success': False, 'error': 'غير مصرح - مفتاح الأدمن مطلوب'}, status=403)
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
     
     try:
         users_data = []
@@ -730,16 +784,11 @@ def update_user_plan(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
     
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
     try:
         data = json.loads(request.body)
-        
-        # التحقق من كلمة مرور الأدمن (من البيئة)
-        from django.conf import settings
-        admin_key = data.get('adminKey', '')
-        expected_key = getattr(settings, 'ADMIN_SECRET_KEY', 'inify_admin_2025')
-        if admin_key != expected_key:
-            return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
-        
         user_id = data.get('userId')
         new_plan = data.get('plan')
         

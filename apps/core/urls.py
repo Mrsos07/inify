@@ -28,6 +28,10 @@ urlpatterns = [
     # Pricing
     path('pricing/', views.pricing_view, name='pricing'),
     
+    # Legal Pages
+    path('terms/', views.terms_view, name='terms'),
+    path('privacy/', views.privacy_view, name='privacy'),
+    
     # Admin Panel
     path('admin-panel-x7k9m/', views.admin_panel_view, name='admin-panel'),
     
@@ -50,6 +54,7 @@ urlpatterns = [
     path('api/settings/save/', views.save_global_settings, name='save-global-settings'),
     
     # Admin API
+    path('api/admin/login/', views.admin_login, name='admin-login'),
     path('api/admin/users/', views.get_all_users, name='get-all-users'),
     path('api/admin/users/update-plan/', views.update_user_plan, name='update-user-plan'),
     

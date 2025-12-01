@@ -501,7 +501,7 @@
     <header class="header">
         <div class="header-right">
             <a href="/dashboard/" class="logo">
-                <img src="/static/logo-full.png" alt="Inify" style="height: 32px;">
+                <img src="/static/images/inify-logo.png" alt="Inify" style="height: 32px;">
             </a>
             <nav class="nav-links">
                 <a href="/dashboard/">لوحة التحكم</a>
@@ -530,23 +530,23 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon">💬</div>
-                <div class="stat-value" id="totalConversations">0</div>
+                <div class="stat-value" id="totalConversations">{{ stats.total|default:0 }}</div>
                 <div class="stat-label">إجمالي المحادثات</div>
             </div>
             <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-value" id="todayConversations">{{ stats.today|default:0 }}</div>
+                <div class="stat-label">محادثات اليوم</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-value" id="totalMessages">{{ stats.total_messages|default:0 }}</div>
+                <div class="stat-label">إجمالي الرسائل</div>
+            </div>
+            <div class="stat-card">
                 <div class="stat-icon">👥</div>
-                <div class="stat-value" id="totalClients">0</div>
-                <div class="stat-label">عملاء تواصلوا</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">📞</div>
-                <div class="stat-value" id="phoneLeads">0</div>
-                <div class="stat-label">تركوا أرقامهم</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">📊</div>
-                <div class="stat-value" id="avgMessages">0</div>
-                <div class="stat-label">متوسط الرسائل</div>
+                <div class="stat-value" id="withLeads">{{ stats.with_leads|default:0 }}</div>
+                <div class="stat-label">تحولوا لعملاء</div>
             </div>
         </div>
 
@@ -615,32 +615,9 @@
     </main>
 
     <script>
-        // Load data
-        const clients = JSON.parse(localStorage.getItem('newra_clients') || '[]');
-        const conversations = JSON.parse(localStorage.getItem('newra_conversations') || '[]');
-        const agentSettings = JSON.parse(localStorage.getItem('newra_agent_settings') || '{}');
-
-        // Apply agent settings to preview
-        if (agentSettings.agentName) {
-            document.getElementById('previewName').textContent = agentSettings.agentName;
-        }
-        if (agentSettings.agentIcon) {
-            document.getElementById('previewAvatar').textContent = agentSettings.agentIcon;
-        }
-
-        // Update stats
-        function updateStats() {
-            document.getElementById('totalConversations').textContent = conversations.length;
-            document.getElementById('totalClients').textContent = clients.length;
-            document.getElementById('phoneLeads').textContent = clients.filter(c => c.phone).length;
-            
-            const totalMessages = conversations.reduce((sum, c) => sum + (c.messageCount || 0), 0);
-            const avgMsg = conversations.length > 0 ? Math.round(totalMessages / conversations.length) : 0;
-            document.getElementById('avgMessages').textContent = avgMsg;
-        }
-
         // Format time ago
         function timeAgo(dateStr) {
+            if (!dateStr) return '';
             const date = new Date(dateStr);
             const now = new Date();
             const diff = Math.floor((now - date) / 1000);
@@ -657,34 +634,34 @@
             return name.split(' ').map(n => n[0]).join('').substring(0, 2);
         }
 
-        // Render conversations
+        // Render conversations from Django data
         function renderConversations() {
             const listEl = document.getElementById('conversationsList');
             const emptyState = document.getElementById('emptyConversations');
             
-            // Combine clients and conversations for display
-            const allItems = [...clients].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
-            
-            if (allItems.length === 0) {
-                listEl.innerHTML = '';
-                emptyState.style.display = 'block';
-                return;
-            }
-            
+            {% if conversations %}
             emptyState.style.display = 'none';
-            listEl.innerHTML = allItems.map(item => `
-                <div class="conversation-item" onclick="window.location.href='/clients/'">
-                    <div class="conversation-avatar">${getInitials(item.name)}</div>
+            listEl.innerHTML = `
+                {% for conv in conversations %}
+                <div class="conversation-item" onclick="window.location.href='/dashboard/leads/'">
+                    <div class="conversation-avatar">${getInitials('{{ conv.visitor_name|default:"عميل" }}')}</div>
                     <div class="conversation-info">
                         <div class="conversation-header">
-                            <span class="conversation-name">${item.name || 'عميل جديد'}</span>
-                            <span class="conversation-time">${timeAgo(item.createdAt)}</span>
+                            <span class="conversation-name">{{ conv.visitor_name|default:"عميل جديد" }}</span>
+                            <span class="conversation-time">${timeAgo('{{ conv.last_message_at|date:"c" }}')}</span>
                         </div>
-                        <div class="conversation-preview">${item.interest || 'استفسار عام'}</div>
-                        ${item.phone ? '<span class="conversation-badge">📞 ترك رقمه</span>' : ''}
+                        <div class="conversation-preview">{{ conv.last_message|default:"محادثة جديدة"|truncatechars:50 }}</div>
+                        {% if conv.visitor_phone %}
+                        <span class="conversation-badge">📞 {{ conv.visitor_phone }}</span>
+                        {% endif %}
                     </div>
                 </div>
-            `).join('');
+                {% endfor %}
+            `;
+            {% else %}
+            listEl.innerHTML = '';
+            emptyState.style.display = 'block';
+            {% endif %}
         }
 
         // Preview chat functionality
@@ -719,7 +696,6 @@
 
         // Initial render
         renderConversations();
-        updateStats();
     </script>
 </body>
 </html>

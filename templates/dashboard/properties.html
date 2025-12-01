@@ -1441,7 +1441,7 @@
     <header class="header">
         <div class="header-right">
             <a href="/dashboard/" class="logo">
-                <img src="/static/logo-full.png" alt="Inify" style="height: 32px;">
+                <img src="/static/images/inify-logo.png" alt="Inify" style="height: 32px;">
             </a>
             <nav class="nav-links">
                 <a href="/dashboard/">لوحة التحكم</a>
@@ -1974,9 +1974,12 @@
             window.location.href = '/settings/#platforms';
         }
 
+        // Get agent ID from context
+        const agentId = '{{ agent_id|default:"" }}';
+        
         // Load platform connection status
         function loadPlatformStatus() {
-            const platforms = JSON.parse(localStorage.getItem('newra_platforms') || '{}');
+            const platforms = JSON.parse(localStorage.getItem('newra_platforms_' + agentId) || '{}');
             
             ['bayut', 'haraj', 'aqar', 'twitter', 'instagram'].forEach(platform => {
                 const statusEl = document.getElementById(platform + 'Status');

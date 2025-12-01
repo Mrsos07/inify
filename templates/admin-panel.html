@@ -1300,7 +1300,7 @@
         const LOCKOUT_DURATION = 300000; // 5 minutes
 
         // Login form with rate limiting
-        document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+        document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             // Check lockout
@@ -1314,11 +1314,24 @@
             const username = document.getElementById('adminUsername').value;
             const password = document.getElementById('adminPassword').value;
             
-            if (verifyAdmin(username, password)) {
-                loginAttempts = 0;
-                sessionStorage.setItem('newra_admin_session', 'authenticated');
-                showAdminPanel();
-            } else {
+            // تسجيل الدخول عبر API
+            try {
+                const response = await fetch('/api/admin/login/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loginAttempts = 0;
+                    sessionStorage.setItem('newra_admin_session', 'authenticated');
+                    showAdminPanel();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
                 loginAttempts++;
                 
                 if (loginAttempts >= MAX_ATTEMPTS) {
@@ -1350,6 +1363,11 @@
             console.log('🔄 Calling loadUsers...');
             await loadUsers();
             console.log('✅ loadUsers completed');
+            
+            // تحميل إعدادات AI
+            await loadAISettings();
+            console.log('✅ AI settings loaded');
+            
             // Auto-check expired subscriptions on login
             autoCheckExpiredSubscriptions();
         }
@@ -1366,11 +1384,9 @@
         async function loadUsers() {
             console.log('🔄 Loading users from API...');
             try {
-                // 🔒 إرسال مفتاح الأدمن للتحقق
+                // إرسال الطلب مع credentials للحفاظ على الـ session
                 const response = await fetch('/api/admin/users/', {
-                    headers: {
-                        'X-Admin-Key': 'inify_admin_2025'
-                    }
+                    credentials: 'same-origin'
                 });
                 console.log('📡 API Response status:', response.status);
                 const data = await response.json();
@@ -1970,7 +1986,7 @@
         }
 
         // Confirm subscription activation/renewal
-        function confirmSubscription() {
+        async function confirmSubscription() {
             if (!selectedSubUserId) return;
             
             const userIndex = allUsers.findIndex(u => String(u.id) === String(selectedSubUserId));
@@ -1983,26 +1999,41 @@
                 const newPlan = document.getElementById('newPlanSelect').value;
                 const plan = SUBSCRIPTION_PLANS[newPlan];
                 
-                // Set subscription dates
-                allUsers[userIndex].role = newPlan;
-                allUsers[userIndex].subscriptionStart = now.toISOString();
-                
-                const expiry = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
-                allUsers[userIndex].subscriptionExpiry = expiry.toISOString();
-                
-                // Add to history
-                if (!allUsers[userIndex].subscriptionHistory) {
-                    allUsers[userIndex].subscriptionHistory = [];
+                // استخدام API لتحديث الباقة
+                try {
+                    const response = await fetch('/api/admin/users/update-plan/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            userId: selectedSubUserId,
+                            plan: newPlan,
+                            duration: duration
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // تحديث البيانات المحلية
+                        allUsers[userIndex].role = newPlan;
+                        allUsers[userIndex].subscriptionStart = now.toISOString();
+                        const expiry = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
+                        allUsers[userIndex].subscriptionExpires = expiry.toISOString();
+                        
+                        alert(`✅ تم تفعيل اشتراك ${plan.name} بنجاح!\n\nينتهي في: ${expiry.toLocaleDateString('ar-SA')}`);
+                        
+                        // إعادة تحميل المستخدمين
+                        await loadUsers();
+                    } else {
+                        alert('❌ خطأ: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Error updating plan:', error);
+                    alert('❌ خطأ في الاتصال بالخادم');
                 }
-                allUsers[userIndex].subscriptionHistory.push({
-                    action: 'activate',
-                    plan: newPlan,
-                    duration: duration,
-                    amount: plan.price * (duration / 30),
-                    date: now.toISOString()
-                });
-                
-                alert(`✅ تم تفعيل اشتراك ${plan.name} بنجاح!\n\nينتهي في: ${expiry.toLocaleDateString('ar-SA')}`);
                 
             } else if (selectedSubAction === 'renew') {
                 const role = allUsers[userIndex].role;
@@ -2036,7 +2067,7 @@
         }
 
         // Cancel subscription
-        function cancelSubscription(userId) {
+        async function cancelSubscription(userId) {
             const user = allUsers.find(u => String(u.id) === String(userId));
             if (!user) return;
             
@@ -2044,27 +2075,33 @@
                 return;
             }
             
-            const userIndex = allUsers.findIndex(u => String(u.id) === String(userId));
-            
-            // Add to history before canceling
-            if (!allUsers[userIndex].subscriptionHistory) {
-                allUsers[userIndex].subscriptionHistory = [];
+            // استخدام API لإلغاء الاشتراك
+            try {
+                const response = await fetch('/api/admin/users/update-plan/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        userId: userId,
+                        plan: 'free'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ تم إلغاء الاشتراك بنجاح');
+                    await loadUsers();
+                    loadSubscriptions();
+                } else {
+                    alert('❌ خطأ: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error canceling subscription:', error);
+                alert('❌ خطأ في الاتصال بالخادم');
             }
-            allUsers[userIndex].subscriptionHistory.push({
-                action: 'cancel',
-                previousPlan: allUsers[userIndex].role,
-                date: new Date().toISOString()
-            });
-            
-            allUsers[userIndex].role = 'free';
-            delete allUsers[userIndex].subscriptionStart;
-            delete allUsers[userIndex].subscriptionExpiry;
-            
-            localStorage.setItem('newra_users', JSON.stringify(allUsers));
-            loadSubscriptions();
-            loadUsers(); // Update users tab too
-            
-            alert('✅ تم إلغاء الاشتراك بنجاح');
         }
 
         // Check and handle expired subscriptions
@@ -2278,6 +2315,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify(settings)
                 });
                 
