@@ -175,3 +175,83 @@ class ViewingAppointmentViewSet(viewsets.ModelViewSet):
         appointment.feedback = request.data.get('feedback', '')
         appointment.save()
         return Response({'status': 'تم إكمال الموعد'})
+
+
+# API لحفظ العميل من الشات (بدون تسجيل دخول)
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from apps.agents.models import Agent
+import json
+
+@csrf_exempt
+def save_lead_from_chat(request, agent_id):
+    """حفظ عميل من الشات المضمن"""
+    from apps.properties.models import Property
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Get agent
+        agent = Agent.objects.get(id=agent_id)
+        
+        # Extract phone number
+        phone = data.get('phone', '')
+        name = data.get('name', '')
+        
+        if not phone:
+            return JsonResponse({'success': False, 'error': 'رقم الجوال مطلوب'}, status=400)
+        
+        # Check if lead already exists
+        existing_lead = Lead.objects.filter(agent=agent, phone=phone).first()
+        
+        if existing_lead:
+            # Update existing lead
+            if name and not existing_lead.name:
+                existing_lead.name = name
+            existing_lead.notes = (existing_lead.notes or '') + f"\n\n--- محادثة جديدة ---\n{data.get('conversation', '')}"
+            existing_lead.save()
+            lead = existing_lead
+        else:
+            # Create new lead
+            lead = Lead.objects.create(
+                agent=agent,
+                name=name or 'عميل من الشات',
+                phone=phone,
+                source='chatbot',
+                status='new',
+                looking_for=data.get('looking_for', 'buy'),
+                city_preference=data.get('city', ''),
+                property_type_preference=data.get('interest', ''),
+                notes=f"محادثة الشات:\n{data.get('conversation', '')}"
+            )
+            lead.calculate_score()
+            lead.save()
+        
+        # Add interested properties
+        interested_properties = data.get('interested_properties', [])
+        if interested_properties:
+            for prop_data in interested_properties:
+                prop_id = prop_data.get('id')
+                if prop_id:
+                    try:
+                        prop = Property.objects.get(id=prop_id)
+                        lead.interested_properties.add(prop)
+                    except Property.DoesNotExist:
+                        pass
+        
+        return JsonResponse({
+            'success': True, 
+            'lead_id': str(lead.id),
+            'message': 'تم حفظ بيانات العميل بنجاح'
+        })
+        
+    except Agent.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
+    except Exception as e:
+        import traceback
+        print(f"Save lead error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

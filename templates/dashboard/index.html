@@ -3,26 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - Newra Estate</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>لوحة التحكم - Inify</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
     <link rel="stylesheet" href="/static/css/dashboard.css">
 </head>
 <body>
-    {% include 'dashboard/partials/sidebar.html' %}
+    <!-- Premium Background Elements -->
+    <div class="premium-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="grid-pattern"></div>
+    <div class="vignette"></div>
 
+    <!-- Auth Check - will be handled by InifyAuth -->
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/dashboard/" class="sidebar-logo">
+            <img src="/static/logo-full.png" alt="Inify" style="height: 32px;">
+        </a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">القائمة الرئيسية</div>
+            <a href="/dashboard" class="nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                لوحة التحكم
+            </a>
+            <a href="/dashboard/properties/" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                العقارات
+            </a>
+            <a href="/dashboard/leads/" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                العملاء
+            </a>
+            <a href="/dashboard/conversations/" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                المحادثات
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">الإعدادات</div>
+            <a href="/dashboard/bot-settings/" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                إعدادات الوكيل
+            </a>
+            <a href="/profile/" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                الملف الشخصي
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">👤</div>
+                <div class="user-details">
+                    <h4 id="userName">المستخدم</h4>
+                    <p><a href="#" onclick="logout()" style="color: var(--accent-solid); text-decoration: none;">تسجيل الخروج</a></p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
     <main class="main-content">
         <div class="page-header">
             <div>
-                <h1>مرحباً، {{ user_first_name }} 👋</h1>
-                <p>إليك نظرة عامة على نشاطك اليوم</p>
+                <h1 id="welcomeMsg">مرحباً بك 👋</h1>
+                <p>إليك نظرة عامة على نشاطك</p>
             </div>
             <div class="header-actions">
-                <button class="btn btn-primary" onclick="openModal('addPropertyModal')">
+                <a href="/chat/live/" class="btn btn-secondary">الشات المباشر</a>
+                <button onclick="logout()" class="btn btn-secondary" style="color: #ff6b6b; border-color: rgba(255,107,107,0.3);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    تسجيل الخروج
+                </button>
+                <a href="/dashboard/properties/" class="btn btn-primary">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                     </svg>
                     إضافة عقار
-                </button>
+                </a>
             </div>
         </div>
 
@@ -30,31 +119,29 @@
             <div class="stat-card">
                 <div class="stat-card-header">
                     <div class="stat-icon">🏠</div>
-                    <span class="stat-change positive">+12%</span>
                 </div>
-                <div class="stat-value">{{ properties_count }}</div>
+                <div class="stat-value" id="propertiesCount">{{ properties_count|default:0 }}</div>
                 <div class="stat-label">إجمالي العقارات</div>
             </div>
             <div class="stat-card">
                 <div class="stat-card-header">
                     <div class="stat-icon">👥</div>
-                    <span class="stat-change positive">+8%</span>
                 </div>
-                <div class="stat-value">{{ leads_count }}</div>
+                <div class="stat-value" id="leadsCount">{{ leads_count|default:0 }}</div>
                 <div class="stat-label">العملاء المحتملين</div>
             </div>
             <div class="stat-card">
                 <div class="stat-card-header">
                     <div class="stat-icon">💬</div>
                 </div>
-                <div class="stat-value">{{ conversations_count }}</div>
+                <div class="stat-value" id="conversationsCount">{{ conversations_count|default:0 }}</div>
                 <div class="stat-label">المحادثات</div>
             </div>
             <div class="stat-card">
                 <div class="stat-card-header">
                     <div class="stat-icon">👁️</div>
                 </div>
-                <div class="stat-value">{{ views_count }}</div>
+                <div class="stat-value" id="viewsCount">{{ views_count|default:0 }}</div>
                 <div class="stat-label">المشاهدات</div>
             </div>
         </div>
@@ -65,23 +152,12 @@
                     <h3>العقارات الأخيرة</h3>
                     <a href="/dashboard/properties/">عرض الكل</a>
                 </div>
-                <div class="properties-table">
-                    {% for property in recent_properties %}
-                    <div class="property-row">
-                        <div class="property-image">🏠</div>
-                        <div class="property-info">
-                            <h4>{{ property.title }}</h4>
-                            <p>{{ property.city }} - {{ property.bedrooms }} غرف</p>
-                        </div>
-                        <div class="property-price">{{ property.price_display }}</div>
-                        <span class="property-status active">نشط</span>
-                    </div>
-                    {% empty %}
-                    <div class="empty-state">
-                        <p>لا توجد عقارات بعد</p>
-                        <button class="btn btn-primary" onclick="openModal('addPropertyModal')">إضافة عقار جديد</button>
-                    </div>
-                    {% endfor %}
+                <div class="properties-table" id="propertiesTable">
+                    <!-- Properties loaded dynamically -->
+                </div>
+                <div class="empty-state" id="emptyProperties" style="display: none;">
+                    <p>لا توجد عقارات بعد</p>
+                    <a href="/dashboard/properties/" class="btn btn-primary" style="margin-top: 16px; display: inline-flex;">إضافة عقار</a>
                 </div>
             </div>
 
@@ -91,33 +167,28 @@
                         <h3>آخر العملاء</h3>
                         <a href="/dashboard/leads/">عرض الكل</a>
                     </div>
-                    {% for lead in recent_leads %}
-                    <div class="lead-item">
-                        <div class="lead-avatar">{{ lead.initials }}</div>
-                        <div class="lead-info">
-                            <h4>{{ lead.name }}</h4>
-                            <p>{{ lead.phone }}</p>
-                        </div>
+                    <div id="recentLeads">
+                        <!-- Leads loaded dynamically -->
                     </div>
-                    {% empty %}
-                    <div class="empty-state"><p>لا يوجد عملاء بعد</p></div>
-                    {% endfor %}
+                    <div class="empty-state" id="emptyLeads" style="display: none;">
+                        <p>لا يوجد عملاء بعد</p>
+                    </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header"><h3>إجراءات سريعة</h3></div>
                     <div class="quick-actions">
-                        <a href="#" class="quick-action" onclick="openModal('addPropertyModal')">
+                        <a href="/dashboard/properties/" class="quick-action">
                             <div class="quick-action-icon">🏠</div><span>إضافة عقار</span>
                         </a>
-                        <a href="/chat/demo/" class="quick-action">
-                            <div class="quick-action-icon">💬</div><span>تجربة الشات</span>
+                        <a href="/dashboard/conversations/" class="quick-action">
+                            <div class="quick-action-icon">💬</div><span>المحادثات</span>
                         </a>
-                        <a href="/dashboard/settings/" class="quick-action">
+                        <a href="/dashboard/bot-settings/" class="quick-action">
                             <div class="quick-action-icon">⚙️</div><span>الإعدادات</span>
                         </a>
-                        <a href="/admin/" class="quick-action">
-                            <div class="quick-action-icon">🔧</div><span>لوحة الإدارة</span>
+                        <a href="/chat/live/" class="quick-action">
+                            <div class="quick-action-icon">💬</div><span>الشات المباشر</span>
                         </a>
                     </div>
                 </div>
@@ -125,7 +196,118 @@
         </div>
     </main>
 
-    {% include 'dashboard/partials/property_modal.html' %}
-    <script src="/static/js/dashboard.js"></script>
+    <script>
+        // Django handles authentication
+        
+        // دالة تسجيل الخروج
+        function logout() {
+            window.location.href = '/auth/logout/';
+        }
+        
+        // تنسيق السعر
+        function formatPrice(price) {
+            return Number(price).toLocaleString('ar-SA');
+        }
+        
+        // تحميل الإحصائيات والعقارات
+        async function loadStats() {
+            try {
+                // تحميل العقارات
+                const propsResponse = await fetch('/api/v1/properties/my/');
+                const propsData = await propsResponse.json();
+                if (propsData.success) {
+                    document.getElementById('propertiesCount').textContent = propsData.properties.length;
+                    
+                    // عرض العقارات الأخيرة
+                    const propertiesTable = document.getElementById('propertiesTable');
+                    const emptyProperties = document.getElementById('emptyProperties');
+                    
+                    if (propsData.properties.length > 0) {
+                        propertiesTable.innerHTML = propsData.properties.slice(0, 5).map(prop => `
+                            <div class="property-row" style="display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <div style="width: 50px; height: 50px; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; margin-left: 12px;">
+                                    ${prop.mainImage ? `<img src="${prop.mainImage}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">` : '🏠'}
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: var(--text-primary);">${prop.title}</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">${prop.city} ${prop.district ? '- ' + prop.district : ''}</div>
+                                </div>
+                                <div style="text-align: left;">
+                                    <div style="font-weight: 600; color: var(--accent-primary);">${formatPrice(prop.price)} ريال</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">${prop.typeLabel || prop.type}</div>
+                                </div>
+                            </div>
+                        `).join('');
+                        emptyProperties.style.display = 'none';
+                    } else {
+                        propertiesTable.innerHTML = '';
+                        emptyProperties.style.display = 'block';
+                    }
+                }
+                
+                // تحميل العملاء
+                const leadsResponse = await fetch('/api/v1/leads/');
+                if (leadsResponse.ok) {
+                    const leadsData = await leadsResponse.json();
+                    const leads = leadsData.results || leadsData || [];
+                    document.getElementById('leadsCount').textContent = leads.length;
+                    
+                    // عرض آخر العملاء
+                    const recentLeads = document.getElementById('recentLeads');
+                    const emptyLeads = document.getElementById('emptyLeads');
+                    
+                    if (leads.length > 0) {
+                        recentLeads.innerHTML = leads.slice(0, 5).map(lead => `
+                            <div style="display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); display: flex; align-items: center; justify-content: center; margin-left: 12px; font-size: 14px;">
+                                    ${lead.name ? lead.name.charAt(0) : '👤'}
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: var(--text-primary);">${lead.name || 'عميل جديد'}</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">${lead.phone || '-'}</div>
+                                </div>
+                                <div>
+                                    <span style="background: ${lead.status === 'new' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(107, 184, 201, 0.2)'}; color: ${lead.status === 'new' ? '#22c55e' : 'var(--accent-primary)'}; padding: 4px 8px; border-radius: 6px; font-size: 11px;">
+                                        ${lead.status === 'new' ? 'جديد' : lead.status_display || lead.status}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('');
+                        emptyLeads.style.display = 'none';
+                    } else {
+                        recentLeads.innerHTML = '';
+                        emptyLeads.style.display = 'block';
+                    }
+                }
+                
+                // تحميل المحادثات من إحصائيات الوكيل
+                try {
+                    // Get agent ID from page context or API
+                    const agentId = '{{ agent_id|default:"" }}';
+                    if (agentId) {
+                        const statsResponse = await fetch(`/api/agent/${agentId}/stats/`);
+                        if (statsResponse.ok) {
+                            const statsData = await statsResponse.json();
+                            if (statsData.success) {
+                                document.getElementById('conversationsCount').textContent = statsData.stats.total_conversations || 0;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.log('Could not load conversation stats');
+                }
+                
+                // المشاهدات = عدد المحادثات (تقريبي)
+                const convCount = parseInt(document.getElementById('conversationsCount').textContent) || 0;
+                document.getElementById('viewsCount').textContent = convCount;
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // تحميل الإحصائيات عند فتح الصفحة
+        loadStats();
+    </script>
 </body>
 </html>

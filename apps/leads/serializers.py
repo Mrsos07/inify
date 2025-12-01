@@ -24,18 +24,33 @@ class LeadSerializer(serializers.ModelSerializer):
     source_display = serializers.CharField(source='get_source_display', read_only=True)
     urgency_display = serializers.CharField(source='get_urgency_display', read_only=True)
     interested_properties_count = serializers.SerializerMethodField()
+    interested_properties_list = serializers.SerializerMethodField()
     
     class Meta:
         model = Lead
         fields = [
             'id', 'name', 'phone', 'email', 'status', 'status_display',
             'source', 'source_display', 'urgency', 'urgency_display',
-            'looking_for', 'city_preference', 'budget_min', 'budget_max',
-            'score', 'interested_properties_count', 'created_at', 'last_contact_at'
+            'looking_for', 'city_preference', 'property_type_preference',
+            'budget_min', 'budget_max', 'notes',
+            'score', 'interested_properties_count', 'interested_properties_list',
+            'created_at', 'last_contact_at'
         ]
     
     def get_interested_properties_count(self, obj):
         return obj.interested_properties.count()
+    
+    def get_interested_properties_list(self, obj):
+        """إرجاع قائمة العقارات المهتم بها"""
+        properties = obj.interested_properties.all()[:5]
+        return [{
+            'id': str(p.id),
+            'title': p.title,
+            'price': str(p.price) if p.price else None,
+            'mainImage': p.main_image.url if p.main_image else None,
+            'type': p.property_type,
+            'city': p.city
+        } for p in properties]
 
 
 class LeadDetailSerializer(serializers.ModelSerializer):

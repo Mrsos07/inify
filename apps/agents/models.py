@@ -4,8 +4,10 @@ Agent Models - نماذج المسوقين العقاريين
 """
 
 import uuid
+from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class Agent(models.Model):
@@ -73,18 +75,29 @@ class Agent(models.Model):
     webhook_secret = models.CharField(max_length=100, blank=True, verbose_name='مفتاح Webhook')
     
     # الاشتراك
+    SUBSCRIPTION_PLANS = [
+        ('free', 'مجاني'),
+        ('basic', 'أساسي'),
+        ('pro', 'احترافي'),
+        ('enterprise', 'مؤسسي'),
+    ]
+    
+    SUBSCRIPTION_DURATIONS = {
+        'free': 0,  # دائم
+        'basic': 30,  # 30 يوم
+        'pro': 30,  # 30 يوم
+        'enterprise': 30,  # 30 يوم
+    }
+    
     subscription_plan = models.CharField(
         max_length=20,
-        choices=[
-            ('free', 'مجاني'),
-            ('basic', 'أساسي'),
-            ('pro', 'احترافي'),
-            ('enterprise', 'مؤسسي'),
-        ],
+        choices=SUBSCRIPTION_PLANS,
         default='free',
         verbose_name='خطة الاشتراك'
     )
-    subscription_expires = models.DateField(null=True, blank=True, verbose_name='انتهاء الاشتراك')
+    subscription_start = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ بدء الاشتراك')
+    subscription_expires = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ انتهاء الاشتراك')
+    subscription_auto_renew = models.BooleanField(default=False, verbose_name='تجديد تلقائي')
     
     # الإحصائيات
     total_leads = models.PositiveIntegerField(default=0, verbose_name='إجمالي العملاء المحتملين')
@@ -156,3 +169,85 @@ class AgentSettings(models.Model):
     
     def __str__(self):
         return f"إعدادات {self.agent}"
+
+
+class GlobalSettings(models.Model):
+    """إعدادات النظام العامة - تُطبق على جميع المستخدمين"""
+    
+    # النموذج المستخدم
+    AI_MODEL_CHOICES = [
+        ('gemini-2.0-flash', 'Gemini 2.0 Flash - سريع جداً'),
+        ('gemini-1.5-flash', 'Gemini 1.5 Flash - سريع'),
+        ('gemini-1.5-pro', 'Gemini 1.5 Pro - متوازن'),
+        ('gemini-2.5-pro-preview-05-06', 'Gemini 2.5 Pro - الأفضل جودة'),
+        ('gemini-2.5-flash-preview-05-20', 'Gemini 2.5 Flash - الأحدث والأسرع'),
+        ('gemini-3-pro-preview', 'Gemini 3 Pro - الجيل الثالث'),
+    ]
+    
+    ai_model = models.CharField(
+        max_length=100, 
+        choices=AI_MODEL_CHOICES,
+        default='gemini-3-pro-preview',
+        verbose_name='نموذج الذكاء الاصطناعي'
+    )
+    
+    # System Prompt
+    system_prompt = models.TextField(
+        blank=True,
+        verbose_name='System Prompt الأساسي',
+        help_text='التعليمات الأساسية التي تُطبق على جميع الوكلاء'
+    )
+    
+    # قواعد عامة
+    default_rules = models.TextField(
+        blank=True,
+        verbose_name='القواعد العامة',
+        help_text='قواعد إضافية للوكيل'
+    )
+    
+    # إعدادات السلوك
+    RESPONSE_STYLE_CHOICES = [
+        ('professional', 'احترافي ومهني'),
+        ('friendly', 'ودود وقريب'),
+        ('formal', 'رسمي'),
+    ]
+    
+    DIALECT_CHOICES = [
+        ('saudi', 'سعودية'),
+        ('gulf', 'خليجية'),
+        ('formal_arabic', 'فصحى'),
+    ]
+    
+    response_style = models.CharField(
+        max_length=20,
+        choices=RESPONSE_STYLE_CHOICES,
+        default='friendly',
+        verbose_name='أسلوب الرد'
+    )
+    
+    dialect = models.CharField(
+        max_length=20,
+        choices=DIALECT_CHOICES,
+        default='saudi',
+        verbose_name='اللهجة'
+    )
+    
+    ask_for_phone = models.BooleanField(default=True, verbose_name='طلب رقم الجوال')
+    show_prices = models.BooleanField(default=True, verbose_name='عرض الأسعار')
+    suggest_similar = models.BooleanField(default=True, verbose_name='اقتراح عقارات مشابهة')
+    
+    # التوقيت
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'إعدادات النظام'
+        verbose_name_plural = 'إعدادات النظام'
+    
+    def __str__(self):
+        return 'إعدادات النظام العامة'
+    
+    @classmethod
+    def get_settings(cls):
+        """الحصول على الإعدادات أو إنشاؤها"""
+        settings, created = cls.objects.get_or_create(pk=1)
+        return settings

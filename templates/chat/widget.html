@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #000000;
+            --primary-color: {{ bot_color|default:'#000000' }};
             --secondary-color: #ffffff;
             --accent-color: #333333;
             --text-color: #1a1a1a;
@@ -479,7 +479,7 @@
 <body>
     <div class="chat-container">
         <!-- Header -->
-        <div class="chat-header" style="background: {{ bot_color|default:'#000000' }};">
+        <div class="chat-header">
             <div class="logo">
                 <!-- Inify Logo SVG -->
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">

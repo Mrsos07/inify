@@ -14,7 +14,7 @@ import json
 
 def home(request):
     """الصفحة الرئيسية - Landing Page"""
-    return render(request, 'landing.html')
+    return render(request, 'index.html')
 
 
 def chat_demo(request):
@@ -66,6 +66,86 @@ def health_check(request):
     })
 
 
+def pricing_view(request):
+    """صفحة الاشتراكات"""
+    return render(request, 'pricing.html')
+
+
+def admin_panel_view(request):
+    """لوحة تحكم الأدمن"""
+    return render(request, 'admin-panel.html')
+
+
+def embed_chat_view(request):
+    """صفحة الشات المضمنة للعملاء"""
+    return render(request, 'embed.html')
+
+
+@login_required(login_url='/auth/login/')
+def live_chat_view(request):
+    """صفحة الشات المباشر"""
+    from apps.agents.models import Agent
+    
+    context = {}
+    try:
+        agent = request.user.agent_profile
+        context = {
+            'agent_id': str(agent.id),
+            'agent_name': agent.bot_name or 'نيورا',
+        }
+    except Agent.DoesNotExist:
+        pass
+    
+    return render(request, 'chat-live.html', context)
+
+
+def chat_view(request):
+    """صفحة الشات"""
+    return render(request, 'chat.html')
+
+
+def clients_view(request):
+    """صفحة العملاء"""
+    return render(request, 'clients.html')
+
+
+def properties_page_view(request):
+    """صفحة العقارات"""
+    return render(request, 'properties.html')
+
+
+def profile_view(request):
+    """صفحة الملف الشخصي"""
+    context = {}
+    if request.user.is_authenticated:
+        from apps.agents.models import Agent
+        try:
+            agent = Agent.objects.get(user=request.user)
+            context = {
+                'user_id': request.user.id,
+                'user_name': request.user.get_full_name() or request.user.username,
+                'user_email': request.user.email,
+                'user_phone': agent.phone or '',
+                'company_name': agent.company_name or '',
+                'subscription_plan': agent.subscription_plan or 'free',
+            }
+        except Agent.DoesNotExist:
+            context = {
+                'user_id': request.user.id,
+                'user_name': request.user.get_full_name() or request.user.username,
+                'user_email': request.user.email,
+                'user_phone': '',
+                'company_name': '',
+                'subscription_plan': 'free',
+            }
+    return render(request, 'profile.html', context)
+
+
+def settings_view(request):
+    """صفحة الإعدادات"""
+    return render(request, 'settings.html')
+
+
 @csrf_exempt
 def login_view(request):
     """صفحة تسجيل الدخول"""
@@ -103,49 +183,59 @@ def register_view(request):
         return redirect('/dashboard/')
     
     if request.method == 'POST':
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        company_name = request.POST.get('company_name', '')
-        city = request.POST.get('city')
-        password = request.POST.get('password')
-        
-        # Validate
-        if User.objects.filter(email=email).exists():
-            return JsonResponse({'success': False, 'error': 'البريد الإلكتروني مستخدم بالفعل'})
-        
-        # Create username from email
-        username = email.split('@')[0]
-        base_username = username
-        counter = 1
-        while User.objects.filter(username=username).exists():
-            username = f"{base_username}{counter}"
-            counter += 1
-        
-        # Create user
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name
-        )
-        
-        # Create agent profile
-        from apps.agents.models import Agent
-        Agent.objects.create(
-            user=user,
-            company_name=company_name,
-            phone=phone,
-            city=city,
-            email=email
-        )
-        
-        # Login the user
-        login(request, user)
-        
-        return JsonResponse({'success': True})
+        try:
+            first_name = request.POST.get('first_name', '')
+            last_name = request.POST.get('last_name', '')
+            email = request.POST.get('email', '')
+            phone = request.POST.get('phone', '')
+            company_name = request.POST.get('company_name', '')
+            city = request.POST.get('city', '')
+            password = request.POST.get('password', '')
+            
+            # Validate required fields
+            if not email or not password:
+                return JsonResponse({'success': False, 'error': 'البريد الإلكتروني وكلمة المرور مطلوبان'})
+            
+            # Validate email not exists
+            if User.objects.filter(email=email).exists():
+                return JsonResponse({'success': False, 'error': 'البريد الإلكتروني مستخدم بالفعل'})
+            
+            # Create username from email
+            username = email.split('@')[0]
+            base_username = username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            # Create user
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name or '',
+                last_name=last_name or ''
+            )
+            
+            # Create agent profile
+            from apps.agents.models import Agent
+            Agent.objects.create(
+                user=user,
+                company_name=company_name or '',
+                phone=phone or '',
+                city=city or '',
+                email=email
+            )
+            
+            # Login the user
+            login(request, user)
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            import traceback
+            print(f"Registration error: {e}")
+            print(traceback.format_exc())
+            return JsonResponse({'success': False, 'error': f'حدث خطأ: {str(e)}'})
     
     return render(request, 'auth/register.html')
 
@@ -205,13 +295,17 @@ def dashboard_view(request):
             'price_display': f"{prop.price:,.0f} ريال"
         })
     
+    # Get total conversations from agent model
+    total_conversations = agent.total_conversations + conversations.count()
+    
     context = {
         'user_name': user.get_full_name() or user.username,
         'user_first_name': user.first_name or user.username,
         'user_initials': ''.join([n[0] for n in (user.get_full_name() or user.username).split()[:2]]).upper(),
+        'agent_id': str(agent.id),
         'properties_count': properties.count(),
         'leads_count': leads.count(),
-        'conversations_count': conversations.count(),
+        'conversations_count': total_conversations,
         'views_count': sum(p.views_count for p in properties),
         'recent_properties': properties_data,
         'recent_leads': leads_data,
@@ -360,6 +454,8 @@ def bot_settings_view(request):
     
     context = {
         'agent': agent,
+        'agent_id': str(agent.id),
+        'chat_url': f'/embed/?agent={agent.id}',
         'active_page': 'bot_settings'
     }
     
@@ -481,3 +577,274 @@ def test_add_property(request):
     '''
     from django.http import HttpResponse
     return HttpResponse(html)
+
+
+# ============ Global Settings API ============
+
+def get_global_settings(request):
+    """الحصول على إعدادات النظام العامة"""
+    from apps.agents.models import GlobalSettings
+    
+    try:
+        settings = GlobalSettings.get_settings()
+        
+        return JsonResponse({
+            'success': True,
+            'settings': {
+                'aiModel': settings.ai_model,
+                'systemPrompt': settings.system_prompt,
+                'defaultRules': settings.default_rules,
+                'responseStyle': settings.response_style,
+                'dialect': settings.dialect,
+                'askForPhone': settings.ask_for_phone,
+                'showPrices': settings.show_prices,
+                'suggestSimilar': settings.suggest_similar,
+                'updatedAt': settings.updated_at.isoformat() if settings.updated_at else None
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def save_global_settings(request):
+    """حفظ إعدادات النظام العامة (للأدمن فقط)"""
+    from apps.agents.models import GlobalSettings
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        
+        # التحقق من كلمة مرور الأدمن (من البيئة)
+        from django.conf import settings as django_settings
+        admin_key = data.get('adminKey', '')
+        expected_key = getattr(django_settings, 'ADMIN_SECRET_KEY', 'inify_admin_2025')
+        if admin_key != expected_key:
+            return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+        
+        settings = GlobalSettings.get_settings()
+        
+        # تحديث الإعدادات
+        if 'aiModel' in data:
+            settings.ai_model = data['aiModel']
+        if 'systemPrompt' in data:
+            settings.system_prompt = data['systemPrompt']
+        if 'defaultRules' in data:
+            settings.default_rules = data['defaultRules']
+        if 'responseStyle' in data:
+            settings.response_style = data['responseStyle']
+        if 'dialect' in data:
+            settings.dialect = data['dialect']
+        if 'askForPhone' in data:
+            settings.ask_for_phone = data['askForPhone']
+        if 'showPrices' in data:
+            settings.show_prices = data['showPrices']
+        if 'suggestSimilar' in data:
+            settings.suggest_similar = data['suggestSimilar']
+        
+        settings.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'تم حفظ الإعدادات بنجاح'
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Save settings error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def get_all_users(request):
+    """الحصول على جميع المستخدمين (للأدمن)"""
+    from apps.agents.models import Agent
+    from django.contrib.auth.models import User
+    
+    # 🔒 التحقق من صلاحية الأدمن
+    admin_key = request.GET.get('key', '') or request.headers.get('X-Admin-Key', '')
+    from django.conf import settings as django_settings
+    expected_key = getattr(django_settings, 'ADMIN_SECRET_KEY', 'inify_admin_2025')
+    
+    if admin_key != expected_key:
+        return JsonResponse({'success': False, 'error': 'غير مصرح - مفتاح الأدمن مطلوب'}, status=403)
+    
+    try:
+        users_data = []
+        
+        # Get all agents with their users
+        agents = Agent.objects.select_related('user').all()
+        
+        for agent in agents:
+            user = agent.user
+            
+            # Count properties
+            from apps.properties.models import Property
+            properties_count = Property.objects.filter(agent=agent).count()
+            
+            # Map subscription plan to role
+            plan_to_role = {
+                'free': 'free',
+                'basic': 'marketer',
+                'pro': 'marketer',
+                'enterprise': 'agency'
+            }
+            role = plan_to_role.get(agent.subscription_plan, 'free')
+            
+            users_data.append({
+                'id': str(agent.id),
+                'name': user.get_full_name() or user.username,
+                'email': user.email,
+                'phone': agent.phone,
+                'company': agent.company_name,
+                'city': agent.city,
+                'role': role,
+                'subscriptionPlan': agent.subscription_plan,
+                'subscriptionExpires': agent.subscription_expires.isoformat() if agent.subscription_expires else None,
+                'propertiesCount': properties_count,
+                'isActive': agent.is_active,
+                'createdAt': user.date_joined.isoformat(),
+                'lastLogin': user.last_login.isoformat() if user.last_login else None
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'users': users_data,
+            'total': len(users_data)
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Get users error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def update_user_plan(request):
+    """تحديث باقة المستخدم (للأدمن)"""
+    from apps.agents.models import Agent
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        
+        # التحقق من كلمة مرور الأدمن (من البيئة)
+        from django.conf import settings
+        admin_key = data.get('adminKey', '')
+        expected_key = getattr(settings, 'ADMIN_SECRET_KEY', 'inify_admin_2025')
+        if admin_key != expected_key:
+            return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+        
+        user_id = data.get('userId')
+        new_plan = data.get('plan')
+        
+        if not user_id or not new_plan:
+            return JsonResponse({'success': False, 'error': 'بيانات ناقصة'}, status=400)
+        
+        # Get agent
+        agent = Agent.objects.get(id=user_id)
+        
+        # Map role to subscription plan
+        role_to_plan = {
+            'free': 'free',
+            'marketer': 'basic',
+            'agency': 'enterprise'
+        }
+        subscription_plan = role_to_plan.get(new_plan, 'free')
+        
+        # Update subscription
+        agent.subscription_plan = subscription_plan
+        
+        # Set subscription dates for paid plans
+        if subscription_plan != 'free':
+            from django.utils import timezone
+            from datetime import timedelta
+            agent.subscription_start = timezone.now()
+            agent.subscription_expires = timezone.now() + timedelta(days=30)
+        else:
+            agent.subscription_start = None
+            agent.subscription_expires = None
+        
+        agent.save()
+        
+        plan_names = {
+            'free': 'مجاني',
+            'marketer': 'مسوق عقاري',
+            'agency': 'مؤسسة عقارية'
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'تم تغيير الباقة إلى {plan_names.get(new_plan, new_plan)}'
+        })
+        
+    except Agent.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'المستخدم غير موجود'}, status=404)
+    except Exception as e:
+        import traceback
+        print(f"Update plan error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def increment_conversation(request, agent_id):
+    """زيادة عداد المحادثات للوكيل"""
+    from apps.agents.models import Agent
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        agent = Agent.objects.get(id=agent_id)
+        agent.total_conversations += 1
+        agent.save(update_fields=['total_conversations'])
+        
+        return JsonResponse({
+            'success': True,
+            'total_conversations': agent.total_conversations
+        })
+        
+    except Agent.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required(login_url='/auth/login/')
+def get_agent_stats(request, agent_id):
+    """الحصول على إحصائيات الوكيل"""
+    from apps.agents.models import Agent
+    from apps.leads.models import Lead
+    from apps.properties.models import Property
+    
+    try:
+        agent = Agent.objects.get(id=agent_id)
+        
+        # 🔒 التحقق من أن المستخدم هو صاحب الحساب
+        if hasattr(request.user, 'agent_profile') and request.user.agent_profile.id != agent.id:
+            return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+        
+        # حساب الإحصائيات الحقيقية
+        leads_count = Lead.objects.filter(agent=agent).count()
+        properties_count = Property.objects.filter(agent=agent).count()
+        
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'total_leads': leads_count,
+                'total_conversations': agent.total_conversations,
+                'total_properties': properties_count,
+                'is_active': agent.is_active
+            }
+        })
+        
+    except Agent.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

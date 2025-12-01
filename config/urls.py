@@ -28,3 +28,9 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # Serve config.js from root
+    from django.views.static import serve
+    import os
+    urlpatterns += [
+        path('config.js', serve, {'document_root': settings.BASE_DIR, 'path': 'config.js'}),
+    ]

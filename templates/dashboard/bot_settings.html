@@ -1,532 +1,2071 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إعدادات الوكيل الذكي - Newra</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <title>الإعدادات - Inify</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
-        .settings-container {
-            max-width: 800px;
+        @font-face {
+            font-family: 'Chillax';
+            src: url('/static/Chillax-Regular.woff2') format('woff2');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'Chillax';
+            src: url('/static/Chillax-Bold.woff2') format('woff2');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+            --card-bg: rgba(30, 58, 95, 0.4);
+            --border: rgba(107, 184, 201, 0.15);
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', 'Chillax', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            min-height: 100vh;
+        }
+
+        /* Premium Background */
+        .premium-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0A1628 0%, #0d1f35 25%, #122a45 50%, #0d1f35 75%, #0A1628 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(107, 184, 201, 0.4) 0%, transparent 70%);
+            top: -200px;
+            right: -200px;
+            animation: float1 20s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(74, 144, 164, 0.35) 0%, transparent 70%);
+            bottom: -150px;
+            left: -150px;
+            animation: float2 25s ease-in-out infinite;
+        }
+        .orb-3 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+            top: 40%;
+            right: 20%;
+            animation: float3 18s ease-in-out infinite;
+        }
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-50px, 50px) scale(1.1); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, -30px) scale(1.05); }
+        }
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+            50% { transform: translate(-30px, 30px) scale(1.1); opacity: 0.3; }
+        }
+        .grid-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: linear-gradient(rgba(107, 184, 201, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(107, 184, 201, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(10, 22, 40, 0.4) 100%);
+        }
+
+        .header {
+            padding: 20px 40px;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-right { display: flex; align-items: center; gap: 20px; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo svg { width: 40px; height: 40px; }
+
+        .logo-text {
+            font-family: 'Chillax', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 15px;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
+
+        .header-btn {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .main-content {
+            max-width: 1200px;
             margin: 0 auto;
+            padding: 40px;
         }
-        
-        .settings-card {
-            background: white;
-            border-radius: 16px;
+
+        .page-header {
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .settings-grid { grid-template-columns: 1fr; }
+        }
+
+        .settings-section {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
             padding: 30px;
+            border: 1px solid var(--border);
             margin-bottom: 24px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        
-        .settings-card h2 {
-            font-size: 20px;
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
             margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #eee;
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        
-        .settings-card h2 svg {
-            width: 24px;
-            height: 24px;
-        }
-        
+
         .form-group {
             margin-bottom: 20px;
         }
-        
+
         .form-group label {
             display: block;
-            font-weight: 600;
             margin-bottom: 8px;
-            color: #333;
+            font-weight: 600;
+            font-size: 14px;
         }
-        
-        .form-group .hint {
-            font-size: 12px;
-            color: #888;
-            margin-top: 4px;
-        }
-        
+
         .form-group input,
         .form-group textarea,
         .form-group select {
             width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
+            padding: 14px 16px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--pearl);
             font-family: inherit;
-            font-size: 14px;
-            transition: border-color 0.2s;
+            font-size: 15px;
+            transition: all 0.3s;
         }
-        
+
         .form-group input:focus,
         .form-group textarea:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #000;
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 3px rgba(107, 184, 201, 0.1);
         }
-        
+
         .form-group textarea {
-            min-height: 100px;
+            min-height: 150px;
             resize: vertical;
         }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
         }
-        
-        .color-picker-wrapper {
+
+        .color-picker-group {
             display: flex;
-            align-items: center;
-            gap: 12px;
+            gap: 16px;
+            flex-wrap: wrap;
         }
-        
-        .color-picker-wrapper input[type="color"] {
+
+        .color-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-option input[type="color"] {
             width: 50px;
             height: 50px;
-            padding: 0;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
+            padding: 0;
+            overflow: hidden;
         }
-        
-        .color-picker-wrapper input[type="text"] {
+
+        .color-option span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .api-key-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .api-key-group input {
             flex: 1;
         }
-        
-        .btn-save {
-            background: #000;
-            color: white;
-            border: none;
-            padding: 14px 32px;
-            border-radius: 10px;
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
             font-family: inherit;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, opacity 0.2s;
+            transition: all 0.3s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-        
-        .btn-save:hover {
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+        }
+
+        .btn-primary:hover {
             transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(107, 184, 201, 0.3);
         }
-        
-        .btn-save:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+
+        .btn-secondary {
+            background: rgba(107, 184, 201, 0.1);
+            color: var(--pearl);
+            border: 1px solid var(--border);
         }
-        
+
+        .btn-secondary:hover {
+            border-color: var(--cyan);
+        }
+
+        .save-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Preview Section */
         .preview-section {
-            background: #f8f8f8;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
+            position: sticky;
+            top: 100px;
         }
-        
-        .preview-section h3 {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 16px;
+
+        .preview-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
         }
-        
+
+        .preview-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Chat Widget Preview */
         .chat-preview {
-            background: white;
-            border-radius: 12px;
+            background: #1a1a2e;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            max-width: 350px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
-        
+
         .chat-preview-header {
-            padding: 16px;
+            padding: 16px 20px;
             display: flex;
             align-items: center;
             gap: 12px;
-            color: white;
         }
-        
-        .chat-preview-header .avatar {
+
+        .chat-preview-avatar {
             width: 40px;
             height: 40px;
-            background: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 20px;
         }
-        
-        .chat-preview-header .info h4 {
-            font-size: 14px;
-            margin: 0;
+
+        .chat-preview-info h4 {
+            font-size: 15px;
+            margin-bottom: 2px;
         }
-        
-        .chat-preview-header .info span {
+
+        .chat-preview-info span {
             font-size: 12px;
-            opacity: 0.8;
+            opacity: 0.7;
         }
-        
-        .chat-preview-body {
-            padding: 16px;
-            min-height: 100px;
+
+        .chat-preview-messages {
+            padding: 20px;
+            min-height: 200px;
+            background: rgba(0, 0, 0, 0.2);
         }
-        
-        .chat-preview-message {
-            background: #f0f0f0;
+
+        .preview-message {
             padding: 12px 16px;
-            border-radius: 12px;
-            border-bottom-right-radius: 4px;
+            border-radius: 16px;
+            max-width: 85%;
+            margin-bottom: 12px;
             font-size: 14px;
-            max-width: 80%;
         }
-        
-        .success-message {
-            background: #d4edda;
-            color: #155724;
+
+        .preview-message.bot {
+            background: rgba(255, 255, 255, 0.1);
+            border-top-right-radius: 4px;
+        }
+
+        .preview-message.user {
+            margin-right: auto;
+            margin-left: 0;
+            border-top-left-radius: 4px;
+        }
+
+        .chat-preview-input {
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-preview-input input {
+            flex: 1;
             padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: none;
+            border-radius: 24px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-family: inherit;
         }
-        
-        .success-message.show {
-            display: block;
+
+        .chat-preview-input button {
+            padding: 12px 20px;
+            border-radius: 24px;
+            border: none;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
         }
-        
+
+        /* Embed Code Section */
+        .embed-section {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .embed-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .embed-code {
-            background: #1a1a1a;
-            color: #fff;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
             padding: 16px;
-            border-radius: 10px;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
             font-size: 12px;
+            color: var(--cyan-light);
             overflow-x: auto;
-            position: relative;
-        }
-        
-        .embed-code code {
+            margin-bottom: 16px;
+            direction: ltr;
+            text-align: left;
             white-space: pre-wrap;
             word-break: break-all;
         }
-        
+
         .copy-btn {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: #333;
+            width: 100%;
+        }
+
+        .success-toast {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: linear-gradient(135deg, #22c55e, #16a34a);
             color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .success-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: rgba(10, 22, 40, 0.4);
+            padding: 6px;
+            border-radius: 12px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
             border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: var(--card-bg);
+            color: var(--pearl);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+        
+        .header-btn.logout {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .header-btn.logout:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Toggle Switch */
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             cursor: pointer;
         }
-        
-        .copy-btn:hover {
-            background: #444;
+
+        .toggle-input {
+            display: none;
         }
-        
-        @media (max-width: 768px) {
-            .form-row {
+
+        .toggle-switch {
+            width: 50px;
+            height: 26px;
+            background: rgba(100, 100, 100, 0.3);
+            border-radius: 13px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+
+        .toggle-input:checked + .toggle-switch {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+
+        .toggle-input:checked + .toggle-switch::after {
+            left: 26px;
+        }
+
+        /* Guide Steps */
+        .guide-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .guide-step {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            padding: 16px;
+            background: rgba(10, 22, 40, 0.4);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .webhook-url {
+            display: block;
+            margin-top: 8px;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--cyan-light);
+            direction: ltr;
+            text-align: left;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .feature-item-box {
+            padding: 20px;
+            background: rgba(10, 22, 40, 0.4);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .feature-item-box .feature-icon {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .feature-item-box strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .feature-item-box p {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin: 0;
+        }
+
+        @media (max-width: 600px) {
+            .features-grid {
                 grid-template-columns: 1fr;
             }
+        }
+
+        /* AI Provider Options */
+        .ai-provider-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .provider-option {
+            cursor: pointer;
+        }
+
+        .provider-option input {
+            display: none;
+        }
+
+        .provider-card {
+            padding: 16px;
+            background: rgba(10, 22, 40, 0.4);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .provider-option input:checked + .provider-card {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+        }
+
+        .provider-icon {
+            font-size: 28px;
+        }
+
+        .provider-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .provider-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .provider-badge.free {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+        }
+
+        .provider-badge.premium {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+        }
+
+        @media (max-width: 500px) {
+            .ai-provider-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Platforms Connect */
+        .platforms-connect-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .platform-connect-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 20px;
+            background: rgba(10, 22, 40, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            transition: all 0.3s;
+        }
+
+        .platform-connect-item:hover {
+            border-color: var(--cyan);
+        }
+
+        .platform-connect-item.connected {
+            border-color: #4ade80;
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .platform-connect-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .platform-connect-info {
+            flex: 1;
+        }
+
+        .platform-connect-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .platform-connect-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .platform-connect-status {
+            font-size: 13px;
+            color: var(--text-muted);
+            padding: 6px 14px;
+            background: rgba(10, 22, 40, 0.5);
+            border-radius: 20px;
+        }
+
+        .platform-connect-status.connected {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+        }
+
+        .platform-connect-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            border: none;
+            border-radius: 10px;
+            color: var(--midnight);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .platform-connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(107, 184, 201, 0.3);
+        }
+
+        .platform-connect-btn.disconnect {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .platform-connect-btn.disconnect:hover {
+            background: rgba(239, 68, 68, 0.3);
+            box-shadow: none;
+            transform: none;
+        }
+
+        .connection-stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .conn-stat {
+            text-align: center;
+        }
+
+        .conn-stat-number {
+            display: block;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .conn-stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* Agent Avatar Upload */
+        .avatar-upload-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(10, 22, 40, 0.4);
+            border-radius: 16px;
+            border: 1px solid rgba(107, 184, 201, 0.15);
+        }
+
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            overflow: hidden;
+            border: 3px solid rgba(107, 184, 201, 0.3);
+            position: relative;
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-preview .emoji-icon {
+            font-size: 48px;
+        }
+
+        .avatar-upload-controls {
+            flex: 1;
+        }
+
+        .avatar-upload-controls h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--pearl);
+        }
+
+        .avatar-upload-controls p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .avatar-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .avatar-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .avatar-btn.upload {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            border: none;
+            color: var(--midnight);
+            font-weight: 600;
+        }
+
+        .avatar-btn.upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(107, 184, 201, 0.3);
+        }
+
+        .avatar-btn.remove {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+
+        .avatar-btn.remove:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .avatar-btn.use-emoji {
+            background: rgba(107, 184, 201, 0.15);
+            border: 1px solid rgba(107, 184, 201, 0.3);
+            color: var(--cyan);
+        }
+
+        .avatar-btn.use-emoji:hover {
+            background: rgba(107, 184, 201, 0.25);
+        }
+
+        #avatarInput {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="dashboard-layout">
-        {% include 'dashboard/partials/sidebar.html' with active_page='bot_settings' %}
-        
-        <main class="main-content">
-            <header class="top-header">
-                <h1>إعدادات الوكيل الذكي</h1>
-            </header>
-            
-            <div class="content-area">
-                <div class="settings-container">
-                    <div class="success-message" id="successMessage">
-                        ✅ تم حفظ الإعدادات بنجاح!
-                    </div>
-                    
-                    <!-- إعدادات الهوية -->
-                    <div class="settings-card">
-                        <h2>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                <circle cx="12" cy="7" r="4"/>
-                            </svg>
-                            هوية الوكيل
-                        </h2>
-                        
-                        <form id="botSettingsForm">
-                            {% csrf_token %}
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>اسم الوكيل</label>
-                                    <input type="text" name="bot_name" id="botName" 
-                                           value="{{ agent.bot_name }}" 
-                                           placeholder="مثال: سعود">
-                                    <div class="hint">الاسم الذي سيظهر للعملاء في الشات</div>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label>وصف الوكيل</label>
-                                    <input type="text" name="bot_title" id="botTitle" 
-                                           value="{{ agent.bot_title }}" 
-                                           placeholder="مثال: مساعدك العقاري">
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>شخصية الوكيل</label>
-                                <textarea name="bot_personality" id="botPersonality" 
-                                          placeholder="مثال: أنا سعود، مساعدك في شركة روشن العقارية. أساعدك في العثور على عقارك المثالي.">{{ agent.bot_personality }}</textarea>
-                                <div class="hint">كيف يعرّف الوكيل عن نفسه للعملاء</div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>رسالة الترحيب</label>
-                                <textarea name="bot_welcome_message" id="botWelcome" 
-                                          placeholder="الرسالة التي تظهر عند بدء المحادثة">{{ agent.bot_welcome_message }}</textarea>
-                            </div>
-                    </div>
-                    
-                    <!-- إعدادات الذكاء الاصطناعي -->
-                    <div class="settings-card">
-                        <h2>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
-                                <path d="M12 2a10 10 0 0 1 10 10"/>
-                                <circle cx="12" cy="12" r="6"/>
-                            </svg>
-                            تعليمات الوكيل الذكي (System Prompt)
-                        </h2>
-                        
-                        <div class="form-group">
-                            <label>تعليمات مخصصة للوكيل</label>
-                            <textarea name="bot_system_prompt" id="botSystemPrompt" 
-                                      style="min-height: 200px;"
-                                      placeholder="أضف تعليمات مخصصة للوكيل الذكي...
+    <!-- Premium Background Elements -->
+    <div class="premium-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="grid-pattern"></div>
+    <div class="vignette"></div>
 
-مثال:
-- إذا أبدى العميل اهتماماً بعقار، اسأله عن رقم جواله للتواصل
-- ركز على عقارات منطقة الرياض
-- لا تذكر أسعار المنافسين
-- اعرض مميزات العقار بشكل جذاب">{{ agent.bot_system_prompt }}</textarea>
-                            <div class="hint">
-                                هذه التعليمات ستوجه الوكيل الذكي في كيفية التعامل مع العملاء. 
-                                الوكيل سيتبع هذه التعليمات بالإضافة للتعليمات الأساسية.
-                            </div>
-                        </div>
+    <script>
+        // Django handles authentication
+        function logout() {
+            window.location.href = '/auth/logout/';
+        }
+    </script>
+
+    <div class="success-toast" id="successToast">✓ تم حفظ الإعدادات بنجاح!</div>
+
+    <header class="header">
+        <div class="header-right">
+            <a href="/dashboard/" class="logo">
+                <img src="/static/logo-full.png" alt="Inify" style="height: 32px;">
+            </a>
+            <nav class="nav-links">
+                <a href="/dashboard/">لوحة التحكم</a>
+                <a href="/dashboard/properties/">العقارات</a>
+                <a href="/dashboard/conversations/">المحادثات</a>
+                <a href="/dashboard/bot-settings/" class="active">الإعدادات</a>
+                <a href="/profile/">حسابي</a>
+            </nav>
+        </div>
+        <button onclick="logout()" class="header-btn logout">تسجيل الخروج</button>
+    </header>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1>⚙️ الإعدادات</h1>
+            <p>إدارة إعدادات حسابك والوكيل الذكي والمنصات المتصلة</p>
+        </div>
+
+        <div class="settings-grid">
+            <div class="settings-main">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('general')">الإعدادات العامة</button>
+                    <button class="tab" onclick="switchTab('platforms')">ربط المنصات</button>
+                    <button class="tab" onclick="switchTab('context')">السياق والمعلومات</button>
+                    <button class="tab" onclick="switchTab('appearance')">المظهر</button>
+                    <button class="tab" onclick="switchTab('whatsapp')">واتساب بزنس</button>
+                </div>
+
+                <!-- General Settings -->
+                <div class="tab-content active" id="generalTab">
+                    <div class="settings-section">
+                        <h3 class="section-title">🤖 معلومات الوكيل</h3>
                         
                         <div class="form-group">
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" name="bot_collect_leads" id="botCollectLeads" 
-                                       {% if agent.bot_collect_leads %}checked{% endif %}
-                                       style="width: 20px; height: 20px;">
-                                <span>جمع بيانات العملاء المهتمين تلقائياً</span>
-                            </label>
-                            <div class="hint">
-                                عند التفعيل، سيقوم الوكيل بطلب رقم الجوال من العملاء المهتمين وإضافتهم تلقائياً لقائمة العملاء المحتملين
-                            </div>
+                            <label>اسم الوكيل</label>
+                            <input type="text" id="agentName" placeholder="مثال: سارة - مستشارتك العقارية">
+                            <p class="form-hint">الاسم الذي سيظهر للعملاء في نافذة المحادثة</p>
                         </div>
-                        
-                        <div class="ai-tips" style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 12px; padding: 16px; margin-top: 16px;">
-                            <h4 style="color: #0369a1; margin: 0 0 12px 0; font-size: 14px;">💡 نصائح لتعليمات فعّالة:</h4>
-                            <ul style="margin: 0; padding-right: 20px; color: #0369a1; font-size: 13px; line-height: 1.8;">
-                                <li>حدد متى يجب على الوكيل طلب رقم الجوال</li>
-                                <li>اذكر المميزات التي يجب التركيز عليها</li>
-                                <li>حدد أسلوب الرد (رسمي، ودود، مختصر)</li>
-                                <li>اذكر المعلومات التي لا يجب مشاركتها</li>
-                            </ul>
+
+                        <div class="form-group">
+                            <label>الوصف المختصر</label>
+                            <input type="text" id="agentDescription" placeholder="مثال: وكيل عقاري ذكي متخصص في السوق السعودي">
+                        </div>
+
+                        <div class="form-group">
+                            <label>رسالة الترحيب</label>
+                            <textarea id="welcomeMessage" placeholder="مرحباً! أنا وكيلك العقاري الذكي. كيف يمكنني مساعدتك اليوم؟"></textarea>
+                            <p class="form-hint">الرسالة التي تظهر عند بدء المحادثة</p>
                         </div>
                     </div>
-                    
-                    <!-- إعدادات المظهر -->
-                    <div class="settings-card">
-                        <h2>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 16v-4"/>
-                                <path d="M12 8h.01"/>
-                            </svg>
-                            مظهر الشات
-                        </h2>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>لون الوكيل</label>
-                                    <div class="color-picker-wrapper">
-                                        <input type="color" id="botColorPicker" value="{{ agent.bot_color|default:'#000000' }}">
-                                        <input type="text" name="bot_color" id="botColor" 
-                                               value="{{ agent.bot_color|default:'#000000' }}" 
-                                               placeholder="#000000">
-                                    </div>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label>لغة الوكيل</label>
-                                    <select name="bot_language" id="botLanguage">
-                                        <option value="ar" {% if agent.bot_language == 'ar' %}selected{% endif %}>العربية</option>
-                                        <option value="en" {% if agent.bot_language == 'en' %}selected{% endif %}>English</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <!-- معاينة -->
-                            <div class="preview-section">
-                                <h3>معاينة الشات</h3>
-                                <div class="chat-preview">
-                                    <div class="chat-preview-header" id="previewHeader" style="background: {{ agent.bot_color|default:'#000000' }}">
-                                        <div class="avatar">
-                                            <svg viewBox="0 0 100 100" width="24" height="24" fill="none">
-                                                <circle cx="30" cy="28" r="18" stroke="#000" stroke-width="7" fill="none"/>
-                                                <circle cx="30" cy="28" r="5" fill="#000"/>
-                                                <line x1="44" y1="42" x2="60" y2="62" stroke="#000" stroke-width="7" stroke-linecap="round"/>
-                                                <circle cx="66" cy="70" r="12" fill="#000"/>
-                                            </svg>
-                                        </div>
-                                        <div class="info">
-                                            <h4 id="previewName">{{ agent.bot_name|default:'نيورا' }}</h4>
-                                            <span id="previewTitle">{{ agent.bot_title|default:'مساعدك العقاري الذكي' }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="chat-preview-body">
-                                        <div class="chat-preview-message" id="previewMessage">
-                                            {{ agent.bot_welcome_message|default:'مرحباً! 👋 كيف يمكنني مساعدتك؟' }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div style="margin-top: 24px;">
-                                <button type="submit" class="btn-save" id="saveBtn">
-                                    حفظ الإعدادات
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                    
-                    <!-- كود التضمين -->
-                    <div class="settings-card">
-                        <h2>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="16 18 22 12 16 6"/>
-                                <polyline points="8 6 2 12 8 18"/>
-                            </svg>
-                            كود تضمين الشات
-                        </h2>
+
+                    <div class="settings-section">
+                        <h3 class="section-title">🤖 نموذج الذكاء الاصطناعي</h3>
                         
-                        <p style="color: #666; margin-bottom: 16px;">
-                            انسخ هذا الكود وألصقه في موقعك لإضافة الشات بوت
-                        </p>
-                        
-                        <div class="embed-code">
-                            <button class="copy-btn" onclick="copyEmbedCode()">نسخ</button>
-                            <code id="embedCode">&lt;script&gt;
-  window.NEWRA_CHAT_CONFIG = {
-    agentId: '{{ agent.id }}',
-    apiUrl: '{{ request.scheme }}://{{ request.get_host }}/api/v1/chat/public/'
-  };
-&lt;/script&gt;
-&lt;script src="{{ request.scheme }}://{{ request.get_host }}{% static 'js/chat-widget.js' %}"&gt;&lt;/script&gt;
-&lt;link rel="stylesheet" href="{{ request.scheme }}://{{ request.get_host }}{% static 'css/chat.css' %}"&gt;</code>
+                        <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(126, 232, 250, 0.05) 100%); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 16px; padding: 24px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                                <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #00D4FF 0%, #7EE8FA 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+                                    <span style="font-size: 28px;">🏠</span>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 22px; font-weight: 700; color: #00D4FF; margin: 0 0 4px 0; font-family: 'Chillax', sans-serif;">Inify</h4>
+                                    <p style="font-size: 14px; color: var(--text-muted); margin: 0;">نموذج ذكاء اصطناعي عقاري مخصص</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                                <span style="background: rgba(0, 212, 255, 0.15); color: #7EE8FA; padding: 6px 14px; border-radius: 20px; font-size: 13px;">✨ مُحسّن للسوق العقاري</span>
+                                <span style="background: rgba(34, 197, 94, 0.15); color: #4ade80; padding: 6px 14px; border-radius: 20px; font-size: 13px;">✅ مُفعّل تلقائياً</span>
+                                <span style="background: rgba(168, 85, 247, 0.15); color: #c084fc; padding: 6px 14px; border-radius: 20px; font-size: 13px;">🇸🇦 يدعم اللهجة السعودية</span>
+                            </div>
                         </div>
+
+                        <p style="font-size: 14px; color: var(--text-muted); line-height: 1.8; margin: 0;">نموذج Inify مُدرّب خصيصاً للتسويق العقاري في السوق السعودي. يفهم احتياجات العملاء ويقدم توصيات ذكية للعقارات المناسبة.</p>
+                    </div>
+                </div>
+
+                <!-- Platforms Settings -->
+                <div class="tab-content" id="platformsTab">
+                    <div class="settings-section">
+                        <h3 class="section-title">🔗 ربط حسابات المنصات</h3>
+                        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">اربط حساباتك على المنصات العقارية ومواقع التواصل لنشر عقاراتك تلقائياً</p>
                         
-                        <div style="margin-top: 16px;">
-                            <a href="/chat/demo/?agent_id={{ agent.id }}" target="_blank" 
-                               style="color: #000; font-weight: 600;">
-                                🔗 معاينة الشات في صفحة منفصلة
-                            </a>
+                        <div class="platforms-connect-list">
+                            <!-- Bayut -->
+                            <div class="platform-connect-item" id="bayutConnect">
+                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #00a651, #008f45);">🏠</div>
+                                <div class="platform-connect-info">
+                                    <div class="platform-connect-name">Bayut</div>
+                                    <div class="platform-connect-desc">منصة عقارية رائدة في الخليج</div>
+                                </div>
+                                <div class="platform-connect-status" id="bayutConnectStatus">غير متصل</div>
+                                <button class="platform-connect-btn" onclick="connectPlatform('bayut')">ربط</button>
+                            </div>
+
+                            <!-- Haraj -->
+                            <div class="platform-connect-item" id="harajConnect">
+                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #1da1f2, #0d8ecf);">🛒</div>
+                                <div class="platform-connect-info">
+                                    <div class="platform-connect-name">حراج</div>
+                                    <div class="platform-connect-desc">أكبر سوق إلكتروني سعودي</div>
+                                </div>
+                                <div class="platform-connect-status" id="harajConnectStatus">غير متصل</div>
+                                <button class="platform-connect-btn" onclick="connectPlatform('haraj')">ربط</button>
+                            </div>
+
+                            <!-- Aqar -->
+                            <div class="platform-connect-item" id="aqarConnect">
+                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">🏢</div>
+                                <div class="platform-connect-info">
+                                    <div class="platform-connect-name">عقار</div>
+                                    <div class="platform-connect-desc">منصة عقارية سعودية</div>
+                                </div>
+                                <div class="platform-connect-status" id="aqarConnectStatus">غير متصل</div>
+                                <button class="platform-connect-btn" onclick="connectPlatform('aqar')">ربط</button>
+                            </div>
+
+                            <!-- Twitter/X -->
+                            <div class="platform-connect-item" id="twitterConnect">
+                                <div class="platform-connect-logo" style="background: #000;">𝕏</div>
+                                <div class="platform-connect-info">
+                                    <div class="platform-connect-name">X (تويتر)</div>
+                                    <div class="platform-connect-desc">انشر عقاراتك على تويتر</div>
+                                </div>
+                                <div class="platform-connect-status" id="twitterConnectStatus">غير متصل</div>
+                                <button class="platform-connect-btn" onclick="connectPlatform('twitter')">ربط</button>
+                            </div>
+
+                            <!-- Instagram -->
+                            <div class="platform-connect-item" id="instagramConnect">
+                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);">📷</div>
+                                <div class="platform-connect-info">
+                                    <div class="platform-connect-name">انستقرام</div>
+                                    <div class="platform-connect-desc">انشر صور عقاراتك</div>
+                                </div>
+                                <div class="platform-connect-status" id="instagramConnectStatus">غير متصل</div>
+                                <button class="platform-connect-btn" onclick="connectPlatform('instagram')">ربط</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section" style="margin-top: 24px;">
+                        <h3 class="section-title">📊 حالة الاتصال</h3>
+                        <div class="connection-stats">
+                            <div class="conn-stat">
+                                <span class="conn-stat-number" id="connectedCount">0</span>
+                                <span class="conn-stat-label">منصات متصلة</span>
+                            </div>
+                            <div class="conn-stat">
+                                <span class="conn-stat-number">5</span>
+                                <span class="conn-stat-label">منصات متاحة</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Context Settings -->
+                <div class="tab-content" id="contextTab">
+                    <div class="settings-section">
+                        <h3 class="section-title">📚 السياسات العامة</h3>
+                        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">أضف سياسات شركتك التي يجب على الوكيل الالتزام بها</p>
+                        
+                        <div class="form-group">
+                            <label>سياسة التسعير والدفع</label>
+                            <textarea id="pricingPolicy" placeholder="مثال:
+- الأسعار قابلة للتفاوض بنسبة 5-10%
+- الدفع نقداً أو بالتقسيط
+- عمولة الوساطة 2.5%"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>سياسة المعاينة والحجز</label>
+                            <textarea id="viewingPolicy" placeholder="مثال:
+- المعاينة مجانية وبدون التزام
+- يجب حجز موعد مسبق
+- الحجز يتطلب عربون 5000 ريال"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="section-title">🏢 معلومات الشركة</h3>
+                        
+                        <div class="form-group">
+                            <label>نبذة عن الشركة</label>
+                            <textarea id="companyInfo" placeholder="مثال:
+- شركة عقارية مرخصة من الهيئة العامة للعقار
+- خبرة 10 سنوات في السوق السعودي
+- متخصصون في العقارات السكنية والتجارية"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>مناطق العمل</label>
+                            <textarea id="workAreas" placeholder="مثال:
+- الرياض (شمال، شرق، غرب)
+- جدة
+- الدمام والخبر"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="section-title">📦 الخدمات والمنتجات</h3>
+                        
+                        <div class="form-group">
+                            <label>الخدمات المقدمة</label>
+                            <textarea id="services" placeholder="مثال:
+- بيع وشراء العقارات
+- تأجير الشقق والفلل
+- إدارة الأملاك
+- التقييم العقاري"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>أنواع العقارات المتوفرة</label>
+                            <textarea id="propertyTypes" placeholder="مثال:
+- شقق سكنية (غرفة - 5 غرف)
+- فلل مستقلة ودوبلكس
+- مكاتب تجارية
+- أراضي سكنية وتجارية"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="section-title">📞 معلومات التواصل</h3>
+                        
+                        <div class="form-group">
+                            <label>بيانات التواصل</label>
+                            <textarea id="contactInfo" placeholder="مثال:
+- رقم الجوال: 05XXXXXXXX
+- البريد: info@company.com
+- العنوان: الرياض، حي العليا
+- أوقات العمل: 9ص - 9م"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="section-title">⚡ إعدادات RAG</h3>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enableRAG" checked style="margin-left: 8px;">
+                                تفعيل RAG (الربط بقاعدة العقارات)
+                            </label>
+                            <p class="form-hint">عند التفعيل، سيتمكن الوكيل من البحث في عقاراتك والإجابة بناءً عليها</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label>عدد النتائج للبحث</label>
+                            <select id="ragResults">
+                                <option value="3">3 عقارات</option>
+                                <option value="5" selected>5 عقارات</option>
+                                <option value="10">10 عقارات</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appearance Settings -->
+                <div class="tab-content" id="appearanceTab">
+                    <div class="settings-section">
+                        <h3 class="section-title">🎨 ألوان الشات بوت</h3>
+                        
+                        <div class="color-picker-group">
+                            <div class="color-option">
+                                <input type="color" id="primaryColor" value="#6BB8C9">
+                                <span>اللون الأساسي</span>
+                            </div>
+                            <div class="color-option">
+                                <input type="color" id="secondaryColor" value="#1E3A5F">
+                                <span>اللون الثانوي</span>
+                            </div>
+                            <div class="color-option">
+                                <input type="color" id="bgColor" value="#0A1628">
+                                <span>لون الخلفية</span>
+                            </div>
+                            <div class="color-option">
+                                <input type="color" id="textColor" value="#F8F8F8">
+                                <span>لون النص</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="section-title">🖼️ صورة الوكيل</h3>
+                        
+                        <div class="avatar-upload-section">
+                            <div class="avatar-preview" id="avatarPreview">
+                                <span class="emoji-icon" id="avatarEmoji">🤖</span>
+                            </div>
+                            <div class="avatar-upload-controls">
+                                <h4>صورة الوكيل الشخصية</h4>
+                                <p>ارفع صورة للوكيل أو استخدم أيقونة. الحجم المثالي: 200×200 بكسل</p>
+                                <div class="avatar-buttons">
+                                    <input type="file" id="avatarInput" accept="image/*">
+                                    <button type="button" class="avatar-btn upload" onclick="document.getElementById('avatarInput').click()">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                            <polyline points="17 8 12 3 7 8"/>
+                                            <line x1="12" y1="3" x2="12" y2="15"/>
+                                        </svg>
+                                        رفع صورة
+                                    </button>
+                                    <button type="button" class="avatar-btn remove" id="removeAvatarBtn" onclick="removeAvatar()" style="display: none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="3 6 5 6 21 6"/>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                        </svg>
+                                        حذف الصورة
+                                    </button>
+                                    <button type="button" class="avatar-btn use-emoji" onclick="toggleEmojiSelector()">
+                                        😀 اختر أيقونة
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="emojiSelectorGroup" style="margin-top: 15px; display: none;">
+                            <label>اختر أيقونة للوكيل</label>
+                            <select id="agentIcon" onchange="updateAvatarEmoji()">
+                                <option value="🏠">🏠 منزل</option>
+                                <option value="🤖" selected>🤖 روبوت</option>
+                                <option value="👤">👤 شخص</option>
+                                <option value="💬">💬 محادثة</option>
+                                <option value="🏢">🏢 مبنى</option>
+                                <option value="⭐">⭐ نجمة</option>
+                                <option value="🏡">🏡 بيت</option>
+                                <option value="🏘️">🏘️ حي سكني</option>
+                                <option value="🌟">🌟 نجمة لامعة</option>
+                                <option value="💼">💼 حقيبة عمل</option>
+                                <option value="🎯">🎯 هدف</option>
+                                <option value="✨">✨ بريق</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="section-title">⚙️ الشكل والموضع</h3>
+
+                        <div class="form-group">
+                            <label>موضع الشات بوت</label>
+                            <select id="widgetPosition">
+                                <option value="bottom-right">أسفل يمين</option>
+                                <option value="bottom-left" selected>أسفل يسار</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>حجم نافذة المحادثة</label>
+                            <select id="widgetSize">
+                                <option value="small">صغير</option>
+                                <option value="medium" selected>متوسط</option>
+                                <option value="large">كبير</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WhatsApp Business Settings -->
+                <div class="tab-content" id="whatsappTab">
+                    <div class="settings-section">
+                        <h3 class="section-title">📱 تفعيل واتساب بزنس</h3>
+                        
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="enableWhatsApp" class="toggle-input">
+                                <span class="toggle-switch"></span>
+                                <span>تفعيل الوكيل على واتساب بزنس</span>
+                            </label>
+                            <p class="form-hint">عند التفعيل، سيتمكن العملاء من التحدث مع الوكيل عبر واتساب</p>
+                        </div>
+
+                        <div id="whatsappSettings" style="display: none;">
+                            <div class="form-group">
+                                <label>رقم واتساب بزنس</label>
+                                <input type="tel" id="whatsappNumber" placeholder="966512345678" dir="ltr" style="text-align: left;">
+                                <p class="form-hint">أدخل الرقم بالصيغة الدولية بدون + (مثال: 966512345678)</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label>معرف حساب واتساب بزنس (WABA ID)</label>
+                                <input type="text" id="wabaId" placeholder="أدخل WABA ID من Meta Business" dir="ltr" style="text-align: left;">
+                            </div>
+
+                            <div class="form-group">
+                                <label>رمز الوصول (Access Token)</label>
+                                <input type="password" id="whatsappToken" placeholder="أدخل Access Token من Meta" dir="ltr" style="text-align: left;">
+                                <p class="form-hint">يمكنك الحصول عليه من <a href="https://business.facebook.com/settings/whatsapp-business-accounts" target="_blank" style="color: var(--cyan);">Meta Business Manager</a></p>
+                            </div>
+
+                            <div class="form-group">
+                                <label>معرف رقم الهاتف (Phone Number ID)</label>
+                                <input type="text" id="phoneNumberId" placeholder="أدخل Phone Number ID" dir="ltr" style="text-align: left;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section" id="whatsappGuide" style="display: none;">
+                        <h3 class="section-title">📋 خطوات الربط مع Meta</h3>
+                        
+                        <div class="guide-steps">
+                            <div class="guide-step">
+                                <span class="step-number">1</span>
+                                <div class="step-content">
+                                    <strong>إنشاء تطبيق Meta</strong>
+                                    <p>اذهب إلى <a href="https://developers.facebook.com/apps/" target="_blank" style="color: var(--cyan);">Meta for Developers</a> وأنشئ تطبيقاً جديداً</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <span class="step-number">2</span>
+                                <div class="step-content">
+                                    <strong>إضافة WhatsApp</strong>
+                                    <p>أضف منتج WhatsApp إلى تطبيقك</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <span class="step-number">3</span>
+                                <div class="step-content">
+                                    <strong>ربط رقم الهاتف</strong>
+                                    <p>اربط رقم واتساب بزنس الخاص بك</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <span class="step-number">4</span>
+                                <div class="step-content">
+                                    <strong>نسخ البيانات</strong>
+                                    <p>انسخ WABA ID و Phone Number ID و Access Token</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <span class="step-number">5</span>
+                                <div class="step-content">
+                                    <strong>إعداد Webhook</strong>
+                                    <p>أضف رابط Webhook التالي في إعدادات التطبيق:</p>
+                                    <code class="webhook-url" id="webhookUrl">https://newra.ai/api/whatsapp/webhook</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="testWhatsAppConnection()" style="margin-top: 20px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                            اختبار الاتصال
+                        </button>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="section-title">💡 مميزات واتساب بزنس</h3>
+                        <div class="features-grid">
+                            <div class="feature-item-box">
+                                <span class="feature-icon">🤖</span>
+                                <strong>رد تلقائي 24/7</strong>
+                                <p>الوكيل يرد على العملاء في أي وقت</p>
+                            </div>
+                            <div class="feature-item-box">
+                                <span class="feature-icon">🏠</span>
+                                <strong>عرض العقارات</strong>
+                                <p>إرسال صور ومعلومات العقارات</p>
+                            </div>
+                            <div class="feature-item-box">
+                                <span class="feature-icon">📊</span>
+                                <strong>جمع البيانات</strong>
+                                <p>حفظ بيانات العملاء تلقائياً</p>
+                            </div>
+                            <div class="feature-item-box">
+                                <span class="feature-icon">📅</span>
+                                <strong>جدولة المواعيد</strong>
+                                <p>حجز مواعيد المعاينة</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="save-actions">
+                    <button class="btn btn-secondary" onclick="resetSettings()">إعادة تعيين</button>
+                    <button class="btn btn-primary" onclick="saveSettings()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        حفظ الإعدادات
+                    </button>
+                </div>
             </div>
-        </main>
-    </div>
-    
+
+            <!-- Preview Section -->
+            <div class="preview-section">
+                <div class="preview-card">
+                    <h4 class="preview-title">معاينة الشات بوت</h4>
+                    <div class="chat-preview" id="chatPreview">
+                        <div class="chat-preview-header" id="previewHeader">
+                            <div class="chat-preview-avatar" id="previewAvatar">🤖</div>
+                            <div class="chat-preview-info">
+                                <h4 id="previewName">Inify</h4>
+                                <span>متصل الآن</span>
+                            </div>
+                        </div>
+                        <div class="chat-preview-messages">
+                            <div class="preview-message bot" id="previewWelcome">مرحباً! كيف يمكنني مساعدتك؟</div>
+                            <div class="preview-message user" id="previewUserMsg">أبحث عن شقة في الرياض</div>
+                        </div>
+                        <div class="chat-preview-input">
+                            <input type="text" placeholder="اكتب رسالتك...">
+                            <button id="previewSendBtn">إرسال</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="embed-section">
+                    <h4 class="embed-title">🔗 رابط الشات بوت المستقل</h4>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">شارك هذا الرابط مع عملائك أو ضمّنه في موقعك</p>
+                    <div class="embed-code" id="chatbotLink" style="font-size: 13px; word-break: break-all;"></div>
+                    <div style="display: flex; gap: 10px; margin-top: 12px;">
+                        <button class="btn btn-primary copy-btn" onclick="copyChatbotLink()" style="flex: 1;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            نسخ الرابط
+                        </button>
+                        <button class="btn btn-secondary" onclick="openChatbotLink()" style="flex: 1;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                <polyline points="15 3 21 3 21 9"/>
+                                <line x1="10" y1="14" x2="21" y2="3"/>
+                            </svg>
+                            فتح
+                        </button>
+                    </div>
+                </div>
+
+                <div class="embed-section" style="margin-top: 20px;">
+                    <h4 class="embed-title">📋 كود التضمين (iframe)</h4>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">أضف هذا الكود في موقعك لتضمين الشات بوت</p>
+                    <div class="embed-code" id="iframeCode" style="font-size: 12px;"></div>
+                    <button class="btn btn-primary copy-btn" onclick="copyIframeCode()" style="margin-top: 12px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        نسخ الكود
+                    </button>
+                </div>
+
+                <div class="embed-section" style="margin-top: 20px;">
+                    <h4 class="embed-title">📱 كود Widget</h4>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">أضف زر شات عائم في موقعك</p>
+                    <div class="embed-code" id="embedCode">&lt;script src="https://newra.ai/widget.js" 
+  data-agent-id="YOUR_AGENT_ID"
+  data-position="bottom-left"&gt;
+&lt;/script&gt;</div>
+                    <button class="btn btn-primary copy-btn" onclick="copyEmbedCode()" style="margin-top: 12px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        نسخ الكود
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
     <script>
-        // Color picker sync
-        const colorPicker = document.getElementById('botColorPicker');
-        const colorInput = document.getElementById('botColor');
-        const previewHeader = document.getElementById('previewHeader');
+        // Django handles authentication
         
-        colorPicker.addEventListener('input', function() {
-            colorInput.value = this.value;
-            previewHeader.style.background = this.value;
-        });
-        
-        colorInput.addEventListener('input', function() {
-            colorPicker.value = this.value;
-            previewHeader.style.background = this.value;
-        });
-        
-        // Live preview
-        document.getElementById('botName').addEventListener('input', function() {
-            document.getElementById('previewName').textContent = this.value || 'نيورا';
-        });
-        
-        document.getElementById('botTitle').addEventListener('input', function() {
-            document.getElementById('previewTitle').textContent = this.value || 'مساعدك العقاري الذكي';
-        });
-        
-        document.getElementById('botWelcome').addEventListener('input', function() {
-            document.getElementById('previewMessage').textContent = this.value || 'مرحباً! 👋 كيف يمكنني مساعدتك؟';
-        });
-        
-        // Form submission
-        document.getElementById('botSettingsForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        // Get agent ID from Django context
+        const agentId = '{{ agent_id|default:"demo" }}';
+
+        // Load saved settings - خاصة بالمستخدم
+        const defaultSettings = {
+            agentName: 'Inify',
+            agentDescription: 'وكيل عقاري ذكي',
+            welcomeMessage: 'مرحباً! 👋 أنا وكيلك العقاري الذكي. كيف يمكنني مساعدتك اليوم؟',
+            model: 'gemini-3-pro-preview',
+            systemPrompt: `أنت وكيل عقاري ذكي اسمك Inify. مهمتك مساعدة العملاء في:
+- البحث عن العقارات المناسبة لاحتياجاتهم
+- الإجابة عن استفساراتهم حول العقارات المتاحة
+- تقديم النصائح العقارية المفيدة
+- جدولة مواعيد المعاينة
+
+قواعد مهمة:
+- كن ودوداً ومهنياً دائماً
+- قدم معلومات دقيقة فقط من العقارات المتاحة
+- إذا لم تجد عقاراً مناسباً، اقترح بدائل
+- اسأل عن الميزانية والموقع المفضل`,
+            additionalContext: '',
+            enableRAG: true,
+            ragResults: '5',
+            primaryColor: '#6BB8C9',
+            secondaryColor: '#1E3A5F',
+            bgColor: '#0A1628',
+            textColor: '#F8F8F8',
+            agentIcon: '🤖',
+            widgetPosition: 'bottom-left',
+            widgetSize: 'medium',
+            // WhatsApp Business
+            enableWhatsApp: false,
+            whatsappNumber: '',
+            wabaId: '',
+            whatsappToken: '',
+            phoneNumberId: ''
+        };
+
+        // تحميل الإعدادات الخاصة بالمستخدم
+        let savedSettings = JSON.parse(localStorage.getItem('newra_agent_settings_' + agentId) || '{}');
+        let settings = Object.keys(savedSettings).length > 0 ? savedSettings : defaultSettings;
+
+        // Load settings into form
+        function loadSettings() {
+            document.getElementById('agentName').value = settings.agentName || '';
+            document.getElementById('agentDescription').value = settings.agentDescription || '';
+            document.getElementById('welcomeMessage').value = settings.welcomeMessage || '';
             
-            const saveBtn = document.getElementById('saveBtn');
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'جاري الحفظ...';
+            // Context settings
+            document.getElementById('pricingPolicy').value = settings.pricingPolicy || '';
+            document.getElementById('viewingPolicy').value = settings.viewingPolicy || '';
+            document.getElementById('companyInfo').value = settings.companyInfo || '';
+            document.getElementById('workAreas').value = settings.workAreas || '';
+            document.getElementById('services').value = settings.services || '';
+            document.getElementById('propertyTypes').value = settings.propertyTypes || '';
+            document.getElementById('contactInfo').value = settings.contactInfo || '';
             
-            const formData = new FormData(this);
+            // RAG settings
+            document.getElementById('enableRAG').checked = settings.enableRAG !== false;
+            document.getElementById('ragResults').value = settings.ragResults || '5';
             
-            try {
-                const response = await fetch('/dashboard/bot-settings/', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-                    }
-                });
-                
-                if (response.ok) {
-                    document.getElementById('successMessage').classList.add('show');
-                    setTimeout(() => {
-                        document.getElementById('successMessage').classList.remove('show');
-                    }, 3000);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('حدث خطأ في حفظ الإعدادات');
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'حفظ الإعدادات';
+            // Appearance
+            document.getElementById('primaryColor').value = settings.primaryColor || '#6BB8C9';
+            document.getElementById('secondaryColor').value = settings.secondaryColor || '#1E3A5F';
+            document.getElementById('bgColor').value = settings.bgColor || '#0A1628';
+            document.getElementById('textColor').value = settings.textColor || '#F8F8F8';
+            document.getElementById('agentIcon').value = settings.agentIcon || '🤖';
+            document.getElementById('widgetPosition').value = settings.widgetPosition || 'bottom-right';
+            document.getElementById('widgetSize').value = settings.widgetSize || 'medium';
+            
+            // Load avatar
+            loadAvatarPreview();
+            
+            // WhatsApp settings
+            document.getElementById('enableWhatsApp').checked = settings.enableWhatsApp || false;
+            document.getElementById('whatsappNumber').value = settings.whatsappNumber || '';
+            document.getElementById('wabaId').value = settings.wabaId || '';
+            document.getElementById('whatsappToken').value = settings.whatsappToken || '';
+            document.getElementById('phoneNumberId').value = settings.phoneNumberId || '';
+            toggleWhatsAppSettings();
+            
+            updatePreview();
+            updateEmbedCode();
+        }
+
+        // Avatar upload handling
+        document.getElementById('avatarInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('يرجى اختيار ملف صورة صالح');
+                return;
             }
+            
+            // Validate file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('حجم الصورة يجب أن يكون أقل من 2 ميجابايت');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imageData = event.target.result;
+                
+                // Save to settings
+                settings.agentAvatar = imageData;
+                settings.useAvatarImage = true;
+                
+                // Update preview
+                updateAvatarPreview(imageData);
+                
+                // Show remove button
+                document.getElementById('removeAvatarBtn').style.display = 'flex';
+                
+                // Hide emoji selector
+                document.getElementById('emojiSelectorGroup').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
         });
-        
+
+        // Load avatar preview
+        function loadAvatarPreview() {
+            const preview = document.getElementById('avatarPreview');
+            const emoji = document.getElementById('avatarEmoji');
+            const removeBtn = document.getElementById('removeAvatarBtn');
+            
+            if (settings.useAvatarImage && settings.agentAvatar) {
+                // Show image
+                preview.innerHTML = `<img src="${settings.agentAvatar}" alt="صورة الوكيل">`;
+                removeBtn.style.display = 'flex';
+            } else {
+                // Show emoji
+                const icon = settings.agentIcon || '🤖';
+                preview.innerHTML = `<span class="emoji-icon" id="avatarEmoji">${icon}</span>`;
+                removeBtn.style.display = 'none';
+            }
+        }
+
+        // Update avatar preview with image
+        function updateAvatarPreview(imageData) {
+            const preview = document.getElementById('avatarPreview');
+            preview.innerHTML = `<img src="${imageData}" alt="صورة الوكيل">`;
+        }
+
+        // Remove avatar
+        function removeAvatar() {
+            if (confirm('هل أنت متأكد من حذف صورة الوكيل؟')) {
+                delete settings.agentAvatar;
+                settings.useAvatarImage = false;
+                
+                // Reset preview to emoji
+                const icon = document.getElementById('agentIcon').value || '🤖';
+                const preview = document.getElementById('avatarPreview');
+                preview.innerHTML = `<span class="emoji-icon" id="avatarEmoji">${icon}</span>`;
+                
+                // Hide remove button
+                document.getElementById('removeAvatarBtn').style.display = 'none';
+                
+                // Clear file input
+                document.getElementById('avatarInput').value = '';
+            }
+        }
+
+        // Toggle emoji selector
+        function toggleEmojiSelector() {
+            const group = document.getElementById('emojiSelectorGroup');
+            group.style.display = group.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Update avatar emoji
+        function updateAvatarEmoji() {
+            const icon = document.getElementById('agentIcon').value;
+            
+            // Only update if not using image
+            if (!settings.useAvatarImage) {
+                const preview = document.getElementById('avatarPreview');
+                preview.innerHTML = `<span class="emoji-icon" id="avatarEmoji">${icon}</span>`;
+            }
+            
+            settings.agentIcon = icon;
+        }
+
+        // Toggle WhatsApp settings visibility
+        function toggleWhatsAppSettings() {
+            const enabled = document.getElementById('enableWhatsApp').checked;
+            document.getElementById('whatsappSettings').style.display = enabled ? 'block' : 'none';
+            document.getElementById('whatsappGuide').style.display = enabled ? 'block' : 'none';
+        }
+
+        // Add event listener for WhatsApp toggle
+        document.getElementById('enableWhatsApp').addEventListener('change', toggleWhatsAppSettings);
+
+        // Test WhatsApp connection
+        function testWhatsAppConnection() {
+            const token = document.getElementById('whatsappToken').value;
+            const phoneId = document.getElementById('phoneNumberId').value;
+            
+            if (!token || !phoneId) {
+                alert('يرجى إدخال Access Token و Phone Number ID أولاً');
+                return;
+            }
+            
+            // Simulate connection test
+            alert('جاري اختبار الاتصال...\n\nملاحظة: هذه الميزة تتطلب خادم backend للعمل بشكل كامل. سيتم تفعيلها قريباً.');
+        }
+
+        // Save settings
+        function saveSettings() {
+            settings = {
+                agentName: document.getElementById('agentName').value || defaultSettings.agentName,
+                agentDescription: document.getElementById('agentDescription').value,
+                welcomeMessage: document.getElementById('welcomeMessage').value || defaultSettings.welcomeMessage,
+                // AI Provider settings (Invy - internal)
+                aiProvider: 'invy',
+                model: 'invy-realestate-v1',
+                // Context settings
+                pricingPolicy: document.getElementById('pricingPolicy').value,
+                viewingPolicy: document.getElementById('viewingPolicy').value,
+                companyInfo: document.getElementById('companyInfo').value,
+                workAreas: document.getElementById('workAreas').value,
+                services: document.getElementById('services').value,
+                propertyTypes: document.getElementById('propertyTypes').value,
+                contactInfo: document.getElementById('contactInfo').value,
+                // RAG settings
+                enableRAG: document.getElementById('enableRAG').checked,
+                ragResults: document.getElementById('ragResults').value,
+                // Appearance
+                primaryColor: document.getElementById('primaryColor').value,
+                secondaryColor: document.getElementById('secondaryColor').value,
+                bgColor: document.getElementById('bgColor').value,
+                textColor: document.getElementById('textColor').value,
+                agentIcon: document.getElementById('agentIcon').value,
+                agentAvatar: settings.agentAvatar || null,
+                useAvatarImage: settings.useAvatarImage || false,
+                widgetPosition: document.getElementById('widgetPosition').value,
+                widgetSize: document.getElementById('widgetSize').value,
+                // WhatsApp Business
+                enableWhatsApp: document.getElementById('enableWhatsApp').checked,
+                whatsappNumber: document.getElementById('whatsappNumber').value,
+                wabaId: document.getElementById('wabaId').value,
+                whatsappToken: document.getElementById('whatsappToken').value,
+                phoneNumberId: document.getElementById('phoneNumberId').value
+            };
+            
+            // حفظ الإعدادات الخاصة بالمستخدم
+            localStorage.setItem('newra_agent_settings_' + agentId, JSON.stringify(settings));
+            
+            // Show success toast
+            const toast = document.getElementById('successToast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+            
+            updatePreview();
+            updateEmbedCode();
+        }
+
+        // Reset settings
+        function resetSettings() {
+            if (confirm('هل أنت متأكد من إعادة تعيين جميع الإعدادات؟')) {
+                settings = {...defaultSettings};
+                localStorage.setItem('newra_agent_settings_' + agentId, JSON.stringify(settings));
+                loadSettings();
+            }
+        }
+
+        // Update preview
+        function updatePreview() {
+            const primaryColor = document.getElementById('primaryColor').value;
+            const secondaryColor = document.getElementById('secondaryColor').value;
+            const bgColor = document.getElementById('bgColor').value;
+            const textColor = document.getElementById('textColor').value;
+            const agentIcon = document.getElementById('agentIcon').value;
+            const agentName = document.getElementById('agentName').value || 'Inify';
+            const welcomeMessage = document.getElementById('welcomeMessage').value || 'مرحباً! كيف يمكنني مساعدتك؟';
+            
+            const preview = document.getElementById('chatPreview');
+            const header = document.getElementById('previewHeader');
+            const avatar = document.getElementById('previewAvatar');
+            const sendBtn = document.getElementById('previewSendBtn');
+            const userMsg = document.getElementById('previewUserMsg');
+            
+            preview.style.background = bgColor;
+            preview.style.color = textColor;
+            header.style.background = `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})`;
+            avatar.style.background = primaryColor;
+            
+            // Show avatar image or emoji
+            if (settings.useAvatarImage && settings.agentAvatar) {
+                avatar.innerHTML = `<img src="${settings.agentAvatar}" alt="الوكيل" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            } else {
+                avatar.textContent = agentIcon;
+            }
+            
+            sendBtn.style.background = primaryColor;
+            sendBtn.style.color = bgColor;
+            userMsg.style.background = primaryColor;
+            userMsg.style.color = bgColor;
+            
+            document.getElementById('previewName').textContent = agentName;
+            document.getElementById('previewWelcome').textContent = welcomeMessage;
+        }
+
+        // Get chatbot URL
+        function getChatbotUrl() {
+            const baseUrl = window.location.origin;
+            return `${baseUrl}/embed/?agent=${agentId}`;
+        }
+
+        // Update embed code
+        function updateEmbedCode() {
+            const position = document.getElementById('widgetPosition').value;
+            const chatbotUrl = getChatbotUrl();
+            
+            // Update chatbot link
+            document.getElementById('chatbotLink').textContent = chatbotUrl;
+            
+            // Update iframe code
+            const iframeCode = `<iframe 
+  src="${chatbotUrl}"
+  width="400"
+  height="600"
+  frameborder="0"
+  style="border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+</iframe>`;
+            document.getElementById('iframeCode').textContent = iframeCode;
+            
+            // Update widget code
+            const widgetCode = `<script src="https://newra.ai/widget.js" 
+  data-agent-id="${agentId}"
+  data-position="${position}"
+  data-primary-color="${settings.primaryColor}"
+  data-bg-color="${settings.bgColor}">
+<\/script>`;
+            document.getElementById('embedCode').textContent = widgetCode;
+        }
+
+        // Copy chatbot link
+        function copyChatbotLink() {
+            const link = getChatbotUrl();
+            navigator.clipboard.writeText(link).then(() => {
+                showCopyToast('✓ تم نسخ الرابط!');
+            });
+        }
+
+        // Open chatbot link
+        function openChatbotLink() {
+            window.open(getChatbotUrl(), '_blank');
+        }
+
+        // Copy iframe code
+        function copyIframeCode() {
+            const code = document.getElementById('iframeCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                showCopyToast('✓ تم نسخ كود iframe!');
+            });
+        }
+
         // Copy embed code
         function copyEmbedCode() {
             const code = document.getElementById('embedCode').textContent;
             navigator.clipboard.writeText(code).then(() => {
-                const btn = document.querySelector('.copy-btn');
-                btn.textContent = 'تم النسخ!';
-                setTimeout(() => {
-                    btn.textContent = 'نسخ';
-                }, 2000);
+                showCopyToast('✓ تم نسخ الكود!');
             });
         }
+
+        // Show copy toast
+        function showCopyToast(message) {
+            const toast = document.getElementById('successToast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.textContent = '✓ تم حفظ الإعدادات بنجاح!';
+            }, 2000);
+        }
+
+        // Toggle API key visibility
+        function toggleApiKey() {
+            const input = document.getElementById('geminiApiKey');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        // Toggle OpenAI API key visibility
+        function toggleOpenAIKey() {
+            const input = document.getElementById('openaiApiKey');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        // Toggle AI Provider
+        function toggleAIProvider() {
+            const isGemini = document.getElementById('providerGemini').checked;
+            document.getElementById('geminiSettings').style.display = isGemini ? 'block' : 'none';
+            document.getElementById('openaiSettings').style.display = isGemini ? 'none' : 'block';
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+            
+            // Load platforms status when switching to platforms tab
+            if (tab === 'platforms') {
+                loadPlatformsStatus();
+            }
+        }
+
+        // ============ Platforms Connection ============
+        function loadPlatformsStatus() {
+            const platforms = JSON.parse(localStorage.getItem('newra_platforms') || '{}');
+            let connectedCount = 0;
+            
+            ['bayut', 'haraj', 'aqar', 'twitter', 'instagram'].forEach(platform => {
+                const item = document.getElementById(platform + 'Connect');
+                const status = document.getElementById(platform + 'ConnectStatus');
+                const btn = item.querySelector('.platform-connect-btn');
+                
+                if (platforms[platform]) {
+                    item.classList.add('connected');
+                    status.textContent = '✓ متصل';
+                    status.classList.add('connected');
+                    btn.textContent = 'إلغاء الربط';
+                    btn.classList.add('disconnect');
+                    connectedCount++;
+                } else {
+                    item.classList.remove('connected');
+                    status.textContent = 'غير متصل';
+                    status.classList.remove('connected');
+                    btn.textContent = 'ربط';
+                    btn.classList.remove('disconnect');
+                }
+            });
+            
+            document.getElementById('connectedCount').textContent = connectedCount;
+        }
+
+        function connectPlatform(platform) {
+            const platforms = JSON.parse(localStorage.getItem('newra_platforms') || '{}');
+            
+            if (platforms[platform]) {
+                // Disconnect
+                if (confirm('هل تريد إلغاء ربط هذه المنصة؟')) {
+                    delete platforms[platform];
+                    localStorage.setItem('newra_platforms', JSON.stringify(platforms));
+                    loadPlatformsStatus();
+                    showCopyToast('✓ تم إلغاء الربط');
+                }
+            } else {
+                // Connect - simulate OAuth flow
+                const platformNames = {
+                    bayut: 'Bayut',
+                    haraj: 'حراج',
+                    aqar: 'عقار',
+                    twitter: 'X (تويتر)',
+                    instagram: 'انستقرام'
+                };
+                
+                if (confirm(`سيتم توجيهك لربط حسابك بـ ${platformNames[platform]}\n\nملاحظة: هذه نسخة تجريبية، سيتم تفعيل الربط الفعلي قريباً.`)) {
+                    // Simulate successful connection
+                    platforms[platform] = {
+                        connected: true,
+                        connectedAt: new Date().toISOString()
+                    };
+                    localStorage.setItem('newra_platforms', JSON.stringify(platforms));
+                    loadPlatformsStatus();
+                    showCopyToast(`✓ تم ربط ${platformNames[platform]} بنجاح!`);
+                }
+            }
+        }
+
+        // Check for hash to open specific tab
+        if (window.location.hash === '#platforms') {
+            setTimeout(() => {
+                document.querySelector('.tab:nth-child(2)').click();
+            }, 100);
+        }
+
+        // Live preview updates
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('input', updatePreview);
+            el.addEventListener('change', updatePreview);
+        });
+
+        // Initial load
+        loadSettings();
     </script>
 </body>
 </html>

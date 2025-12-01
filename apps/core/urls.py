@@ -15,6 +15,8 @@ urlpatterns = [
     path('auth/login/', views.login_view, name='login'),
     path('auth/register/', views.register_view, name='register'),
     path('auth/logout/', views.logout_view, name='logout'),
+    path('login/', views.login_view, name='login-alt'),
+    path('register/', views.register_view, name='register-alt'),
     
     # Dashboard
     path('dashboard/', views.dashboard_view, name='dashboard'),
@@ -23,6 +25,35 @@ urlpatterns = [
     path('dashboard/conversations/', views.conversations_view, name='conversations'),
     path('dashboard/bot-settings/', views.bot_settings_view, name='bot-settings'),
     
+    # Pricing
+    path('pricing/', views.pricing_view, name='pricing'),
+    
+    # Admin Panel
+    path('admin-panel-x7k9m/', views.admin_panel_view, name='admin-panel'),
+    
+    # Chat
+    path('embed/', views.embed_chat_view, name='embed-chat'),
+    path('chat/live/', views.live_chat_view, name='live-chat'),
+    path('chat/', views.chat_view, name='chat'),
+    
+    # Other Pages
+    path('clients/', views.clients_view, name='clients'),
+    path('properties/', views.properties_page_view, name='properties-page'),
+    path('profile/', views.profile_view, name='profile'),
+    path('settings/', views.settings_view, name='settings'),
+    
     # Test
     path('test/add-property/', views.test_add_property, name='test-add-property'),
+    
+    # Global Settings API
+    path('api/settings/', views.get_global_settings, name='get-global-settings'),
+    path('api/settings/save/', views.save_global_settings, name='save-global-settings'),
+    
+    # Admin API
+    path('api/admin/users/', views.get_all_users, name='get-all-users'),
+    path('api/admin/users/update-plan/', views.update_user_plan, name='update-user-plan'),
+    
+    # Agent Stats API
+    path('api/agent/<uuid:agent_id>/stats/', views.get_agent_stats, name='get-agent-stats'),
+    path('api/agent/<uuid:agent_id>/conversation/', views.increment_conversation, name='increment-conversation'),
 ]

@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الاشتراكات - Inify</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <style>
+        /* Chillax Font - English */
+        @font-face {
+            font-family: 'Chillax';
+            src: url('/static/Chillax-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Chillax';
+            src: url('/static/Chillax-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-display: swap;
+        }
+        
+        /* BalooBhaijaan2 Font - Arabic */
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Medium.ttf') format('truetype');
+            font-weight: 500;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-display: swap;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue: #2E5A8B;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+            --card-bg: rgba(30, 58, 95, 0.4);
+            --border: rgba(107, 184, 201, 0.15);
+            --gold: #FFD700;
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', 'Chillax', 'Segoe UI', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            min-height: 100vh;
+        }
+
+        .en { font-family: 'Chillax', sans-serif; }
+
+        /* Premium Background */
+        .premium-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0A1628 0%, #0d1f35 25%, #122a45 50%, #0d1f35 75%, #0A1628 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(107, 184, 201, 0.4) 0%, transparent 70%);
+            top: -200px;
+            right: -200px;
+            animation: float1 20s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(74, 144, 164, 0.35) 0%, transparent 70%);
+            bottom: -150px;
+            left: -150px;
+            animation: float2 25s ease-in-out infinite;
+        }
+        .orb-3 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(141, 212, 227, 0.25) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: float3 18s ease-in-out infinite;
+        }
+        .orb-4 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+            top: 30%;
+            right: 10%;
+            animation: float4 22s ease-in-out infinite;
+        }
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-50px, 50px) scale(1.1); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, -30px) scale(1.05); }
+        }
+        @keyframes float3 {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.5; }
+        }
+        @keyframes float4 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-30px, 30px) rotate(180deg); }
+        }
+        .grid-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: linear-gradient(rgba(107, 184, 201, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(107, 184, 201, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(10, 22, 40, 0.4) 100%);
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 40px;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo svg {
+            width: 40px;
+            height: 40px;
+        }
+
+        .logo-text {
+            font-family: 'Chillax', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 15px;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--cyan);
+        }
+
+        .header-btn {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .header-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(107, 184, 201, 0.3);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 40px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .page-header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Pricing Grid */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .pricing-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid var(--border);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(107, 184, 201, 0.3);
+            box-shadow: 0 30px 60px rgba(10, 22, 40, 0.4);
+        }
+
+        .pricing-card.popular {
+            border-color: var(--cyan);
+            background: linear-gradient(160deg, rgba(30, 58, 95, 0.6) 0%, rgba(74, 144, 164, 0.2) 100%);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 20px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 20px;
+        }
+
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .plan-icon {
+            font-size: 50px;
+            margin-bottom: 16px;
+        }
+
+        .plan-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .plan-desc {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .plan-price {
+            margin-top: 20px;
+        }
+
+        .price-amount {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .price-currency {
+            font-size: 20px;
+            color: var(--text-muted);
+        }
+
+        .price-period {
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        .pricing-features {
+            margin-bottom: 30px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(107, 184, 201, 0.08);
+        }
+
+        .feature-item:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .feature-icon.check {
+            color: #4ade80;
+        }
+
+        .feature-icon.cross {
+            color: #f87171;
+        }
+
+        .feature-text {
+            font-size: 15px;
+        }
+
+        .feature-text.disabled {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        .pricing-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .pricing-btn.primary {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            border: none;
+        }
+
+        .pricing-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(107, 184, 201, 0.3);
+        }
+
+        .pricing-btn.secondary {
+            background: transparent;
+            color: var(--pearl);
+            border: 1px solid var(--border);
+        }
+
+        .pricing-btn.secondary:hover {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+        }
+
+        /* Enterprise Plan Styles */
+        .pricing-card.enterprise {
+            border: 2px solid var(--gold);
+            position: relative;
+            background: linear-gradient(180deg, rgba(255, 215, 0, 0.05) 0%, var(--card-bg) 100%);
+        }
+
+        .enterprise-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--gold), #FFA500);
+            color: var(--midnight);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .pricing-btn.enterprise-btn {
+            background: linear-gradient(135deg, var(--gold), #FFA500);
+            color: var(--midnight);
+            border: none;
+        }
+
+        .pricing-btn.enterprise-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .feature-item.highlight {
+            background: rgba(255, 215, 0, 0.1);
+            margin: 0 -20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+        }
+
+        .feature-item.highlight .feature-icon {
+            color: var(--gold);
+        }
+
+        .api-docs-link {
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 14px;
+            transition: opacity 0.3s;
+        }
+
+        .api-docs-link:hover {
+            opacity: 0.8;
+        }
+
+        .plan-price.custom {
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .plan-price.custom .price-amount {
+            font-size: 32px;
+            background: linear-gradient(135deg, var(--gold), #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .plan-price.custom .price-period {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 50px;
+            border: 1px solid var(--border);
+        }
+
+        .faq-section h2 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 40px;
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .faq-item {
+            padding: 24px;
+            background: rgba(10, 22, 40, 0.4);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .faq-question {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .faq-answer {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 16px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .main-content {
+                padding: 40px 20px;
+            }
+
+            .page-header h1 {
+                font-size: 32px;
+            }
+
+            .pricing-card {
+                padding: 30px;
+            }
+
+            .faq-section {
+                padding: 30px 20px;
+            }
+
+            .faq-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Premium Background Elements -->
+    <div class="premium-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+    <div class="grid-pattern"></div>
+    <div class="vignette"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-right">
+            <a href="/" class="logo">
+                <img src="/static/logo-full.png" alt="Inify" style="height: 32px;">
+            </a>
+            <nav class="nav-links">
+                <a href="/">الرئيسية</a>
+                <a href="/pricing/" class="active">الاشتراكات</a>
+                <a href="/auth/login/">تسجيل الدخول</a>
+            </nav>
+        </div>
+        <a href="/auth/register/" class="header-btn">ابدأ مجاناً</a>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1>اختر خطتك المناسبة</h1>
+            <p>باقات مرنة تناسب جميع احتياجاتك، ابدأ مجاناً وقم بالترقية في أي وقت</p>
+        </div>
+
+        <!-- Pricing Cards -->
+        <div class="pricing-grid">
+            <!-- Free Plan -->
+            <div class="pricing-card">
+                <div class="pricing-header">
+                    <div class="plan-icon">🚀</div>
+                    <h3 class="plan-name">مجاني</h3>
+                    <p class="plan-desc">للبدء واستكشاف المنصة</p>
+                    <div class="plan-price">
+                        <span class="price-amount">0</span>
+                        <span class="price-currency">ريال</span>
+                        <span class="price-period">/ شهر</span>
+                    </div>
+                </div>
+                <div class="pricing-features">
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">إضافة حتى 5 عقارات</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">لوحة تحكم أساسية</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">محادثات محدودة (50/شهر)</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon cross">✗</span>
+                        <span class="feature-text disabled">تحليلات متقدمة</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon cross">✗</span>
+                        <span class="feature-text disabled">دعم فني أولوية</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon cross">✗</span>
+                        <span class="feature-text disabled">ربط مع المنصات</span>
+                    </div>
+                </div>
+                <a href="/auth/register/" class="pricing-btn secondary">ابدأ مجاناً</a>
+            </div>
+
+            <!-- Pro Plan (المسوق) -->
+            <div class="pricing-card popular">
+                <span class="popular-badge">الأكثر شعبية</span>
+                <div class="pricing-header">
+                    <div class="plan-icon">⭐</div>
+                    <h3 class="plan-name">المسوق</h3>
+                    <p class="plan-desc">للمسوقين العقاريين المحترفين</p>
+                    <div class="plan-price">
+                        <span class="price-amount">299</span>
+                        <span class="price-currency">ريال</span>
+                        <span class="price-period">/ شهر</span>
+                    </div>
+                </div>
+                <div class="pricing-features">
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">عقارات غير محدودة</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">محادثات غير محدودة</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">لوحة تحكم متقدمة</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">تخصيص الشات بوت</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">تقارير وتحليلات متقدمة</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">دعم فني أولوية</span>
+                    </div>
+                </div>
+                <a href="/auth/register/" class="pricing-btn primary">اشترك الآن</a>
+            </div>
+
+            <!-- Enterprise Plan (مخصص) -->
+            <div class="pricing-card enterprise">
+                <span class="enterprise-badge">🏆 للشركات</span>
+                <div class="pricing-header">
+                    <div class="plan-icon">👑</div>
+                    <h3 class="plan-name">مخصص</h3>
+                    <p class="plan-desc">للشركات والمكاتب العقارية الكبرى</p>
+                    <div class="plan-price custom">
+                        <span class="price-amount">تواصل معنا</span>
+                        <span class="price-period">حسب متطلباتك</span>
+                    </div>
+                </div>
+                <div class="pricing-features">
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">عقارات غير محدودة</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">محادثات غير محدودة</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">تحليلات وتقارير شاملة</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">دعم فني على مدار الساعة</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">ربط WhatsApp Business</span>
+                    </div>
+                    <div class="feature-item highlight">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text"><strong>🔗 API مخصص للتكامل</strong></span>
+                    </div>
+                    <div class="feature-item highlight">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text"><strong>📡 Webhooks للإشعارات</strong></span>
+                    </div>
+                    <div class="feature-item highlight">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text"><strong>🏷️ White Label (علامتك التجارية)</strong></span>
+                    </div>
+                    <div class="feature-item highlight">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text"><strong>📢 نشر تلقائي على المنصات</strong></span>
+                    </div>
+                </div>
+                <a href="/auth/register/" class="pricing-btn enterprise-btn">تواصل معنا</a>
+                <a href="/docs/api/" class="api-docs-link">📚 توثيق API</a>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="faq-section">
+            <h2>الأسئلة الشائعة</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h4 class="faq-question">
+                        <span>❓</span> هل يمكنني تغيير الباقة لاحقاً؟
+                    </h4>
+                    <p class="faq-answer">نعم، يمكنك الترقية أو تغيير باقتك في أي وقت من خلال إعدادات حسابك. سيتم احتساب الفرق في السعر بشكل تناسبي.</p>
+                </div>
+                <div class="faq-item">
+                    <h4 class="faq-question">
+                        <span>💳</span> ما هي طرق الدفع المتاحة؟
+                    </h4>
+                    <p class="faq-answer">نقبل الدفع عبر البطاقات الائتمانية (فيزا، ماستركارد)، مدى، Apple Pay، وكذلك التحويل البنكي للباقات السنوية.</p>
+                </div>
+                <div class="faq-item">
+                    <h4 class="faq-question">
+                        <span>🔄</span> هل يمكنني إلغاء الاشتراك؟
+                    </h4>
+                    <p class="faq-answer">بالطبع، يمكنك إلغاء اشتراكك في أي وقت. ستستمر في الاستفادة من الخدمة حتى نهاية فترة الفوترة الحالية.</p>
+                </div>
+                <div class="faq-item">
+                    <h4 class="faq-question">
+                        <span>🎁</span> هل هناك خصم للاشتراك السنوي؟
+                    </h4>
+                    <p class="faq-answer">نعم! عند الاشتراك السنوي تحصل على خصم 20%، أي ما يعادل شهرين مجاناً.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

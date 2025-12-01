@@ -62,10 +62,10 @@ const InifyAuth = {
             color: '#FFD700'
         },
         agency: {
-            name: 'مؤسسة عقارية',
-            nameEn: 'Agency',
-            maxProperties: 100,
-            maxClients: 500,
+            name: 'مخصص',
+            nameEn: 'Custom',
+            maxProperties: -1,
+            maxClients: -1,
             canUseAI: true,
             canExportData: true,
             canViewAnalytics: true,
@@ -73,37 +73,38 @@ const InifyAuth = {
             canCustomizeChatbot: true,
             canUseAdvancedRAG: true,
             canAddTeamMembers: true,
-            maxTeamMembers: 10,
+            maxTeamMembers: -1,
             canAccessAPI: true,
-            canWhiteLabel: false,
-            monthlyPrice: 499,
-            badge: '🏢',
-            color: '#6BB8C9'
+            canWhiteLabel: true,
+            monthlyPrice: 'مخصص',
+            badge: '👑',
+            color: '#c084fc'
         },
         marketer: {
-            name: 'مسوق عقاري',
+            name: 'المسوق',
             nameEn: 'Marketer',
-            maxProperties: 25,
-            maxClients: 100,
+            maxProperties: -1,
+            maxClients: -1,
             canUseAI: true,
             canExportData: true,
             canViewAnalytics: true,
             canManageUsers: false,
             canCustomizeChatbot: true,
-            canUseAdvancedRAG: false,
+            canUseAdvancedRAG: true,
             canAddTeamMembers: false,
             maxTeamMembers: 0,
             canAccessAPI: false,
             canWhiteLabel: false,
-            monthlyPrice: 149,
-            badge: '💼',
-            color: '#4A90A4'
+            monthlyPrice: 299,
+            badge: '⭐',
+            color: '#6BB8C9'
         },
         free: {
             name: 'مستخدم مجاني',
             nameEn: 'Free User',
-            maxProperties: 3,
-            maxClients: 10,
+            maxProperties: 5,
+            maxClients: 50,
+            maxConversations: 50,  // 50 محادثة/شهر
             canUseAI: true,
             canExportData: false,
             canViewAnalytics: false,
@@ -118,6 +119,60 @@ const InifyAuth = {
             badge: '🆓',
             color: '#9CA3AF'
         }
+    },
+
+    // 🔒 التحقق من حدود الباقة
+    checkLimit(limitType) {
+        const perms = this.getCurrentPermissions();
+        const session = this.getSession();
+        
+        if (limitType === 'properties') {
+            if (perms.maxProperties === -1) return { allowed: true, remaining: -1 };
+            const properties = this.getProperties();
+            const remaining = perms.maxProperties - properties.length;
+            return { 
+                allowed: remaining > 0, 
+                remaining: remaining,
+                max: perms.maxProperties,
+                current: properties.length
+            };
+        }
+        
+        if (limitType === 'conversations') {
+            if (!perms.maxConversations || perms.maxConversations === -1) return { allowed: true, remaining: -1 };
+            const monthKey = `conversations_${session.id}_${new Date().getMonth()}_${new Date().getFullYear()}`;
+            const count = parseInt(localStorage.getItem(monthKey) || '0');
+            const remaining = perms.maxConversations - count;
+            return {
+                allowed: remaining > 0,
+                remaining: remaining,
+                max: perms.maxConversations,
+                current: count
+            };
+        }
+        
+        if (limitType === 'clients') {
+            if (perms.maxClients === -1) return { allowed: true, remaining: -1 };
+            const clients = this.getClients();
+            const remaining = perms.maxClients - clients.length;
+            return {
+                allowed: remaining > 0,
+                remaining: remaining,
+                max: perms.maxClients,
+                current: clients.length
+            };
+        }
+        
+        return { allowed: true, remaining: -1 };
+    },
+
+    // زيادة عداد المحادثات
+    incrementConversations() {
+        const session = this.getSession();
+        if (!session.id) return;
+        const monthKey = `conversations_${session.id}_${new Date().getMonth()}_${new Date().getFullYear()}`;
+        const count = parseInt(localStorage.getItem(monthKey) || '0');
+        localStorage.setItem(monthKey, String(count + 1));
     },
 
     // الحصول على الجلسة الحالية
@@ -353,7 +408,7 @@ const InifyAuth = {
     // حماية الصفحة (إعادة توجيه إذا لم يكن مسجل دخول)
     requireAuth() {
         if (!this.isLoggedIn()) {
-            window.location.href = '/login/';
+            window.location.href = '/auth/login/';
             return false;
         }
         return true;

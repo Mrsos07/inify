@@ -1426,9 +1426,13 @@
 
     <!-- Auth Check -->
     <script>
-        // Django handles authentication
+        const session = JSON.parse(localStorage.getItem('newra_session') || '{}');
+        if (!session.loggedIn) {
+            window.location.href = '/login/';
+        }
         function logout() {
-            window.location.href = '/auth/logout/';
+            localStorage.removeItem('newra_session');
+            window.location.href = '/';
         }
     </script>
 
@@ -1440,14 +1444,14 @@
     <!-- Header -->
     <header class="header">
         <div class="header-right">
-            <a href="/dashboard/" class="logo">
+            <a href="/" class="logo">
                 <img src="/static/logo-full.png" alt="Inify" style="height: 32px;">
             </a>
             <nav class="nav-links">
                 <a href="/dashboard/">لوحة التحكم</a>
-                <a href="/dashboard/properties/" class="active">العقارات</a>
-                <a href="/dashboard/conversations/">المحادثات</a>
-                <a href="/dashboard/leads/">العملاء</a>
+                <a href="/properties/" class="active">العقارات</a>
+                <a href="/chat/">المحادثات</a>
+                <a href="/clients/">العملاء</a>
                 <a href="/profile/">حسابي</a>
             </nav>
         </div>
@@ -1900,29 +1904,16 @@
         }
     </style>
 
+    <script src="/static/js/auth.js"></script>
     <script>
-        // Django handles authentication
-        
-        // تحميل العقارات من قاعدة البيانات
-        let properties = [];
-        const permissions = { name: 'مستخدم', color: '#6bb8c9', badge: '👤' };
-        
-        // تحميل العقارات عند فتح الصفحة
-        async function loadProperties() {
-            try {
-                const response = await fetch('/api/v1/properties/my/');
-                const data = await response.json();
-                if (data.success) {
-                    properties = data.properties;
-                    renderProperties();
-                }
-            } catch (error) {
-                console.error('Error loading properties:', error);
-            }
+        // التحقق من تسجيل الدخول
+        if (!InifyAuth.requireAuth()) {
+            // سيتم إعادة التوجيه
         }
-        
-        // تحميل العقارات عند فتح الصفحة
-        loadProperties();
+
+        // تحميل العقارات الخاصة بالمستخدم
+        let properties = InifyAuth.getProperties();
+        const permissions = InifyAuth.getCurrentPermissions();
 
         // Tab switching
         function switchTab(tab) {
@@ -2314,25 +2305,25 @@
                                 ${property.listing_type === 'rent' && property.payment_count && property.payment_count !== '1' ? `<small style="display:block;font-size:11px;color:var(--text-muted);margin-top:2px;">💳 ${property.payment_count} دفعات</small>` : ''}
                             </div>
                             <div class="property-actions">
-                                <button class="property-action-btn publish-btn" title="نشر على المنصات" onclick="openPublishModal('${property.id}')">
+                                <button class="property-action-btn publish-btn" title="نشر على المنصات" onclick="openPublishModal(${property.id})">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
                                         <polyline points="16 6 12 2 8 6"/>
                                         <line x1="12" y1="2" x2="12" y2="15"/>
                                     </svg>
                                 </button>
-                                <button class="property-action-btn status-btn" title="تغيير الحالة" onclick="changeStatus('${property.id}')">
+                                <button class="property-action-btn status-btn" title="تغيير الحالة" onclick="changeStatus(${property.id})">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
                                     </svg>
                                 </button>
-                                <button class="property-action-btn" title="تعديل" onclick="editProperty('${property.id}')">
+                                <button class="property-action-btn" title="تعديل" onclick="editProperty(${property.id})">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                     </svg>
                                 </button>
-                                <button class="property-action-btn delete" title="حذف" onclick="deleteProperty('${property.id}')">
+                                <button class="property-action-btn delete" title="حذف" onclick="deleteProperty(${property.id})">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <polyline points="3 6 5 6 21 6"/>
                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -2395,28 +2386,17 @@
         });
 
         // Delete property
-        async function deleteProperty(id) {
+        function deleteProperty(id) {
             if (confirm('هل أنت متأكد من حذف هذا العقار؟')) {
-                try {
-                    const response = await fetch(`/api/v1/properties/detail/${id}/delete/`, {
-                        method: 'POST'
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        await loadProperties();
-                    } else {
-                        alert('خطأ: ' + (data.error || 'فشل في حذف العقار'));
-                    }
-                } catch (error) {
-                    console.error('Error deleting property:', error);
-                    alert('حدث خطأ في حذف العقار');
-                }
+                properties = properties.filter(p => p.id !== id);
+                InifyAuth.setProperties(properties);
+                renderProperties();
             }
         }
 
         // Change property status
         function changeStatus(id) {
-            const property = properties.find(p => String(p.id) === String(id));
+            const property = properties.find(p => p.id === id);
             if (!property) return;
             
             const currentStatus = property.status || 'available';
@@ -2459,30 +2439,15 @@
             });
         }
 
-        async function saveStatus(id) {
+        function saveStatus(id) {
             const modal = document.querySelector('.status-modal-overlay');
             const selectedStatus = modal.querySelector('input[name="status"]:checked').value;
             
-            const property = properties.find(p => String(p.id) === String(id));
-            if (property) {
-                property.status = selectedStatus;
-                
-                try {
-                    const response = await fetch('/api/v1/properties/save-json/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(property)
-                    });
-                    
-                    const data = await response.json();
-                    if (data.success) {
-                        await loadProperties();
-                    }
-                } catch (error) {
-                    console.error('Error updating status:', error);
-                }
+            const propertyIndex = properties.findIndex(p => p.id === id);
+            if (propertyIndex >= 0) {
+                properties[propertyIndex].status = selectedStatus;
+                InifyAuth.setProperties(properties);
+                renderProperties();
             }
             
             modal.remove();
@@ -2492,7 +2457,7 @@
         let editingPropertyId = null;
         
         function editProperty(id) {
-            const property = properties.find(p => String(p.id) === String(id));
+            const property = properties.find(p => p.id === id);
             if (!property) return;
             
             editingPropertyId = id;
@@ -2562,55 +2527,46 @@
         }
 
         // Form submission
-        document.getElementById('propertyForm').addEventListener('submit', async (e) => {
+        document.getElementById('propertyForm').addEventListener('submit', (e) => {
             e.preventDefault();
             
-            // Create FormData for file upload
-            const formData = new FormData(e.target);
+            // Get form data
+            const propertyData = getFormData();
             
             if (editingPropertyId) {
-                formData.set('property_id', editingPropertyId);
+                // Update existing property
+                const propertyIndex = properties.findIndex(p => p.id === editingPropertyId);
+                if (propertyIndex >= 0) {
+                    propertyData.id = editingPropertyId;
+                    propertyData.createdAt = properties[propertyIndex].createdAt;
+                    properties[propertyIndex] = propertyData;
+                }
+                editingPropertyId = null;
+            } else {
+                // 🔒 التحقق من حد العقارات للإضافة الجديدة فقط
+                const limit = InifyAuth.checkLimit('properties');
+                if (!limit.allowed) {
+                    alert(`⚠️ لقد وصلت للحد الأقصى من العقارات (${limit.max} عقارات)\n\nباقتك الحالية: ${permissions.name}\n\nقم بترقية اشتراكك للحصول على عقارات غير محدودة!`);
+                    window.location.href = '/pricing/';
+                    return;
+                }
+                // Add new property
+                properties.unshift(propertyData);
             }
             
-            // Add images
-            uploadedImages.forEach((img, index) => {
-                if (img.file) {
-                    formData.append('images', img.file);
-                }
-            });
+            InifyAuth.setProperties(properties);
             
-            try {
-                const response = await fetch('/api/v1/properties/save/', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // إعادة تحميل العقارات
-                    await loadProperties();
-                    
-                    // Show success message
-                    const successMessage = document.getElementById('successMessage');
-                    successMessage.classList.add('show');
-                    
-                    // Reset form
-                    resetForm();
-                    
-                    setTimeout(() => {
-                        successMessage.classList.remove('show');
-                        switchTab('list');
-                    }, 2000);
-                } else {
-                    alert('خطأ: ' + (data.error || 'فشل في حفظ العقار'));
-                }
-            } catch (error) {
-                console.error('Error saving property:', error);
-                alert('حدث خطأ في حفظ العقار');
-            }
+            // Show success message
+            const successMessage = document.getElementById('successMessage');
+            successMessage.classList.add('show');
             
-            editingPropertyId = null;
+            // Reset form
+            resetForm();
+            
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+                switchTab('list');
+            }, 2000);
         });
 
         function resetForm() {

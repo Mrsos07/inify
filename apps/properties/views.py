@@ -178,25 +178,50 @@ def save_property(request):
         else:
             property_obj = Property(agent=agent)
         
+        # Safe conversion functions
+        def safe_int(val, default=0):
+            if val is None or val == '':
+                return default
+            try:
+                return int(val)
+            except (ValueError, TypeError):
+                return default
+        
+        def safe_float(val, default=0):
+            if val is None or val == '':
+                return default
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                return default
+        
         # تحديث البيانات
         property_obj.title = request.POST.get('title', '')
-        property_obj.property_type = request.POST.get('property_type', 'apartment')
-        property_obj.status = request.POST.get('status', 'for_sale')
-        property_obj.price = float(request.POST.get('price') or 0)
-        property_obj.size = float(request.POST.get('size') or 0)
+        property_obj.property_type = request.POST.get('type') or request.POST.get('property_type', 'apartment')
+        
+        # Handle status/listing_type
+        listing_type = request.POST.get('listing_type', 'sale')
+        status = request.POST.get('status', '')
+        if status in ['for_sale', 'for_rent', 'reserved', 'sold', 'rented']:
+            property_obj.status = status
+        elif listing_type == 'rent':
+            property_obj.status = 'for_rent'
+        else:
+            property_obj.status = 'for_sale'
+        
+        property_obj.price = safe_float(request.POST.get('price'))
+        property_obj.size = safe_float(request.POST.get('area') or request.POST.get('size'))
         property_obj.city = request.POST.get('city', '')
-        property_obj.neighborhood = request.POST.get('neighborhood', '')
+        property_obj.neighborhood = request.POST.get('district') or request.POST.get('neighborhood', '')
         property_obj.description = request.POST.get('description', '')
-        property_obj.bedrooms = int(request.POST.get('bedrooms') or 0)
-        property_obj.bathrooms = int(request.POST.get('bathrooms') or 0)
-        property_obj.living_rooms = int(request.POST.get('living_rooms') or 0)
-        property_obj.floors = int(request.POST.get('floors') or 1)
-        floor_number = request.POST.get('floor_number')
-        property_obj.floor_number = int(floor_number) if floor_number and floor_number.strip() else None
-        property_obj.parking_spaces = int(request.POST.get('parking_spaces') or 0)
+        property_obj.bedrooms = safe_int(request.POST.get('bedrooms'))
+        property_obj.bathrooms = safe_int(request.POST.get('bathrooms'))
+        property_obj.living_rooms = safe_int(request.POST.get('living_rooms'))
+        property_obj.floors = safe_int(request.POST.get('floors'), 1)
+        property_obj.floor_number = safe_int(request.POST.get('floor') or request.POST.get('floor_number'), None)
+        property_obj.parking_spaces = safe_int(request.POST.get('parking_spaces'))
         property_obj.furnishing = request.POST.get('furnishing', 'unfurnished')
-        year_built = request.POST.get('year_built')
-        property_obj.year_built = int(year_built) if year_built and year_built.strip() else None
+        property_obj.year_built = safe_int(request.POST.get('year_built'), None)
         property_obj.address = request.POST.get('address', '')
         property_obj.is_featured = request.POST.get('is_featured') == 'on'
         property_obj.is_negotiable = request.POST.get('is_negotiable') == 'on'
@@ -332,3 +357,172 @@ def delete_property_video(request, video_id):
         return JsonResponse({'success': True})
     except PropertyVideo.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'الفيديو غير موجود'}, status=404)
+
+
+def list_properties(request):
+    """الحصول على جميع عقارات المستخدم"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'غير مسجل الدخول', 'properties': []})
+    
+    try:
+        agent = request.user.agent_profile
+        properties = Property.objects.filter(agent=agent, is_active=True).order_by('-created_at')
+        
+        data = []
+        for prop in properties:
+            primary_image = prop.images.filter(is_primary=True).first()
+            if not primary_image:
+                primary_image = prop.images.first()
+            
+            data.append({
+                'id': str(prop.id),
+                'title': prop.title,
+                'type': prop.property_type,
+                'typeLabel': prop.get_property_type_display(),
+                'listing_type': 'sale' if prop.status == 'for_sale' else 'rent',
+                'status': prop.status,
+                'statusLabel': prop.get_status_display(),
+                'price': float(prop.price),
+                'area': float(prop.size),
+                'city': prop.city,
+                'cityLabel': prop.city,
+                'district': prop.neighborhood,
+                'address': prop.address,
+                'description': prop.description,
+                'bedrooms': prop.bedrooms,
+                'bathrooms': prop.bathrooms,
+                'mainImage': primary_image.image.url if primary_image else None,
+                'images': [img.image.url for img in prop.images.all()],
+                'createdAt': prop.created_at.isoformat(),
+            })
+        
+        return JsonResponse({'success': True, 'properties': data, 'count': len(data)})
+    except AttributeError:
+        # No agent profile
+        return JsonResponse({'success': True, 'properties': [], 'count': 0, 'message': 'لا يوجد حساب وكيل'})
+    except Exception as e:
+        import traceback
+        print(f"list_properties error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': str(e), 'properties': []}, status=500)
+
+
+@csrf_exempt
+@login_required  
+def save_property_json(request):
+    """حفظ عقار من JSON"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        agent = request.user.agent_profile
+        data = json.loads(request.body)
+        
+        property_id = data.get('id')
+        
+        # إنشاء أو تحديث العقار
+        if property_id:
+            try:
+                property_obj = Property.objects.get(id=property_id, agent=agent)
+            except Property.DoesNotExist:
+                property_obj = Property(agent=agent)
+        else:
+            property_obj = Property(agent=agent)
+        
+        # تحديث البيانات
+        property_obj.title = data.get('title', '')
+        property_obj.property_type = data.get('type', 'apartment')
+        
+        listing_type = data.get('listing_type', 'sale')
+        if listing_type == 'sale':
+            property_obj.status = 'for_sale'
+        else:
+            property_obj.status = 'for_rent'
+        
+        # تحديث الحالة إذا تم تحديدها
+        status_val = data.get('status')
+        if status_val:
+            if status_val == 'available':
+                property_obj.status = 'for_sale' if listing_type == 'sale' else 'for_rent'
+            elif status_val == 'reserved':
+                property_obj.status = 'reserved'
+            elif status_val == 'sold':
+                property_obj.status = 'sold' if listing_type == 'sale' else 'rented'
+        
+        property_obj.price = float(data.get('price') or 0)
+        property_obj.size = float(data.get('area') or 0)
+        property_obj.city = data.get('city', '')
+        property_obj.neighborhood = data.get('district', '')
+        property_obj.address = data.get('address', '')
+        property_obj.description = data.get('description', '')
+        
+        # Safe integer conversion
+        def safe_int(val, default=0):
+            if val is None or val == '':
+                return default
+            try:
+                return int(val)
+            except (ValueError, TypeError):
+                return default
+        
+        property_obj.bedrooms = safe_int(data.get('bedrooms'))
+        property_obj.bathrooms = safe_int(data.get('bathrooms'))
+        property_obj.year_built = safe_int(data.get('year_built'), None)
+        property_obj.floor_number = safe_int(data.get('floor'), None)
+        
+        property_obj.save()
+        
+        return JsonResponse({'success': True, 'property_id': str(property_obj.id)})
+    
+    except Exception as e:
+        import traceback
+        print(f"Save property JSON error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def get_agent_properties(request, agent_id):
+    """الحصول على عقارات وكيل معين (للشات)"""
+    try:
+        from apps.agents.models import Agent
+        agent = Agent.objects.get(id=agent_id)
+        properties = Property.objects.filter(agent=agent, is_active=True).order_by('-created_at')
+        
+        data = []
+        for prop in properties:
+            primary_image = prop.images.filter(is_primary=True).first()
+            if not primary_image:
+                primary_image = prop.images.first()
+            
+            data.append({
+                'id': str(prop.id),
+                'title': prop.title,
+                'type': prop.property_type,
+                'typeLabel': prop.get_property_type_display(),
+                'listing_type': 'sale' if prop.status == 'for_sale' else 'rent',
+                'status': prop.status,
+                'statusLabel': prop.get_status_display(),
+                'price': float(prop.price),
+                'area': float(prop.size),
+                'city': prop.city,
+                'cityLabel': prop.city,
+                'district': prop.neighborhood,
+                'description': prop.description,
+                'bedrooms': prop.bedrooms,
+                'bathrooms': prop.bathrooms,
+                'mainImage': primary_image.image.url if primary_image else None,
+                'images': [img.image.url for img in prop.images.all()],
+            })
+        
+        # إضافة بيانات الوكيل
+        agent_data = {
+            'id': str(agent.id),
+            'name': agent.bot_name or agent.user.get_full_name() or 'نيورا',
+            'company': agent.company_name or '',
+            'welcomeMessage': agent.bot_welcome_message or 'مرحباً! 👋 كيف يمكنني مساعدتك اليوم؟',
+            'systemPrompt': agent.bot_system_prompt or '',
+        }
+        
+        return JsonResponse({'success': True, 'properties': data, 'agent': agent_data})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e), 'properties': []}, status=500)

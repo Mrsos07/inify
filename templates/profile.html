@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي - Inify</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+            --card-bg: rgba(30, 58, 95, 0.4);
+            --border: rgba(107, 184, 201, 0.15);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            min-height: 100vh;
+        }
+
+        /* Premium Background */
+        .premium-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0A1628 0%, #0d1f35 25%, #122a45 50%, #0d1f35 75%, #0A1628 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(107, 184, 201, 0.4) 0%, transparent 70%);
+            top: -200px;
+            right: -200px;
+            animation: float1 20s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(74, 144, 164, 0.35) 0%, transparent 70%);
+            bottom: -150px;
+            left: -150px;
+            animation: float2 25s ease-in-out infinite;
+        }
+        .orb-3 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+            top: 40%;
+            right: 20%;
+            animation: float3 18s ease-in-out infinite;
+        }
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-50px, 50px) scale(1.1); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, -30px) scale(1.05); }
+        }
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+            50% { transform: translate(-30px, 30px) scale(1.1); opacity: 0.3; }
+        }
+        .grid-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: linear-gradient(rgba(107, 184, 201, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(107, 184, 201, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(10, 22, 40, 0.4) 100%);
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 40px;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-right { display: flex; align-items: center; gap: 20px; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo svg { width: 40px; height: 40px; }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-light) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 15px;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
+
+        .header-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .header-btn.logout {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .header-btn.logout:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+        }
+
+        /* Profile Grid */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin: 0 auto 20px;
+        }
+
+        .profile-name {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .profile-email {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .profile-role {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .role-free {
+            background: rgba(100, 100, 100, 0.3);
+            color: #a0a0a0;
+        }
+
+        .role-marketer {
+            background: rgba(107, 184, 201, 0.2);
+            color: var(--cyan-light);
+        }
+
+        .role-agency {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+        }
+
+        .role-admin {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Settings Sections */
+        .settings-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .section-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(107, 184, 201, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--pearl);
+            font-family: inherit;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--cyan);
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(107, 184, 201, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(107, 184, 201, 0.1);
+            color: var(--cyan);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(107, 184, 201, 0.2);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Subscription Card */
+        .subscription-card {
+            background: linear-gradient(135deg, rgba(107, 184, 201, 0.1), rgba(74, 144, 164, 0.1));
+            border: 1px solid var(--cyan);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .subscription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .subscription-plan {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .subscription-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .subscription-price span {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .subscription-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .feature-tag {
+            padding: 6px 14px;
+            background: rgba(107, 184, 201, 0.15);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--cyan-light);
+        }
+
+        .subscription-expiry {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(10, 22, 40, 0.4);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .subscription-expiry.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+        }
+
+        .subscription-expiry.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+
+        /* Plans Grid */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 700px) {
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .plan-card {
+            background: rgba(10, 22, 40, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .plan-card:hover {
+            border-color: var(--cyan);
+            transform: translateY(-4px);
+        }
+
+        .plan-card.current {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+        }
+
+        .plan-card.current::after {
+            content: 'الباقة الحالية';
+            display: block;
+            margin-top: 12px;
+            padding: 6px 12px;
+            background: var(--cyan);
+            color: var(--midnight);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .plan-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .plan-price {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--cyan);
+            margin-bottom: 4px;
+        }
+
+        .plan-price span {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .plan-features {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 12px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #22c55e, #4ade80);
+            color: #000;
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--dark-blue);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            color: var(--pearl);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Premium Background Elements -->
+    <div class="premium-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="grid-pattern"></div>
+    <div class="vignette"></div>
+
+    <!-- Auth Check -->
+    <script>
+        // Django handles authentication
+        function logout() {
+            window.location.href = '/auth/logout/';
+        }
+    </script>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-right">
+            <a href="/" class="logo">
+                <img src="/static/logo-full.png" alt="Inify" style="height: 32px;">
+            </a>
+            <nav class="nav-links">
+                <a href="/dashboard/">لوحة التحكم</a>
+                <a href="/dashboard/properties/">العقارات</a>
+                <a href="/dashboard/conversations/">المحادثات</a>
+                <a href="/dashboard/leads/">العملاء</a>
+                <a href="/profile/" class="active">حسابي</a>
+            </nav>
+        </div>
+        <button onclick="logout()" class="header-btn logout">تسجيل الخروج</button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1>👤 الملف الشخصي</h1>
+            <p>إدارة حسابك وإعدادات الاشتراك</p>
+        </div>
+
+        <div class="profile-grid">
+            <!-- Profile Card -->
+            <div>
+                <div class="profile-card">
+                    <div class="profile-avatar" id="profileAvatar">👤</div>
+                    <div class="profile-name" id="profileName">المستخدم</div>
+                    <div class="profile-email" id="profileEmail">email@example.com</div>
+                    <div class="profile-role" id="profileRole">مجاني</div>
+                    
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="propertiesCount">0</div>
+                            <div class="stat-label">العقارات</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="clientsCount">0</div>
+                            <div class="stat-label">العملاء</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div>
+                <!-- Subscription Section -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-icon">💎</div>
+                        <div>
+                            <div class="section-title">الاشتراك والباقة</div>
+                            <div class="section-subtitle">إدارة اشتراكك وترقية الباقة</div>
+                        </div>
+                    </div>
+
+                    <div class="subscription-card" id="subscriptionCard">
+                        <div class="subscription-header">
+                            <div class="subscription-plan" id="currentPlan">الباقة المجانية</div>
+                            <div class="subscription-price" id="currentPrice">0 <span>ريال/شهر</span></div>
+                        </div>
+                        <div class="subscription-features" id="currentFeatures">
+                            <!-- Features will be loaded -->
+                        </div>
+                        <div class="subscription-expiry" id="subscriptionExpiry">
+                            <span>📅</span>
+                            <span>اشتراك دائم</span>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-bottom: 12px; font-size: 15px;">ترقية الباقة</h4>
+                    <div class="plans-grid" id="plansGrid">
+                        <!-- Plans will be loaded -->
+                    </div>
+                </div>
+
+                <!-- Personal Info Section -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-icon">📝</div>
+                        <div>
+                            <div class="section-title">المعلومات الشخصية</div>
+                            <div class="section-subtitle">تعديل بياناتك الأساسية</div>
+                        </div>
+                    </div>
+
+                    <form id="profileForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>الاسم الكامل</label>
+                                <input type="text" id="fullName" placeholder="أدخل اسمك">
+                            </div>
+                            <div class="form-group">
+                                <label>اسم الشركة / المكتب</label>
+                                <input type="text" id="companyName" placeholder="اسم الشركة">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>البريد الإلكتروني</label>
+                                <input type="email" id="email" placeholder="email@example.com" disabled>
+                                <p class="form-hint">لا يمكن تغيير البريد الإلكتروني</p>
+                            </div>
+                            <div class="form-group">
+                                <label>رقم الجوال</label>
+                                <input type="tel" id="phone" placeholder="05xxxxxxxx" dir="ltr" style="text-align: left;">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                <polyline points="17 21 17 13 7 13 7 21"/>
+                                <polyline points="7 3 7 8 15 8"/>
+                            </svg>
+                            حفظ التغييرات
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Password Section -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-icon">🔒</div>
+                        <div>
+                            <div class="section-title">تغيير كلمة المرور</div>
+                            <div class="section-subtitle">تأمين حسابك بكلمة مرور قوية</div>
+                        </div>
+                    </div>
+
+                    <form id="passwordForm">
+                        <div class="form-group">
+                            <label>كلمة المرور الحالية</label>
+                            <input type="password" id="currentPassword" placeholder="أدخل كلمة المرور الحالية">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>كلمة المرور الجديدة</label>
+                                <input type="password" id="newPassword" placeholder="كلمة المرور الجديدة">
+                            </div>
+                            <div class="form-group">
+                                <label>تأكيد كلمة المرور</label>
+                                <input type="password" id="confirmPassword" placeholder="أعد إدخال كلمة المرور">
+                            </div>
+                        </div>
+                        <p class="form-hint" style="margin-bottom: 16px;">يجب أن تكون كلمة المرور 8 أحرف على الأقل</p>
+                        <button type="submit" class="btn btn-secondary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                            تغيير كلمة المرور
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Upgrade Modal -->
+    <div class="modal-overlay" id="upgradeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">🚀 ترقية الباقة</div>
+                <button class="modal-close" onclick="closeUpgradeModal()">×</button>
+            </div>
+            <div id="upgradeContent">
+                <!-- Content will be loaded -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Django handles authentication
+
+        // Plans data
+        const plans = {
+            free: {
+                name: 'المجانية',
+                price: 0,
+                features: ['5 عقارات', '50 محادثة/شهر', 'شات بوت أساسي'],
+                color: '#a0a0a0'
+            },
+            marketer: {
+                name: 'المسوق',
+                price: 299,
+                features: ['عقارات غير محدودة', 'محادثات غير محدودة', 'تخصيص الشات بوت', 'تقارير متقدمة', 'دعم فني'],
+                color: '#6BB8C9'
+            },
+            agency: {
+                name: 'مخصص',
+                price: 'تواصل معنا',
+                features: ['عقارات غير محدودة', 'محادثات غير محدودة', 'تخصيص كامل', 'API متقدم', 'دعم فني مميز', 'مدير حساب خاص'],
+                color: '#c084fc'
+            }
+        };
+
+        // Get current user from Django context
+        const currentUser = {
+            id: '{{ user_id|default:"" }}',
+            name: '{{ user_name|default:"المستخدم" }}',
+            email: '{{ user_email|default:"" }}',
+            phone: '{{ user_phone|default:"" }}',
+            company: '{{ company_name|default:"" }}',
+            role: '{{ subscription_plan|default:"free" }}'
+        };
+
+        // Load user data
+        function loadUserData() {
+            if (!currentUser.id) {
+                window.location.href = '/auth/login/';
+                return;
+            }
+
+            // Update profile card
+            document.getElementById('profileName').textContent = currentUser.name || currentUser.company || 'المستخدم';
+            document.getElementById('profileEmail').textContent = currentUser.email;
+            document.getElementById('profileAvatar').textContent = getInitials(currentUser.name || currentUser.company);
+            
+            // Update role badge
+            const roleEl = document.getElementById('profileRole');
+            const role = currentUser.role || 'free';
+            const roleLabels = {
+                free: 'مجاني',
+                marketer: 'مسوق',
+                agency: 'وكالة',
+                admin: 'مدير'
+            };
+            roleEl.textContent = roleLabels[role] || role;
+            roleEl.className = `profile-role role-${role}`;
+
+            // Update stats
+            const properties = JSON.parse(localStorage.getItem('newra_properties') || '[]');
+            const clients = JSON.parse(localStorage.getItem('newra_clients') || '[]');
+            
+            document.getElementById('propertiesCount').textContent = properties.length;
+            document.getElementById('clientsCount').textContent = clients.length;
+
+            // Update form
+            document.getElementById('fullName').value = currentUser.name || '';
+            document.getElementById('companyName').value = currentUser.company || '';
+            document.getElementById('email').value = currentUser.email || '';
+            document.getElementById('phone').value = currentUser.phone || '';
+
+            // Update subscription
+            updateSubscriptionCard(role);
+            renderPlans(role);
+        }
+
+        // Get initials
+        function getInitials(name) {
+            if (!name) return '👤';
+            return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        }
+
+        // Update subscription card
+        function updateSubscriptionCard(role) {
+            const plan = plans[role] || plans.free;
+            
+            document.getElementById('currentPlan').textContent = `باقة ${plan.name}`;
+            document.getElementById('currentPrice').innerHTML = `${plan.price} <span>ريال/شهر</span>`;
+            
+            const featuresEl = document.getElementById('currentFeatures');
+            featuresEl.innerHTML = plan.features.map(f => `<span class="feature-tag">✓ ${f}</span>`).join('');
+
+            // Update expiry
+            const expiryEl = document.getElementById('subscriptionExpiry');
+            if (currentUser.subscriptionExpiry) {
+                const expiry = new Date(currentUser.subscriptionExpiry);
+                const now = new Date();
+                const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+                
+                if (daysLeft <= 0) {
+                    expiryEl.className = 'subscription-expiry danger';
+                    expiryEl.innerHTML = '<span>⚠️</span><span>انتهى الاشتراك</span>';
+                } else if (daysLeft <= 7) {
+                    expiryEl.className = 'subscription-expiry warning';
+                    expiryEl.innerHTML = `<span>⏰</span><span>متبقي ${daysLeft} أيام</span>`;
+                } else {
+                    expiryEl.className = 'subscription-expiry';
+                    expiryEl.innerHTML = `<span>📅</span><span>ينتهي في ${expiry.toLocaleDateString('ar-SA')}</span>`;
+                }
+            } else if (role === 'free') {
+                expiryEl.innerHTML = '<span>♾️</span><span>اشتراك دائم</span>';
+            }
+        }
+
+        // Render plans
+        function renderPlans(currentRole) {
+            const grid = document.getElementById('plansGrid');
+            grid.innerHTML = Object.entries(plans).map(([key, plan]) => `
+                <div class="plan-card ${key === currentRole ? 'current' : ''}" onclick="${key !== currentRole ? `selectPlan('${key}')` : ''}">
+                    <div class="plan-name">${plan.name}</div>
+                    <div class="plan-price">${plan.price} <span>ريال</span></div>
+                    <div class="plan-features">${plan.features.slice(0, 2).join(' • ')}</div>
+                </div>
+            `).join('');
+        }
+
+        // Select plan for upgrade
+        function selectPlan(planKey) {
+            const plan = plans[planKey];
+            const currentRole = currentUser.role || 'free';
+            
+            if (planKey === 'free' && currentRole !== 'free') {
+                // Downgrade
+                document.getElementById('upgradeContent').innerHTML = `
+                    <p style="margin-bottom: 20px;">هل تريد تخفيض اشتراكك إلى الباقة المجانية؟</p>
+                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+                        ⚠️ سيتم تقليل الميزات المتاحة لك
+                    </p>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" onclick="closeUpgradeModal()">إلغاء</button>
+                        <button class="btn btn-danger" onclick="confirmUpgrade('${planKey}')">تأكيد التخفيض</button>
+                    </div>
+                `;
+            } else {
+                // Upgrade
+                document.getElementById('upgradeContent').innerHTML = `
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <div style="font-size: 48px; margin-bottom: 12px;">💎</div>
+                        <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">باقة ${plan.name}</div>
+                        <div style="font-size: 32px; font-weight: 700; color: var(--cyan);">${plan.price} ريال<span style="font-size: 16px; color: var(--text-muted);">/شهر</span></div>
+                    </div>
+                    <div style="margin-bottom: 24px;">
+                        ${plan.features.map(f => `<div style="padding: 8px 0; border-bottom: 1px solid var(--border);">✓ ${f}</div>`).join('')}
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" onclick="closeUpgradeModal()">إلغاء</button>
+                        <button class="btn btn-primary" onclick="confirmUpgrade('${planKey}')">ترقية الآن</button>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('upgradeModal').classList.add('show');
+        }
+
+        // Confirm upgrade
+        function confirmUpgrade(planKey) {
+            const users = JSON.parse(localStorage.getItem('newra_users') || '[]');
+            const userIndex = users.findIndex(u => String(u.id) === String(currentUser.id));
+            
+            if (userIndex >= 0) {
+                users[userIndex].role = planKey;
+                
+                // Set expiry for paid plans
+                if (planKey !== 'free') {
+                    const expiry = new Date();
+                    expiry.setMonth(expiry.getMonth() + 1);
+                    users[userIndex].subscriptionExpiry = expiry.toISOString();
+                } else {
+                    delete users[userIndex].subscriptionExpiry;
+                }
+                
+                localStorage.setItem('newra_users', JSON.stringify(users));
+                
+                // Update session
+                const session = JSON.parse(localStorage.getItem('newra_session') || '{}');
+                session.role = planKey;
+                localStorage.setItem('newra_session', JSON.stringify(session));
+                
+                closeUpgradeModal();
+                showToast('تم تحديث الاشتراك بنجاح!', 'success');
+                loadUserData();
+            }
+        }
+
+        // Close upgrade modal
+        function closeUpgradeModal() {
+            document.getElementById('upgradeModal').classList.remove('show');
+        }
+
+        // Profile form submit
+        document.getElementById('profileForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('fullName').value.trim();
+            const company = document.getElementById('companyName').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            
+            const users = JSON.parse(localStorage.getItem('newra_users') || '[]');
+            const userIndex = users.findIndex(u => String(u.id) === String(currentUser.id));
+            
+            if (userIndex >= 0) {
+                users[userIndex].name = name;
+                users[userIndex].company = company;
+                users[userIndex].phone = phone;
+                
+                localStorage.setItem('newra_users', JSON.stringify(users));
+                
+                // Update session
+                const session = JSON.parse(localStorage.getItem('newra_session') || '{}');
+                session.name = name;
+                session.company = company;
+                localStorage.setItem('newra_session', JSON.stringify(session));
+                
+                showToast('تم حفظ التغييرات بنجاح!', 'success');
+                loadUserData();
+            }
+        });
+
+        // Password form submit
+        document.getElementById('passwordForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast('يرجى ملء جميع الحقول', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 8) {
+                showToast('كلمة المرور يجب أن تكون 8 أحرف على الأقل', 'error');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showToast('كلمات المرور غير متطابقة', 'error');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('newra_users') || '[]');
+            const userIndex = users.findIndex(u => String(u.id) === String(currentUser.id));
+            
+            if (userIndex >= 0) {
+                // Check current password
+                if (users[userIndex].password !== currentPassword) {
+                    showToast('كلمة المرور الحالية غير صحيحة', 'error');
+                    return;
+                }
+                
+                users[userIndex].password = newPassword;
+                localStorage.setItem('newra_users', JSON.stringify(users));
+                
+                // Clear form
+                document.getElementById('passwordForm').reset();
+                
+                showToast('تم تغيير كلمة المرور بنجاح!', 'success');
+            }
+        });
+
+        // Show toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize
+        loadUserData();
+    </script>
+</body>
+</html>
