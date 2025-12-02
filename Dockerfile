@@ -34,14 +34,6 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p /app/logs /app/staticfiles /app/media
 
-# Collect static files
-RUN python manage.py collectstatic --noinput --clear
-
-# Create non-root user for security
-RUN adduser --disabled-password --gecos '' appuser \
-    && chown -R appuser:appuser /app
-USER appuser
-
 # Expose port
 EXPOSE 8000
 
@@ -49,5 +41,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health/ || exit 1
 
-# Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "4", "--timeout", "120", "config.wsgi:application"]
+# Run migrations and collect static on startup, then start gunicorn
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:8000 --workers 2 --threads 4 --timeout 120 config.wsgi:application"]
