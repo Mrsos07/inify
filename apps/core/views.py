@@ -250,7 +250,9 @@ def register_view(request):
                     'require_verification': True
                 })
             else:
-                # Email service not available - login directly
+                # Email service not available - auto-verify and login
+                agent.is_email_verified = True
+                agent.save()
                 login(request, user)
                 return JsonResponse({'success': True})
         except Exception as e:
