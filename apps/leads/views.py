@@ -7,6 +7,7 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import SessionAuthentication
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Lead, LeadActivity, ViewingAppointment
@@ -17,9 +18,16 @@ from .serializers import (
 from services.lead_service import LeadService
 
 
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    """Session authentication without CSRF check"""
+    def enforce_csrf(self, request):
+        return  # Skip CSRF check
+
+
 class LeadViewSet(viewsets.ModelViewSet):
     """ViewSet للعملاء المحتملين"""
     
+    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'source', 'urgency', 'looking_for']
@@ -136,6 +144,7 @@ class LeadViewSet(viewsets.ModelViewSet):
 class ViewingAppointmentViewSet(viewsets.ModelViewSet):
     """ViewSet لمواعيد المعاينة"""
     
+    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [IsAuthenticated]
     serializer_class = ViewingAppointmentSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]

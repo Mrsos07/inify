@@ -7,13 +7,37 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.views.static import serve
+import os
 
 # Health check endpoint for Render
 def health_check(request):
     return JsonResponse({'status': 'ok', 'service': 'inify'})
 
+# SEO: robots.txt
+def robots_txt(request):
+    robots_path = os.path.join(settings.BASE_DIR, 'static', 'robots.txt')
+    try:
+        with open(robots_path, 'r') as f:
+            return HttpResponse(f.read(), content_type='text/plain')
+    except FileNotFoundError:
+        return HttpResponse("User-agent: *\nAllow: /", content_type='text/plain')
+
+# SEO: sitemap.xml
+def sitemap_xml(request):
+    sitemap_path = os.path.join(settings.BASE_DIR, 'static', 'sitemap.xml')
+    try:
+        with open(sitemap_path, 'r', encoding='utf-8') as f:
+            return HttpResponse(f.read(), content_type='application/xml')
+    except FileNotFoundError:
+        return HttpResponse('<?xml version="1.0" encoding="UTF-8"?><urlset></urlset>', content_type='application/xml')
+
 urlpatterns = [
+    # SEO files (must be accessible at root)
+    path('robots.txt', robots_txt, name='robots_txt'),
+    path('sitemap.xml', sitemap_xml, name='sitemap_xml'),
+    
     # Health check (must be first for Render)
     path('health/', health_check, name='health_check'),
     

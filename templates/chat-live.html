@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المحادثة - Inify</title>
+    <title>تجربة الشات - Inify</title>
     
     <!-- 🔒 Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -15,189 +15,144 @@
     <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
     
     <style>
-        /* Fonts */
-        @font-face {
-            font-family: 'Chillax';
-            src: url('/static/Chillax-Regular.woff2') format('woff2');
-            font-weight: 400;
-            font-display: swap;
-        }
-        @font-face {
-            font-family: 'Chillax';
-            src: url('/static/Chillax-Bold.woff2') format('woff2');
-            font-weight: 700;
-            font-display: swap;
-        }
         @font-face {
             font-family: 'BalooBhaijaan2';
             src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
             font-weight: 400;
-            font-display: swap;
         }
         @font-face {
             font-family: 'BalooBhaijaan2';
             src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
             font-weight: 700;
-            font-display: swap;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --midnight: #0A0E1A;
-            --dark-blue: #141B2D;
-            --card-bg: #1A2235;
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
             --blue-mid: #4A90A4;
-            --cyan: #00D4FF;
-            --cyan-light: #7EE8FA;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
             --pearl: #F8F8F8;
-            --text-muted: rgba(248, 248, 248, 0.5);
-            --gradient-primary: linear-gradient(135deg, #00D4FF 0%, #7EE8FA 50%, #00D4FF 100%);
-            --gradient-dark: linear-gradient(180deg, #0A0E1A 0%, #141B2D 100%);
-            --glow-cyan: 0 0 40px rgba(0, 212, 255, 0.3);
+            --text-muted: rgba(248, 248, 248, 0.6);
+            --border: rgba(107, 184, 201, 0.15);
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
         }
 
         body {
-            font-family: 'BalooBhaijaan2', 'Chillax', 'Segoe UI', sans-serif;
-            background: var(--gradient-dark);
+            font-family: 'BalooBhaijaan2', sans-serif;
+            background: linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0A1628 100%);
             color: var(--pearl);
-            height: 100vh;
             display: flex;
             flex-direction: column;
-            position: relative;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Header */
+        .page-header {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-title h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--pearl);
+        }
+
+        .page-title span {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: rgba(107, 184, 201, 0.15);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--pearl);
+            text-decoration: none;
+            font-family: inherit;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(107, 184, 201, 0.25);
+            border-color: var(--cyan);
+        }
+
+        /* Chat Container - Embed Style */
+        #chatContainer {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 500px;
+            height: calc(100vh - 120px);
+            max-height: 700px;
+            background: var(--midnight);
+            border-radius: 24px;
             overflow: hidden;
-        }
-
-        /* Animated Background */
-        .bg-effects {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
-        }
-
-        .bg-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.4;
-            animation: float 20s ease-in-out infinite;
-        }
-
-        .bg-orb-1 {
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(0, 212, 255, 0.3) 0%, transparent 70%);
-            top: -200px;
-            right: -100px;
-            animation-delay: 0s;
-        }
-
-        .bg-orb-2 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(126, 232, 250, 0.2) 0%, transparent 70%);
-            bottom: -150px;
-            left: -100px;
-            animation-delay: -10s;
-        }
-
-        .bg-orb-3 {
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(74, 144, 164, 0.2) 0%, transparent 70%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -5s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(30px, -30px) scale(1.05); }
-            50% { transform: translate(-20px, 20px) scale(0.95); }
-            75% { transform: translate(20px, 30px) scale(1.02); }
-        }
-
-        /* Grid Pattern */
-        .bg-grid {
-            position: fixed;
-            inset: 0;
-            background-image: 
-                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none;
-            z-index: 0;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border);
         }
 
         /* Header */
         .chat-header {
-            position: relative;
-            z-index: 10;
-            padding: 20px 40px;
-            background: rgba(26, 34, 53, 0.8);
+            padding: 16px 24px;
+            background: rgba(30, 58, 95, 0.6);
             backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 14px;
         }
 
-        .chat-header-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .chat-logo {
-            width: 52px;
-            height: 52px;
-            background: var(--gradient-primary);
-            border-radius: 16px;
+        .agent-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: var(--glow-cyan);
-            position: relative;
+            font-size: 24px;
             overflow: hidden;
         }
 
-        .chat-logo::before {
-            content: '';
-            position: absolute;
-            inset: 2px;
-            background: var(--dark-blue);
-            border-radius: 14px;
+        .agent-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .chat-logo svg {
-            width: 28px;
-            height: 28px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .chat-title h1 {
-            font-size: 22px;
+        .agent-info h1 {
+            font-size: 18px;
             font-weight: 700;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
-        .chat-title p {
+        .agent-info span {
             font-size: 13px;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            color: var(--cyan-light);
         }
 
         .status-dot {
@@ -205,375 +160,216 @@
             height: 8px;
             background: #22c55e;
             border-radius: 50%;
+            display: inline-block;
+            margin-left: 6px;
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-            50% { opacity: 0.8; box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
-        .header-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .header-btn {
-            padding: 12px 24px;
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            border-radius: 12px;
-            color: var(--pearl);
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .header-btn:hover {
-            background: rgba(0, 212, 255, 0.2);
-            border-color: var(--cyan);
-            box-shadow: var(--glow-cyan);
-        }
-
-        .header-btn.primary {
-            background: var(--gradient-primary);
-            border: none;
-            color: var(--midnight);
-        }
-
-        .header-btn.primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
-        }
-
-        /* Main Chat Container */
-        .chat-wrapper {
+        /* Messages */
+        .chat-messages {
             flex: 1;
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-            position: relative;
-            z-index: 10;
-            overflow: hidden;
-            min-height: 0;
-        }
-
-        .chat-container {
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            flex-direction: column;
-            background: rgba(26, 34, 53, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 212, 255, 0.1);
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
-            max-height: 100%;
-        }
-
-        /* Messages Area */
-        .messages {
-            flex: 1;
+            padding: 24px;
             overflow-y: auto;
-            padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 16px;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(0, 212, 255, 0.3) transparent;
             min-height: 0;
         }
 
-        .messages::-webkit-scrollbar {
+        .chat-messages::-webkit-scrollbar {
             width: 6px;
         }
 
-        .messages::-webkit-scrollbar-track {
+        .chat-messages::-webkit-scrollbar-track {
             background: transparent;
         }
 
-        .messages::-webkit-scrollbar-thumb {
-            background: rgba(0, 212, 255, 0.3);
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--border);
             border-radius: 3px;
         }
 
-        /* Message Bubbles */
         .message {
             max-width: 85%;
-            padding: 16px 20px;
-            border-radius: 20px;
-            line-height: 1.5;
-            font-size: 15px;
-            position: relative;
-            animation: messageIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 14px 18px;
+            border-radius: 18px;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
         }
 
-        @keyframes messageIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .message.bot {
+            background: rgba(30, 58, 95, 0.6);
+            border: 1px solid var(--border);
             align-self: flex-start;
-            background: rgba(26, 34, 53, 0.9);
-            border: 1px solid rgba(0, 212, 255, 0.15);
-            border-top-right-radius: 8px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .message.bot::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
-            border-radius: 0 8px 0 24px;
-        }
-
-        .message.bot strong {
-            color: var(--cyan);
-            font-weight: 600;
-        }
-
-        .message.bot p {
-            margin: 4px 0;
-        }
-
-        .message.bot ul, .message.bot ol {
-            margin: 6px 0;
-            padding-right: 20px;
-        }
-
-        .message.bot li {
-            margin: 2px 0;
+            border-bottom-right-radius: 6px;
         }
 
         .message.user {
-            align-self: flex-end;
-            background: var(--gradient-primary);
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
             color: var(--midnight);
-            border-top-left-radius: 8px;
-            font-weight: 500;
-            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.3);
+            align-self: flex-end;
+            border-bottom-left-radius: 6px;
         }
 
-        /* Bot Avatar */
-        .message-with-avatar {
+        .message.typing {
             display: flex;
-            gap: 14px;
-            align-items: flex-start;
+            gap: 6px;
+            padding: 18px 22px;
         }
 
-        .bot-avatar {
-            width: 42px;
-            height: 42px;
-            background: var(--gradient-primary);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            flex-shrink: 0;
-            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--cyan);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
         }
 
         /* Property Cards */
-        .message.bot .property-cards {
-            display: grid;
+        .properties-container {
+            display: flex;
+            flex-direction: column;
             gap: 12px;
             margin-top: 12px;
         }
 
-        .property-card-mini {
-            background: rgba(10, 14, 26, 0.8);
+        .property-card {
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
             border-radius: 16px;
             overflow: hidden;
-            border: 1px solid rgba(0, 212, 255, 0.15);
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .property-card-mini:hover {
-            border-color: var(--cyan);
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
-        }
-
-        .property-card-mini .property-image {
-            width: 100%;
-            height: 120px;
-            background-size: cover;
-            background-position: center;
-            background-color: rgba(26, 34, 53, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
+        .property-image {
+            height: 160px;
+            background: var(--dark-blue);
             position: relative;
+            cursor: pointer;
+            overflow: hidden;
         }
 
-        .property-card-mini .property-image::after {
-            content: '';
+        .property-image::after {
+            content: '🔍 اضغط لعرض الصورة';
             position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(10, 14, 26, 0.8) 0%, transparent 50%);
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            color: white;
+            font-size: 12px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
-        .property-card-mini .property-badge {
+        .property-image:hover::after {
+            opacity: 1;
+        }
+
+        .property-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .property-image:hover img {
+            transform: scale(1.05);
+        }
+
+        .property-badge {
             position: absolute;
-            top: 8px;
-            right: 8px;
-            padding: 4px 10px;
-            background: var(--gradient-primary);
+            top: 12px;
+            right: 12px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
             color: var(--midnight);
-            font-size: 11px;
-            font-weight: 700;
-            border-radius: 6px;
-            z-index: 2;
-        }
-
-        .property-card-mini .property-info {
-            padding: 12px;
-        }
-
-        .property-card-mini .property-title {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            color: var(--pearl);
-        }
-
-        .property-card-mini .property-location {
             font-size: 12px;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-bottom: 8px;
+            font-weight: 600;
+            border-radius: 8px;
         }
 
-        .property-card-mini .property-details {
-            display: flex;
-            gap: 12px;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
+        .property-content {
+            padding: 16px;
         }
 
-        .property-card-mini .property-price {
+        .property-title {
             font-size: 16px;
             font-weight: 700;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
         }
 
-        .property-card-mini .property-price span {
+        .property-location {
             font-size: 13px;
-            font-weight: 400;
-            -webkit-text-fill-color: var(--text-muted);
+            color: var(--text-muted);
+            margin-bottom: 12px;
         }
 
-        .property-card-mini .image-count {
-            position: absolute;
-            bottom: 8px;
-            left: 8px;
-            background: rgba(10, 14, 26, 0.9);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 10px;
-            color: var(--pearl);
-            z-index: 2;
-            backdrop-filter: blur(10px);
-        }
-
-        .property-card-mini .view-images-btn {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            background: var(--cyan);
-            color: var(--midnight);
-            border: none;
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s;
-            font-family: inherit;
-            z-index: 2;
-        }
-
-        .property-card-mini:hover .view-images-btn {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .property-card-mini .view-images-btn:hover {
-            background: var(--cyan-light);
-            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
-        }
-
-        .property-card-mini .property-amenities {
+        .property-details {
             display: flex;
-            gap: 6px;
-            margin-top: 6px;
-            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--cyan-light);
         }
 
-        .property-card-mini .amenity-tag {
-            font-size: 14px;
+        .property-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--cyan);
+            margin-top: 12px;
         }
 
-        /* Chat Input */
+        /* Input */
         .chat-input-container {
-            padding: 16px;
-            background: rgba(20, 27, 45, 0.8);
-            border-top: 1px solid rgba(0, 212, 255, 0.1);
+            padding: 20px 24px;
+            background: rgba(30, 58, 95, 0.6);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
         }
 
         .chat-input-wrapper {
             display: flex;
             gap: 12px;
-            background: rgba(10, 14, 26, 0.6);
-            border: 2px solid rgba(0, 212, 255, 0.15);
-            border-radius: 20px;
-            padding: 8px;
-            transition: all 0.3s;
+            background: rgba(10, 22, 40, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 12px 20px;
+            transition: border-color 0.3s;
         }
 
         .chat-input-wrapper:focus-within {
             border-color: var(--cyan);
-            box-shadow: 0 0 30px rgba(0, 212, 255, 0.15);
         }
 
         .chat-input {
             flex: 1;
-            padding: 12px 16px;
             background: transparent;
             border: none;
             color: var(--pearl);
             font-family: inherit;
-            font-size: 15px;
+            font-size: 16px;
             outline: none;
+            padding: 4px 0;
         }
 
         .chat-input::placeholder {
@@ -581,198 +377,97 @@
         }
 
         .send-btn {
-            padding: 12px 24px;
-            background: var(--gradient-primary);
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
             border: none;
             border-radius: 12px;
-            color: var(--midnight);
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .send-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
-        }
-
-        .send-btn:active {
-            transform: scale(0.98);
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(107, 184, 201, 0.3);
         }
 
         .send-btn svg {
-            transition: transform 0.3s;
+            width: 20px;
+            height: 20px;
+            stroke: var(--midnight);
         }
 
-        .send-btn:hover svg {
-            transform: translateX(-4px);
-        }
-
-        /* Typing Indicator */
-        .typing-indicator {
-            display: none;
-            align-self: flex-start;
-            padding: 14px 18px;
-            background: rgba(26, 34, 53, 0.9);
-            border: 1px solid rgba(0, 212, 255, 0.15);
-            border-radius: 24px;
-            border-top-right-radius: 8px;
-        }
-
-        .typing-indicator.show {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .typing-indicator span {
-            width: 10px;
-            height: 10px;
-            background: var(--cyan);
-            border-radius: 50%;
-            animation: typing 1.4s infinite;
-        }
-
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
-            30% { transform: translateY(-10px); opacity: 1; }
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 16px;
-        }
-
-        .quick-action-btn {
-            padding: 10px 18px;
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            border-radius: 12px;
-            color: var(--cyan);
-            font-family: inherit;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .quick-action-btn:hover {
-            background: rgba(0, 212, 255, 0.2);
-            border-color: var(--cyan);
-        }
-
-        /* Settings Link */
-        .settings-link {
-            position: fixed;
-            bottom: 24px;
-            left: 24px;
-            z-index: 100;
-        }
-
-        .settings-link a {
-            padding: 12px 20px;
-            background: rgba(26, 34, 53, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 212, 255, 0.15);
-            border-radius: 12px;
-            color: var(--text-muted);
-            font-size: 14px;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .settings-link a:hover {
-            color: var(--cyan);
-            border-color: var(--cyan);
+        /* Test Mode Badge */
+        .test-badge {
+            background: rgba(234, 179, 8, 0.2);
+            color: #eab308;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
         }
 
         /* Gallery Modal */
-        .chat-gallery-modal {
+        .gallery-modal {
+            display: none;
             position: fixed;
             inset: 0;
-            background: rgba(10, 14, 26, 0.98);
-            backdrop-filter: blur(20px);
-            z-index: 9999;
-            display: none;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
             align-items: center;
             justify-content: center;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.3s ease;
         }
 
-        .chat-gallery-modal.show {
+        .gallery-modal.show {
             display: flex;
         }
 
-        .chat-gallery-close {
+        .gallery-close {
             position: absolute;
-            top: 24px;
-            right: 24px;
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            border: 2px solid rgba(255,255,255,0.2);
-            background: rgba(26, 34, 53, 0.9);
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
             color: white;
             font-size: 28px;
             cursor: pointer;
             transition: all 0.3s;
-            z-index: 10;
-        }
-
-        .chat-gallery-close:hover {
-            background: #ef4444;
-            border-color: #ef4444;
-            transform: rotate(90deg);
-        }
-
-        .chat-gallery-content {
-            max-width: 90vw;
-            max-height: 85vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
 
-        .chat-gallery-content img {
-            max-width: 100%;
+        .gallery-close:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.1);
+        }
+
+        .gallery-image {
+            max-width: 90%;
             max-height: 80vh;
-            object-fit: contain;
             border-radius: 16px;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
         }
 
-        .chat-gallery-counter {
-            margin-top: 20px;
-            padding: 10px 24px;
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            border-radius: 24px;
-            color: white;
-            font-size: 14px;
-        }
-
-        .chat-gallery-nav {
+        .gallery-nav {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
-            border: 2px solid rgba(255,255,255,0.2);
-            background: rgba(26, 34, 53, 0.9);
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
             color: white;
+            font-size: 24px;
             cursor: pointer;
             transition: all 0.3s;
             display: flex;
@@ -780,1173 +475,489 @@
             justify-content: center;
         }
 
-        .chat-gallery-nav:hover {
-            background: var(--cyan);
-            border-color: var(--cyan);
-            color: var(--midnight);
+        .gallery-nav:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-50%) scale(1.1);
         }
 
-        .chat-gallery-prev { left: 24px; }
-        .chat-gallery-next { right: 24px; }
+        .gallery-nav.prev { right: 20px; }
+        .gallery-nav.next { left: 20px; }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .chat-header {
-                padding: 12px 16px;
-            }
+        .gallery-counter {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
 
-            .chat-wrapper {
-                padding: 10px;
-            }
+        .gallery-property-info {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: white;
+        }
 
-            .chat-container {
-                border-radius: 16px;
-            }
+        .gallery-property-info h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
 
-            .messages {
-                padding: 14px;
-                gap: 12px;
-            }
-
-            .message {
-                max-width: 92%;
-                padding: 12px 14px;
-                font-size: 14px;
-                line-height: 1.4;
-            }
-
-            .chat-input-container {
-                padding: 12px;
-            }
-
-            .chat-input-wrapper {
-                padding: 6px;
-                border-radius: 16px;
-            }
-
-            .chat-input {
-                padding: 10px 12px;
-                font-size: 14px;
-            }
-
-            .send-btn {
-                padding: 10px 16px;
-            }
-
-            .send-btn span {
-                display: none;
-            }
-
-            .header-btn span {
-                display: none;
-            }
-
-            .settings-link {
-                display: none;
-            }
-
-            .quick-actions {
-                gap: 6px;
-            }
-
-            .quick-action-btn {
-                padding: 8px 12px;
-                font-size: 12px;
-            }
-
-            .property-card-mini .property-image {
-                height: 100px;
-            }
-
-            .property-card-mini .property-info {
-                padding: 10px;
-            }
+        .gallery-property-info p {
+            font-size: 14px;
+            opacity: 0.8;
         }
     </style>
 </head>
 <body>
-    <!-- Background Effects -->
-    <div class="bg-effects">
-        <div class="bg-orb bg-orb-1"></div>
-        <div class="bg-orb bg-orb-2"></div>
-        <div class="bg-orb bg-orb-3"></div>
-    </div>
-    <div class="bg-grid"></div>
-
-    <!-- Header -->
-    <header class="chat-header">
-        <div class="chat-header-left">
-            <div class="chat-logo">
-                <img src="/static/images/inify-logo-white.png" alt="Inify" style="width: 32px; height: 32px;">
-            </div>
-            <div class="chat-title">
-                <h1 id="agentNameHeader">Inify AI</h1>
-                <p><span class="status-dot"></span> متصل الآن</p>
-            </div>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title">
+            <h1>🤖 تجربة الشات</h1>
+            <span class="test-badge">وضع التجربة</span>
         </div>
-        <div class="header-actions">
-            <a href="/settings/" class="header-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-                <span>الإعدادات</span>
-            </a>
-            <a href="/chat/" class="header-btn primary">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
-                </svg>
-                <span>العودة</span>
-            </a>
-        </div>
-    </header>
-
-    <!-- Chat Container -->
-    <div class="chat-wrapper">
-        <div class="chat-container">
-            <div class="messages" id="messages">
-                <div class="message bot" id="welcomeMessage">
-                    مرحباً بك! 👋 أنا وكيلك العقاري الذكي. كيف يمكنني مساعدتك اليوم؟
-                    <div class="quick-actions">
-                        <button class="quick-action-btn" onclick="sendQuickMessage('أريد شقة للإيجار')">🏠 شقة للإيجار</button>
-                        <button class="quick-action-btn" onclick="sendQuickMessage('أبحث عن فيلا للبيع')">🏡 فيلا للبيع</button>
-                        <button class="quick-action-btn" onclick="sendQuickMessage('ما هي العقارات المتاحة؟')">📋 العقارات المتاحة</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="typing-indicator" id="typingIndicator">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-
-            <div class="chat-input-container">
-                <form class="chat-input-wrapper" id="chatForm">
-                    <input type="text" class="chat-input" id="chatInput" placeholder="اكتب رسالتك هنا..." autocomplete="off">
-                    <button type="submit" class="send-btn" id="sendBtn">
-                        <span>إرسال</span>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <line x1="22" y1="2" x2="11" y2="13"/>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                        </svg>
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Link -->
-    <div class="settings-link">
-        <a href="/settings/">
-            ⚙️ إعدادات الوكيل
+        <a href="/dashboard/" class="back-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            العودة للوحة التحكم
         </a>
     </div>
 
-    <!-- Chat Gallery Modal -->
-    <div class="chat-gallery-modal" id="chatGalleryModal">
-        <button class="chat-gallery-close" onclick="closeChatGallery()">×</button>
-        <button class="chat-gallery-nav chat-gallery-prev" onclick="prevChatImage()">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="15 18 9 12 15 6"/>
-            </svg>
-        </button>
-        <div class="chat-gallery-content">
-            <img id="chatGalleryImage" src="" alt="صورة العقار">
-            <div class="chat-gallery-counter" id="chatGalleryCounter">1 / 1</div>
-        </div>
-        <button class="chat-gallery-nav chat-gallery-next" onclick="nextChatImage()">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9 18 15 12 9 6"/>
-            </svg>
-        </button>
+    <div id="chatContainer">
+        <!-- Will be populated by JavaScript -->
+    </div>
+
+    <!-- Gallery Modal -->
+    <div class="gallery-modal" id="galleryModal" onclick="closeGalleryOnBackdrop(event)">
+        <button class="gallery-close" onclick="closeGallery()">×</button>
+        <button class="gallery-nav prev" onclick="prevImage()">❮</button>
+        <img class="gallery-image" id="galleryImage" src="" alt="">
+        <button class="gallery-nav next" onclick="nextImage()">❯</button>
+        <div class="gallery-property-info" id="galleryPropertyInfo"></div>
+        <div class="gallery-counter" id="galleryCounter"></div>
     </div>
 
     <script src="/config.js"></script>
-    <script src="/static/js/auth.js"></script>
     <script>
-        // DOM Elements
-        const messagesEl = document.getElementById('messages');
-        const chatForm = document.getElementById('chatForm');
-        const chatInput = document.getElementById('chatInput');
-        const typingIndicator = document.getElementById('typingIndicator');
-        const welcomeMessageEl = document.getElementById('welcomeMessage');
-
-        // Load agent settings - خاصة بالمستخدم
+        // Get agent ID from Django context
         const agentId = '{{ agent_id|default:"demo" }}';
-        const agentSettings = JSON.parse(localStorage.getItem('newra_agent_settings_' + agentId) || '{}');
-        
-        // Properties array - will be loaded from API
-        let cachedProperties = [];
-        let propertiesLoaded = false;
-        
-        // Function to get fresh properties from API
-        async function loadPropertiesFromAPI() {
-            console.log('🔄 Loading properties from API...');
-            try {
-                const response = await fetch(`/api/v1/properties/my/`);
-                console.log('📡 API Response status:', response.status);
-                const data = await response.json();
-                console.log('📦 API Response data:', data);
-                if (data.success) {
-                    cachedProperties = data.properties;
-                    console.log('✅ Properties loaded from API:', cachedProperties.length);
-                } else {
-                    console.log('❌ API returned error:', data.error);
-                }
-            } catch (error) {
-                console.error('❌ Error loading properties:', error);
-                // Fallback to localStorage
-                cachedProperties = JSON.parse(localStorage.getItem('newra_properties') || '[]');
-            }
-            propertiesLoaded = true;
-            
-            // Log properties after loading
-            console.log('═══════════════════════════════════════');
-            console.log('🏠 Inify Chat - RAG System Initialized');
-            console.log('═══════════════════════════════════════');
-            console.log('📊 Properties loaded:', cachedProperties.length);
-            if (cachedProperties.length > 0) {
-                console.log('📋 Your Properties:');
-                cachedProperties.forEach((p, i) => {
-                    console.log(`   [${i+1}] ${p.title} - ${p.city} - ${p.price} ريال`);
-                });
-            } else {
-                console.log('⚠️ No properties found! Add properties from dashboard');
-            }
-            console.log('═══════════════════════════════════════');
-        }
-        
-        // Load properties on init
-        loadPropertiesFromAPI();
-        
-        // Function to get properties
-        function getProperties() {
-            return cachedProperties;
-        }
-
-        // Conversation history for context
-        let conversationHistory = [];
-        
-        // Track client info for lead capture
-        let clientInfo = {
-            phone: null,
-            name: null,
-            savedToLeads: false
-        };
-        
-        // ═══════════════════════════════════════════════════════════
-        // 🛡️ Rate Limit & Abuse Detection System
-        // ═══════════════════════════════════════════════════════════
-        let abuseDetection = {
-            offTopicCount: 0,           // عدد الأسئلة خارج الموضوع
-            maxOffTopic: 7,             // الحد الأقصى
-            isBlocked: false,           // هل تم حظر المستخدم
-            suspiciousPatterns: [
-                // محاولات كسر النموذج
-                'ignore', 'تجاهل', 'انسى', 'forget',
-                'system prompt', 'سيستم برومبت',
-                'you are now', 'أنت الآن',
-                'act as', 'تصرف ك',
-                'pretend', 'تظاهر',
-                'jailbreak', 'bypass',
-                'ignore previous', 'تجاهل السابق',
-                'new instructions', 'تعليمات جديدة',
-                'override', 'تجاوز',
-                'admin', 'أدمن', 'مشرف',
-                'developer', 'مطور',
-                'debug', 'test mode',
-                'what is your prompt', 'ما هو البرومبت',
-                'show me your instructions', 'أرني تعليماتك',
-                'repeat after me', 'كرر ورائي',
-                'say exactly', 'قل بالضبط'
-            ],
-            offTopicPatterns: [
-                // أسئلة خارج العقارات
-                'طبخ', 'وصفة', 'أكل',
-                'سياسة', 'حرب', 'انتخابات',
-                'دين', 'فتوى',
-                'برمجة', 'كود', 'python', 'javascript',
-                'قصة', 'حكاية', 'نكتة', 'ضحك',
-                'أغنية', 'فيلم', 'مسلسل',
-                'لعبة', 'game',
-                'رياضة', 'كورة', 'مباراة',
-                'طقس', 'جو',
-                'ترجم', 'translate',
-                'اكتب لي', 'write me',
-                'ما رأيك في', 'what do you think'
-            ]
-        };
-        
-        // كشف الأسئلة المشبوهة
-        function detectAbuse(message) {
-            const msgLower = message.toLowerCase();
-            
-            // كشف محاولات كسر النموذج
-            for (const pattern of abuseDetection.suspiciousPatterns) {
-                if (msgLower.includes(pattern.toLowerCase())) {
-                    console.log('🚨 Suspicious pattern detected:', pattern);
-                    abuseDetection.isBlocked = true;
-                    return 'blocked';
-                }
-            }
-            
-            // كشف الأسئلة خارج الموضوع
-            for (const pattern of abuseDetection.offTopicPatterns) {
-                if (msgLower.includes(pattern.toLowerCase())) {
-                    abuseDetection.offTopicCount++;
-                    console.log('⚠️ Off-topic question:', abuseDetection.offTopicCount, '/', abuseDetection.maxOffTopic);
-                    
-                    if (abuseDetection.offTopicCount >= abuseDetection.maxOffTopic) {
-                        abuseDetection.isBlocked = true;
-                        return 'blocked';
-                    }
-                    return 'off-topic';
-                }
-            }
-            
-            return 'ok';
-        }
-        
-        // رسالة الحظر
-        function getBlockedMessage() {
-            return `عذراً، يبدو أن أسئلتك خارج نطاق خدماتنا العقارية 🏠
-
-أنا هنا لمساعدتك في:
-• البحث عن شقق وفلل
-• معرفة الأسعار والمواصفات
-• ترتيب مواعيد المعاينة
-
-إذا كنت مهتماً بعقار، أخبرني! 😊`;
-        }
-        
-        // Extract phone number from message
-        function extractPhoneNumber(text) {
-            const patterns = [
-                /(?:\+?966|0)?5\d{8}/g,
-                /(?:\+?966|0)?1\d{7}/g,
-            ];
-            
-            for (const pattern of patterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    let phone = match[0].replace(/\s/g, '');
-                    if (phone.startsWith('+966')) {
-                        phone = '0' + phone.slice(4);
-                    } else if (phone.startsWith('966')) {
-                        phone = '0' + phone.slice(3);
-                    } else if (!phone.startsWith('0')) {
-                        phone = '0' + phone;
-                    }
-                    return phone;
-                }
-            }
-            return null;
-        }
-        
-        // Save lead to database
-        async function saveLeadToDatabase(phone) {
-            if (clientInfo.savedToLeads) return;
-            
-            try {
-                const response = await fetch('/api/v1/leads/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({
-                        name: clientInfo.name || 'عميل من الشات',
-                        phone: phone,
-                        source: 'chatbot',
-                        status: 'new',
-                        notes: conversationHistory.map(m => `${m.role === 'user' ? 'العميل' : 'الوكيل'}: ${m.content}`).join('\n')
-                    })
-                });
-                
-                if (response.ok) {
-                    clientInfo.savedToLeads = true;
-                    console.log('✅ Lead saved to database');
-                }
-            } catch (error) {
-                console.error('Error saving lead:', error);
-            }
-        }
-
-        // Apply settings
-        if (agentSettings.agentName) {
-            document.getElementById('agentNameHeader').textContent = agentSettings.agentName;
-        }
-        if (agentSettings.welcomeMessage) {
-            // Keep quick actions, just update the text
-            const quickActionsHTML = welcomeMessageEl.querySelector('.quick-actions')?.outerHTML || '';
-            welcomeMessageEl.innerHTML = agentSettings.welcomeMessage + quickActionsHTML;
-        }
-
-        // Quick message function for quick action buttons
-        function sendQuickMessage(message) {
-            chatInput.value = message;
-            chatForm.dispatchEvent(new Event('submit'));
-        }
-
-        // RAG: Search properties based on query
-        function searchProperties(query) {
-            const properties = getProperties();
-            console.log('🔍 Searching properties:', properties.length, 'total');
-            
-            if (properties.length === 0) return [];
-            
-            const queryLower = query.toLowerCase();
-            const maxResults = 5;
-            
-            // Keyword matching for RAG
-            const scored = properties.map(prop => {
-                let score = 0;
-                const searchText = `${prop.title} ${prop.description} ${prop.cityLabel || prop.city} ${prop.district} ${prop.typeLabel || prop.type}`.toLowerCase();
-                
-                // Match keywords - property types
-                if ((queryLower.includes('شقة') || queryLower.includes('شقه')) && (prop.type === 'apartment' || prop.typeLabel?.includes('شقة'))) score += 10;
-                if (queryLower.includes('فيلا') && (prop.type === 'villa' || prop.typeLabel?.includes('فيلا'))) score += 10;
-                if (queryLower.includes('دوبلكس') && prop.type === 'duplex') score += 10;
-                if (queryLower.includes('أرض') && prop.type === 'land') score += 10;
-                if (queryLower.includes('تجاري') && prop.type === 'commercial') score += 10;
-                if (queryLower.includes('مكتب') && prop.type === 'office') score += 10;
-                
-                // Match cities (Arabic and English)
-                if (queryLower.includes('الرياض') && prop.city === 'riyadh') score += 10;
-                if (queryLower.includes('جدة') && prop.city === 'jeddah') score += 10;
-                if (queryLower.includes('الدمام') && prop.city === 'dammam') score += 10;
-                if (queryLower.includes('مكة') && prop.city === 'makkah') score += 10;
-                if (queryLower.includes('المدينة') && prop.city === 'madinah') score += 10;
-                if (queryLower.includes('الخبر') && prop.city === 'khobar') score += 10;
-                
-                // Match district/neighborhood
-                if (prop.district && queryLower.includes(prop.district.toLowerCase())) score += 15;
-                
-                // Match listing type
-                if ((queryLower.includes('بيع') || queryLower.includes('للبيع')) && prop.listing_type === 'sale') score += 5;
-                if ((queryLower.includes('إيجار') || queryLower.includes('ايجار') || queryLower.includes('للايجار')) && prop.listing_type === 'rent') score += 5;
-                if (queryLower.includes('استئجار') && prop.listing_type === 'rent') score += 5;
-                
-                // Partial text match
-                queryLower.split(' ').forEach(word => {
-                    if (word.length > 2 && searchText.includes(word)) score += 2;
-                });
-                
-                // Give base score if no specific match but properties exist
-                if (score === 0) score = 1;
-                
-                return { property: prop, score };
-            });
-            
-            const results = scored
-                .filter(s => s.score > 0)
-                .sort((a, b) => b.score - a.score)
-                .slice(0, maxResults)
-                .map(s => s.property);
-            
-            console.log('✅ Found properties:', results.length);
-            return results;
-        }
-
-        // Format properties for AI context
-        function formatPropertiesContext(props) {
-            if (props.length === 0) return 'لا توجد عقارات مطابقة في قاعدة البيانات حالياً.';
-            
-            return props.map((p, i) => `
-العقار ${i + 1}:
-- العنوان: ${p.title}
-- النوع: ${p.typeLabel}
-- العرض: ${p.listing_type === 'sale' ? 'للبيع' : 'للإيجار'}
-- الموقع: ${p.cityLabel}${p.district ? ' - ' + p.district : ''}
-- السعر: ${Number(p.price).toLocaleString('ar-SA')} ريال${p.listing_type === 'rent' ? '/شهر' : ''}
-${p.area ? '- المساحة: ' + p.area + ' م²' : ''}
-${p.bedrooms ? '- الغرف: ' + p.bedrooms : ''}
-${p.bathrooms ? '- الحمامات: ' + p.bathrooms : ''}
-${p.description ? '- الوصف: ' + p.description : ''}
-`).join('\n');
-        }
-
-        // Build system prompt with ALL user properties (RAG)
-        function buildSystemPrompt(userQuery) {
-            const agentName = agentSettings.agentName || 'Inify';
-            const allProperties = getProperties(); // Get fresh properties
-            
-            // فلترة العقارات المتاحة فقط (استبعاد المحجوز والمنتهي)
-            // status يمكن أن يكون: available, for_sale, for_rent, reserved, sold, rented
-            const properties = allProperties.filter(p => 
-                !p.status || 
-                p.status === 'available' || 
-                p.status === 'for_sale' || 
-                p.status === 'for_rent'
-            );
-            
-            // Search for relevant properties based on query
-            const relevantProperties = searchProperties(userQuery).filter(p => 
-                !p.status || 
-                p.status === 'available' || 
-                p.status === 'for_sale' || 
-                p.status === 'for_rent'
-            );
-            lastSearchedProperties = relevantProperties.length > 0 ? relevantProperties : properties;
-            
-            // Format AVAILABLE properties for AI context
-            let allPropertiesText = '';
-            if (properties.length > 0) {
-                allPropertiesText = properties.map((p, i) => {
-                    const listingType = p.listing_type === 'sale' ? 'للبيع' : 'للإيجار';
-                    const price = Number(p.price).toLocaleString('ar-SA');
-                    // تحديد نوع السعر للإيجار
-                    let priceLabel = '';
-                    if (p.listing_type === 'rent') {
-                        const rentPeriod = p.rent_period || p.price_type || 'yearly';
-                        const periodLabels = { 'yearly': '/سنوي', 'monthly': '/شهري', 'daily': '/يومي' };
-                        priceLabel = periodLabels[rentPeriod] || '/سنوي';
-                    }
-                    // عدد الدفعات
-                    const paymentInfo = p.listing_type === 'rent' && p.payment_count ? 
-                        `   عدد الدفعات: ${p.payment_count === '1' ? 'دفعة واحدة' : p.payment_count + ' دفعات'}` : '';
-                    
-                    return `【عقار ${i+1}】
-   الاسم: ${p.title}
-   النوع: ${p.typeLabel || p.type}
-   العرض: ${listingType}
-   المدينة: ${p.cityLabel || p.city}
-   الحي: ${p.district || '-'}
-   السعر: ${price} ريال${priceLabel}
-${paymentInfo}
-   المساحة: ${p.area || '-'} م²
-   الغرف: ${p.bedrooms || '-'}
-   الحمامات: ${p.bathrooms || '-'}
-   الوصف: ${p.description || '-'}
-   رابط الموقع: ${p.location_url || 'غير متوفر'}`;
-                }).join('\n\n');
-            } else {
-                allPropertiesText = '⚠️ لا توجد عقارات متاحة حالياً';
-            }
-            
-            console.log('=== RAG Prompt ===');
-            console.log('Total properties:', allProperties.length);
-            console.log('Available properties:', properties.length);
-            console.log('Properties for AI:', allPropertiesText.substring(0, 200) + '...');
-            
-            // بناء سياق إضافي من الإعدادات
-            let contextInfo = '';
-            if (agentSettings.pricingPolicy) {
-                contextInfo += `\n📋 سياسة التسعير والدفع:\n${agentSettings.pricingPolicy}\n`;
-            }
-            if (agentSettings.viewingPolicy) {
-                contextInfo += `\n📅 سياسة المعاينة والحجز:\n${agentSettings.viewingPolicy}\n`;
-            }
-            if (agentSettings.companyInfo) {
-                contextInfo += `\n🏢 معلومات الشركة:\n${agentSettings.companyInfo}\n`;
-            }
-            if (agentSettings.workAreas) {
-                contextInfo += `\n📍 مناطق العمل:\n${agentSettings.workAreas}\n`;
-            }
-            if (agentSettings.services) {
-                contextInfo += `\n🛠️ الخدمات المقدمة:\n${agentSettings.services}\n`;
-            }
-            if (agentSettings.contactInfo) {
-                contextInfo += `\n📞 معلومات التواصل:\n${agentSettings.contactInfo}\n`;
-            }
-            
-            // إضافة الـ Global System Prompt من قاعدة البيانات (يُطبق على الجميع)
-            let globalPrompt = '';
-            if (globalAdminSettingsDB) {
-                console.log('📋 Admin System Prompt from DB:', globalAdminSettingsDB.systemPrompt ? 'موجود ✅' : 'غير موجود ❌');
-                
-                if (globalAdminSettingsDB.systemPrompt) {
-                    globalPrompt = `\n\n🔧 تعليمات النظام:\n${globalAdminSettingsDB.systemPrompt}\n`;
-                }
-                if (globalAdminSettingsDB.defaultRules) {
-                    globalPrompt += `\n📌 قواعد عامة:\n${globalAdminSettingsDB.defaultRules}\n`;
-                }
-            }
-            
-            // إضافة الـ system prompt المخصص من إعدادات المستخدم
-            let customPrompt = '';
-            if (agentSettings.systemPrompt) {
-                customPrompt = `\n\n📝 تعليمات خاصة:\n${agentSettings.systemPrompt}\n`;
-            }
-            
-            // إذا كان هناك System Prompt من الأدمن، استخدمه كأساس
-            if (globalAdminSettingsDB && globalAdminSettingsDB.systemPrompt) {
-                let prompt = globalAdminSettingsDB.systemPrompt;
-                
-                // استبدال المتغيرات
-                prompt = prompt.replace(/{bot_name}/g, agentName);
-                prompt = prompt.replace(/{company_name}/g, agentSettings.companyName || '');
-                prompt = prompt.replace(/{city}/g, agentSettings.city || '');
-                
-                // إضافة الأقسام
-                prompt += `\n\n═══ معلومات الوكيل ═══
-• الاسم: ${agentName}
-• الشركة: ${agentSettings.companyName || 'غير محدد'}
-• المدينة: ${agentSettings.city || 'غير محدد'}`;
-                
-                if (agentSettings.systemPrompt) {
-                    prompt += `\n• تعليمات المسوق: ${agentSettings.systemPrompt}`;
-                }
-                
-                prompt += `\n\n═══ العقارات المتاحة (${properties.length} عقار) ═══\n${allPropertiesText}`;
-                
-                if (globalAdminSettingsDB.defaultRules) {
-                    prompt += `\n\n═══ قواعد إضافية ═══\n${globalAdminSettingsDB.defaultRules}`;
-                }
-                
-                if (contextInfo) {
-                    prompt += `\n\n═══ معلومات الشركة ═══${contextInfo}`;
-                }
-                
-                return prompt;
-            }
-            
-            // Prompt افتراضي إذا لم يكن هناك إعدادات في الأدمن
-            return `أنت "${agentName}" وكيل عقاري سعودي محترف.
-
-═══ معلومات الوكيل ═══
-• الاسم: ${agentName}
-• الشركة: ${agentSettings.companyName || 'غير محدد'}
-${customPrompt}${contextInfo ? '\n═══ معلومات الشركة ═══' + contextInfo : ''}
-
-═══ العقارات المتاحة (${properties.length} عقار) ═══
-${allPropertiesText}
-
-═══ طريقة الرد ═══
-• ردود قصيرة (3 أسطر كحد أقصى)
-• لا تكرر معلومات العقار - الكارت يعرضها
-• اطلب رقم الجوال عند الاهتمام
-
-═══ عند اهتمام العميل بعقار ═══
-⚠️ ممنوع تكرار عرض العقار أو تفاصيله!
-✅ فقط قل: "ممتاز! أعطني رقمك وأرتب لك معاينة"
-
-═══ هويتك ═══
-⚠️ ممنوع منعاً باتاً ذكر:
-- Google أو قوقل
-- Gemini أو أي نموذج AI
-- OpenAI أو ChatGPT
-- أي شركة تقنية
-
-✅ إذا سُئلت "من أنت؟" أو "ما النموذج؟":
-قل فقط: "أنا ${agentName}، مستشارك العقاري الذكي 🏠"
-
-⛔ ممنوع:
-- اختلاق عقارات غير موجودة
-- ردود طويلة ومملة
-- استخدام ** أو تنسيق markdown`;
-        }
-
-        // 🔒 Agent ID from Django template
-        const AGENT_ID = '{{ agent_id }}';
+        const agentName = '{{ agent_name|default:"Inify" }}';
         
         // Global settings from database
-        let globalAdminSettingsDB = null;
-        let GEMINI_MODEL = 'gemini-2.0-flash';
+        let globalAdminSettings = null;
         
         // Load global settings from database
-        async function loadGlobalSettingsFromDB() {
+        async function loadGlobalSettings() {
             try {
                 const response = await fetch('/api/settings/');
                 const data = await response.json();
                 if (data.success && data.settings) {
-                    globalAdminSettingsDB = data.settings;
-                    GEMINI_MODEL = data.settings.aiModel || 'gemini-2.5-pro-preview-05-06';
+                    globalAdminSettings = data.settings;
                     console.log('✅ Global settings loaded from database');
-                    console.log('🤖 AI Model:', GEMINI_MODEL);
-                    console.log('📋 System Prompt:', globalAdminSettingsDB.systemPrompt ? 'موجود ✅' : 'غير موجود ❌');
                 }
             } catch (error) {
                 console.error('Error loading global settings:', error);
             }
         }
         
-        // Load settings on page load
-        loadGlobalSettingsFromDB();
-        
-        // Main AI call function - routes to appropriate provider
-        async function callAI(userMessage) {
-            const aiProvider = agentSettings.aiProvider || 'gemini';
+        let agentSettings = null;
+        let properties = [];
+        let conversationHistory = [];
+        let lastSearchedProperties = [];
+        let currentGalleryImages = [];
+        let currentGalleryIndex = 0;
+
+        // Initialize
+        async function init() {
+            const container = document.getElementById('chatContainer');
             
-            if (aiProvider === 'openai' && agentSettings.openaiApiKey) {
-                return await callOpenAI(userMessage);
-            } else {
-                return await callGeminiAPI(userMessage);
+            if (!agentId || agentId === 'demo') {
+                showError('لم يتم تحديد الوكيل', 'يرجى إنشاء حساب وتسجيل الدخول أولاً');
+                return;
+            }
+            
+            // Load global settings from database first
+            await loadGlobalSettings();
+            
+            // Load agent settings and properties
+            const loaded = await loadAgentData(agentId);
+            
+            if (!loaded) {
+                showError('خطأ في التحميل', 'لم يتم العثور على بيانات الوكيل');
+                return;
+            }
+            
+            // Render chat interface
+            renderChat();
+        }
+
+        // Load agent data from API
+        async function loadAgentData(id) {
+            try {
+                const response = await fetch(`/api/v1/properties/agent/${id}/`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    console.error('Agent not found:', data.error);
+                    return false;
+                }
+                
+                // Load agent settings from API response
+                if (data.agent) {
+                    agentSettings = {
+                        agentName: data.agent.name || agentName || 'Inify',
+                        agentDescription: data.agent.title || 'وكيل عقاري ذكي',
+                        personality: data.agent.personality || '',
+                        company: data.agent.company || '',
+                        city: data.agent.city || '',
+                        phone: data.agent.phone || '',
+                        email: data.agent.email || '',
+                        welcomeMessage: data.agent.welcomeMessage || 'مرحباً! 👋 هذا وضع التجربة. كيف يمكنني مساعدتك؟',
+                        agentIcon: '🤖',
+                        systemPrompt: data.agent.systemPrompt || '',
+                        collectLeads: false, // Disabled in test mode
+                        language: data.agent.language || 'ar',
+                        enableRAG: true,
+                        ragResults: '5'
+                    };
+                } else {
+                    agentSettings = {
+                        agentName: agentName || 'Inify',
+                        agentDescription: 'وكيل عقاري ذكي',
+                        welcomeMessage: 'مرحباً! 👋 هذا وضع التجربة. كيف يمكنني مساعدتك؟',
+                        agentIcon: '🤖',
+                        collectLeads: false,
+                        enableRAG: true
+                    };
+                }
+                
+                // Load properties
+                properties = data.properties.filter(p => !p.status || p.status === 'for_sale' || p.status === 'for_rent');
+                console.log('✅ Properties loaded:', properties.length);
+                console.log('✅ Agent loaded:', agentSettings.agentName);
+                
+                return true;
+            } catch (error) {
+                console.error('Error loading agent data:', error);
+                return false;
             }
         }
-        
-        // Call Backend API (same as embed - secure)
-        async function callGeminiAPI(userMessage) {
-            console.log('=== Calling Backend API ===');
-            console.log('Agent ID:', AGENT_ID);
+
+        // Show error state
+        function showError(title, message) {
+            document.getElementById('chatContainer').innerHTML = `
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">😕</div>
+                    <h2 style="font-size: 24px; margin-bottom: 12px;">${title}</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 24px;">${message}</p>
+                    <a href="/dashboard/" style="padding: 12px 24px; background: linear-gradient(135deg, var(--blue-mid), var(--cyan)); color: var(--midnight); text-decoration: none; border-radius: 12px; font-weight: 600;">العودة للوحة التحكم</a>
+                </div>
+            `;
+        }
+
+        // Render chat interface
+        function renderChat() {
+            const container = document.getElementById('chatContainer');
+            container.innerHTML = `
+                <div class="chat-header">
+                    <div class="agent-avatar">🤖</div>
+                    <div class="agent-info">
+                        <h1>${agentSettings.agentName}</h1>
+                        <span><span class="status-dot"></span> وضع التجربة</span>
+                    </div>
+                </div>
+                
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot">${agentSettings.welcomeMessage}</div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="اكتب رسالتك هنا..." onkeypress="handleKeyPress(event)">
+                        <button class="send-btn" onclick="sendMessage()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add welcome message to history
+            conversationHistory.push({
+                role: 'assistant',
+                content: agentSettings.welcomeMessage
+            });
+        }
+
+        // Handle key press
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            input.value = '';
+            
+            // Add user message
+            addMessage(message, 'user');
+            conversationHistory.push({ role: 'user', content: message });
+            
+            // Show typing indicator
+            showTyping();
             
             try {
-                const response = await fetch(`/api/v1/chat/embed/${AGENT_ID}/`, {
+                const response = await getAIResponse(message);
+                hideTyping();
+                addMessage(response, 'bot');
+                conversationHistory.push({ role: 'assistant', content: response });
+                
+                // Show property cards if mentioned
+                const mentionedProperties = findMentionedProperties(response);
+                if (mentionedProperties.length > 0) {
+                    lastSearchedProperties = mentionedProperties;
+                    const propertyCards = generatePropertyCards();
+                    if (propertyCards) {
+                        addMessage(propertyCards, 'bot', true);
+                    }
+                }
+            } catch (error) {
+                hideTyping();
+                addMessage('عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.', 'bot');
+            }
+        }
+
+        // Find mentioned properties in response
+        function findMentionedProperties(response) {
+            if (!properties || properties.length === 0) return [];
+            
+            const responseLower = response.toLowerCase();
+            const presentationKeywords = ['لدي', 'عندي', 'عندنا', 'متوفر', 'موجود', 'لقيت', 'وجدت', 'شقة', 'فيلا', 'خيارات', 'عروض'];
+            const hasPresentationKeyword = presentationKeywords.some(kw => responseLower.includes(kw));
+            
+            if (!hasPresentationKeyword) return [];
+            
+            const foundProperties = [];
+            
+            for (const prop of properties) {
+                const districtMatch = prop.district && responseLower.includes(prop.district.toLowerCase());
+                const priceMatch = prop.price && (
+                    response.includes(prop.price.toString()) || 
+                    response.includes(formatPrice(prop.price))
+                );
+                const areaMatch = prop.area && response.includes(prop.area.toString());
+                const refMatch = prop.reference_number && response.includes(prop.reference_number);
+                
+                if (districtMatch || priceMatch || areaMatch || refMatch) {
+                    foundProperties.push(prop);
+                }
+            }
+            
+            return foundProperties;
+        }
+
+        // Add message to chat
+        function addMessage(content, type, isHtml = false) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            if (isHtml) {
+                messageDiv.innerHTML = content;
+            } else {
+                messageDiv.textContent = content;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Show typing indicator
+        function showTyping() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot typing';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Hide typing indicator
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        // Get AI response - using Backend API
+        async function getAIResponse(userMessage) {
+            try {
+                console.log('🔒 Sending request to secure Backend API...');
+                
+                const response = await fetch(`/api/v1/chat/embed/${agentId}/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: userMessage,
-                        conversation_history: conversationHistory.slice(-6),
-                        client_info: clientInfo
+                        history: conversationHistory.slice(-6)
                     })
                 });
                 
-                console.log('Response status:', response.status);
-                
                 const data = await response.json();
-                console.log('Response data:', data);
                 
-                if (data.success && data.response) {
-                    return data.response;
-                }
-                
-                if (data.error) {
+                if (!response.ok || !data.success) {
                     console.error('API Error:', data.error);
-                    return 'حدث خطأ: ' + data.error;
+                    return 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.';
                 }
                 
-                return 'عذراً، لم أتمكن من معالجة طلبك. يرجى المحاولة مرة أخرى.';
-                
+                return data.response || 'عذراً، لم أتمكن من معالجة طلبك.';
             } catch (error) {
-                console.error('Fetch error:', error);
-                return 'حدث خطأ في الاتصال: ' + error.message;
+                console.error('Fetch Error:', error);
+                return 'عذراً، حدث خطأ في الاتصال. يرجى التحقق من اتصال الإنترنت.';
             }
         }
 
-        // Call OpenAI API
-        async function callOpenAI(userMessage) {
-            const apiKey = agentSettings.openaiApiKey;
-            const model = agentSettings.openaiModel || 'gpt-4o';
+        // Generate property cards HTML
+        function generatePropertyCards() {
+            if (lastSearchedProperties.length === 0) return '';
             
-            const systemPrompt = buildSystemPrompt(userMessage);
-            
-            console.log('=== OpenAI API Call ===');
-            console.log('Model:', model);
-            
-            try {
-                const messages = [
-                    { role: 'system', content: systemPrompt },
-                    ...conversationHistory.slice(-6).map(m => ({
-                        role: m.role === 'user' ? 'user' : 'assistant',
-                        content: m.content
-                    })),
-                    { role: 'user', content: userMessage }
-                ];
-                
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: model,
-                        messages: messages,
-                        temperature: 0.7,
-                        max_tokens: 1024
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    console.error('OpenAI Error:', data.error);
-                    if (data.error.code === 'invalid_api_key') {
-                        return 'مفتاح OpenAI غير صحيح. يرجى التحقق من الإعدادات.';
-                    }
-                    return 'حدث خطأ: ' + data.error.message;
-                }
-                
-                if (data.choices && data.choices.length > 0) {
-                    return data.choices[0].message.content;
-                }
-                
-                return 'عذراً، لم أتمكن من معالجة طلبك.';
-                
-            } catch (error) {
-                console.error('OpenAI Fetch error:', error);
-                return 'حدث خطأ في الاتصال: ' + error.message;
-            }
+            return `
+                <div class="properties-container">
+                    ${lastSearchedProperties.map((p, i) => `
+                        <div class="property-card">
+                            ${p.mainImage ? `
+                                <div class="property-image" onclick="openGallery(${i})">
+                                    <img src="${p.mainImage}" alt="${p.title}">
+                                    <span class="property-badge">${p.listing_type === 'sale' ? 'للبيع' : 'للإيجار'}</span>
+                                </div>
+                            ` : ''}
+                            <div class="property-content">
+                                ${p.reference_number ? `<div style="font-size: 10px; color: var(--cyan); margin-bottom: 4px;">🔖 ${p.reference_number}</div>` : ''}
+                                <div class="property-title">${p.title}</div>
+                                <div class="property-location">📍 ${p.cityLabel || p.city}${p.district ? ' - ' + p.district : ''}</div>
+                                <div class="property-details">
+                                    ${p.area ? `<span>📐 ${p.area} م²</span>` : ''}
+                                    ${p.bedrooms ? `<span>🛏️ ${p.bedrooms} غرف</span>` : ''}
+                                    ${p.bathrooms ? `<span>🚿 ${p.bathrooms} حمام</span>` : ''}
+                                </div>
+                                <div class="property-price">
+                                    ${formatPrice(p.price)} ريال${p.listing_type === 'rent' ? '/سنوي' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
         }
 
-        // No fallback - AI only mode
-
-        // Generate property card HTML with gallery
-        function generatePropertyCard(property, index) {
-            const hasImages = property.mainImage || (property.images && property.images.length > 0);
-            const allImages = [];
-            if (property.mainImage) allImages.push(property.mainImage);
-            if (property.images) allImages.push(...property.images);
-            const imageCount = allImages.length;
-            
-            let amenitiesHTML = '';
-            if (property.amenities && property.amenities.length > 0) {
-                amenitiesHTML = `<div class="property-amenities">${property.amenities.slice(0, 4).map(a => `<span class="amenity-tag">${getAmenityIcon(a)}</span>`).join('')}</div>`;
-            }
-            
-            const priceLabel = property.listing_type === 'rent' ? ({'yearly': '/سنوي', 'monthly': '/شهري', 'daily': '/يومي'}[property.rent_period || property.price_type] || '/سنوي') : '';
-            const paymentInfo = property.listing_type === 'rent' && property.payment_count && property.payment_count !== '1' ? `<small style="display:block;font-size:10px;color:#9ca3af;margin-top:2px;">💳 ${property.payment_count} دفعات</small>` : '';
-            return `<div class="property-card-mini"><div class="property-image" ${property.mainImage ? `style="background-image: url('${property.mainImage}')"` : ''}>${!property.mainImage ? '🏠' : ''}<span class="property-badge">${property.listing_type === 'sale' ? 'للبيع' : 'للإيجار'}</span>${imageCount > 1 ? `<span class="image-count">📷 ${imageCount}</span>` : ''}${hasImages ? `<button class="view-images-btn" onclick="openChatGallery(${index})">عرض الصور</button>` : ''}</div><div class="property-info"><div class="property-title">${property.title}</div><div class="property-location">📍 ${property.cityLabel}${property.district ? ' - ' + property.district : ''}</div><div class="property-details">${property.bedrooms ? '<span>🛏️ ' + property.bedrooms + ' غرف</span>' : ''}${property.bathrooms ? '<span>🚿 ' + property.bathrooms + ' حمام</span>' : ''}${property.area ? '<span>📐 ' + property.area + ' م²</span>' : ''}</div><div class="property-price">${Number(property.price).toLocaleString('ar-SA')} <span>ريال${priceLabel}</span>${paymentInfo}</div>${amenitiesHTML}</div></div>`;
+        // Format price
+        function formatPrice(price) {
+            if (!price) return '0';
+            return parseInt(price).toLocaleString('ar-SA');
         }
 
-        // Get amenity icon
-        function getAmenityIcon(amenity) {
-            const icons = {
-                'parking': '🚗',
-                'pool': '🏊',
-                'gym': '💪',
-                'elevator': '🛗',
-                'security': '🔒',
-                'garden': '🌳',
-                'ac': '❄️',
-                'furnished': '🛋️'
-            };
-            return icons[amenity] || '✓';
-        }
+        // Gallery functions
+        let currentGalleryProperty = null;
 
-        // Chat Gallery
-        let chatGalleryImages = [];
-        let chatGalleryIndex = 0;
-
-        function openChatGallery(propertyIndex) {
+        function openGallery(propertyIndex) {
             const property = lastSearchedProperties[propertyIndex];
             if (!property) return;
             
-            chatGalleryImages = [];
-            if (property.mainImage) chatGalleryImages.push(property.mainImage);
-            if (property.images) chatGalleryImages.push(...property.images);
+            currentGalleryProperty = property;
+            currentGalleryImages = property.images && property.images.length > 0 
+                ? property.images 
+                : (property.mainImage ? [property.mainImage] : []);
             
-            if (chatGalleryImages.length === 0) return;
+            if (currentGalleryImages.length === 0) {
+                alert('لا توجد صور لهذا العقار');
+                return;
+            }
             
-            chatGalleryIndex = 0;
-            showChatGalleryImage();
-            document.getElementById('chatGalleryModal').classList.add('show');
+            currentGalleryIndex = 0;
+            
+            const prevBtn = document.querySelector('.gallery-nav.prev');
+            const nextBtn = document.querySelector('.gallery-nav.next');
+            if (currentGalleryImages.length <= 1) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'flex';
+                nextBtn.style.display = 'flex';
+            }
+            
+            showGalleryImage();
+            document.getElementById('galleryModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
         }
 
-        function closeChatGallery() {
-            document.getElementById('chatGalleryModal').classList.remove('show');
+        function closeGallery() {
+            document.getElementById('galleryModal').classList.remove('show');
+            document.body.style.overflow = '';
+            currentGalleryProperty = null;
         }
 
-        function showChatGalleryImage() {
-            document.getElementById('chatGalleryImage').src = chatGalleryImages[chatGalleryIndex];
-            document.getElementById('chatGalleryCounter').textContent = `${chatGalleryIndex + 1} / ${chatGalleryImages.length}`;
+        function closeGalleryOnBackdrop(event) {
+            if (event.target.id === 'galleryModal') {
+                closeGallery();
+            }
         }
 
-        function nextChatImage() {
-            chatGalleryIndex = (chatGalleryIndex + 1) % chatGalleryImages.length;
-            showChatGalleryImage();
+        function showGalleryImage() {
+            const img = document.getElementById('galleryImage');
+            img.src = currentGalleryImages[currentGalleryIndex];
+            img.alt = currentGalleryProperty?.title || 'صورة العقار';
+            
+            document.getElementById('galleryCounter').textContent = 
+                `${currentGalleryIndex + 1} / ${currentGalleryImages.length}`;
+            
+            if (currentGalleryProperty) {
+                document.getElementById('galleryPropertyInfo').innerHTML = `
+                    <h3>${currentGalleryProperty.title}</h3>
+                    <p>${formatPrice(currentGalleryProperty.price)} ريال - ${currentGalleryProperty.cityLabel || currentGalleryProperty.city}</p>
+                `;
+            }
         }
 
-        function prevChatImage() {
-            chatGalleryIndex = (chatGalleryIndex - 1 + chatGalleryImages.length) % chatGalleryImages.length;
-            showChatGalleryImage();
+        function nextImage() {
+            currentGalleryIndex = (currentGalleryIndex + 1) % currentGalleryImages.length;
+            showGalleryImage();
         }
 
-        // Keyboard navigation for gallery
+        function prevImage() {
+            currentGalleryIndex = (currentGalleryIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length;
+            showGalleryImage();
+        }
+
+        // Keyboard navigation
         document.addEventListener('keydown', (e) => {
-            const modal = document.getElementById('chatGalleryModal');
-            if (!modal.classList.contains('show')) return;
-            if (e.key === 'Escape') closeChatGallery();
-            if (e.key === 'ArrowRight') prevChatImage();
-            if (e.key === 'ArrowLeft') nextChatImage();
+            if (!document.getElementById('galleryModal').classList.contains('show')) return;
+            
+            if (e.key === 'Escape') closeGallery();
+            if (e.key === 'ArrowLeft') nextImage();
+            if (e.key === 'ArrowRight') prevImage();
         });
 
-        // Store last searched properties for display
-        let lastSearchedProperties = [];
-
-        // 🔒 XSS Protection - تنظيف النص
-        function escapeHtml(text) {
-            if (typeof text !== 'string') return '';
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, char => map[char]);
-        }
-
-        // Format message text (convert markdown-like to HTML) - with XSS protection
-        function formatMessage(text) {
-            // First escape HTML to prevent XSS
-            let safe = escapeHtml(text);
-            return safe
-                // Bold: **text** or *text*
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.+?)\*/g, '<strong>$1</strong>')
-                // Bullet points
-                .replace(/^[•●]\s*/gm, '• ')
-                // Line breaks
-                .replace(/\n/g, '<br>');
-        }
-
-        // Add message to chat
-        function addMessage(content, isUser = false, showProperties = false) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${isUser ? 'user' : 'bot'}`;
-            
-            // Create text content
-            const textDiv = document.createElement('div');
-            if (isUser) {
-                textDiv.textContent = content;
-            } else {
-                textDiv.innerHTML = formatMessage(content);
-            }
-            msgDiv.appendChild(textDiv);
-            
-            // Add property cards if available
-            if (!isUser && showProperties && lastSearchedProperties.length > 0) {
-                const cardsDiv = document.createElement('div');
-                cardsDiv.className = 'property-cards';
-                cardsDiv.innerHTML = lastSearchedProperties.map((p, i) => generatePropertyCard(p, i)).join('');
-                msgDiv.appendChild(cardsDiv);
-            }
-            
-            messagesEl.appendChild(msgDiv);
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-        }
-
-        // Client data capture
-        let currentClient = {
-            id: 'client_' + Date.now(),
-            name: null,
-            phone: null,
-            email: null,
-            interest: null,
-            status: 'new',
-            conversation: [],
-            createdAt: new Date().toISOString()
-        };
-
-        // Phone number detection regex (Saudi format)
-        const phoneRegex = /(?:(?:\+|00)?966|0)?5[0-9]{8}|(?:(?:\+|00)?966|0)?[0-9]{9}/g;
-        
-        // Email detection regex
-        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-
-        // Name detection (after greeting or when asking)
-        function extractName(text) {
-            const namePatterns = [
-                /(?:اسمي|انا|أنا)\s+([أ-ي\s]+)/,
-                /(?:اسم|الاسم)\s*:?\s*([أ-ي\s]+)/
-            ];
-            for (const pattern of namePatterns) {
-                const match = text.match(pattern);
-                if (match && match[1]) {
-                    return match[1].trim().split(' ').slice(0, 3).join(' ');
-                }
-            }
-            return null;
-        }
-
-        // Extract interest from conversation
-        function extractInterest(text) {
-            const interests = [];
-            if (text.includes('شقة') || text.includes('شقق')) interests.push('شقة');
-            if (text.includes('فيلا') || text.includes('فلل')) interests.push('فيلا');
-            if (text.includes('أرض') || text.includes('ارض')) interests.push('أرض');
-            if (text.includes('دوبلكس')) interests.push('دوبلكس');
-            if (text.includes('إيجار') || text.includes('ايجار') || text.includes('استئجار')) interests.push('إيجار');
-            if (text.includes('شراء') || text.includes('بيع')) interests.push('شراء');
-            if (text.includes('الرياض')) interests.push('الرياض');
-            if (text.includes('جدة')) interests.push('جدة');
-            if (text.includes('الدمام')) interests.push('الدمام');
-            return interests.length > 0 ? interests.join('، ') : null;
-        }
-
-        // Save client to database - حفظ في قاعدة البيانات
-        async function saveClient() {
-            // لا نحفظ العميل إلا إذا أرسل رقم جوال أو إيميل
-            if (!currentClient.phone && !currentClient.email) return;
-            if (clientInfo.savedToLeads) return; // تم الحفظ مسبقاً
-            
-            console.log('💾 Saving client to database:', currentClient.phone);
-            
-            try {
-                // Get CSRF token
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                                  document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
-                
-                // Prepare interested properties
-                const interestedProps = lastSearchedProperties.slice(0, 5).map(p => ({
-                    id: p.id,
-                    title: p.title,
-                    price: p.price
-                }));
-                
-                const response = await fetch('/api/v1/leads/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({
-                        name: currentClient.name || 'عميل من الشات',
-                        phone: currentClient.phone,
-                        email: currentClient.email || '',
-                        source: 'chatbot',
-                        status: 'new',
-                        property_type_preference: currentClient.interest || '',
-                        notes: currentClient.conversation.map(m => `${m.role === 'user' ? 'العميل' : 'الوكيل'}: ${m.content}`).join('\n'),
-                        interested_property_ids: interestedProps.map(p => p.id)
-                    })
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    clientInfo.savedToLeads = true;
-                    console.log('✅ Client saved to database:', data.id);
-                } else {
-                    console.error('❌ Failed to save client:', response.status);
-                    // Fallback to localStorage
-                    saveClientToLocalStorage();
-                }
-            } catch (error) {
-                console.error('❌ Error saving client:', error);
-                // Fallback to localStorage
-                saveClientToLocalStorage();
-            }
-        }
-        
-        // Fallback: Save to localStorage
-        function saveClientToLocalStorage() {
-            if (!InifyAuth.isLoggedIn()) return;
-            
-            let clients = InifyAuth.getClients();
-            const existingIndex = clients.findIndex(c => c.phone && c.phone === currentClient.phone);
-            if (existingIndex >= 0) {
-                clients[existingIndex] = {
-                    ...clients[existingIndex],
-                    ...currentClient,
-                    conversation: [...(clients[existingIndex].conversation || []), ...currentClient.conversation]
-                };
-            } else {
-                clients.unshift(currentClient);
-            }
-            InifyAuth.setClients(clients);
-        }
-
-        // Handle form submit
-        chatForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const message = chatInput.value.trim();
-            if (!message) return;
-            
-            // ═══════════════════════════════════════════════════════════
-            // 🛡️ فحص الإساءة قبل الإرسال
-            // ═══════════════════════════════════════════════════════════
-            if (abuseDetection.isBlocked) {
-                addMessage(message, true);
-                addMessage('عذراً، تم إيقاف المحادثة. يرجى التواصل معنا مباشرة للمساعدة. 📞', false);
-                // تعطيل حقل الإدخال
-                chatInput.disabled = true;
-                chatInput.placeholder = 'تم إيقاف المحادثة';
-                return;
-            }
-            
-            const abuseStatus = detectAbuse(message);
-            if (abuseStatus === 'blocked') {
-                addMessage(message, true);
-                addMessage('🚫 تم إيقاف المحادثة بسبب أسئلة خارج نطاق الخدمة.\n\nللمساعدة في العقارات، يرجى التواصل معنا مباشرة. 📞', false);
-                // تعطيل حقل الإدخال
-                chatInput.disabled = true;
-                chatInput.placeholder = 'تم إيقاف المحادثة';
-                return;
-            }
-            
-            if (abuseStatus === 'off-topic') {
-                addMessage(message, true);
-                chatInput.value = '';
-                const remaining = abuseDetection.maxOffTopic - abuseDetection.offTopicCount;
-                if (remaining <= 3) {
-                    addMessage(`أنا متخصص في العقارات فقط 🏠\n\nكيف أقدر أساعدك في البحث عن شقة أو فيلا؟`, false);
-                } else {
-                    addMessage(getBlockedMessage(), false);
-                }
-                return;
-            }
-            // ═══════════════════════════════════════════════════════════
-            
-            // 🔒 التحقق من حد المحادثات (للباقة المجانية)
-            if (typeof InifyAuth !== 'undefined' && InifyAuth.isLoggedIn()) {
-                const convLimit = InifyAuth.checkLimit('conversations');
-                if (!convLimit.allowed) {
-                    addMessage(`⚠️ لقد وصلت للحد الأقصى من المحادثات هذا الشهر (${convLimit.max} محادثة).\n\nقم بترقية اشتراكك للحصول على محادثات غير محدودة!`, false);
-                    return;
-                }
-                // زيادة عداد المحادثات
-                InifyAuth.incrementConversations();
-            }
-
-            // Extract client data from message
-            const phones = message.match(phoneRegex);
-            if (phones && phones.length > 0) {
-                currentClient.phone = phones[0].replace(/^00966|^\+966|^0/, '05');
-                currentClient.status = 'interested';
-            }
-            
-            const emails = message.match(emailRegex);
-            if (emails && emails.length > 0) {
-                currentClient.email = emails[0];
-            }
-            
-            const name = extractName(message);
-            if (name) {
-                currentClient.name = name;
-            }
-            
-            const interest = extractInterest(message);
-            if (interest && !currentClient.interest) {
-                currentClient.interest = interest;
-            } else if (interest) {
-                currentClient.interest += '، ' + interest;
-            }
-
-            // Add user message
-            addMessage(message, true);
-            conversationHistory.push({ role: 'user', content: message });
-            currentClient.conversation.push({ role: 'user', content: message });
-            chatInput.value = '';
-
-            // Show typing indicator
-            typingIndicator.classList.add('show');
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-
-            // Check if user is asking for properties
-            const propertyKeywords = ['عقار', 'عقارات', 'شقة', 'شقق', 'فيلا', 'فلل', 'أرض', 'اراضي', 'متوفر', 'متاح', 'عندك', 'عندكم', 'اعرض', 'وريني', 'ابي', 'أبي', 'أبغى', 'ابغى', 'للإيجار', 'للايجار', 'للبيع', 'إيجار', 'ايجار', 'بيع'];
-            const isAskingForProperties = propertyKeywords.some(keyword => message.includes(keyword));
-            
-            // Get AI response
-            let response;
-            let shouldShowProperties = false;
-            
-            try {
-                response = await callAI(message);
-                // Only show property cards if user asked for properties
-                shouldShowProperties = isAskingForProperties && lastSearchedProperties.length > 0;
-            } catch (error) {
-                console.error('AI Error:', error);
-                response = 'عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي. يرجى المحاولة مرة أخرى.';
-            }
-
-            // Hide typing and show response
-            typingIndicator.classList.remove('show');
-            addMessage(response, false, shouldShowProperties);
-            conversationHistory.push({ role: 'assistant', content: response });
-            currentClient.conversation.push({ role: 'bot', content: response });
-
-            // Save client after each interaction
-            saveClient();
-        });
-
-        // Save on page unload
-        window.addEventListener('beforeunload', saveClient);
+        // Initialize on load
+        init();
     </script>
 </body>
 </html>
-
-

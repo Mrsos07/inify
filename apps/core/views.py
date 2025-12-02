@@ -576,9 +576,12 @@ def conversations_view(request):
 
 
 @login_required(login_url='/auth/login/')
+@csrf_exempt
 def bot_settings_view(request):
     """صفحة إعدادات الوكيل الذكي"""
     from apps.agents.models import Agent
+    import base64
+    from django.core.files.base import ContentFile
     
     user = request.user
     
@@ -606,9 +609,32 @@ def bot_settings_view(request):
         agent.bot_system_prompt = request.POST.get('bot_system_prompt', agent.bot_system_prompt or '')
         agent.bot_collect_leads = request.POST.get('bot_collect_leads') == 'on'
         
+        # Handle avatar image upload (base64)
+        avatar_data = request.POST.get('bot_avatar')
+        if avatar_data and avatar_data.startswith('data:image'):
+            try:
+                # Parse base64 image
+                format, imgstr = avatar_data.split(';base64,')
+                ext = format.split('/')[-1]
+                if ext in ['jpeg', 'jpg', 'png', 'gif', 'webp']:
+                    image_data = base64.b64decode(imgstr)
+                    file_name = f'agent_{agent.id}.{ext}'
+                    agent.profile_image.save(file_name, ContentFile(image_data), save=False)
+            except Exception as e:
+                print(f"Error saving avatar: {e}")
+        
+        # Handle avatar removal
+        if request.POST.get('remove_avatar') == 'true':
+            if agent.profile_image:
+                agent.profile_image.delete(save=False)
+        
+        # Handle file upload directly
+        if 'avatar_file' in request.FILES:
+            agent.profile_image = request.FILES['avatar_file']
+        
         agent.save()
         
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({'status': 'success', 'avatar_url': agent.profile_image.url if agent.profile_image else None})
     
     context = {
         'agent': agent,

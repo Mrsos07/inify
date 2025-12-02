@@ -162,6 +162,7 @@
             font-weight: 700;
             background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-light) 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -1020,7 +1021,7 @@
                 <a href="/profile/">حسابي</a>
             </nav>
         </div>
-        <button onclick="logout()" class="header-btn logout">تسجيل الخروج</button>
+        <a href="/chat/live/" class="header-btn" style="background: linear-gradient(135deg, var(--blue-mid), var(--cyan)); color: var(--midnight);">🤖 تجربة الشات</a>
     </header>
 
     <main class="main-content">
@@ -1578,6 +1579,22 @@
     <script>
         // Django handles authentication
         
+        // Helper function to get cookie value
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
         // Get agent ID from Django context
         const agentId = '{{ agent_id|default:"demo" }}';
 
@@ -1712,11 +1729,19 @@
         // Load avatar preview
         function loadAvatarPreview() {
             const preview = document.getElementById('avatarPreview');
-            const emoji = document.getElementById('avatarEmoji');
             const removeBtn = document.getElementById('removeAvatarBtn');
             
-            if (settings.useAvatarImage && settings.agentAvatar) {
-                // Show image
+            // تحقق من وجود صورة من السيرفر أولاً
+            const serverAvatar = '{% if agent.profile_image %}{{ agent.profile_image.url }}{% endif %}';
+            
+            if (serverAvatar) {
+                // Show server image
+                preview.innerHTML = `<img src="${serverAvatar}" alt="صورة الوكيل">`;
+                removeBtn.style.display = 'flex';
+                settings.useAvatarImage = true;
+                settings.serverAvatarUrl = serverAvatar;
+            } else if (settings.useAvatarImage && settings.agentAvatar) {
+                // Show local image (base64)
                 preview.innerHTML = `<img src="${settings.agentAvatar}" alt="صورة الوكيل">`;
                 removeBtn.style.display = 'flex';
             } else {
@@ -1734,10 +1759,11 @@
         }
 
         // Remove avatar
-        function removeAvatar() {
+        async function removeAvatar() {
             if (confirm('هل أنت متأكد من حذف صورة الوكيل؟')) {
                 delete settings.agentAvatar;
                 settings.useAvatarImage = false;
+                delete settings.serverAvatarUrl;
                 
                 // Reset preview to emoji
                 const icon = document.getElementById('agentIcon').value || '🤖';
@@ -1749,6 +1775,31 @@
                 
                 // Clear file input
                 document.getElementById('avatarInput').value = '';
+                
+                // إرسال طلب حذف الصورة للسيرفر
+                try {
+                    const formData = new FormData();
+                    formData.append('remove_avatar', 'true');
+                    
+                    // الحصول على CSRF token
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                                      document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
+                    
+                    await fetch('/dashboard/bot-settings/', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': csrfToken
+                        }
+                    });
+                    
+                    // تحديث localStorage
+                    localStorage.setItem('newra_agent_settings_' + agentId, JSON.stringify(settings));
+                } catch (error) {
+                    console.error('Error removing avatar:', error);
+                }
+                
+                updatePreview();
             }
         }
 
@@ -1835,22 +1886,39 @@
             
             // حفظ الإعدادات في قاعدة البيانات
             try {
+                // الحصول على CSRF token
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                                  getCookie('csrftoken') || '';
+                
                 const formData = new FormData();
+                formData.append('csrfmiddlewaretoken', csrfToken);
                 formData.append('bot_name', settings.agentName);
                 formData.append('bot_title', settings.agentDescription);
                 formData.append('bot_welcome_message', settings.welcomeMessage);
                 formData.append('bot_color', settings.primaryColor);
                 formData.append('bot_system_prompt', settings.companyInfo || '');
                 
+                // إرسال صورة الوكيل إذا كانت موجودة
+                if (settings.useAvatarImage && settings.agentAvatar) {
+                    formData.append('bot_avatar', settings.agentAvatar);
+                }
+                
                 const response = await fetch('/dashboard/bot-settings/', {
                     method: 'POST',
                     body: formData,
                     headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                        'X-CSRFToken': csrfToken
                     }
                 });
                 
                 if (response.ok) {
+                    const data = await response.json();
+                    
+                    // تحديث رابط الصورة من السيرفر إذا تم رفعها
+                    if (data.avatar_url) {
+                        settings.serverAvatarUrl = data.avatar_url;
+                    }
+                    
                     // حفظ نسخة محلية للتحميل السريع
                     localStorage.setItem('newra_agent_settings_' + agentId, JSON.stringify(settings));
                     
@@ -1902,8 +1970,9 @@
             avatar.style.background = primaryColor;
             
             // Show avatar image or emoji
-            if (settings.useAvatarImage && settings.agentAvatar) {
-                avatar.innerHTML = `<img src="${settings.agentAvatar}" alt="الوكيل" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            const avatarUrl = settings.serverAvatarUrl || settings.agentAvatar;
+            if (settings.useAvatarImage && avatarUrl) {
+                avatar.innerHTML = `<img src="${avatarUrl}" alt="الوكيل" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
             } else {
                 avatar.textContent = agentIcon;
             }

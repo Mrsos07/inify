@@ -1,0 +1,35 @@
+# Robots.txt for Inify.ai
+# https://inify.ai
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /auth/
+Disallow: /static/admin/
+
+# Allow search engines to crawl important pages
+Allow: /pricing/
+Allow: /register/
+Allow: /embed/
+
+# Sitemap location
+Sitemap: https://inify.ai/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
+# Google specific
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /dashboard/
+
+# Bing specific
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /dashboard/

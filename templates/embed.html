@@ -613,7 +613,10 @@
                         language: data.agent.language || 'ar',
                         color: data.agent.color || '#000000',
                         enableRAG: true,
-                        ragResults: '5'
+                        ragResults: '5',
+                        // صورة الوكيل
+                        agentAvatar: data.agent.profileImage || null,
+                        useAvatarImage: !!data.agent.profileImage
                     };
                 } else {
                     agentSettings = {
@@ -886,18 +889,24 @@
                 addMessage(response, 'bot');
                 conversationHistory.push({ role: 'assistant', content: response });
                 
-                // عرض كروت العقارات إذا ذكر الوكيل عقارات
-                const mentionedProperties = findMentionedProperties(response);
-                if (mentionedProperties.length > 0) {
-                    lastSearchedProperties = mentionedProperties;
-                    const propertyCards = generatePropertyCards();
-                    if (propertyCards) {
-                        addMessage(propertyCards, 'bot', true);
+                // عرض كروت العقارات فقط إذا لم تكن رسالة اهتمام
+                if (!isInterestMessage) {
+                    const mentionedProperties = findMentionedProperties(response);
+                    if (mentionedProperties.length > 0) {
+                        lastSearchedProperties = mentionedProperties;
+                        const propertyCards = generatePropertyCards();
+                        if (propertyCards) {
+                            addMessage(propertyCards, 'bot', true);
+                        }
                     }
                 }
+                
+                // إعادة تعيين متغير الاهتمام
+                isInterestMessage = false;
             } catch (error) {
                 hideTyping();
                 addMessage('عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.', 'bot');
+                isInterestMessage = false;
             }
         }
         
@@ -1445,6 +1454,9 @@
             return parseInt(price).toLocaleString('ar-SA');
         }
         
+        // متغير لتتبع أن المستخدم أبدى اهتمامه بعقار (لمنع عرض الكروت مرة أخرى)
+        let isInterestMessage = false;
+        
         // اختيار عقار والرد على الوكيل
         function selectProperty(propertyIndex) {
             const property = lastSearchedProperties[propertyIndex];
@@ -1452,6 +1464,9 @@
             
             // حفظ العقار المختار
             clientRequirements.selectedProperty = property;
+            
+            // تعيين أن هذه رسالة اهتمام (لمنع عرض الكروت مرة أخرى)
+            isInterestMessage = true;
             
             // إنشاء رسالة تلقائية
             const refNumber = property.reference_number ? ` (${property.reference_number})` : '';

@@ -542,6 +542,7 @@ def get_agent_properties(request, agent_id):
             'collectLeads': agent.bot_collect_leads,
             'language': agent.bot_language or 'ar',
             'color': agent.bot_color or '#000000',
+            'profileImage': agent.profile_image.url if agent.profile_image else None,
         }
         
         return JsonResponse({'success': True, 'properties': data, 'agent': agent_data})
