@@ -530,7 +530,7 @@ def get_agent_properties(request, agent_id):
         # إضافة بيانات الوكيل الكاملة
         agent_data = {
             'id': str(agent.id),
-            'name': agent.bot_name or agent.user.get_full_name() or 'نيورا',
+            'name': agent.bot_name or agent.user.get_full_name() or 'Inify',
             'title': agent.bot_title or 'مساعدك العقاري الذكي',
             'personality': agent.bot_personality or '',
             'company': agent.company_name or '',

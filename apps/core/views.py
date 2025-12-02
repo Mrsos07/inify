@@ -38,7 +38,7 @@ def chat_demo(request):
     if agent:
         context = {
             'agent_id': str(agent.id),
-            'bot_name': agent.bot_name or 'نيورا',
+            'bot_name': agent.bot_name or 'Inify',
             'bot_title': agent.bot_title or 'المساعد العقاري الذكي',
             'bot_welcome_message': agent.bot_welcome_message or 'مرحباً! 👋 كيف يمكنني مساعدتك؟',
             'bot_color': agent.bot_color or '#000000',
@@ -47,7 +47,7 @@ def chat_demo(request):
     else:
         context = {
             'agent_id': '',
-            'bot_name': 'نيورا',
+            'bot_name': 'Inify',
             'bot_title': 'المساعد العقاري الذكي',
             'bot_welcome_message': 'مرحباً! 👋 كيف يمكنني مساعدتك؟',
             'bot_color': '#000000',
@@ -91,7 +91,7 @@ def live_chat_view(request):
         agent = request.user.agent_profile
         context = {
             'agent_id': str(agent.id),
-            'agent_name': agent.bot_name or 'نيورا',
+            'agent_name': agent.bot_name or 'Inify',
         }
     except Agent.DoesNotExist:
         pass

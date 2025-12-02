@@ -525,7 +525,7 @@ class EmbedChatAPI(View):
             return JsonResponse({
                 'success': True,
                 'response': response_text,
-                'agent': agent.bot_name or 'نيورا'
+                'agent': agent.bot_name or 'Inify'
             })
             
         except json.JSONDecodeError:
@@ -611,7 +611,7 @@ class EmbedChatAPI(View):
         # ═══════════════════════════════════════════════════════════
         agent_info = f"""
 ═══ معلومات الوكيل ═══
-• الاسم: {agent.bot_name or 'نيورا'}
+• الاسم: {agent.bot_name or 'Inify'}
 • الشركة: {agent.company_name or 'غير محدد'}
 • المدينة: {agent.city or 'غير محدد'}
 • الهاتف: {agent.phone or 'غير محدد'}
@@ -635,7 +635,7 @@ class EmbedChatAPI(View):
             final_prompt = system_prompt
             
             # استبدال المتغيرات
-            final_prompt = final_prompt.replace('{bot_name}', agent.bot_name or 'نيورا')
+            final_prompt = final_prompt.replace('{bot_name}', agent.bot_name or 'Inify')
             final_prompt = final_prompt.replace('{company_name}', agent.company_name or '')
             final_prompt = final_prompt.replace('{city}', agent.city or '')
             

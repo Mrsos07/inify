@@ -91,14 +91,14 @@ class GeminiService:
         # ═══════════════════════════════════════════════════════════
         # 2. AGENT INFO - معلومات المسوق
         # ═══════════════════════════════════════════════════════════
-        bot_name = "نيورا"
+        bot_name = "Inify"
         company_name = ""
         city = ""
         custom_prompt = ""
         collect_leads = True
         
         if self.agent:
-            bot_name = self.agent.bot_name or "نيورا"
+            bot_name = self.agent.bot_name or "Inify"
             company_name = self.agent.company_name or ""
             city = self.agent.city or ""
             custom_prompt = getattr(self.agent, 'bot_system_prompt', '') or ''
@@ -322,8 +322,9 @@ class GeminiService:
     
     def _fallback_response(self, message: str, context: str) -> str:
         """رد احتياطي عند فشل Gemini"""
+        bot_name = self.agent.bot_name if self.agent and self.agent.bot_name else "Inify"
         if 'مرحبا' in message or 'أهلا' in message:
-            return "أهلاً وسهلاً! أنا نيورا، مساعدك العقاري. كيف يمكنني مساعدتك اليوم؟"
+            return f"أهلاً وسهلاً! أنا {bot_name}، مساعدك العقاري. كيف يمكنني مساعدتك اليوم؟"
         
         if context and len(context) > 50:
             return f"إليك ما وجدته من عقارات:\n\n{context}\n\nهل تريد معرفة المزيد عن أي عقار؟"
