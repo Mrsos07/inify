@@ -67,6 +67,9 @@ class Agent(models.Model):
     )
     bot_color = models.CharField(max_length=7, default='#000000', verbose_name='لون البوت')
     
+    # التحقق من الإيميل
+    is_email_verified = models.BooleanField(default=False, verbose_name='تم التحقق من الإيميل')
+    
     # إعدادات الإشعارات
     notify_email = models.BooleanField(default=True, verbose_name='إشعارات البريد')
     notify_whatsapp = models.BooleanField(default=False, verbose_name='إشعارات واتساب')

@@ -41,6 +41,9 @@ Pillow>=10.2.0
 django-cloudinary-storage>=0.3.0
 cloudinary>=1.36.0
 
+# Email
+resend>=0.7.0
+
 # Utilities
 python-dateutil>=2.8.2
 pytz>=2024.1

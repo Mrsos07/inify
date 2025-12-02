@@ -229,18 +229,30 @@ def register_view(request):
             
             # Create agent profile
             from apps.agents.models import Agent
-            Agent.objects.create(
+            agent = Agent.objects.create(
                 user=user,
                 company_name=company_name or '',
                 phone=phone or '',
                 city=city or '',
-                email=email
+                email=email,
+                is_email_verified=False
             )
             
-            # Login the user
-            login(request, user)
+            # Send verification email
+            from services.email_service import email_service
+            email_result = email_service.send_verification_email(email, first_name or username)
             
-            return JsonResponse({'success': True})
+            if email_result.get('success'):
+                # Don't login yet - require email verification
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'تم إنشاء الحساب! تحقق من بريدك الإلكتروني لتفعيل الحساب.',
+                    'require_verification': True
+                })
+            else:
+                # Email service not available - login directly
+                login(request, user)
+                return JsonResponse({'success': True})
         except Exception as e:
             import traceback
             print(f"Registration error: {e}")
@@ -254,6 +266,92 @@ def logout_view(request):
     """تسجيل الخروج"""
     logout(request)
     return redirect('/')
+
+
+def verify_email_view(request):
+    """التحقق من الإيميل"""
+    token = request.GET.get('token', '')
+    
+    if not token:
+        return render(request, 'auth/verify-email.html', {'error': 'رابط غير صالح'})
+    
+    from services.email_service import email_service
+    email = email_service.verify_token(token, 'email_verify')
+    
+    if email:
+        # Mark user as verified
+        try:
+            user = User.objects.get(email=email)
+            from apps.agents.models import Agent
+            agent = Agent.objects.get(user=user)
+            agent.is_email_verified = True
+            agent.save()
+            
+            # Login the user
+            login(request, user)
+            return render(request, 'auth/verify-email.html', {'success': True})
+        except (User.DoesNotExist, Agent.DoesNotExist):
+            return render(request, 'auth/verify-email.html', {'error': 'المستخدم غير موجود'})
+    else:
+        return render(request, 'auth/verify-email.html', {'error': 'الرابط منتهي الصلاحية أو غير صالح'})
+
+
+@csrf_exempt
+def forgot_password_view(request):
+    """صفحة نسيت كلمة المرور"""
+    if request.method == 'POST':
+        email = request.POST.get('email', '')
+        
+        if not email:
+            return JsonResponse({'success': False, 'error': 'البريد الإلكتروني مطلوب'})
+        
+        try:
+            user = User.objects.get(email=email)
+            from services.email_service import email_service
+            result = email_service.send_password_reset_email(email, user.first_name or user.username)
+            
+            if result.get('success'):
+                return JsonResponse({'success': True, 'message': 'تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني'})
+            else:
+                return JsonResponse({'success': False, 'error': 'فشل إرسال الإيميل. حاول مرة أخرى.'})
+        except User.DoesNotExist:
+            # Don't reveal if email exists or not (security)
+            return JsonResponse({'success': True, 'message': 'إذا كان البريد مسجلاً، ستصلك رسالة استعادة كلمة المرور'})
+    
+    return render(request, 'auth/forgot-password.html')
+
+
+@csrf_exempt
+def reset_password_view(request):
+    """صفحة إعادة تعيين كلمة المرور"""
+    token = request.GET.get('token', '')
+    
+    if request.method == 'POST':
+        token = request.POST.get('token', '')
+        new_password = request.POST.get('password', '')
+        
+        if not token or not new_password:
+            return JsonResponse({'success': False, 'error': 'بيانات غير صالحة'})
+        
+        from services.email_service import email_service
+        email = email_service.verify_token(token, 'password_reset')
+        
+        if email:
+            try:
+                user = User.objects.get(email=email)
+                user.set_password(new_password)
+                user.save()
+                return JsonResponse({'success': True, 'message': 'تم تغيير كلمة المرور بنجاح'})
+            except User.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'المستخدم غير موجود'})
+        else:
+            return JsonResponse({'success': False, 'error': 'الرابط منتهي الصلاحية'})
+    
+    # Validate token on GET
+    if not token:
+        return render(request, 'auth/reset-password.html', {'error': 'رابط غير صالح', 'token': ''})
+    
+    return render(request, 'auth/reset-password.html', {'token': token})
 
 
 @login_required(login_url='/auth/login/')

@@ -15,6 +15,9 @@ urlpatterns = [
     path('auth/login/', views.login_view, name='login'),
     path('auth/register/', views.register_view, name='register'),
     path('auth/logout/', views.logout_view, name='logout'),
+    path('auth/verify-email/', views.verify_email_view, name='verify-email'),
+    path('auth/forgot-password/', views.forgot_password_view, name='forgot-password'),
+    path('auth/reset-password/', views.reset_password_view, name='reset-password'),
     path('login/', views.login_view, name='login-alt'),
     path('register/', views.register_view, name='register-alt'),
     
