@@ -317,6 +317,7 @@ def dashboard_view(request):
         'leads_count': leads.count(),
         'conversations_count': total_conversations,
         'views_count': sum(p.views_count for p in properties),
+        'interested_count': sum(p.interested_count for p in properties),
         'recent_properties': properties_data,
         'recent_leads': leads_data,
         'active_page': 'dashboard'
@@ -392,6 +393,7 @@ def conversations_view(request):
     """صفحة المحادثات"""
     from apps.agents.models import Agent
     from apps.chat.models import Conversation, Message
+    from apps.leads.models import Lead
     from django.utils import timezone
     from datetime import timedelta
     
@@ -402,25 +404,70 @@ def conversations_view(request):
     except Agent.DoesNotExist:
         return redirect('dashboard')
     
-    # Get conversations for this agent
-    conversations = Conversation.objects.filter(agent=agent).order_by('-last_message_at')
+    # Get conversations from Conversation model
+    chat_conversations = Conversation.objects.filter(agent=agent).order_by('-last_message_at')
     
-    # Add last message to each conversation
-    for conv in conversations:
+    # Get leads with conversations (from notes)
+    leads_with_conversations = Lead.objects.filter(
+        agent=agent,
+        notes__icontains='محادثة'
+    ).order_by('-created_at')
+    
+    # Build conversations list
+    conversations_list = []
+    
+    # Add from Conversation model
+    for conv in chat_conversations:
         last_msg = conv.messages.order_by('-created_at').first()
-        conv.last_message = last_msg.content if last_msg else None
+        conversations_list.append({
+            'id': str(conv.id),
+            'visitor_name': conv.client_name or 'عميل جديد',
+            'visitor_phone': conv.client_phone,
+            'last_message': last_msg.content if last_msg else 'محادثة جديدة',
+            'last_message_at': conv.last_message_at or conv.started_at,
+            'source': 'chat',
+            'status': conv.status,
+        })
+    
+    # Add from Lead model (conversations stored in notes)
+    for lead in leads_with_conversations:
+        # Extract last message from notes
+        last_message = 'محادثة محفوظة'
+        if lead.notes:
+            lines = lead.notes.split('\n')
+            for line in reversed(lines):
+                if line.strip():
+                    last_message = line.strip()[:50]
+                    break
+        
+        conversations_list.append({
+            'id': str(lead.id),
+            'visitor_name': lead.name or 'عميل من الشات',
+            'visitor_phone': lead.phone,
+            'last_message': last_message,
+            'last_message_at': lead.created_at,
+            'source': 'lead',
+            'status': lead.status,
+        })
+    
+    # Sort by date
+    conversations_list.sort(key=lambda x: x['last_message_at'] or timezone.now(), reverse=True)
     
     # Stats
     today = timezone.now().date()
+    total_conversations = agent.total_conversations + chat_conversations.count() + leads_with_conversations.count()
+    today_conversations = chat_conversations.filter(started_at__date=today).count() + \
+                          leads_with_conversations.filter(created_at__date=today).count()
+    
     stats = {
-        'total': conversations.count(),
-        'today': conversations.filter(started_at__date=today).count(),
+        'total': total_conversations,
+        'today': today_conversations,
         'total_messages': Message.objects.filter(conversation__agent=agent).count(),
-        'with_leads': conversations.filter(leads__isnull=False).distinct().count(),
+        'with_leads': leads_with_conversations.count(),
     }
     
     context = {
-        'conversations': conversations,
+        'conversations': conversations_list,
         'stats': stats,
         'active_page': 'conversations'
     }
@@ -666,26 +713,19 @@ def save_global_settings(request):
 
 def check_admin_access(request):
     """التحقق من صلاحية الأدمن"""
+    # التحقق من session الأدمن أولاً
+    if request.session.get('is_admin_authenticated'):
+        print(f"✅ Admin authenticated via session")
+        return True
+    
     from django.conf import settings as django_settings
     expected_key = getattr(django_settings, 'ADMIN_SECRET_KEY', 'inify_admin_2025')
     
-    # التحقق من المفتاح في: query params, body, headers
-    admin_key = request.GET.get('key', '')
+    # التحقق من المفتاح في: query params, headers
+    admin_key = request.GET.get('key', '') or request.META.get('HTTP_X_ADMIN_KEY', '')
     
-    if not admin_key and request.method == 'POST':
-        try:
-            import json
-            data = json.loads(request.body)
-            admin_key = data.get('adminKey', '')
-        except:
-            pass
-    
-    if not admin_key:
-        admin_key = request.META.get('HTTP_X_ADMIN_KEY', '')
-    
-    # التحقق من session الأدمن
-    if not admin_key and request.session.get('is_admin_authenticated'):
-        return True
+    print(f"🔑 Session auth: {request.session.get('is_admin_authenticated')}")
+    print(f"🔑 Admin key: {admin_key}")
     
     return admin_key == expected_key
 

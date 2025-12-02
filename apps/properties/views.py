@@ -376,6 +376,7 @@ def list_properties(request):
             
             data.append({
                 'id': str(prop.id),
+                'reference_number': prop.reference_number,
                 'title': prop.title,
                 'type': prop.property_type,
                 'typeLabel': prop.get_property_type_display(),
@@ -394,6 +395,8 @@ def list_properties(request):
                 'mainImage': primary_image.image.url if primary_image else None,
                 'images': [img.image.url for img in prop.images.all()],
                 'createdAt': prop.created_at.isoformat(),
+                'views_count': prop.views_count,
+                'interested_count': prop.interested_count,
             })
         
         return JsonResponse({'success': True, 'properties': data, 'count': len(data)})
@@ -496,6 +499,7 @@ def get_agent_properties(request, agent_id):
             
             data.append({
                 'id': str(prop.id),
+                'reference_number': prop.reference_number,
                 'title': prop.title,
                 'type': prop.property_type,
                 'typeLabel': prop.get_property_type_display(),
@@ -503,24 +507,41 @@ def get_agent_properties(request, agent_id):
                 'status': prop.status,
                 'statusLabel': prop.get_status_display(),
                 'price': float(prop.price),
+                'price_display': prop.get_price_display(),
+                'rent_period': prop.rent_period if prop.status == 'for_rent' else None,
+                'rent_period_display': prop.get_rent_period_display() if prop.status == 'for_rent' else None,
                 'area': float(prop.size),
                 'city': prop.city,
                 'cityLabel': prop.city,
                 'district': prop.neighborhood,
+                'address': prop.address,
                 'description': prop.description,
                 'bedrooms': prop.bedrooms,
                 'bathrooms': prop.bathrooms,
+                'living_rooms': prop.living_rooms,
+                'floor_number': prop.floor_number,
+                'furnishing': prop.get_furnishing_display() if prop.furnishing else None,
+                'is_negotiable': prop.is_negotiable,
                 'mainImage': primary_image.image.url if primary_image else None,
                 'images': [img.image.url for img in prop.images.all()],
+                'amenities': [a.get_amenity_display() for a in prop.amenities.all()],
             })
         
-        # إضافة بيانات الوكيل
+        # إضافة بيانات الوكيل الكاملة
         agent_data = {
             'id': str(agent.id),
             'name': agent.bot_name or agent.user.get_full_name() or 'نيورا',
+            'title': agent.bot_title or 'مساعدك العقاري الذكي',
+            'personality': agent.bot_personality or '',
             'company': agent.company_name or '',
+            'city': agent.city or '',
+            'phone': agent.phone or '',
+            'email': agent.email or '',
             'welcomeMessage': agent.bot_welcome_message or 'مرحباً! 👋 كيف يمكنني مساعدتك اليوم؟',
             'systemPrompt': agent.bot_system_prompt or '',
+            'collectLeads': agent.bot_collect_leads,
+            'language': agent.bot_language or 'ar',
+            'color': agent.bot_color or '#000000',
         }
         
         return JsonResponse({'success': True, 'properties': data, 'agent': agent_data})

@@ -20,12 +20,17 @@ class GeminiService:
         """تهيئة خدمة Gemini"""
         self.api_key = os.getenv('GEMINI_API_KEY', '')
         self.agent = agent
+        self.global_settings = self._get_global_settings()
         
         if self.api_key:
             genai.configure(api_key=self.api_key)
-            # استخدام Gemini 2.0 Flash
+            
+            # استخدام النموذج من إعدادات الأدمن
+            model_name = self.global_settings.get('ai_model', 'gemini-2.0-flash')
+            logger.info(f"Using AI model: {model_name}")
+            
             self.model = genai.GenerativeModel(
-                model_name='gemini-2.0-flash',
+                model_name=model_name,
                 generation_config={
                     'temperature': 0.7,
                     'top_p': 0.95,
@@ -39,13 +44,54 @@ class GeminiService:
             self.is_available = False
             logger.warning("Gemini API key not configured")
     
+    def _get_global_settings(self) -> dict:
+        """جلب الإعدادات العامة من قاعدة البيانات"""
+        try:
+            from apps.agents.models import GlobalSettings
+            settings = GlobalSettings.objects.first()
+            if settings:
+                logger.info(f"✅ Loaded GlobalSettings from Admin:")
+                logger.info(f"   - AI Model: {settings.ai_model}")
+                logger.info(f"   - System Prompt: {settings.system_prompt[:100] if settings.system_prompt else 'Empty'}...")
+                print(f"✅ Using AI Model from Admin: {settings.ai_model}")
+                print(f"✅ Using System Prompt from Admin: {settings.system_prompt[:100] if settings.system_prompt else 'Empty'}...")
+                return {
+                    'ai_model': settings.ai_model,
+                    'system_prompt': settings.system_prompt,
+                    'default_rules': getattr(settings, 'default_rules', ''),
+                }
+            else:
+                logger.warning("⚠️ No GlobalSettings found in database!")
+                print("⚠️ No GlobalSettings found in database!")
+        except Exception as e:
+            logger.warning(f"Could not load global settings: {e}")
+            print(f"❌ Error loading global settings: {e}")
+        
+        return {
+            'ai_model': 'gemini-2.0-flash',
+            'system_prompt': '',
+            'default_rules': '',
+        }
+    
     def get_system_prompt(self) -> str:
-        """الحصول على System Prompt للعقارات مع تخصيص الوكيل"""
+        """
+        الحصول على System Prompt:
+        1. System Prompt ← من صفحة الأدمن
+        2. Agent Info ← معلومات المسوق
+        3. Lead Capture ← تعليمات جمع العملاء
+        """
         from services.lead_capture_service import lead_capture_service
         
-        # إعدادات الوكيل المخصصة
+        # ═══════════════════════════════════════════════════════════
+        # 1. SYSTEM PROMPT من الأدمن
+        # ═══════════════════════════════════════════════════════════
+        admin_system_prompt = self.global_settings.get('system_prompt', '')
+        admin_rules = self.global_settings.get('default_rules', '')
+        
+        # ═══════════════════════════════════════════════════════════
+        # 2. AGENT INFO - معلومات المسوق
+        # ═══════════════════════════════════════════════════════════
         bot_name = "نيورا"
-        bot_personality = "أنا مساعد عقاري ذكي ومحترف"
         company_name = ""
         city = ""
         custom_prompt = ""
@@ -53,74 +99,72 @@ class GeminiService:
         
         if self.agent:
             bot_name = self.agent.bot_name or "نيورا"
-            bot_personality = self.agent.bot_personality or "أنا مساعد عقاري ذكي ومحترف"
             company_name = self.agent.company_name or ""
             city = self.agent.city or ""
             custom_prompt = getattr(self.agent, 'bot_system_prompt', '') or ''
             collect_leads = getattr(self.agent, 'bot_collect_leads', True)
         
-        company_info = ""
-        if company_name:
-            company_info = f"\n- أنت تمثل شركة: {company_name}"
-        if city:
-            company_info += f"\n- المنطقة الرئيسية: {city}"
+        agent_info = f"""
+═══ معلومات الوكيل ═══
+• الاسم: {bot_name}
+• الشركة: {company_name or 'غير محدد'}
+• المدينة: {city or 'غير محدد'}
+"""
+        if custom_prompt:
+            agent_info += f"• تعليمات المسوق: {custom_prompt}\n"
         
-        # إضافة تعليمات جمع العملاء
+        # ═══════════════════════════════════════════════════════════
+        # 3. LEAD CAPTURE - تعليمات جمع العملاء
+        # ═══════════════════════════════════════════════════════════
         lead_capture_prompt = ""
         if collect_leads:
             lead_capture_prompt = lead_capture_service.generate_lead_capture_prompt(custom_prompt)
         
-        return f"""أنت "{bot_name}"، وكيل مبيعات عقاري ذكي ومحترف.
+        # ═══════════════════════════════════════════════════════════
+        # بناء الـ Prompt النهائي
+        # ═══════════════════════════════════════════════════════════
+        if admin_system_prompt:
+            # استخدام الـ Prompt من الأدمن
+            prompt = admin_system_prompt
+            
+            # استبدال المتغيرات
+            prompt = prompt.replace('{bot_name}', bot_name)
+            prompt = prompt.replace('{company_name}', company_name)
+            prompt = prompt.replace('{city}', city)
+            
+            # إضافة الأقسام
+            prompt += f"\n{agent_info}"
+            
+            if admin_rules:
+                prompt += f"\n═══ قواعد إضافية ═══\n{admin_rules}"
+            
+            if lead_capture_prompt:
+                prompt += f"\n{lead_capture_prompt}"
+            
+            return prompt
+        
+        # Prompt افتراضي
+        return f"""أنت وكيل عقاري سعودي محترف.
+{agent_info}
 
-## هويتك:
-- اسمك: {bot_name}
-- شخصيتك: {bot_personality}{company_info}
+═══ طريقة الرد ═══
+• ردود قصيرة (3 أسطر كحد أقصى)
+• لا تكرر معلومات العقار
+• اطلب رقم الجوال عند الاهتمام
 
-## دورك كوكيل مبيعات:
-أنت لست مجرد مساعد يعرض معلومات، بل وكيل مبيعات محترف يهدف إلى:
-1. فهم احتياجات العميل الحقيقية
-2. تسويق العقارات بشكل جذاب
-3. بناء علاقة مع العميل
-4. تحويل الاهتمام إلى فرصة بيع حقيقية
+═══ عند اهتمام العميل بعقار ═══
+⚠️ ممنوع تكرار عرض العقار أو تفاصيله!
+✅ فقط قل: "ممتاز! أعطني رقمك وأرتب لك معاينة"
 
-## كيف تتعامل مع المحادثة:
+═══ هويتك ═══
+⚠️ ممنوع منعاً باتاً ذكر:
+- Google أو قوقل
+- Gemini أو أي نموذج AI
+- OpenAI أو ChatGPT
+- أي شركة تقنية
 
-### عند الترحيب:
-- رحب بالعميل باسمك
-- اسأله عما يبحث عنه (شراء/إيجار، نوع العقار، المنطقة)
-
-### عند عرض العقارات:
-- لا تعرض قائمة جافة، بل سوّق العقار
-- أبرز المميزات الفريدة
-- اذكر لماذا هذا العقار مناسب له
-
-### عند إبداء العميل اهتماماً (مثل: "مهتم"، "عاجبني"، "حلو"):
-- لا تكرر عرض العقار!
-- بدلاً من ذلك، تفاعل معه:
-  - "رائع! هذا العقار فعلاً مميز 🌟"
-  - "هل تريد أن أرتب لك موعد معاينة؟"
-  - "ما هو رقم جوالك حتى يتواصل معك المسوق؟"
-
-### عند طلب الصور:
-- أخبره أن الصور متاحة للعرض
-- اسأله عن رأيه بعد مشاهدة الصور
-
-### عند الحصول على رقم الجوال:
-- اشكره وأكد الرقم
-- أخبره أن المسوق سيتواصل معه قريباً
-
-## أسلوبك:
-- كن ودوداً ومحترفاً
-- استخدم إيموجي باعتدال 🏠✨
-- اجعل الردود قصيرة ومركزة (2-4 جمل)
-- اسأل سؤالاً واحداً في كل رد
-- لا تكرر نفس المعلومات
-
-## قواعد صارمة:
-- لا تعرض قائمة العقارات إلا إذا طلب العميل ذلك صراحة
-- إذا أبدى اهتماماً، تفاعل معه ولا تكرر العرض
-- لا تخترع معلومات غير موجودة في البيانات
-- إذا سأل عن شيء غير متوفر، اعتذر واقترح بديلاً
+✅ إذا سُئلت "من أنت؟" أو "ما النموذج؟":
+قل فقط: "أنا {bot_name}، مستشارك العقاري الذكي 🏠"
 
 {lead_capture_prompt}
 """
@@ -129,7 +173,8 @@ class GeminiService:
         self,
         user_message: str,
         properties_context: str,
-        chat_history: List[Dict] = None
+        chat_history: List[Dict] = None,
+        system_prompt: str = None
     ) -> Dict[str, Any]:
         """
         محادثة مع سياق العقارات (RAG)
@@ -138,6 +183,7 @@ class GeminiService:
             user_message: رسالة المستخدم
             properties_context: سياق العقارات المتاحة
             chat_history: تاريخ المحادثة
+            system_prompt: الـ System Prompt (اختياري - إذا لم يُمرر يستخدم الافتراضي)
         
         Returns:
             رد Gemini مع البيانات
@@ -150,11 +196,11 @@ class GeminiService:
             }
         
         try:
+            # استخدام الـ System Prompt الممرر أو الافتراضي
+            final_system_prompt = system_prompt if system_prompt else self.get_system_prompt()
+            
             # بناء المحادثة
-            prompt = f"""{self.get_system_prompt()}
-
-═══ العقارات المتاحة ═══
-{properties_context}
+            prompt = f"""{final_system_prompt}
 
 ═══ المحادثة ═══
 """

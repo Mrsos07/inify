@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>العملاء المحتملين - Inify</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
     <style>
         @font-face {
             font-family: 'BalooBhaijaan2';
@@ -786,8 +786,24 @@
 
         // Format date
         function formatDate(dateStr) {
+            if (!dateStr) return '-';
             const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return '-';
             return date.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
+        }
+        
+        // Format date and time
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return '-';
+            return date.toLocaleString('ar-SA', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         }
 
         // Get initials
@@ -831,9 +847,12 @@
         // View property by ID from API
         async function viewPropertyById(propertyId) {
             try {
-                const response = await fetch(`/api/v1/properties/${propertyId}/`);
+                const response = await fetch(`/api/v1/properties/detail/${propertyId}/`);
                 if (response.ok) {
-                    const property = await response.json();
+                    const data = await response.json();
+                    console.log('Property data:', data);
+                    // البيانات تأتي داخل property
+                    const property = data.property || data;
                     showPropertyModal(property);
                 } else {
                     alert('العقار غير موجود أو تم حذفه');
@@ -854,33 +873,44 @@
             const modal = document.getElementById('clientModal');
             const body = document.getElementById('modalBody');
             
+            // Get main image
+            const mainImage = property.images && property.images.length > 0 
+                ? property.images.find(img => img.is_primary)?.url || property.images[0]?.url 
+                : property.mainImage;
+            
             body.innerHTML = `
                 <div style="text-align: center; margin-bottom: 20px;">
-                    ${property.mainImage ? `<img src="${property.mainImage}" style="max-width: 100%; max-height: 200px; border-radius: 12px; margin-bottom: 15px;">` : ''}
-                    <h3 style="font-size: 18px; margin-bottom: 10px;">${property.title}</h3>
+                    ${mainImage ? `<img src="${mainImage}" style="max-width: 100%; max-height: 200px; border-radius: 12px; margin-bottom: 15px;">` : ''}
+                    <h3 style="font-size: 18px; margin-bottom: 10px;">${property.title || 'عقار'}</h3>
                 </div>
                 <div class="detail-group">
                     <div class="detail-label">النوع</div>
-                    <div class="detail-value">${property.typeLabel || property.type || '-'}</div>
+                    <div class="detail-value">${property.property_type || property.type || '-'}</div>
                 </div>
                 <div class="detail-group">
                     <div class="detail-label">الموقع</div>
-                    <div class="detail-value">${property.cityLabel || property.city || '-'}${property.district ? ' - ' + property.district : ''}</div>
+                    <div class="detail-value">${property.city || '-'}${property.neighborhood ? ' - ' + property.neighborhood : ''}</div>
                 </div>
                 <div class="detail-group">
                     <div class="detail-label">السعر</div>
                     <div class="detail-value" style="color: var(--cyan); font-weight: bold;">${parseInt(property.price || 0).toLocaleString('ar-SA')} ريال</div>
                 </div>
-                ${property.area ? `
+                ${property.size ? `
                 <div class="detail-group">
                     <div class="detail-label">المساحة</div>
-                    <div class="detail-value">${property.area} م²</div>
+                    <div class="detail-value">${property.size} م²</div>
                 </div>
                 ` : ''}
                 ${property.bedrooms ? `
                 <div class="detail-group">
                     <div class="detail-label">غرف النوم</div>
                     <div class="detail-value">${property.bedrooms}</div>
+                </div>
+                ` : ''}
+                ${property.bathrooms ? `
+                <div class="detail-group">
+                    <div class="detail-label">الحمامات</div>
+                    <div class="detail-value">${property.bathrooms}</div>
                 </div>
                 ` : ''}
                 ${property.description ? `
@@ -977,19 +1007,52 @@
             const modal = document.getElementById('clientModal');
             const body = document.getElementById('modalBody');
             
-            const conversationHtml = client.conversation && client.conversation.length > 0
-                ? client.conversation.map(msg => `
-                    <div class="msg ${msg.role}">${msg.content}</div>
-                `).join('')
-                : '<p style="color: var(--text-muted);">لا توجد محادثة محفوظة</p>';
+            // Build conversation HTML
+            let conversationHtml = '<p style="color: var(--text-muted);">لا توجد محادثة محفوظة</p>';
+            const messages = client.conversation || client.messages || [];
+            if (messages.length > 0) {
+                conversationHtml = `
+                    <div class="conversation-container" style="max-height: 300px; overflow-y: auto; padding: 10px; background: var(--midnight); border-radius: 10px;">
+                        ${messages.map(msg => `
+                            <div class="chat-msg ${msg.role === 'user' ? 'user-msg' : 'bot-msg'}" style="
+                                display: flex;
+                                flex-direction: column;
+                                align-items: ${msg.role === 'user' ? 'flex-end' : 'flex-start'};
+                                margin-bottom: 10px;
+                            ">
+                                <div style="
+                                    max-width: 80%;
+                                    padding: 10px 14px;
+                                    border-radius: 12px;
+                                    background: ${msg.role === 'user' ? 'var(--cyan)' : 'rgba(255,255,255,0.1)'};
+                                    color: ${msg.role === 'user' ? 'var(--midnight)' : 'var(--text-light)'};
+                                    font-size: 13px;
+                                    line-height: 1.5;
+                                ">
+                                    ${msg.content}
+                                </div>
+                                <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">
+                                    ${msg.role === 'user' ? '👤 العميل' : '🤖 البوت'}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
             
             // Build interested properties HTML
             let propertiesHtml = '<p style="color: var(--text-muted);">لا توجد عقارات محددة</p>';
-            if (client.interestedProperties && client.interestedProperties.length > 0) {
-                propertiesHtml = client.interestedProperties.map(p => 
-                    `<div class="property-link" onclick="viewProperty('${p.id}')" style="display: block; max-width: 100%; margin: 5px 0; padding: 10px;">
-                        <strong>${p.title}</strong>
-                        ${p.price ? `<br><span style="color: var(--cyan);">${parseInt(p.price).toLocaleString('ar-SA')} ريال</span>` : ''}
+            const interestedProps = client.interested_properties_list || client.interestedProperties || [];
+            if (interestedProps.length > 0) {
+                propertiesHtml = interestedProps.map(p => 
+                    `<div class="property-card-mini" onclick="viewPropertyById('${p.id}')" style="display: flex; align-items: center; gap: 12px; padding: 12px; margin: 8px 0; background: rgba(107, 184, 201, 0.1); border-radius: 10px; cursor: pointer; transition: all 0.3s;">
+                        ${p.mainImage || p.image ? `<img src="${p.mainImage || p.image}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;">` : '<div style="width: 60px; height: 60px; border-radius: 8px; background: var(--midnight); display: flex; align-items: center; justify-content: center;">🏠</div>'}
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-light); margin-bottom: 4px;">${p.title}</div>
+                            ${p.price ? `<div style="color: var(--cyan); font-weight: bold;">${parseInt(p.price).toLocaleString('ar-SA')} ريال</div>` : ''}
+                            ${p.city || p.cityLabel ? `<div style="font-size: 12px; color: var(--text-muted);">📍 ${p.cityLabel || p.city}</div>` : ''}
+                        </div>
+                        <div style="color: var(--cyan);">←</div>
                     </div>`
                 ).join('');
             }
@@ -1037,7 +1100,7 @@
                 </div>
                 <div class="detail-group">
                     <div class="detail-label">تاريخ التسجيل</div>
-                    <div class="detail-value">${new Date(client.createdAt).toLocaleString('ar-SA')}</div>
+                    <div class="detail-value">${formatDateTime(client.created_at || client.createdAt)}</div>
                 </div>
                 <div class="detail-group">
                     <div class="detail-label">ملخص المحادثة</div>
@@ -1074,28 +1137,76 @@
         }
 
         // Update client status
-        function updateStatus(id) {
+        async function updateStatus(id) {
             const statuses = ['new', 'interested', 'contacted', 'converted'];
             const client = clients.find(c => String(c.id) === String(id));
             if (!client) return;
             
             const currentIndex = statuses.indexOf(client.status);
             const nextIndex = (currentIndex + 1) % statuses.length;
-            client.status = statuses[nextIndex];
+            const newStatus = statuses[nextIndex];
             
-            localStorage.setItem('newra_clients', JSON.stringify(clients));
-            renderClients();
-            updateStats();
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                                  document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
+                
+                const response = await fetch(`/api/v1/leads/${id}/update_status/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Status updated in database');
+                    client.status = newStatus;
+                    renderClients();
+                    updateStats();
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    console.error('❌ Failed to update status:', data);
+                    alert('فشل تحديث الحالة: ' + (data.error || 'خطأ غير معروف'));
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+                alert('حدث خطأ أثناء تحديث الحالة');
+            }
         }
 
         // Delete client
-        function deleteClient(id) {
+        async function deleteClient(id) {
             if (!confirm('هل أنت متأكد من حذف هذا العميل؟')) return;
             
-            clients = clients.filter(c => String(c.id) !== String(id));
-            localStorage.setItem('newra_clients', JSON.stringify(clients));
-            renderClients();
-            updateStats();
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                                  document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
+                
+                const response = await fetch(`/api/v1/leads/${id}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    credentials: 'same-origin'
+                });
+                
+                if (response.ok || response.status === 204) {
+                    console.log('✅ Client deleted from database');
+                    clients = clients.filter(c => String(c.id) !== String(id));
+                    renderClients();
+                    updateStats();
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    console.error('❌ Failed to delete client:', data);
+                    alert('فشل حذف العميل: ' + (data.detail || data.error || 'خطأ غير معروف'));
+                }
+            } catch (error) {
+                console.error('Error deleting client:', error);
+                alert('حدث خطأ أثناء حذف العميل');
+            }
         }
 
         // Search and filter
@@ -1118,3 +1229,5 @@
     </script>
 </body>
 </html>
+
+

@@ -25,6 +25,7 @@ class LeadSerializer(serializers.ModelSerializer):
     urgency_display = serializers.CharField(source='get_urgency_display', read_only=True)
     interested_properties_count = serializers.SerializerMethodField()
     interested_properties_list = serializers.SerializerMethodField()
+    conversation = serializers.SerializerMethodField()
     
     class Meta:
         model = Lead
@@ -34,7 +35,7 @@ class LeadSerializer(serializers.ModelSerializer):
             'looking_for', 'city_preference', 'property_type_preference',
             'budget_min', 'budget_max', 'notes',
             'score', 'interested_properties_count', 'interested_properties_list',
-            'created_at', 'last_contact_at'
+            'conversation', 'created_at', 'last_contact_at'
         ]
     
     def get_interested_properties_count(self, obj):
@@ -43,14 +44,57 @@ class LeadSerializer(serializers.ModelSerializer):
     def get_interested_properties_list(self, obj):
         """إرجاع قائمة العقارات المهتم بها"""
         properties = obj.interested_properties.all()[:5]
-        return [{
-            'id': str(p.id),
-            'title': p.title,
-            'price': str(p.price) if p.price else None,
-            'mainImage': p.main_image.url if p.main_image else None,
-            'type': p.property_type,
-            'city': p.city
-        } for p in properties]
+        result = []
+        for p in properties:
+            # Get primary image
+            primary_image = p.images.filter(is_primary=True).first()
+            if not primary_image:
+                primary_image = p.images.first()
+            
+            result.append({
+                'id': str(p.id),
+                'title': p.title,
+                'price': str(p.price) if p.price else None,
+                'mainImage': primary_image.image.url if primary_image else None,
+                'type': p.property_type,
+                'city': p.city,
+                'cityLabel': p.city
+            })
+        return result
+    
+    def get_conversation(self, obj):
+        """إرجاع رسائل المحادثة"""
+        # أولاً: محاولة جلب المحادثة من الـ ForeignKey
+        if obj.conversation:
+            messages = obj.conversation.messages.all().order_by('created_at')[:20]
+            return [{
+                'role': msg.role,
+                'content': msg.content,
+                'created_at': msg.created_at.isoformat() if msg.created_at else None
+            } for msg in messages]
+        
+        # ثانياً: محاولة استخراج المحادثة من notes
+        if obj.notes and 'محادثة الشات:' in obj.notes:
+            conversation_text = obj.notes.split('محادثة الشات:')[-1].strip()
+            if conversation_text:
+                messages = []
+                for line in conversation_text.split('\n'):
+                    line = line.strip()
+                    if line.startswith('العميل:'):
+                        messages.append({
+                            'role': 'user',
+                            'content': line.replace('العميل:', '').strip(),
+                            'created_at': None
+                        })
+                    elif line.startswith('الوكيل:'):
+                        messages.append({
+                            'role': 'assistant',
+                            'content': line.replace('الوكيل:', '').strip(),
+                            'created_at': None
+                        })
+                return messages
+        
+        return []
 
 
 class LeadDetailSerializer(serializers.ModelSerializer):

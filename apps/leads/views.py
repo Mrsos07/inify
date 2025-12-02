@@ -230,7 +230,7 @@ def save_lead_from_chat(request, agent_id):
             lead.calculate_score()
             lead.save()
         
-        # Add interested properties
+        # Add interested properties and update interested_count
         interested_properties = data.get('interested_properties', [])
         if interested_properties:
             for prop_data in interested_properties:
@@ -238,7 +238,12 @@ def save_lead_from_chat(request, agent_id):
                 if prop_id:
                     try:
                         prop = Property.objects.get(id=prop_id)
-                        lead.interested_properties.add(prop)
+                        # Check if not already added
+                        if not lead.interested_properties.filter(id=prop.id).exists():
+                            lead.interested_properties.add(prop)
+                            # Increment interested_count
+                            prop.interested_count += 1
+                            prop.save(update_fields=['interested_count'])
                     except Property.DoesNotExist:
                         pass
         

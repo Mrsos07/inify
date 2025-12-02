@@ -9,6 +9,7 @@ django-filter>=23.5
 
 # Database
 psycopg2-binary>=2.9.9
+dj-database-url>=2.1.0
 
 # AI & ML
 openai>=1.12.0

@@ -10,7 +10,7 @@
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
     
     <style>
         @font-face {
@@ -517,12 +517,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         const agentId = urlParams.get('agent');
         
-        // 🔒 Gemini API configuration - loaded from secure config
-        const GEMINI_API_KEY = typeof CONFIG !== 'undefined' ? CONFIG.GEMINI_API_KEY : '';
+        // 🔒 API Key is now handled securely on the backend - no exposure to frontend
         
         // Global settings from database
         let globalAdminSettings = null;
-        let GEMINI_MODEL = 'gemini-2.5-pro-preview-05-06';
         
         // Load global settings from database
         async function loadGlobalSettings() {
@@ -531,9 +529,7 @@
                 const data = await response.json();
                 if (data.success && data.settings) {
                     globalAdminSettings = data.settings;
-                    GEMINI_MODEL = data.settings.aiModel || 'gemini-2.5-pro-preview-05-06';
                     console.log('✅ Global settings loaded from database');
-                    console.log('🤖 AI Model:', GEMINI_MODEL);
                     console.log('📋 System Prompt:', globalAdminSettings.systemPrompt ? 'موجود ✅' : 'غير موجود ❌');
                 }
             } catch (error) {
@@ -604,10 +600,18 @@
                 if (data.agent) {
                     agentSettings = {
                         agentName: data.agent.name || 'نيورا',
-                        agentDescription: data.agent.company || 'وكيل عقاري ذكي',
+                        agentDescription: data.agent.title || 'وكيل عقاري ذكي',
+                        personality: data.agent.personality || '',
+                        company: data.agent.company || '',
+                        city: data.agent.city || '',
+                        phone: data.agent.phone || '',
+                        email: data.agent.email || '',
                         welcomeMessage: data.agent.welcomeMessage || 'مرحباً! 👋 كيف يمكنني مساعدتك اليوم؟',
                         agentIcon: '🤖',
                         systemPrompt: data.agent.systemPrompt || '',
+                        collectLeads: data.agent.collectLeads !== false,
+                        language: data.agent.language || 'ar',
+                        color: data.agent.color || '#000000',
                         enableRAG: true,
                         ragResults: '5'
                     };
@@ -615,9 +619,17 @@
                     agentSettings = {
                         agentName: 'نيورا',
                         agentDescription: 'وكيل عقاري ذكي',
+                        personality: '',
+                        company: '',
+                        city: '',
+                        phone: '',
+                        email: '',
                         welcomeMessage: 'مرحباً! 👋 كيف يمكنني مساعدتك اليوم؟',
                         agentIcon: '🤖',
                         systemPrompt: '',
+                        collectLeads: true,
+                        language: 'ar',
+                        color: '#000000',
                         enableRAG: true,
                         ragResults: '5'
                     };
@@ -722,6 +734,91 @@
             name: null,
             savedToLeads: false
         };
+        
+        // ═══════════════════════════════════════════════════════════
+        // 🛡️ Rate Limit & Abuse Detection System
+        // ═══════════════════════════════════════════════════════════
+        let abuseDetection = {
+            offTopicCount: 0,           // عدد الأسئلة خارج الموضوع
+            maxOffTopic: 7,             // الحد الأقصى
+            isBlocked: false,           // هل تم حظر المستخدم
+            suspiciousPatterns: [
+                // محاولات كسر النموذج
+                'ignore', 'تجاهل', 'انسى', 'forget',
+                'system prompt', 'سيستم برومبت',
+                'you are now', 'أنت الآن',
+                'act as', 'تصرف ك',
+                'pretend', 'تظاهر',
+                'jailbreak', 'bypass',
+                'ignore previous', 'تجاهل السابق',
+                'new instructions', 'تعليمات جديدة',
+                'override', 'تجاوز',
+                'admin', 'أدمن', 'مشرف',
+                'developer', 'مطور',
+                'debug', 'test mode',
+                'what is your prompt', 'ما هو البرومبت',
+                'show me your instructions', 'أرني تعليماتك',
+                'repeat after me', 'كرر ورائي',
+                'say exactly', 'قل بالضبط'
+            ],
+            offTopicPatterns: [
+                // أسئلة خارج العقارات
+                'طبخ', 'وصفة', 'أكل',
+                'سياسة', 'حرب', 'انتخابات',
+                'دين', 'فتوى',
+                'برمجة', 'كود', 'python', 'javascript',
+                'قصة', 'حكاية', 'نكتة', 'ضحك',
+                'أغنية', 'فيلم', 'مسلسل',
+                'لعبة', 'game',
+                'رياضة', 'كورة', 'مباراة',
+                'طقس', 'جو',
+                'ترجم', 'translate',
+                'اكتب لي', 'write me',
+                'ما رأيك في', 'what do you think'
+            ]
+        };
+        
+        // كشف الأسئلة المشبوهة
+        function detectAbuse(message) {
+            const msgLower = message.toLowerCase();
+            
+            // كشف محاولات كسر النموذج
+            for (const pattern of abuseDetection.suspiciousPatterns) {
+                if (msgLower.includes(pattern.toLowerCase())) {
+                    console.log('🚨 Suspicious pattern detected:', pattern);
+                    abuseDetection.isBlocked = true;
+                    return 'blocked';
+                }
+            }
+            
+            // كشف الأسئلة خارج الموضوع
+            for (const pattern of abuseDetection.offTopicPatterns) {
+                if (msgLower.includes(pattern.toLowerCase())) {
+                    abuseDetection.offTopicCount++;
+                    console.log('⚠️ Off-topic question:', abuseDetection.offTopicCount, '/', abuseDetection.maxOffTopic);
+                    
+                    if (abuseDetection.offTopicCount >= abuseDetection.maxOffTopic) {
+                        abuseDetection.isBlocked = true;
+                        return 'blocked';
+                    }
+                    return 'off-topic';
+                }
+            }
+            
+            return 'ok';
+        }
+        
+        // رسالة الحظر
+        function getBlockedMessage() {
+            return `عذراً، يبدو أن أسئلتك خارج نطاق خدماتنا العقارية 🏠
+
+أنا هنا لمساعدتك في:
+• البحث عن شقق وفلل
+• معرفة الأسعار والمواصفات
+• ترتيب مواعيد المعاينة
+
+إذا كنت مهتماً بعقار، أخبرني! 😊`;
+        }
 
         // Send message
         async function sendMessage() {
@@ -732,10 +829,46 @@
             
             input.value = '';
             
+            // ═══════════════════════════════════════════════════════════
+            // 🛡️ فحص الإساءة قبل الإرسال
+            // ═══════════════════════════════════════════════════════════
+            if (abuseDetection.isBlocked) {
+                addMessage(message, 'user');
+                addMessage('عذراً، تم إيقاف المحادثة. يرجى التواصل معنا مباشرة للمساعدة. 📞', 'bot');
+                // تعطيل حقل الإدخال
+                document.getElementById('chatInput').disabled = true;
+                document.getElementById('chatInput').placeholder = 'تم إيقاف المحادثة';
+                return;
+            }
+            
+            const abuseStatus = detectAbuse(message);
+            if (abuseStatus === 'blocked') {
+                addMessage(message, 'user');
+                addMessage('🚫 تم إيقاف المحادثة بسبب أسئلة خارج نطاق الخدمة.\n\nللمساعدة في العقارات، يرجى التواصل معنا مباشرة. 📞', 'bot');
+                // تعطيل حقل الإدخال
+                document.getElementById('chatInput').disabled = true;
+                document.getElementById('chatInput').placeholder = 'تم إيقاف المحادثة';
+                return;
+            }
+            
+            if (abuseStatus === 'off-topic') {
+                addMessage(message, 'user');
+                const remaining = abuseDetection.maxOffTopic - abuseDetection.offTopicCount;
+                if (remaining <= 3) {
+                    addMessage(`أنا متخصص في العقارات فقط 🏠\n\nكيف أقدر أساعدك في البحث عن شقة أو فيلا؟`, 'bot');
+                } else {
+                    addMessage(getBlockedMessage(), 'bot');
+                }
+                return;
+            }
+            // ═══════════════════════════════════════════════════════════
+            
             // Check for phone number in message
             const phoneNumber = extractPhoneNumber(message);
+            console.log('📱 Phone check:', phoneNumber, 'savedToLeads:', clientInfo.savedToLeads);
             if (phoneNumber && !clientInfo.savedToLeads) {
                 clientInfo.phone = phoneNumber;
+                console.log('📱 Saving lead with phone:', phoneNumber);
                 // Save lead and redirect
                 saveLeadAndRedirect();
             }
@@ -752,10 +885,55 @@
                 hideTyping();
                 addMessage(response, 'bot');
                 conversationHistory.push({ role: 'assistant', content: response });
+                
+                // عرض كروت العقارات إذا ذكر الوكيل عقارات
+                const mentionedProperties = findMentionedProperties(response);
+                if (mentionedProperties.length > 0) {
+                    lastSearchedProperties = mentionedProperties;
+                    const propertyCards = generatePropertyCards();
+                    if (propertyCards) {
+                        addMessage(propertyCards, 'bot', true);
+                    }
+                }
             } catch (error) {
                 hideTyping();
                 addMessage('عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.', 'bot');
             }
+        }
+        
+        // البحث عن جميع العقارات المذكورة في رد الوكيل
+        function findMentionedProperties(response) {
+            if (!properties || properties.length === 0) return [];
+            
+            const responseLower = response.toLowerCase();
+            
+            // الكلمات التي تدل على عرض عقارات
+            const presentationKeywords = ['لدي', 'عندي', 'عندنا', 'متوفر', 'موجود', 'لقيت', 'وجدت', 'شقة', 'فيلا', 'خيارات', 'عروض'];
+            const hasPresentationKeyword = presentationKeywords.some(kw => responseLower.includes(kw));
+            
+            if (!hasPresentationKeyword) return [];
+            
+            const foundProperties = [];
+            
+            for (const prop of properties) {
+                // البحث بالحي أو السعر أو المساحة أو الرقم المرجعي
+                const districtMatch = prop.district && responseLower.includes(prop.district.toLowerCase());
+                const priceMatch = prop.price && (
+                    response.includes(prop.price.toString()) || 
+                    response.includes(prop.price.toLocaleString('ar-SA')) ||
+                    response.includes(formatPrice(prop.price))
+                );
+                const areaMatch = prop.area && response.includes(prop.area.toString());
+                const refMatch = prop.reference_number && response.includes(prop.reference_number);
+                
+                // إذا ذكر الحي أو السعر أو المساحة أو الرقم المرجعي
+                if (districtMatch || priceMatch || areaMatch || refMatch) {
+                    console.log('🏠 Found mentioned property:', prop.title);
+                    foundProperties.push(prop);
+                }
+            }
+            
+            return foundProperties;
         }
 
         // Extract phone number from message
@@ -817,27 +995,32 @@
             
             // Save to database via API
             try {
+                console.log('📤 Sending lead to API...');
+                const requestBody = {
+                    phone: client.phone,
+                    name: client.name,
+                    city: clientRequirements.city || '',
+                    interest: clientRequirements.type || '',
+                    looking_for: clientRequirements.listingType === 'rent' ? 'rent' : 'buy',
+                    conversation: conversationHistory.map(m => `${m.role === 'user' ? 'العميل' : 'الوكيل'}: ${m.content}`).join('\n'),
+                    interested_properties: lastSearchedProperties.map(p => ({
+                        id: p.id,
+                        title: p.title,
+                        price: p.price
+                    }))
+                };
+                console.log('📤 Request body:', requestBody);
+                
                 const response = await fetch(`/api/v1/leads/chat/${agentId}/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        phone: client.phone,
-                        name: client.name,
-                        city: clientRequirements.city || '',
-                        interest: clientRequirements.type || '',
-                        looking_for: clientRequirements.listingType === 'rent' ? 'rent' : 'buy',
-                        conversation: conversationHistory.map(m => `${m.role === 'user' ? 'العميل' : 'الوكيل'}: ${m.content}`).join('\n'),
-                        interested_properties: lastSearchedProperties.map(p => ({
-                            id: p.id,
-                            title: p.title,
-                            price: p.price
-                        }))
-                    })
+                    body: JSON.stringify(requestBody)
                 });
                 
                 const data = await response.json();
+                console.log('📥 API Response:', data);
                 
                 if (data.success) {
                     clientInfo.savedToLeads = true;
@@ -848,7 +1031,7 @@
                         addMessage('✅ شكراً لك! تم حفظ بياناتك وسيتواصل معك أحد ممثلينا قريباً.', 'bot');
                     }, 1000);
                 } else {
-                    console.error('Failed to save client:', data.error);
+                    console.error('❌ Failed to save client:', data.error);
                 }
             } catch (error) {
                 console.error('Error saving client:', error);
@@ -876,29 +1059,17 @@
         }
 
         // Add message to chat
-        function addMessage(content, type) {
+        function addMessage(content, type, isHtml = false) {
             const messagesContainer = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
             
-            if (type === 'bot') {
-                // Check if response is presenting a specific property (not just mentioning)
-                // Look for property presentation patterns
-                const isPresentingProperty = (
-                    (content.includes('موجود') || content.includes('عندي') || content.includes('عندنا') || 
-                     content.includes('متوفر') || content.includes('لقيت') || content.includes('وجدت')) &&
-                    (content.includes('شقة') || content.includes('فيلا') || content.includes('عقار')) &&
-                    (content.includes('ريال') || content.includes('السعر') || content.includes('الإيجار'))
-                );
-                
-                if (isPresentingProperty && properties.length > 0) {
-                    // Set lastSearchedProperties to show cards
-                    lastSearchedProperties = properties.slice(0, 3);
-                    // Bot content is trusted, property cards are generated safely
-                    messageDiv.innerHTML = escapeHtml(content) + generatePropertyCards();
-                } else {
-                    messageDiv.textContent = content;
-                }
+            if (isHtml) {
+                // HTML content (property cards)
+                messageDiv.innerHTML = content;
+            } else if (type === 'bot') {
+                // Bot text content
+                messageDiv.textContent = content;
             } else {
                 // User content - always escape
                 messageDiv.textContent = content;
@@ -929,89 +1100,30 @@
             if (typing) typing.remove();
         }
 
-        // Get AI response
+        // Get AI response - استخدام Backend API الآمن
         async function getAIResponse(userMessage) {
-            const systemPrompt = buildSystemPrompt(userMessage);
-            
-            // Build conversation for Gemini - avoid consecutive same roles
-            const contents = [];
-            
-            // Add system prompt as first user message
-            contents.push({ role: 'user', parts: [{ text: systemPrompt }] });
-            contents.push({ role: 'model', parts: [{ text: 'فهمت، سأساعدك في البحث عن العقارات المناسبة.' }] });
-            
-            // Add conversation history (last 6 messages)
-            const history = conversationHistory.slice(-6);
-            for (let i = 0; i < history.length; i++) {
-                const msg = history[i];
-                const role = msg.role === 'assistant' ? 'model' : 'user';
-                
-                // Avoid consecutive same roles
-                if (contents.length > 0 && contents[contents.length - 1].role === role) {
-                    continue;
-                }
-                
-                contents.push({ role, parts: [{ text: msg.content }] });
-            }
-            
-            // Add current user message
-            if (contents[contents.length - 1].role !== 'user') {
-                contents.push({ role: 'user', parts: [{ text: userMessage }] });
-            } else {
-                // Merge with last user message
-                contents[contents.length - 1].parts[0].text += '\n' + userMessage;
-            }
-            
             try {
-                console.log('Sending request to Gemini API...');
-                console.log('Model:', GEMINI_MODEL);
-                console.log('Contents:', JSON.stringify(contents, null, 2));
+                console.log('🔒 Sending request to secure Backend API...');
                 
-                const requestBody = {
-                    contents: contents,
-                    generationConfig: {
-                        temperature: 0.7,
-                        maxOutputTokens: 8192
-                    }
-                };
-                
-                const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-                    {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestBody)
-                    }
-                );
+                const response = await fetch(`/api/v1/chat/embed/${agentId}/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: userMessage,
+                        history: conversationHistory.slice(-6)
+                    })
+                });
                 
                 const data = await response.json();
-                console.log('API Response Status:', response.status);
-                console.log('API Response:', JSON.stringify(data, null, 2));
+                console.log('API Response:', data);
                 
-                if (!response.ok) {
-                    console.error('API Error:', response.status, data);
-                    if (data.error?.message) {
-                        console.error('Error Message:', data.error.message);
-                    }
+                if (!response.ok || !data.success) {
+                    console.error('API Error:', data.error);
                     return 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.';
                 }
                 
-                if (data.error) {
-                    console.error('Gemini Error:', data.error);
-                    return 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.';
-                }
-                
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!text) {
-                    console.error('No text in response:', data);
-                    // Check if blocked by safety
-                    if (data.candidates?.[0]?.finishReason === 'SAFETY') {
-                        return 'عذراً، لم أتمكن من الرد على هذا السؤال.';
-                    }
-                    return 'عذراً، لم أتمكن من معالجة طلبك. يرجى المحاولة مرة أخرى.';
-                }
-                
-                return text;
+                // الرد يأتي مباشرة من Backend
+                return data.response || 'عذراً، لم أتمكن من معالجة طلبك.';
             } catch (error) {
                 console.error('Fetch Error:', error);
                 console.error('Error Details:', error.message);
@@ -1034,8 +1146,23 @@
             // Analyze user query to extract requirements
             analyzeUserQuery(userQuery);
             
-            let prompt = `أنت ${agentSettings.agentName}، وكيل عقاري ذكي ومحترف.`;
-            prompt += '\nمهمتك هي مساعدة العملاء في البحث عن العقارات المناسبة لاحتياجاتهم.';
+            let prompt = `أنت "${agentSettings.agentName}"، ${agentSettings.agentDescription || 'وكيل عقاري ذكي ومحترف'}.`;
+            
+            // إضافة معلومات الوكيل
+            if (agentSettings.personality) {
+                prompt += `\n\n🎭 شخصيتك:\n${agentSettings.personality}`;
+            }
+            if (agentSettings.company) {
+                prompt += `\n\n🏢 الشركة: ${agentSettings.company}`;
+            }
+            if (agentSettings.city) {
+                prompt += `\n📍 المنطقة الرئيسية: ${agentSettings.city}`;
+            }
+            if (agentSettings.phone) {
+                prompt += `\n📞 للتواصل: ${agentSettings.phone}`;
+            }
+            
+            prompt += '\n\nمهمتك هي مساعدة العملاء في البحث عن العقارات المناسبة لاحتياجاتهم.';
             
             // إضافة الـ Global System Prompt من قاعدة البيانات (يُطبق على الجميع)
             if (globalAdminSettings) {
@@ -1085,7 +1212,9 @@
                     const listingType = p.listing_type === 'sale' ? 'للبيع' : 'للإيجار';
                     let priceLabel = '';
                     if (p.listing_type === 'rent') {
-                        priceLabel = p.price_type === 'yearly' ? '/سنوياً' : '/شهرياً';
+                        const rentPeriod = p.rent_period || p.price_type || 'yearly';
+                        const periodLabels = { 'yearly': '/سنوياً', 'monthly': '/شهرياً', 'daily': '/يومياً' };
+                        priceLabel = periodLabels[rentPeriod] || '/سنوياً';
                     }
                     
                     prompt += `\n\n【عقار ${i + 1}】`;
@@ -1093,10 +1222,16 @@
                     prompt += `\n• النوع: ${p.typeLabel || p.type} - ${listingType}`;
                     prompt += `\n• المدينة: ${p.cityLabel || p.city}`;
                     prompt += `\n• الحي: ${p.district || 'غير محدد'}`;
+                    if (p.address) prompt += `\n• العنوان التفصيلي: ${p.address}`;
                     prompt += `\n• السعر: ${formatPrice(p.price)} ريال${priceLabel}`;
+                    if (p.is_negotiable) prompt += ` (قابل للتفاوض)`;
                     if (p.area) prompt += `\n• المساحة: ${p.area} م²`;
                     if (p.bedrooms) prompt += `\n• غرف النوم: ${p.bedrooms}`;
                     if (p.bathrooms) prompt += `\n• الحمامات: ${p.bathrooms}`;
+                    if (p.living_rooms) prompt += `\n• غرف المعيشة: ${p.living_rooms}`;
+                    if (p.floor_number) prompt += `\n• الطابق: ${p.floor_number}`;
+                    if (p.furnishing) prompt += `\n• التأثيث: ${p.furnishing}`;
+                    if (p.amenities && p.amenities.length > 0) prompt += `\n• المميزات: ${p.amenities.join('، ')}`;
                     if (p.description) prompt += `\n• الوصف: ${p.description}`;
                 });
             } else {
@@ -1262,7 +1397,7 @@
             return `
                 <div class="properties-container">
                     ${lastSearchedProperties.map((p, i) => `
-                        <div class="property-card">
+                        <div class="property-card" style="cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                             ${p.mainImage ? `
                                 <div class="property-image" onclick="openGallery(${i})">
                                     <img src="${p.mainImage}" alt="${p.title}">
@@ -1270,6 +1405,7 @@
                                 </div>
                             ` : ''}
                             <div class="property-content">
+                                ${p.reference_number ? `<div style="font-size: 10px; color: var(--cyan); margin-bottom: 4px; font-family: monospace;">🔖 ${p.reference_number}</div>` : ''}
                                 <div class="property-title">${p.title}</div>
                                 <div class="property-location">📍 ${p.cityLabel || p.city}${p.district ? ' - ' + p.district : ''}</div>
                                 <div class="property-details">
@@ -1278,9 +1414,24 @@
                                     ${p.bathrooms ? `<span>🚿 ${p.bathrooms} حمام</span>` : ''}
                                 </div>
                                 <div class="property-price">
-                                    ${formatPrice(p.price)} ريال${p.listing_type === 'rent' ? (p.price_type === 'yearly' ? '/سنوي' : '/شهري') : ''}
-                                    ${p.listing_type === 'rent' && p.payment_count && p.payment_count !== '1' ? `<small style="display:block;font-size:10px;color:#9ca3af;margin-top:2px;">💳 ${p.payment_count} دفعات</small>` : ''}
+                                    ${formatPrice(p.price)} ريال${p.listing_type === 'rent' ? ({'yearly': '/سنوي', 'monthly': '/شهري', 'daily': '/يومي'}[p.rent_period || p.price_type] || '/سنوي') : ''}
                                 </div>
+                                <button onclick="selectProperty(${i})" style="
+                                    width: 100%;
+                                    margin-top: 10px;
+                                    padding: 10px;
+                                    background: linear-gradient(135deg, var(--primary), var(--secondary));
+                                    color: white;
+                                    border: none;
+                                    border-radius: 8px;
+                                    font-family: inherit;
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    cursor: pointer;
+                                    transition: all 0.3s;
+                                " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                    ❤️ مهتم بهذا العقار
+                                </button>
                             </div>
                         </div>
                     `).join('')}
@@ -1292,6 +1443,25 @@
         function formatPrice(price) {
             if (!price) return '0';
             return parseInt(price).toLocaleString('ar-SA');
+        }
+        
+        // اختيار عقار والرد على الوكيل
+        function selectProperty(propertyIndex) {
+            const property = lastSearchedProperties[propertyIndex];
+            if (!property) return;
+            
+            // حفظ العقار المختار
+            clientRequirements.selectedProperty = property;
+            
+            // إنشاء رسالة تلقائية
+            const refNumber = property.reference_number ? ` (${property.reference_number})` : '';
+            const message = `أنا مهتم بهذا العقار: ${property.title}${refNumber}`;
+            
+            // إرسال الرسالة تلقائياً
+            document.getElementById('chatInput').value = message;
+            sendMessage();
+            
+            console.log('✅ Property selected:', property.title, property.reference_number);
         }
 
         // Gallery functions
@@ -1397,3 +1567,5 @@
     </script>
 </body>
 </html>
+
+

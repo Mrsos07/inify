@@ -5,6 +5,7 @@ Lead Models - نماذج العملاء المحتملين
 
 import uuid
 from django.db import models
+from encrypted_model_fields.fields import EncryptedCharField, EncryptedEmailField
 
 
 class LeadStatus(models.TextChoices):
@@ -57,11 +58,11 @@ class Lead(models.Model):
         verbose_name='المحادثة'
     )
     
-    # معلومات العميل
+    # معلومات العميل (مشفرة)
     name = models.CharField(max_length=200, verbose_name='الاسم')
-    phone = models.CharField(max_length=20, blank=True, verbose_name='رقم الجوال')
-    email = models.EmailField(blank=True, verbose_name='البريد الإلكتروني')
-    whatsapp = models.CharField(max_length=20, blank=True, verbose_name='واتساب')
+    phone = EncryptedCharField(max_length=100, blank=True, verbose_name='رقم الجوال')
+    email = EncryptedEmailField(blank=True, verbose_name='البريد الإلكتروني')
+    whatsapp = EncryptedCharField(max_length=100, blank=True, verbose_name='واتساب')
     
     # الحالة والمصدر
     status = models.CharField(

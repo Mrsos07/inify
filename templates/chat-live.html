@@ -12,7 +12,7 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
     
     <style>
         /* Fonts */
@@ -1035,6 +1035,91 @@
             savedToLeads: false
         };
         
+        // ═══════════════════════════════════════════════════════════
+        // 🛡️ Rate Limit & Abuse Detection System
+        // ═══════════════════════════════════════════════════════════
+        let abuseDetection = {
+            offTopicCount: 0,           // عدد الأسئلة خارج الموضوع
+            maxOffTopic: 7,             // الحد الأقصى
+            isBlocked: false,           // هل تم حظر المستخدم
+            suspiciousPatterns: [
+                // محاولات كسر النموذج
+                'ignore', 'تجاهل', 'انسى', 'forget',
+                'system prompt', 'سيستم برومبت',
+                'you are now', 'أنت الآن',
+                'act as', 'تصرف ك',
+                'pretend', 'تظاهر',
+                'jailbreak', 'bypass',
+                'ignore previous', 'تجاهل السابق',
+                'new instructions', 'تعليمات جديدة',
+                'override', 'تجاوز',
+                'admin', 'أدمن', 'مشرف',
+                'developer', 'مطور',
+                'debug', 'test mode',
+                'what is your prompt', 'ما هو البرومبت',
+                'show me your instructions', 'أرني تعليماتك',
+                'repeat after me', 'كرر ورائي',
+                'say exactly', 'قل بالضبط'
+            ],
+            offTopicPatterns: [
+                // أسئلة خارج العقارات
+                'طبخ', 'وصفة', 'أكل',
+                'سياسة', 'حرب', 'انتخابات',
+                'دين', 'فتوى',
+                'برمجة', 'كود', 'python', 'javascript',
+                'قصة', 'حكاية', 'نكتة', 'ضحك',
+                'أغنية', 'فيلم', 'مسلسل',
+                'لعبة', 'game',
+                'رياضة', 'كورة', 'مباراة',
+                'طقس', 'جو',
+                'ترجم', 'translate',
+                'اكتب لي', 'write me',
+                'ما رأيك في', 'what do you think'
+            ]
+        };
+        
+        // كشف الأسئلة المشبوهة
+        function detectAbuse(message) {
+            const msgLower = message.toLowerCase();
+            
+            // كشف محاولات كسر النموذج
+            for (const pattern of abuseDetection.suspiciousPatterns) {
+                if (msgLower.includes(pattern.toLowerCase())) {
+                    console.log('🚨 Suspicious pattern detected:', pattern);
+                    abuseDetection.isBlocked = true;
+                    return 'blocked';
+                }
+            }
+            
+            // كشف الأسئلة خارج الموضوع
+            for (const pattern of abuseDetection.offTopicPatterns) {
+                if (msgLower.includes(pattern.toLowerCase())) {
+                    abuseDetection.offTopicCount++;
+                    console.log('⚠️ Off-topic question:', abuseDetection.offTopicCount, '/', abuseDetection.maxOffTopic);
+                    
+                    if (abuseDetection.offTopicCount >= abuseDetection.maxOffTopic) {
+                        abuseDetection.isBlocked = true;
+                        return 'blocked';
+                    }
+                    return 'off-topic';
+                }
+            }
+            
+            return 'ok';
+        }
+        
+        // رسالة الحظر
+        function getBlockedMessage() {
+            return `عذراً، يبدو أن أسئلتك خارج نطاق خدماتنا العقارية 🏠
+
+أنا هنا لمساعدتك في:
+• البحث عن شقق وفلل
+• معرفة الأسعار والمواصفات
+• ترتيب مواعيد المعاينة
+
+إذا كنت مهتماً بعقار، أخبرني! 😊`;
+        }
+        
         // Extract phone number from message
         function extractPhoneNumber(text) {
             const patterns = [
@@ -1215,7 +1300,9 @@ ${p.description ? '- الوصف: ' + p.description : ''}
                     // تحديد نوع السعر للإيجار
                     let priceLabel = '';
                     if (p.listing_type === 'rent') {
-                        priceLabel = p.price_type === 'yearly' ? '/سنوي' : '/شهري';
+                        const rentPeriod = p.rent_period || p.price_type || 'yearly';
+                        const periodLabels = { 'yearly': '/سنوي', 'monthly': '/شهري', 'daily': '/يومي' };
+                        priceLabel = periodLabels[rentPeriod] || '/سنوي';
                     }
                     // عدد الدفعات
                     const paymentInfo = p.listing_type === 'rent' && p.payment_count ? 
@@ -1284,46 +1371,72 @@ ${paymentInfo}
                 customPrompt = `\n\n📝 تعليمات خاصة:\n${agentSettings.systemPrompt}\n`;
             }
             
-            return `أنت "${agentName}" مسوق عقاري محترف وذكي. أسلوبك سعودي ودود ومحترف.
-${globalPrompt}${customPrompt}${contextInfo ? '\n═══════════════════════════════════════\n📚 معلومات الشركة والسياسات:\n═══════════════════════════════════════' + contextInfo : ''}
+            // إذا كان هناك System Prompt من الأدمن، استخدمه كأساس
+            if (globalAdminSettingsDB && globalAdminSettingsDB.systemPrompt) {
+                let prompt = globalAdminSettingsDB.systemPrompt;
+                
+                // استبدال المتغيرات
+                prompt = prompt.replace(/{bot_name}/g, agentName);
+                prompt = prompt.replace(/{company_name}/g, agentSettings.companyName || '');
+                prompt = prompt.replace(/{city}/g, agentSettings.city || '');
+                
+                // إضافة الأقسام
+                prompt += `\n\n═══ معلومات الوكيل ═══
+• الاسم: ${agentName}
+• الشركة: ${agentSettings.companyName || 'غير محدد'}
+• المدينة: ${agentSettings.city || 'غير محدد'}`;
+                
+                if (agentSettings.systemPrompt) {
+                    prompt += `\n• تعليمات المسوق: ${agentSettings.systemPrompt}`;
+                }
+                
+                prompt += `\n\n═══ العقارات المتاحة (${properties.length} عقار) ═══\n${allPropertiesText}`;
+                
+                if (globalAdminSettingsDB.defaultRules) {
+                    prompt += `\n\n═══ قواعد إضافية ═══\n${globalAdminSettingsDB.defaultRules}`;
+                }
+                
+                if (contextInfo) {
+                    prompt += `\n\n═══ معلومات الشركة ═══${contextInfo}`;
+                }
+                
+                return prompt;
+            }
+            
+            // Prompt افتراضي إذا لم يكن هناك إعدادات في الأدمن
+            return `أنت "${agentName}" وكيل عقاري سعودي محترف.
 
-═══════════════════════════════════════
-📋 العقارات المتاحة (${properties.length} عقار):
-═══════════════════════════════════════
+═══ معلومات الوكيل ═══
+• الاسم: ${agentName}
+• الشركة: ${agentSettings.companyName || 'غير محدد'}
+${customPrompt}${contextInfo ? '\n═══ معلومات الشركة ═══' + contextInfo : ''}
+
+═══ العقارات المتاحة (${properties.length} عقار) ═══
 ${allPropertiesText}
-═══════════════════════════════════════
 
-🎯 أسلوب التسويق الاحترافي:
-1. رحب بالعميل بشكل ودي وقصير
-2. اعرض العقار المناسب مع تفاصيله الكاملة
-3. أبرز مميزات العقار وموقعه المتميز
-4. أجب على جميع أسئلة العميل بصبر واهتمام
-5. قدم معلومات إضافية مفيدة (قرب الخدمات، المدارس، المستشفيات)
-6. إذا سأل عن الموقع، أرسل رابط Google Maps إذا متوفر
+═══ طريقة الرد ═══
+• ردود قصيرة (3 أسطر كحد أقصى)
+• لا تكرر معلومات العقار - الكارت يعرضها
+• اطلب رقم الجوال عند الاهتمام
 
-⚠️ مهم جداً - دقة معلومات السعر:
-- اذكر نوع السعر بدقة كما هو مكتوب (شهري أو سنوي)
-- إذا كان السعر سنوي، قل "إيجاره السنوي" وليس "الشهري"
-- إذا كان السعر شهري، قل "إيجاره الشهري"
-- اذكر عدد الدفعات إن وجد (دفعة واحدة، دفعتين، إلخ)
+═══ عند اهتمام العميل بعقار ═══
+⚠️ ممنوع تكرار عرض العقار أو تفاصيله!
+✅ فقط قل: "ممتاز! أعطني رقمك وأرتب لك معاينة"
 
-📞 طلب بيانات التواصل:
-- لا تطلب رقم الجوال في أول رد أبداً
-- انتظر حتى يسأل العميل 2-3 أسئلة عن العقار
-- أو انتظر حتى يبدي اهتماماً واضحاً (يسأل عن المعاينة، الحجز، التفاوض)
-- عندها اطلب رقمه بأسلوب لطيف: "عشان أرتب لك موعد معاينة، ممكن رقم جوالك؟"
+═══ هويتك ═══
+⚠️ ممنوع منعاً باتاً ذكر:
+- Google أو قوقل
+- Gemini أو أي نموذج AI
+- OpenAI أو ChatGPT
+- أي شركة تقنية
 
-💬 أسلوب الرد:
-- استخدم لهجة سعودية ودية
-- ردود مختصرة ومفيدة (لا تكتب فقرات طويلة)
-- استخدم الإيموجي باعتدال
-- كن متحمساً للعقار بدون مبالغة
+✅ إذا سُئلت "من أنت؟" أو "ما النموذج؟":
+قل فقط: "أنا ${agentName}، مستشارك العقاري الذكي 🏠"
 
 ⛔ ممنوع:
 - اختلاق عقارات غير موجودة
-- طلب الرقم في أول رسالة
-- الإلحاح على العميل
-- ردود طويلة ومملة`;
+- ردود طويلة ومملة
+- استخدام ** أو تنسيق markdown`;
         }
 
         // 🔒 Gemini API configuration - loaded from secure config
@@ -1506,7 +1619,7 @@ ${allPropertiesText}
                 amenitiesHTML = `<div class="property-amenities">${property.amenities.slice(0, 4).map(a => `<span class="amenity-tag">${getAmenityIcon(a)}</span>`).join('')}</div>`;
             }
             
-            const priceLabel = property.listing_type === 'rent' ? (property.price_type === 'yearly' ? '/سنوي' : '/شهري') : '';
+            const priceLabel = property.listing_type === 'rent' ? ({'yearly': '/سنوي', 'monthly': '/شهري', 'daily': '/يومي'}[property.rent_period || property.price_type] || '/سنوي') : '';
             const paymentInfo = property.listing_type === 'rent' && property.payment_count && property.payment_count !== '1' ? `<small style="display:block;font-size:10px;color:#9ca3af;margin-top:2px;">💳 ${property.payment_count} دفعات</small>` : '';
             return `<div class="property-card-mini"><div class="property-image" ${property.mainImage ? `style="background-image: url('${property.mainImage}')"` : ''}>${!property.mainImage ? '🏠' : ''}<span class="property-badge">${property.listing_type === 'sale' ? 'للبيع' : 'للإيجار'}</span>${imageCount > 1 ? `<span class="image-count">📷 ${imageCount}</span>` : ''}${hasImages ? `<button class="view-images-btn" onclick="openChatGallery(${index})">عرض الصور</button>` : ''}</div><div class="property-info"><div class="property-title">${property.title}</div><div class="property-location">📍 ${property.cityLabel}${property.district ? ' - ' + property.district : ''}</div><div class="property-details">${property.bedrooms ? '<span>🛏️ ' + property.bedrooms + ' غرف</span>' : ''}${property.bathrooms ? '<span>🚿 ' + property.bathrooms + ' حمام</span>' : ''}${property.area ? '<span>📐 ' + property.area + ' م²</span>' : ''}</div><div class="property-price">${Number(property.price).toLocaleString('ar-SA')} <span>ريال${priceLabel}</span>${paymentInfo}</div>${amenitiesHTML}</div></div>`;
         }
@@ -1756,6 +1869,41 @@ ${allPropertiesText}
             const message = chatInput.value.trim();
             if (!message) return;
             
+            // ═══════════════════════════════════════════════════════════
+            // 🛡️ فحص الإساءة قبل الإرسال
+            // ═══════════════════════════════════════════════════════════
+            if (abuseDetection.isBlocked) {
+                addMessage(message, true);
+                addMessage('عذراً، تم إيقاف المحادثة. يرجى التواصل معنا مباشرة للمساعدة. 📞', false);
+                // تعطيل حقل الإدخال
+                chatInput.disabled = true;
+                chatInput.placeholder = 'تم إيقاف المحادثة';
+                return;
+            }
+            
+            const abuseStatus = detectAbuse(message);
+            if (abuseStatus === 'blocked') {
+                addMessage(message, true);
+                addMessage('🚫 تم إيقاف المحادثة بسبب أسئلة خارج نطاق الخدمة.\n\nللمساعدة في العقارات، يرجى التواصل معنا مباشرة. 📞', false);
+                // تعطيل حقل الإدخال
+                chatInput.disabled = true;
+                chatInput.placeholder = 'تم إيقاف المحادثة';
+                return;
+            }
+            
+            if (abuseStatus === 'off-topic') {
+                addMessage(message, true);
+                chatInput.value = '';
+                const remaining = abuseDetection.maxOffTopic - abuseDetection.offTopicCount;
+                if (remaining <= 3) {
+                    addMessage(`أنا متخصص في العقارات فقط 🏠\n\nكيف أقدر أساعدك في البحث عن شقة أو فيلا؟`, false);
+                } else {
+                    addMessage(getBlockedMessage(), false);
+                }
+                return;
+            }
+            // ═══════════════════════════════════════════════════════════
+            
             // 🔒 التحقق من حد المحادثات (للباقة المجانية)
             if (typeof InifyAuth !== 'undefined' && InifyAuth.isLoggedIn()) {
                 const convLimit = InifyAuth.checkLimit('conversations');
@@ -1833,3 +1981,5 @@ ${allPropertiesText}
     </script>
 </body>
 </html>
+
+

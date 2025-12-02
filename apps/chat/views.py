@@ -470,3 +470,209 @@ class WebhookView(View):
             'response': response['content'],
             'phone': phone
         })
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class EmbedChatAPI(View):
+    """API آمن للشات المضمن - يستخدم Backend بدلاً من استدعاء Gemini من المتصفح"""
+    
+    def post(self, request, agent_id):
+        """معالجة رسالة الشات"""
+        try:
+            from apps.agents.models import Agent
+            from apps.properties.models import Property
+            
+            # التحقق من الوكيل
+            try:
+                agent = Agent.objects.get(id=agent_id)
+            except Agent.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
+            
+            # قراءة البيانات
+            data = json.loads(request.body)
+            message = data.get('message', '')
+            conversation_history = data.get('history', [])
+            
+            if not message:
+                return JsonResponse({'success': False, 'error': 'الرسالة مطلوبة'}, status=400)
+            
+            # جلب عقارات الوكيل
+            properties = Property.objects.filter(agent=agent, is_active=True)
+            
+            # بناء سياق العقارات
+            properties_context = self._build_properties_context(properties)
+            
+            # بناء الـ prompt
+            system_prompt = self._build_system_prompt(agent, properties_context)
+            
+            # استخدام Gemini Service
+            gemini_service = GeminiService(agent=agent)
+            
+            if not gemini_service.is_available:
+                return JsonResponse({'success': False, 'error': 'خدمة AI غير متاحة'}, status=503)
+            
+            # توليد الرد مع الـ System Prompt
+            result = gemini_service.chat_with_context(
+                user_message=message,
+                properties_context=properties_context,
+                chat_history=conversation_history[-6:],  # آخر 6 رسائل
+                system_prompt=system_prompt  # إرسال الـ System Prompt
+            )
+            
+            # استخراج النص من الرد
+            response_text = result.get('content', '') if isinstance(result, dict) else str(result)
+            
+            return JsonResponse({
+                'success': True,
+                'response': response_text,
+                'agent': agent.bot_name or 'نيورا'
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'بيانات غير صالحة'}, status=400)
+        except Exception as e:
+            logger.error(f"Embed chat error: {e}")
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+    def _build_properties_context(self, properties):
+        """بناء سياق العقارات"""
+        if not properties.exists():
+            return "لا توجد عقارات متاحة حالياً"
+        
+        context = f"العقارات المتاحة ({properties.count()} عقار):\n"
+        context += "═" * 40 + "\n"
+        
+        for i, prop in enumerate(properties, 1):
+            listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
+            
+            # فترة الإيجار
+            price_suffix = ''
+            if prop.status == 'for_rent':
+                period_labels = {'yearly': '/سنوياً', 'monthly': '/شهرياً', 'daily': '/يومياً'}
+                price_suffix = period_labels.get(prop.rent_period, '/سنوياً')
+            
+            context += f"\n【عقار {i}】 🔖 الرقم المرجعي: {prop.reference_number}\n"
+            context += f"• العنوان: {prop.title}\n"
+            context += f"• النوع: {prop.get_property_type_display()} - {listing_type}\n"
+            context += f"• المدينة: {prop.city}\n"
+            context += f"• الحي: {prop.neighborhood or 'غير محدد'}\n"
+            if prop.address:
+                context += f"• العنوان التفصيلي: {prop.address}\n"
+            context += f"• السعر: {prop.price:,.0f} ريال{price_suffix}"
+            if prop.is_negotiable:
+                context += " (قابل للتفاوض)"
+            context += "\n"
+            if prop.size:
+                context += f"• المساحة: {prop.size} م²\n"
+            if prop.bedrooms:
+                context += f"• غرف النوم: {prop.bedrooms}\n"
+            if prop.bathrooms:
+                context += f"• الحمامات: {prop.bathrooms}\n"
+            if prop.living_rooms:
+                context += f"• غرف المعيشة: {prop.living_rooms}\n"
+            if prop.floor_number:
+                context += f"• الطابق: {prop.floor_number}\n"
+            if prop.furnishing:
+                context += f"• التأثيث: {prop.get_furnishing_display()}\n"
+            
+            # المميزات
+            amenities = [a.get_amenity_display() for a in prop.amenities.all()]
+            if amenities:
+                context += f"• المميزات: {', '.join(amenities)}\n"
+            
+            if prop.description:
+                context += f"• الوصف: {prop.description}\n"
+        
+        context += "═" * 40
+        return context
+    
+    def _build_system_prompt(self, agent, properties_context):
+        """
+        بناء الـ Prompt الكامل:
+        1. System Prompt ← من صفحة الأدمن
+        2. Agent Info ← معلومات المسوق
+        3. RAG Context ← العقارات المتاحة
+        """
+        from apps.agents.models import GlobalSettings
+        
+        # ═══════════════════════════════════════════════════════════
+        # 1. SYSTEM PROMPT من الأدمن
+        # ═══════════════════════════════════════════════════════════
+        try:
+            global_settings = GlobalSettings.objects.first()
+            system_prompt = global_settings.system_prompt if global_settings and global_settings.system_prompt else ''
+            default_rules = global_settings.default_rules if global_settings and global_settings.default_rules else ''
+        except:
+            system_prompt = ''
+            default_rules = ''
+        
+        # ═══════════════════════════════════════════════════════════
+        # 2. AGENT INFO - معلومات المسوق
+        # ═══════════════════════════════════════════════════════════
+        agent_info = f"""
+═══ معلومات الوكيل ═══
+• الاسم: {agent.bot_name or 'نيورا'}
+• الشركة: {agent.company_name or 'غير محدد'}
+• المدينة: {agent.city or 'غير محدد'}
+• الهاتف: {agent.phone or 'غير محدد'}
+"""
+        
+        # تعليمات المسوق الخاصة
+        if agent.bot_system_prompt:
+            agent_info += f"• تعليمات المسوق: {agent.bot_system_prompt}\n"
+        
+        # ═══════════════════════════════════════════════════════════
+        # 3. RAG CONTEXT - العقارات المتاحة
+        # ═══════════════════════════════════════════════════════════
+        rag_context = properties_context
+        
+        # ═══════════════════════════════════════════════════════════
+        # بناء الـ Prompt النهائي
+        # ═══════════════════════════════════════════════════════════
+        
+        # إذا كان هناك System Prompt في الأدمن
+        if system_prompt:
+            final_prompt = system_prompt
+            
+            # استبدال المتغيرات
+            final_prompt = final_prompt.replace('{bot_name}', agent.bot_name or 'نيورا')
+            final_prompt = final_prompt.replace('{company_name}', agent.company_name or '')
+            final_prompt = final_prompt.replace('{city}', agent.city or '')
+            
+            # إضافة الأقسام
+            final_prompt += f"\n\n{agent_info}"
+            final_prompt += f"\n{rag_context}"
+            
+            if default_rules:
+                final_prompt += f"\n\n═══ قواعد إضافية ═══\n{default_rules}"
+            
+            return final_prompt
+        
+        # ═══════════════════════════════════════════════════════════
+        # Prompt افتراضي إذا لم يكن هناك إعدادات في الأدمن
+        # ═══════════════════════════════════════════════════════════
+        return f"""أنت وكيل عقاري سعودي محترف.
+
+{agent_info}
+
+{rag_context}
+
+═══ طريقة الرد ═══
+• ردود قصيرة (3 أسطر كحد أقصى)
+• لا تكرر معلومات العقار - الكارت يعرضها
+• اطلب رقم الجوال عند الاهتمام
+
+═══ عند اهتمام العميل بعقار ═══
+⚠️ ممنوع تكرار عرض العقار أو تفاصيله!
+✅ فقط قل: "ممتاز! أعطني رقمك وأرتب لك معاينة"
+
+═══ هويتك ═══
+⚠️ ممنوع منعاً باتاً ذكر:
+- Google أو قوقل
+- Gemini أو أي نموذج AI
+- OpenAI أو ChatGPT
+- أي شركة تقنية
+
+✅ إذا سُئلت "من أنت؟" أو "ما النموذج؟":
+قل فقط: "أنا {bot_name}، مستشارك العقاري الذكي 🏠"
+"""

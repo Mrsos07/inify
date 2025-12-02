@@ -12,7 +12,7 @@
     <meta name="referrer" content="no-referrer">
     <meta name="robots" content="noindex, nofollow">
     
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
     <style>
         @font-face {
             font-family: 'BalooBhaijaan2';
@@ -994,9 +994,11 @@
                     <thead>
                         <tr>
                             <th>المستخدم</th>
+                            <th>البريد الإلكتروني</th>
                             <th>الهاتف</th>
                             <th>نوع الاشتراك</th>
                             <th>العقارات</th>
+                            <th>الحالة</th>
                             <th>تاريخ التسجيل</th>
                             <th>الإجراءات</th>
                         </tr>
@@ -1467,15 +1469,15 @@
                     <tr>
                         <td>
                             <div class="user-info">
-                                <div class="user-avatar">${user.name ? user.name.charAt(0) : '👤'}</div>
+                                <div class="user-avatar">${user.name ? user.name.charAt(0).toUpperCase() : '👤'}</div>
                                 <div>
                                     <div class="user-name">${user.name || 'بدون اسم'}</div>
-                                    <div class="user-email">${user.email}</div>
                                     <div class="user-company" style="font-size: 11px; color: var(--text-muted);">${user.company || ''}</div>
                                 </div>
                             </div>
                         </td>
-                        <td>${user.phone || '-'}</td>
+                        <td style="direction: ltr; text-align: left;">${user.email || '-'}</td>
+                        <td style="direction: ltr;">${user.phone || '-'}</td>
                         <td><span class="role-badge ${roleInfo.class}">${roleInfo.label}</span></td>
                         <td>${propsCount}</td>
                         <td>${statusBadge}</td>
@@ -2349,3 +2351,5 @@
     </script>
 </body>
 </html>
+
+

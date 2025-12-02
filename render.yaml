@@ -1,0 +1,54 @@
+# ═══════════════════════════════════════════════════════════
+# 🚀 Inify - Render Blueprint Configuration
+# ═══════════════════════════════════════════════════════════
+# This file configures automatic deployment on Render.com
+
+services:
+  # ─────────────────────────────────────────────────────────
+  # Web Service (Django Application)
+  # ─────────────────────────────────────────────────────────
+  - type: web
+    name: inify
+    runtime: docker
+    region: frankfurt  # أقرب منطقة للسعودية
+    plan: starter  # يمكن تغييره لـ standard للإنتاج
+    
+    # Health check
+    healthCheckPath: /health/
+    
+    # Environment variables
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "inify.ai,www.inify.ai,.onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://inify.ai,https://www.inify.ai,https://*.onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://inify.ai,https://www.inify.ai"
+      - key: USE_POSTGRES
+        value: "True"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: inify-db
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false  # يجب إضافته يدوياً في Render Dashboard
+      - key: ADMIN_SECRET_KEY
+        generateValue: true
+      - key: FIELD_ENCRYPTION_KEY
+        sync: false  # يجب إضافته يدوياً
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+
+  # ─────────────────────────────────────────────────────────
+  # PostgreSQL Database
+  # ─────────────────────────────────────────────────────────
+databases:
+  - name: inify-db
+    plan: starter  # يمكن تغييره لـ standard للإنتاج
+    region: frankfurt
+    databaseName: inify_production
+    user: inify_user

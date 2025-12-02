@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from .models import Agent, AgentSettings
+from .models import Agent, AgentSettings, GlobalSettings
 
 
 class AgentSettingsInline(admin.StackedInline):
@@ -15,3 +15,38 @@ class AgentAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'company_name', 'email', 'phone']
     inlines = [AgentSettingsInline]
     readonly_fields = ['id', 'created_at', 'updated_at', 'total_leads', 'total_conversations']
+
+
+@admin.register(GlobalSettings)
+class GlobalSettingsAdmin(admin.ModelAdmin):
+    """إعدادات النظام العامة"""
+    
+    fieldsets = (
+        ('🤖 نموذج الذكاء الاصطناعي', {
+            'fields': ('ai_model',),
+            'description': 'اختر النموذج المستخدم للوكيل الذكي'
+        }),
+        ('📝 System Prompt', {
+            'fields': ('system_prompt',),
+            'description': '''
+            التعليمات الأساسية للوكيل. يمكنك استخدام المتغيرات التالية:
+            • {bot_name} - اسم البوت
+            • {company_name} - اسم الشركة
+            • {city} - المدينة
+            • {properties_context} - قائمة العقارات
+            '''
+        }),
+        ('📋 القواعد العامة', {
+            'fields': ('default_rules',),
+        }),
+        ('💬 أسلوب الرد', {
+            'fields': ('response_style', 'dialect'),
+        }),
+    )
+    
+    def has_add_permission(self, request):
+        # السماح بإضافة سجل واحد فقط
+        return not GlobalSettings.objects.exists()
+    
+    def has_delete_permission(self, request, obj=None):
+        return False

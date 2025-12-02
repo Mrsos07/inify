@@ -6,7 +6,7 @@
     <title>إدارة العقارات - Inify</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
     
     <style>
         /* Chillax Font - English */
@@ -2298,7 +2298,10 @@
                         ${imageCount > 0 ? `<button class="view-gallery-btn" onclick="openGallery(${index})">عرض الصور</button>` : ''}
                     </div>
                     <div class="property-content">
-                        <h3 class="property-title">${property.title}</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <h3 class="property-title" style="margin: 0;">${property.title}</h3>
+                            ${property.reference_number ? `<span style="font-size: 11px; background: rgba(107,184,201,0.2); color: var(--cyan); padding: 2px 8px; border-radius: 4px; font-family: monospace;">🔖 ${property.reference_number}</span>` : ''}
+                        </div>
                         <div class="property-location">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
@@ -2310,6 +2313,10 @@
                             ${property.bedrooms ? `<div class="feature-item"><span>🛏️</span> ${property.bedrooms} غرف</div>` : ''}
                             ${property.bathrooms ? `<div class="feature-item"><span>🚿</span> ${property.bathrooms} حمام</div>` : ''}
                             ${property.area ? `<div class="feature-item"><span>📐</span> ${property.area} م²</div>` : ''}
+                        </div>
+                        <div class="property-stats" style="display: flex; gap: 15px; margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+                            <span title="عدد المشاهدات">👁️ ${property.views_count || 0}</span>
+                            <span title="عدد المهتمين" style="color: ${property.interested_count > 0 ? 'var(--success)' : 'inherit'};">❤️ ${property.interested_count || 0} مهتم</span>
                         </div>
                         <div class="property-footer">
                             <div class="property-price">
@@ -2642,3 +2649,5 @@
     </script>
 </body>
 </html>
+
+

@@ -14,9 +14,9 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security settings
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-secret-key-change-in-production')
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', ')dlq-w668w=ob91id_hng)*cd1%z)@$u1dng^c+v2zj!=z&y_+xk7m9p2q')
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'inify.ai,www.inify.ai,.onrender.com,localhost,127.0.0.1').split(',')
 
 # 🔒 Security Headers (Production)
 if not DEBUG:
@@ -36,13 +36,17 @@ ADMIN_SECRET_KEY = os.getenv('ADMIN_SECRET_KEY', 'change-this-in-production')
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', '')
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 
+# Encryption Key for sensitive data (should be in .env)
+FIELD_ENCRYPTION_KEY = os.getenv('FIELD_ENCRYPTION_KEY', '')
+
 # CSRF Settings
-CSRF_TRUSTED_ORIGINS = [
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', ','.join([
     'http://localhost:8000',
     'http://127.0.0.1:8000',
-    'http://localhost:*',
-    'http://127.0.0.1:*',
-]
+    'https://inify.ai',
+    'https://www.inify.ai',
+    'https://*.onrender.com',
+])).split(',')
 CSRF_COOKIE_SAMESITE = 'Lax'
 
 # Application definition
@@ -57,6 +61,7 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'corsheaders',
+    'encrypted_model_fields',
     
     # Local apps
     'apps.core',
@@ -99,14 +104,28 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database configuration
-# Use SQLite for development, PostgreSQL for production
+# Supports: DATABASE_URL (Render), individual vars, or SQLite
+import dj_database_url
+
+DATABASE_URL = os.getenv('DATABASE_URL')
 USE_POSTGRES = os.getenv('USE_POSTGRES', 'False').lower() == 'true'
 
-if USE_POSTGRES:
+if DATABASE_URL:
+    # Render.com or any service using DATABASE_URL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=not DEBUG,
+        )
+    }
+elif USE_POSTGRES:
+    # Manual PostgreSQL configuration
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME', 'newra_estate'),
+            'NAME': os.getenv('DB_NAME', 'inify_production'),
             'USER': os.getenv('DB_USER', 'postgres'),
             'PASSWORD': os.getenv('DB_PASSWORD', ''),
             'HOST': os.getenv('DB_HOST', 'localhost'),
@@ -114,6 +133,7 @@ if USE_POSTGRES:
         }
     }
 else:
+    # SQLite for local development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -170,8 +190,9 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,https://inify.ai,https://www.inify.ai').split(',')
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # فقط في التطوير
 
 # OpenAI / AI Settings
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')

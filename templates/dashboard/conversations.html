@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>المحادثات - Inify</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
     <style>
         @font-face {
             font-family: 'BalooBhaijaan2';
@@ -634,34 +634,48 @@
             return name.split(' ').map(n => n[0]).join('').substring(0, 2);
         }
 
+        // Conversations data from Django
+        const conversationsData = [
+            {% for conv in conversations %}
+            {
+                id: '{{ conv.id }}',
+                visitor_name: '{{ conv.visitor_name|default:"عميل جديد" }}',
+                visitor_phone: '{{ conv.visitor_phone|default:"" }}',
+                last_message: '{{ conv.last_message|default:"محادثة جديدة"|escapejs }}',
+                last_message_at: '{{ conv.last_message_at|date:"c" }}',
+                source: '{{ conv.source|default:"chat" }}',
+                status: '{{ conv.status|default:"new" }}'
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
         // Render conversations from Django data
         function renderConversations() {
             const listEl = document.getElementById('conversationsList');
             const emptyState = document.getElementById('emptyConversations');
             
-            {% if conversations %}
-            emptyState.style.display = 'none';
-            listEl.innerHTML = `
-                {% for conv in conversations %}
-                <div class="conversation-item" onclick="window.location.href='/dashboard/leads/'">
-                    <div class="conversation-avatar">${getInitials('{{ conv.visitor_name|default:"عميل" }}')}</div>
-                    <div class="conversation-info">
-                        <div class="conversation-header">
-                            <span class="conversation-name">{{ conv.visitor_name|default:"عميل جديد" }}</span>
-                            <span class="conversation-time">${timeAgo('{{ conv.last_message_at|date:"c" }}')}</span>
+            if (conversationsData.length > 0) {
+                emptyState.style.display = 'none';
+                listEl.innerHTML = conversationsData.map(conv => `
+                    <div class="conversation-item" onclick="window.location.href='/dashboard/leads/'">
+                        <div class="conversation-avatar">${getInitials(conv.visitor_name)}</div>
+                        <div class="conversation-info">
+                            <div class="conversation-header">
+                                <span class="conversation-name">${conv.visitor_name}</span>
+                                <span class="conversation-time">${timeAgo(conv.last_message_at)}</span>
+                            </div>
+                            <div class="conversation-preview">${conv.last_message}</div>
+                            ${conv.visitor_phone ? `<span class="conversation-badge">📞 ${conv.visitor_phone}</span>` : ''}
+                            <span class="conversation-badge" style="background: ${conv.source === 'lead' ? 'rgba(34, 197, 94, 0.2); color: #22c55e;' : 'rgba(107, 184, 201, 0.2); color: var(--cyan);'}">
+                                ${conv.source === 'lead' ? '👤 عميل' : '💬 شات'}
+                            </span>
                         </div>
-                        <div class="conversation-preview">{{ conv.last_message|default:"محادثة جديدة"|truncatechars:50 }}</div>
-                        {% if conv.visitor_phone %}
-                        <span class="conversation-badge">📞 {{ conv.visitor_phone }}</span>
-                        {% endif %}
                     </div>
-                </div>
-                {% endfor %}
-            `;
-            {% else %}
-            listEl.innerHTML = '';
-            emptyState.style.display = 'block';
-            {% endif %}
+                `).join('');
+            } else {
+                listEl.innerHTML = '';
+                emptyState.style.display = 'block';
+            }
         }
 
         // Preview chat functionality
@@ -699,3 +713,5 @@
     </script>
 </body>
 </html>
+
+

@@ -1,0 +1,61 @@
+# ═══════════════════════════════════════════════════════════
+# 🐳 Inify - Docker Ignore File
+# ═══════════════════════════════════════════════════════════
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+.env.local
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Local files
+*.log
+*.sqlite3
+db.sqlite3
+.env
+.env.local
+.env.development
+
+# Static/Media (will be collected in container)
+staticfiles/
+media/
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Scripts (not needed in container)
+scripts/
+
+# Misc
+.DS_Store
+Thumbs.db
+*.bak
+2x/

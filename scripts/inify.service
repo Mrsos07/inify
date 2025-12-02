@@ -1,0 +1,49 @@
+# ═══════════════════════════════════════════════════════════
+# 🚀 Inify - Systemd Service File
+# ═══════════════════════════════════════════════════════════
+# Copy to: /etc/systemd/system/inify.service
+# Enable: sudo systemctl enable inify
+# Start: sudo systemctl start inify
+
+[Unit]
+Description=Inify - AI Real Estate Assistant
+Documentation=https://inify.sa
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+RuntimeDirectory=inify
+WorkingDirectory=/var/www/inify
+
+# Environment
+Environment="DJANGO_SETTINGS_MODULE=config.settings"
+EnvironmentFile=/var/www/inify/.env
+
+# Gunicorn command
+ExecStart=/var/www/inify/venv/bin/gunicorn \
+    --config /var/www/inify/gunicorn.conf.py \
+    config.wsgi:application
+
+# Restart policy
+Restart=always
+RestartSec=3
+TimeoutStartSec=30
+TimeoutStopSec=30
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/www/inify/logs /var/www/inify/media
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=inify
+
+[Install]
+WantedBy=multi-user.target

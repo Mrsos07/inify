@@ -8,6 +8,7 @@ from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from encrypted_model_fields.fields import EncryptedCharField, EncryptedEmailField
 
 
 class Agent(models.Model):
@@ -21,12 +22,12 @@ class Agent(models.Model):
         verbose_name='المستخدم'
     )
     
-    # المعلومات الأساسية
+    # المعلومات الأساسية (مشفرة)
     company_name = models.CharField(max_length=200, blank=True, verbose_name='اسم الشركة')
-    license_number = models.CharField(max_length=50, blank=True, verbose_name='رقم الترخيص')
-    phone = models.CharField(max_length=20, verbose_name='رقم الجوال')
-    whatsapp = models.CharField(max_length=20, blank=True, verbose_name='واتساب')
-    email = models.EmailField(verbose_name='البريد الإلكتروني')
+    license_number = EncryptedCharField(max_length=50, blank=True, verbose_name='رقم الترخيص')
+    phone = EncryptedCharField(max_length=100, verbose_name='رقم الجوال')
+    whatsapp = EncryptedCharField(max_length=100, blank=True, verbose_name='واتساب')
+    email = EncryptedEmailField(verbose_name='البريد الإلكتروني')
     
     # الموقع
     city = models.CharField(max_length=100, verbose_name='المدينة')

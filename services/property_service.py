@@ -184,6 +184,8 @@ class PropertyService:
             'status_code': prop.status,
             'price': float(prop.price),
             'price_display': prop.get_price_display(),
+            'rent_period': prop.rent_period if prop.status == 'for_rent' else None,
+            'rent_period_display': prop.get_rent_period_display() if prop.status == 'for_rent' else None,
             'is_negotiable': prop.is_negotiable,
             'city': prop.city,
             'area': prop.area,

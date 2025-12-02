@@ -6,7 +6,7 @@
     <title>لوحة التحكم - Inify</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
     
     <link rel="stylesheet" href="/static/css/dashboard.css">
 </head>
@@ -143,6 +143,13 @@
                 </div>
                 <div class="stat-value" id="viewsCount">{{ views_count|default:0 }}</div>
                 <div class="stat-label">المشاهدات</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon">❤️</div>
+                </div>
+                <div class="stat-value" id="interestedCount">{{ interested_count|default:0 }}</div>
+                <div class="stat-label">إجمالي المهتمين</div>
             </div>
         </div>
 
@@ -311,3 +318,5 @@
     </script>
 </body>
 </html>
+
+

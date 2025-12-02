@@ -39,6 +39,13 @@ class FurnishingStatus(models.TextChoices):
     UNFURNISHED = 'unfurnished', 'غير مفروش'
 
 
+class RentPeriod(models.TextChoices):
+    """فترة الإيجار"""
+    YEARLY = 'yearly', 'سنوي'
+    MONTHLY = 'monthly', 'شهري'
+    DAILY = 'daily', 'يومي'
+
+
 class Property(models.Model):
     """نموذج العقار الرئيسي"""
     
@@ -53,6 +60,13 @@ class Property(models.Model):
     )
     
     # المعلومات الأساسية
+    reference_number = models.CharField(
+        max_length=20, 
+        unique=True, 
+        blank=True,
+        verbose_name='الرقم المرجعي',
+        help_text='رقم فريد للعقار يستخدمه الوكيل والعميل للتعريف'
+    )
     title = models.CharField(max_length=200, verbose_name='عنوان العقار')
     description = models.TextField(blank=True, verbose_name='الوصف')
     property_type = models.CharField(
@@ -93,6 +107,13 @@ class Property(models.Model):
         max_digits=12, decimal_places=2, null=True, blank=True,
         verbose_name='السعر لكل متر مربع'
     )
+    rent_period = models.CharField(
+        max_length=20,
+        choices=RentPeriod.choices,
+        default=RentPeriod.YEARLY,
+        verbose_name='فترة الإيجار',
+        help_text='سنوي/شهري/يومي - يُستخدم فقط للعقارات المعروضة للإيجار'
+    )
     is_negotiable = models.BooleanField(default=True, verbose_name='قابل للتفاوض')
     
     # المساحة والتفاصيل
@@ -128,6 +149,7 @@ class Property(models.Model):
     is_featured = models.BooleanField(default=False, verbose_name='مميز')
     is_active = models.BooleanField(default=True, verbose_name='نشط')
     views_count = models.PositiveIntegerField(default=0, verbose_name='عدد المشاهدات')
+    interested_count = models.PositiveIntegerField(default=0, verbose_name='عدد المهتمين')
     
     # للبحث المتجهي (Vector Search)
     embedding = models.JSONField(null=True, blank=True, verbose_name='التضمين المتجهي')
@@ -144,12 +166,59 @@ class Property(models.Model):
         ]
     
     def __str__(self):
-        return f"{self.title} - {self.city}"
+        return f"[{self.reference_number}] {self.title} - {self.city}" if self.reference_number else f"{self.title} - {self.city}"
+    
+    def save(self, *args, **kwargs):
+        # توليد رقم مرجعي فريد إذا لم يكن موجوداً
+        if not self.reference_number:
+            self.reference_number = self._generate_reference_number()
+        super().save(*args, **kwargs)
+    
+    def _generate_reference_number(self):
+        """توليد رقم مرجعي فريد للعقار"""
+        import random
+        import string
+        
+        # الحصول على أول حرفين من المدينة
+        city_code = ''.join([c for c in self.city[:2].upper() if c.isalpha()]) or 'XX'
+        
+        # نوع العقار
+        type_codes = {
+            'apartment': 'SH',  # شقة
+            'villa': 'VL',      # فيلا
+            'land': 'AR',       # أرض
+            'building': 'BN',   # عمارة
+            'office': 'MK',     # مكتب
+            'shop': 'MH',       # محل
+            'warehouse': 'MS',  # مستودع
+            'farm': 'MZ',       # مزرعة
+        }
+        type_code = type_codes.get(self.property_type, 'PR')
+        
+        # رقم عشوائي من 4 أرقام
+        random_num = ''.join(random.choices(string.digits, k=4))
+        
+        # الرقم المرجعي: المدينة-النوع-الرقم
+        ref = f"{city_code}-{type_code}-{random_num}"
+        
+        # التأكد من عدم التكرار
+        from apps.properties.models import Property
+        while Property.objects.filter(reference_number=ref).exists():
+            random_num = ''.join(random.choices(string.digits, k=4))
+            ref = f"{city_code}-{type_code}-{random_num}"
+        
+        return ref
     
     def get_price_display(self):
         """عرض السعر بتنسيق مناسب"""
         if self.status == PropertyStatus.FOR_RENT:
-            return f"{self.price:,.0f} ريال/شهرياً"
+            period_labels = {
+                'yearly': 'سنوياً',
+                'monthly': 'شهرياً',
+                'daily': 'يومياً'
+            }
+            period = period_labels.get(self.rent_period, 'سنوياً')
+            return f"{self.price:,.0f} ريال/{period}"
         return f"{self.price:,.0f} ريال"
     
     def get_summary(self):
