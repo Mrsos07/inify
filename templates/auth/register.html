@@ -364,7 +364,13 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    window.location.href = '/dashboard/';
+                    if (data.require_verification) {
+                        // Show verification message
+                        alert(data.message || 'تم إنشاء الحساب! تحقق من بريدك الإلكتروني لتفعيل الحساب.');
+                        window.location.href = '/auth/login/';
+                    } else {
+                        window.location.href = '/dashboard/';
+                    }
                 } else {
                     alert(data.error || 'حدث خطأ في التسجيل');
                 }
