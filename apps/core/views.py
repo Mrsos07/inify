@@ -223,9 +223,17 @@ def register_view(request):
             if not email or not password:
                 return JsonResponse({'success': False, 'error': 'البريد الإلكتروني وكلمة المرور مطلوبان'})
             
+            if not phone:
+                return JsonResponse({'success': False, 'error': 'رقم الجوال مطلوب'})
+            
             # Validate email not exists
             if User.objects.filter(email=email).exists():
                 return JsonResponse({'success': False, 'error': 'البريد الإلكتروني مستخدم بالفعل'})
+            
+            # Validate phone not exists
+            from apps.agents.models import Agent
+            if Agent.objects.filter(phone=phone).exists():
+                return JsonResponse({'success': False, 'error': 'رقم الجوال مستخدم بالفعل'})
             
             # Create username from email
             username = email.split('@')[0]
