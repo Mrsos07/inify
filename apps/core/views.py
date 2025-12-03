@@ -178,6 +178,23 @@ def login_view(request):
                 pass
         
         if user is not None:
+            # Check if email is verified
+            from apps.agents.models import Agent
+            try:
+                agent = Agent.objects.get(user=user)
+                if not agent.is_email_verified:
+                    # Resend verification email
+                    from services.email_service import email_service
+                    if email_service.is_available:
+                        email_service.send_verification_email(user.email, user.first_name or user.username)
+                    return JsonResponse({
+                        'success': False, 
+                        'error': 'يرجى تفعيل حسابك أولاً. تم إرسال رابط التفعيل إلى بريدك الإلكتروني.',
+                        'require_verification': True
+                    })
+            except Agent.DoesNotExist:
+                pass  # Admin users don't need verification
+            
             login(request, user)
             return JsonResponse({'success': True})
         else:

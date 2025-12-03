@@ -27,7 +27,7 @@ class EmailService:
     def __init__(self):
         self.api_key = os.getenv('RESEND_API_KEY', '')
         self.from_email = os.getenv('FROM_EMAIL', 'Inify <noreply@inify.ai>')
-        self.site_url = os.getenv('SITE_URL', 'https://realestate.inify.ai')
+        self.site_url = os.getenv('SITE_URL', 'https://inify.ai')
         
         if self.api_key and RESEND_AVAILABLE:
             resend.api_key = self.api_key
