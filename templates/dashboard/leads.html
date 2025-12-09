@@ -361,6 +361,11 @@
             color: #c084fc;
         }
 
+        .status-badge.viewing_scheduled {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
         .interest-tag {
             font-size: 13px;
             color: var(--text-muted);
@@ -405,6 +410,149 @@
             border-color: var(--danger);
             background: rgba(239, 68, 68, 0.1);
             color: var(--danger);
+        }
+
+        .action-btn.viewing-btn:hover {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        /* Viewing Modal */
+        .viewing-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 22, 40, 0.95);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .viewing-modal-overlay.show {
+            display: flex;
+        }
+        .viewing-modal {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid var(--border);
+        }
+        .viewing-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .viewing-modal-header h3 {
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .viewing-modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .viewing-modal-close:hover {
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+        .viewing-form-group {
+            margin-bottom: 20px;
+        }
+        .viewing-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--pearl);
+        }
+        .viewing-form-group input,
+        .viewing-form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--pearl);
+            font-family: inherit;
+            font-size: 15px;
+        }
+        .viewing-form-group input:focus,
+        .viewing-form-group select:focus {
+            outline: none;
+            border-color: var(--cyan);
+        }
+        .viewing-submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .viewing-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+        }
+        .viewing-appointments-list {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        .viewing-appointment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(10, 22, 40, 0.4);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .viewing-appointment-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .viewing-appointment-property {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .viewing-appointment-datetime {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .viewing-status {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .viewing-status.pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        .viewing-status.confirmed {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
         }
 
         .empty-state {
@@ -653,6 +801,11 @@
                 <div class="stat-value" id="convertedCount">0</div>
                 <div class="stat-label">تم التحويل</div>
             </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <div class="stat-icon">📅</div>
+                <div class="stat-value" id="appointmentsCount">0</div>
+                <div class="stat-label">مواعيد المعاينة</div>
+            </div>
         </div>
 
         <div class="clients-section">
@@ -719,7 +872,7 @@
                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
                                   document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
                 
-                const response = await fetch('/api/v1/leads/', {
+                const response = await fetch('/api/v1/leads/my/', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -733,7 +886,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     console.log('📦 API Data:', data);
-                    clients = data.results || data || [];
+                    clients = data.leads || data.results || data || [];
                     console.log('✅ Clients loaded from database:', clients.length);
                     updateStats();
                     renderClients();
@@ -759,17 +912,34 @@
 
         // Update stats
         function updateStats() {
+            // حساب عدد المعاينات
+            let totalAppointments = 0;
+            clients.forEach(c => {
+                if (c.viewing_appointments && c.viewing_appointments.length > 0) {
+                    totalAppointments += c.viewing_appointments.length;
+                }
+            });
+            
             const counts = {
                 new: clients.filter(c => c.status === 'new').length,
                 interested: clients.filter(c => c.status === 'interested').length,
                 contacted: clients.filter(c => c.status === 'contacted').length,
-                converted: clients.filter(c => c.status === 'converted').length
+                converted: clients.filter(c => c.status === 'converted').length,
+                viewing_scheduled: clients.filter(c => c.status === 'viewing_scheduled').length,
+                appointments: totalAppointments
             };
             
             document.getElementById('newCount').textContent = counts.new;
             document.getElementById('interestedCount').textContent = counts.interested;
             document.getElementById('contactedCount').textContent = counts.contacted;
             document.getElementById('convertedCount').textContent = counts.converted;
+            
+            // تحديث عدد المعاينات إذا كان العنصر موجود
+            const appointmentsEl = document.getElementById('appointmentsCount');
+            if (appointmentsEl) appointmentsEl.textContent = counts.appointments;
+            
+            const viewingScheduledEl = document.getElementById('viewingScheduledCount');
+            if (viewingScheduledEl) viewingScheduledEl.textContent = counts.viewing_scheduled;
         }
 
         // Get status label
@@ -778,7 +948,8 @@
                 'new': 'جديد',
                 'interested': 'مهتم',
                 'contacted': 'تم التواصل',
-                'converted': 'تم التحويل'
+                'converted': 'تم التحويل',
+                'viewing_scheduled': '📅 موعد معاينة'
             };
             return labels[status] || status;
         }
@@ -966,7 +1137,17 @@
                         <span class="status-badge ${client.status}">${getStatusLabel(client.status)}</span>
                     </div>
                     <div class="interest-tag">${getInterestDisplay(client)}</div>
-                    <div style="font-size: 13px; color: var(--text-muted);">${formatDate(client.created_at || client.createdAt)}</div>
+                    <div style="font-size: 13px; color: var(--text-muted);">
+                        ${formatDate(client.created_at || client.createdAt)}
+                        ${client.viewing_appointments && client.viewing_appointments.length > 0 ? `
+                            <div style="margin-top: 4px; color: #f59e0b; font-size: 12px;">
+                                📅 ${client.viewing_appointments[0].scheduled_date || client.viewing_appointments[0].date || ''} - ${(client.viewing_appointments[0].scheduled_time || client.viewing_appointments[0].time || '').substring(0,5)}
+                                <span style="color: ${client.viewing_appointments[0].status === 'confirmed' ? '#22c55e' : '#f59e0b'};">
+                                    (${client.viewing_appointments[0].status === 'confirmed' ? 'مؤكد' : client.viewing_appointments[0].status === 'pending' ? 'قيد الانتظار' : client.viewing_appointments[0].status_display || client.viewing_appointments[0].status})
+                                </span>
+                            </div>
+                        ` : ''}
+                    </div>
                     <div class="client-actions">
                         ${client.phone ? `
                         <button class="action-btn whatsapp" onclick="openWhatsApp('${client.phone}')" title="واتساب">
@@ -975,6 +1156,14 @@
                             </svg>
                         </button>
                         ` : ''}
+                        <button class="action-btn viewing-btn" onclick="openViewingModal('${client.id}')" title="حجز معاينة" style="color: #f59e0b;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                        </button>
                         <button class="action-btn" onclick="viewClient('${client.id}')" title="عرض">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -1041,7 +1230,7 @@
             
             // Build interested properties HTML
             let propertiesHtml = '<p style="color: var(--text-muted);">لا توجد عقارات محددة</p>';
-            const interestedProps = client.interested_properties_list || client.interestedProperties || [];
+            const interestedProps = client.interested_properties || client.interested_properties_list || client.interestedProperties || [];
             if (interestedProps.length > 0) {
                 propertiesHtml = interestedProps.map(p => 
                     `<div class="property-card-mini" onclick="viewPropertyById('${p.id}')" style="display: flex; align-items: center; gap: 12px; padding: 12px; margin: 8px 0; background: rgba(107, 184, 201, 0.1); border-radius: 10px; cursor: pointer; transition: all 0.3s;">
@@ -1049,11 +1238,34 @@
                         <div style="flex: 1;">
                             <div style="font-weight: 600; color: var(--text-light); margin-bottom: 4px;">${p.title}</div>
                             ${p.price ? `<div style="color: var(--cyan); font-weight: bold;">${parseInt(p.price).toLocaleString('ar-SA')} ريال</div>` : ''}
-                            ${p.city || p.cityLabel ? `<div style="font-size: 12px; color: var(--text-muted);">📍 ${p.cityLabel || p.city}</div>` : ''}
+                            ${p.city || p.cityLabel ? `<div style="font-size: 12px; color: var(--text-muted);">📍 ${p.cityLabel || p.city}${p.neighborhood ? ' - ' + p.neighborhood : ''}</div>` : ''}
                         </div>
                         <div style="color: var(--cyan);">←</div>
                     </div>`
                 ).join('');
+            }
+            
+            // Build viewing appointments HTML
+            let appointmentsHtml = '';
+            const appointments = client.viewing_appointments || [];
+            if (appointments.length > 0) {
+                appointmentsHtml = `
+                    <div class="detail-group">
+                        <div class="detail-label">📅 مواعيد المعاينة</div>
+                        <div class="detail-value">
+                            ${appointments.map(appt => `
+                                <div style="padding: 12px; margin: 8px 0; background: rgba(34, 197, 94, 0.1); border-radius: 10px; border-right: 3px solid #22c55e;">
+                                    <div style="font-weight: 600; color: var(--text-light); margin-bottom: 8px;">🏠 ${appt.property_title}</div>
+                                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                                        <span style="color: var(--text-muted);">📅 ${appt.scheduled_date}</span>
+                                        <span style="color: var(--text-muted);">⏰ ${appt.scheduled_time}</span>
+                                        <span style="background: ${appt.status === 'confirmed' ? 'rgba(34, 197, 94, 0.2)' : appt.status === 'pending' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(107, 184, 201, 0.2)'}; color: ${appt.status === 'confirmed' ? '#22c55e' : appt.status === 'pending' ? '#fbbf24' : 'var(--cyan)'}; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${appt.status_display || appt.status}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
             }
             
             // Build requirements HTML
@@ -1093,6 +1305,7 @@
                     <div class="detail-label">العقارات المهتم بها</div>
                     <div class="detail-value">${propertiesHtml}</div>
                 </div>
+                ${appointmentsHtml}
                 <div class="detail-group">
                     <div class="detail-label">الحالة</div>
                     <div class="detail-value"><span class="status-badge ${client.status}">${getStatusLabel(client.status)}</span></div>
@@ -1222,9 +1435,242 @@
             if (e.target.id === 'clientModal') closeModal();
         });
 
+        // ============ Viewing Appointment Functions ============
+        let currentViewingClientId = null;
+        let availableProperties = [];
+
+        async function loadProperties() {
+            try {
+                const response = await fetch('/api/v1/properties/my/');
+                const data = await response.json();
+                if (data.success) {
+                    availableProperties = data.properties;
+                }
+            } catch (error) {
+                console.error('Error loading properties:', error);
+            }
+        }
+        loadProperties();
+
+        function openViewingModal(clientId) {
+            currentViewingClientId = clientId;
+            const client = clients.find(c => String(c.id) === String(clientId));
+            
+            document.getElementById('viewingClientName').textContent = client?.name || 'العميل';
+            
+            // Populate property select
+            const propertySelect = document.getElementById('viewingPropertySelect');
+            propertySelect.innerHTML = '<option value="">اختر العقار...</option>';
+            
+            // Add interested properties first
+            const interestedProps = client?.interested_properties_list || [];
+            if (interestedProps.length > 0) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = '⭐ العقارات المهتم بها';
+                interestedProps.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.id;
+                    option.textContent = p.title;
+                    option.selected = true;
+                    optgroup.appendChild(option);
+                });
+                propertySelect.appendChild(optgroup);
+            }
+            
+            // Add all properties
+            if (availableProperties.length > 0) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = '📋 جميع العقارات';
+                availableProperties.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.id;
+                    option.textContent = p.title;
+                    optgroup.appendChild(option);
+                });
+                propertySelect.appendChild(optgroup);
+            }
+            
+            // Set default date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('viewingDate').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('viewingTime').value = '10:00';
+            
+            // Load existing appointments
+            loadClientAppointments(clientId);
+            
+            document.getElementById('viewingModal').classList.add('show');
+        }
+
+        function closeViewingModal() {
+            document.getElementById('viewingModal').classList.remove('show');
+            currentViewingClientId = null;
+        }
+
+        async function loadClientAppointments(clientId) {
+            const listEl = document.getElementById('clientAppointmentsList');
+            listEl.innerHTML = '<p style="color: var(--text-muted); text-align: center;">جاري التحميل...</p>';
+            
+            try {
+                // البحث عن العميل في البيانات المحملة مسبقاً
+                const client = clients.find(c => String(c.id) === String(clientId));
+                
+                if (!client) {
+                    listEl.innerHTML = '<p style="color: var(--text-muted); text-align: center; font-size: 13px;">لا توجد بيانات</p>';
+                    return;
+                }
+                
+                const appointments = client.viewing_appointments || [];
+                
+                if (appointments.length === 0) {
+                    listEl.innerHTML = '<p style="color: var(--text-muted); text-align: center; font-size: 13px;">لا توجد مواعيد سابقة</p>';
+                    return;
+                }
+                
+                const statusLabels = {
+                    'pending': 'قيد الانتظار',
+                    'confirmed': 'مؤكد',
+                    'completed': 'تم',
+                    'cancelled': 'ملغي',
+                    'no_show': 'لم يحضر',
+                    'rescheduled': 'تم إعادة الجدولة'
+                };
+                
+                listEl.innerHTML = appointments.map(appt => `
+                    <div class="viewing-appointment-item">
+                        <div class="viewing-appointment-info">
+                            <div class="viewing-appointment-property">${appt.property_title || 'عقار'}</div>
+                            <div class="viewing-appointment-datetime">📅 ${appt.scheduled_date || appt.date || ''} - 🕐 ${(appt.scheduled_time || appt.time || '').substring(0,5)}</div>
+                        </div>
+                        <span class="viewing-status ${appt.status}">${statusLabels[appt.status] || appt.status}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                listEl.innerHTML = '<p style="color: var(--text-muted); text-align: center;">خطأ في التحميل</p>';
+            }
+        }
+
+        async function submitViewing() {
+            const propertyId = document.getElementById('viewingPropertySelect').value;
+            const date = document.getElementById('viewingDate').value;
+            const time = document.getElementById('viewingTime').value;
+            const notes = document.getElementById('viewingNotes').value;
+            
+            if (!propertyId) {
+                alert('يرجى اختيار العقار');
+                return;
+            }
+            
+            if (!date || !time) {
+                alert('يرجى تحديد التاريخ والوقت');
+                return;
+            }
+            
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                                  document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
+                
+                const response = await fetch('/api/v1/leads/appointments/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        lead: currentViewingClientId,
+                        property: propertyId,
+                        scheduled_date: date,
+                        scheduled_time: time,
+                        notes: notes,
+                        booked_by: 'agent'
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('✅ تم حجز موعد المعاينة بنجاح');
+                    
+                    // Update client status
+                    const client = clients.find(c => String(c.id) === String(currentViewingClientId));
+                    if (client) {
+                        client.status = 'viewing_scheduled';
+                    }
+                    
+                    loadClientAppointments(currentViewingClientId);
+                    renderClients();
+                    updateStats();
+                    
+                    // Clear form
+                    document.getElementById('viewingNotes').value = '';
+                } else {
+                    const data = await response.json();
+                    alert('خطأ: ' + (data.scheduled_time || data.error || 'فشل في حجز الموعد'));
+                }
+            } catch (error) {
+                console.error('Error booking viewing:', error);
+                alert('حدث خطأ أثناء حجز الموعد');
+            }
+        }
+
         // Initial render
         renderClients();
         updateStats();
+    </script>
+
+    <!-- Viewing Modal -->
+    <div class="viewing-modal-overlay" id="viewingModal">
+        <div class="viewing-modal">
+            <div class="viewing-modal-header">
+                <h3>📅 حجز موعد معاينة - <span id="viewingClientName"></span></h3>
+                <button class="viewing-modal-close" onclick="closeViewingModal()">×</button>
+            </div>
+            
+            <div class="viewing-form-group">
+                <label>العقار</label>
+                <select id="viewingPropertySelect">
+                    <option value="">اختر العقار...</option>
+                </select>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="viewing-form-group">
+                    <label>التاريخ</label>
+                    <input type="date" id="viewingDate">
+                </div>
+                <div class="viewing-form-group">
+                    <label>الوقت</label>
+                    <input type="time" id="viewingTime" value="10:00">
+                </div>
+            </div>
+            
+            <div class="viewing-form-group">
+                <label>ملاحظات (اختياري)</label>
+                <input type="text" id="viewingNotes" placeholder="أي ملاحظات إضافية...">
+            </div>
+            
+            <button class="viewing-submit-btn" onclick="submitViewing()">
+                📅 حجز الموعد
+            </button>
+            
+            <div class="viewing-appointments-list">
+                <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--text-muted);">المواعيد السابقة</h4>
+                <div id="clientAppointmentsList">
+                    <!-- Appointments will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Close viewing modal on outside click
+        document.addEventListener('DOMContentLoaded', function() {
+            const viewingModal = document.getElementById('viewingModal');
+            if (viewingModal) {
+                viewingModal.addEventListener('click', (e) => {
+                    if (e.target.id === 'viewingModal') closeViewingModal();
+                });
+            }
+        });
     </script>
 </body>
 </html>

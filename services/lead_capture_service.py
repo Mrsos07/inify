@@ -25,6 +25,26 @@ class LeadCaptureService:
             'اشتري', 'استأجر', 'أستأجر', 'اخذه', 'آخذه', 'interested', 'yes', 'ok'
         ]
         
+        # كلمات تدل على طلب معاينة
+        self.viewing_keywords = [
+            'معاينة', 'أشوف', 'اشوف', 'زيارة', 'أزور', 'ازور', 'موعد', 'أحجز', 'احجز',
+            'أبي أشوفه', 'ابي اشوفه', 'متى أقدر', 'متى اقدر', 'وقت مناسب', 'أي وقت',
+            'viewing', 'visit', 'appointment', 'schedule'
+        ]
+        
+        # أنماط استخراج التاريخ والوقت
+        self.date_patterns = [
+            r'(\d{1,2})[/-](\d{1,2})',  # DD/MM or DD-MM
+            r'يوم\s+(السبت|الأحد|الاثنين|الثلاثاء|الأربعاء|الخميس|الجمعة)',
+            r'(غدا|غداً|بكرة|بكره|اليوم|بعد غد|بعد بكرة)',
+        ]
+        
+        self.time_patterns = [
+            r'الساعة\s*(\d{1,2})',
+            r'(\d{1,2})\s*(صباحاً|صباحا|مساءً|مساء|ص|م)',
+            r'(\d{1,2}):(\d{2})',
+        ]
+        
         # كلمات تدل على رفض أو عدم اهتمام
         self.rejection_keywords = [
             'لا', 'مو', 'ما', 'غالي', 'بعيد', 'صغير', 'كبير', 'مش', 'مب',
@@ -192,16 +212,24 @@ class LeadCaptureService:
 - أو: "ممتاز اختيارك! أحتاج رقم جوالك حتى يتواصل معك المسوق العقاري"
 - لا تكن ملحاً، اسأل مرة واحدة فقط
 
-### 4. تأكيد البيانات:
+### 4. حجز موعد المعاينة:
+عندما يعطيك العميل رقمه ويريد معاينة:
+- اسأله عن الوقت المناسب: "متى يناسبك موعد المعاينة؟ (غداً، بعد غد، يوم السبت...)"
+- إذا حدد وقت، أكد له: "تم حجز موعد المعاينة يوم [التاريخ] الساعة [الوقت] ✅"
+- إذا لم يحدد، اقترح: "ما رأيك غداً الساعة 10 صباحاً؟"
+
+### 5. تأكيد البيانات:
 عندما يعطيك العميل رقمه:
 - أكد الرقم: "تمام، رقمك 05XXXXXXXX صحيح؟"
 - أخبره: "سيتواصل معك المسوق قريباً إن شاء الله"
+- إذا طلب معاينة: "تم تسجيل موعد المعاينة وسيتم التأكيد معك 📅"
 
-### 5. قواعد مهمة:
+### 6. قواعد مهمة:
 - لا تطلب رقم الجوال إلا إذا أبدى العميل اهتماماً حقيقياً
 - كن ودوداً ومحترفاً
 - لا تضغط على العميل
 - إذا رفض إعطاء رقمه، احترم قراره واستمر في المساعدة
+- عند حجز المعاينة، تأكد من عدم تعارض المواعيد
 """
         
         if agent_custom_prompt:
@@ -331,6 +359,242 @@ class LeadCaptureService:
                 return f"هل أنت مهتم بـ '{property_title}'؟ يمكنني ترتيب موعد معاينة لك إذا أردت 🏠"
         
         return None
+    
+    def analyze_viewing_request(self, message: str, conversation_history: List[Dict] = None) -> Dict[str, Any]:
+        """
+        تحليل طلب المعاينة من رسالة العميل
+        
+        Returns:
+            Dict with: wants_viewing, suggested_date, suggested_time, extracted_datetime
+        """
+        message_lower = message.lower()
+        
+        result = {
+            'wants_viewing': False,
+            'suggested_date': None,
+            'suggested_time': None,
+            'day_name': None,
+            'relative_date': None,
+        }
+        
+        # التحقق من طلب المعاينة
+        for keyword in self.viewing_keywords:
+            if keyword in message_lower:
+                result['wants_viewing'] = True
+                break
+        
+        # استخراج التاريخ النسبي
+        relative_dates = {
+            'اليوم': 0, 'غدا': 1, 'غداً': 1, 'بكرة': 1, 'بكره': 1,
+            'بعد غد': 2, 'بعد بكرة': 2, 'بعد بكره': 2
+        }
+        for word, days in relative_dates.items():
+            if word in message_lower:
+                result['relative_date'] = days
+                from datetime import datetime, timedelta
+                target_date = datetime.now() + timedelta(days=days)
+                result['suggested_date'] = target_date.strftime('%Y-%m-%d')
+                break
+        
+        # استخراج اسم اليوم
+        days_map = {
+            'السبت': 5, 'الأحد': 6, 'الاحد': 6, 'الاثنين': 0, 'الثلاثاء': 1,
+            'الاربعاء': 2, 'الأربعاء': 2, 'الخميس': 3, 'الجمعة': 4
+        }
+        for day_name, day_num in days_map.items():
+            if day_name in message_lower:
+                result['day_name'] = day_name
+                # حساب التاريخ
+                from datetime import datetime, timedelta
+                today = datetime.now()
+                days_ahead = day_num - today.weekday()
+                if days_ahead <= 0:
+                    days_ahead += 7
+                target_date = today + timedelta(days=days_ahead)
+                result['suggested_date'] = target_date.strftime('%Y-%m-%d')
+                break
+        
+        # استخراج الوقت
+        for pattern in self.time_patterns:
+            match = re.search(pattern, message)
+            if match:
+                hour = int(match.group(1))
+                # تحويل إلى 24 ساعة
+                if len(match.groups()) > 1:
+                    period = match.group(2) if len(match.groups()) > 1 else ''
+                    if period and ('م' in period or 'مساء' in period.lower()):
+                        if hour < 12:
+                            hour += 12
+                result['suggested_time'] = f"{hour:02d}:00"
+                break
+        
+        return result
+    
+    def book_viewing_appointment(
+        self,
+        agent_id: str,
+        lead_id: str,
+        property_id: str,
+        scheduled_date: str,
+        scheduled_time: str,
+        notes: str = ''
+    ) -> Dict[str, Any]:
+        """
+        حجز موعد معاينة للعميل مع التحقق من التعارض
+        
+        Returns:
+            Dict with: success, appointment_id, message, conflicts
+        """
+        from apps.leads.models import Lead, ViewingAppointment, LeadActivity
+        from apps.properties.models import Property
+        from apps.agents.models import Agent
+        from datetime import datetime
+        import uuid
+        
+        try:
+            # تحويل المعرفات
+            if isinstance(agent_id, str):
+                agent_id = uuid.UUID(agent_id)
+            if isinstance(lead_id, str):
+                lead_id = uuid.UUID(lead_id)
+            if isinstance(property_id, str):
+                property_id = uuid.UUID(property_id)
+            
+            # الحصول على الكائنات
+            agent = Agent.objects.get(id=agent_id)
+            lead = Lead.objects.get(id=lead_id, agent=agent)
+            
+            # محاولة الحصول على العقار - أولاً من نفس الوكيل، ثم من أي وكيل
+            try:
+                property_obj = Property.objects.get(id=property_id, agent=agent)
+            except Property.DoesNotExist:
+                # محاولة الحصول على العقار بدون تحديد الوكيل
+                property_obj = Property.objects.get(id=property_id)
+                logger.warning(f"Property {property_id} belongs to different agent, but proceeding with booking")
+            
+            # تحويل التاريخ والوقت
+            date_obj = datetime.strptime(scheduled_date, '%Y-%m-%d').date()
+            time_obj = datetime.strptime(scheduled_time, '%H:%M').time()
+            
+            # التحقق من التعارض
+            availability = ViewingAppointment.check_availability(
+                property_id=property_id,
+                date=date_obj,
+                time=time_obj,
+                duration_minutes=30
+            )
+            
+            if not availability['available']:
+                return {
+                    'success': False,
+                    'message': 'الموعد متعارض مع موعد آخر',
+                    'conflicts': availability['conflicts'],
+                    'available_slots': ViewingAppointment.get_available_slots(
+                        property_id=property_id,
+                        date=date_obj
+                    )
+                }
+            
+            # إنشاء الموعد
+            appointment = ViewingAppointment.objects.create(
+                lead=lead,
+                property=property_obj,
+                agent=agent,
+                scheduled_date=date_obj,
+                scheduled_time=time_obj,
+                duration_minutes=30,
+                notes=notes,
+                booked_by='ai_agent',
+                status='pending'
+            )
+            
+            # تحديث حالة العميل
+            lead.status = 'viewing_scheduled'
+            lead.save()
+            
+            # تسجيل النشاط
+            LeadActivity.objects.create(
+                lead=lead,
+                activity_type='viewing',
+                description=f'تم حجز موعد معاينة للعقار {property_obj.title} بتاريخ {scheduled_date} الساعة {scheduled_time}',
+                metadata={
+                    'appointment_id': str(appointment.id),
+                    'property_id': str(property_obj.id),
+                    'booked_by': 'ai_agent'
+                }
+            )
+            
+            logger.info(f"Viewing appointment created: {appointment.id} for lead: {lead.id}")
+            
+            return {
+                'success': True,
+                'appointment_id': str(appointment.id),
+                'message': 'تم حجز الموعد بنجاح',
+                'appointment_details': {
+                    'date': scheduled_date,
+                    'time': scheduled_time,
+                    'property': property_obj.title,
+                    'property_address': f"{property_obj.city}, {property_obj.neighborhood}" if property_obj.neighborhood else property_obj.city
+                }
+            }
+            
+        except Lead.DoesNotExist:
+            logger.error(f"Lead not found: lead_id={lead_id}, agent_id={agent_id}")
+            return {'success': False, 'message': 'العميل غير موجود'}
+        except Property.DoesNotExist:
+            logger.error(f"Property not found: property_id={property_id}")
+            return {'success': False, 'message': 'العقار غير موجود'}
+        except Agent.DoesNotExist:
+            logger.error(f"Agent not found: agent_id={agent_id}")
+            return {'success': False, 'message': 'الوكيل غير موجود'}
+        except Exception as e:
+            logger.error(f"Error booking viewing: {e}")
+            import traceback
+            traceback.print_exc()
+            return {'success': False, 'message': str(e)}
+    
+    def get_available_viewing_slots(
+        self,
+        property_id: str,
+        date: str = None
+    ) -> List[Dict]:
+        """
+        الحصول على الفترات المتاحة للمعاينة
+        """
+        from apps.leads.models import ViewingAppointment, PropertyCalendar
+        from apps.properties.models import Property
+        from datetime import datetime, timedelta
+        import uuid
+        
+        try:
+            if isinstance(property_id, str):
+                property_id = uuid.UUID(property_id)
+            
+            property_obj = Property.objects.get(id=property_id)
+            
+            # الحصول على التقويم أو إنشاء واحد افتراضي
+            calendar, _ = PropertyCalendar.objects.get_or_create(property=property_obj)
+            
+            # تحديد التاريخ
+            if date:
+                target_date = datetime.strptime(date, '%Y-%m-%d').date()
+            else:
+                target_date = datetime.now().date() + timedelta(days=1)  # غداً
+            
+            # الحصول على الفترات المتاحة
+            slots = calendar.get_available_slots(target_date)
+            
+            return {
+                'date': str(target_date),
+                'slots': slots,
+                'property_title': property_obj.title
+            }
+            
+        except Property.DoesNotExist:
+            return {'date': None, 'slots': [], 'error': 'العقار غير موجود'}
+        except Exception as e:
+            logger.error(f"Error getting available slots: {e}")
+            return {'date': None, 'slots': [], 'error': str(e)}
 
 
 # Singleton instance

@@ -67,6 +67,33 @@ class Agent(models.Model):
     )
     bot_color = models.CharField(max_length=7, default='#000000', verbose_name='لون البوت')
     
+    # إعدادات السياق الإضافية للوكيل
+    bot_pricing_policy = models.TextField(
+        blank=True,
+        verbose_name='سياسة التسعير والدفع',
+        help_text='مثال: الأسعار قابلة للتفاوض، الدفع نقداً أو بالتقسيط'
+    )
+    bot_viewing_policy = models.TextField(
+        blank=True,
+        verbose_name='سياسة المعاينة والحجز',
+        help_text='مثال: المعاينة مجانية، الحجز بعربون 5%'
+    )
+    bot_work_areas = models.TextField(
+        blank=True,
+        verbose_name='مناطق العمل',
+        help_text='مثال: الرياض - حي النرجس، حي الياسمين'
+    )
+    bot_services = models.TextField(
+        blank=True,
+        verbose_name='الخدمات المقدمة',
+        help_text='مثال: بيع، شراء، تأجير، إدارة أملاك'
+    )
+    bot_contact_info = models.TextField(
+        blank=True,
+        verbose_name='معلومات التواصل الإضافية',
+        help_text='مثال: واتساب: 05xxxxxxxx، الموقع: www.example.com'
+    )
+    
     # التحقق من الإيميل
     is_email_verified = models.BooleanField(default=False, verbose_name='تم التحقق من الإيميل')
     
@@ -178,7 +205,20 @@ class AgentSettings(models.Model):
 class GlobalSettings(models.Model):
     """إعدادات النظام العامة - تُطبق على جميع المستخدمين"""
     
-    # النموذج المستخدم
+    # مزود الذكاء الاصطناعي
+    AI_PROVIDER_CHOICES = [
+        ('gemini', 'Google Gemini'),
+        ('openai', 'OpenAI GPT'),
+    ]
+    
+    ai_provider = models.CharField(
+        max_length=20,
+        choices=AI_PROVIDER_CHOICES,
+        default='gemini',
+        verbose_name='مزود الذكاء الاصطناعي'
+    )
+    
+    # النموذج المستخدم - Gemini
     AI_MODEL_CHOICES = [
         ('gemini-2.0-flash', 'Gemini 2.0 Flash - سريع جداً'),
         ('gemini-1.5-flash', 'Gemini 1.5 Flash - سريع'),
@@ -188,11 +228,38 @@ class GlobalSettings(models.Model):
         ('gemini-3-pro-preview', 'Gemini 3 Pro - الجيل الثالث'),
     ]
     
+    # نماذج OpenAI
+    OPENAI_MODEL_CHOICES = [
+        ('gpt-5', 'GPT-5 - الجيل الخامس 🚀'),
+        ('gpt-5-mini', 'GPT-5 Mini - سريع وذكي ⚡'),
+        ('gpt-5-mini-2025-08-07', 'GPT-5 Mini (2025-08-07) - الأحدث ⚡'),
+        ('gpt-4.1', 'GPT-4.1 - الأحدث'),
+        ('gpt-4o', 'GPT-4o - الأفضل'),
+        ('gpt-4o-mini', 'GPT-4o Mini - سريع وموفر'),
+        ('gpt-4-turbo', 'GPT-4 Turbo - متوازن'),
+        ('gpt-3.5-turbo', 'GPT-3.5 Turbo - اقتصادي'),
+    ]
+    
     ai_model = models.CharField(
         max_length=100, 
         choices=AI_MODEL_CHOICES,
         default='gemini-3-pro-preview',
-        verbose_name='نموذج الذكاء الاصطناعي'
+        verbose_name='نموذج Gemini'
+    )
+    
+    openai_model = models.CharField(
+        max_length=100,
+        choices=OPENAI_MODEL_CHOICES,
+        default='gpt-4o-mini',
+        verbose_name='نموذج OpenAI'
+    )
+    
+    # مفتاح OpenAI
+    openai_api_key = models.CharField(
+        max_length=500,
+        blank=True,
+        verbose_name='مفتاح OpenAI API',
+        help_text='مفتاح API الخاص بـ OpenAI'
     )
     
     # System Prompt

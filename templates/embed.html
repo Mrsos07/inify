@@ -64,6 +64,92 @@
             overflow: hidden;
             box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border);
         }
+        
+        /* ═══════════════════════════════════════════════════════════ */
+        /* 📱 Responsive Design - Mobile First */
+        /* ═══════════════════════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+            
+            #chatContainer {
+                max-width: 100%;
+                height: 100vh;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+            
+            .chat-header {
+                padding: 12px 16px;
+            }
+            
+            .agent-avatar {
+                width: 42px;
+                height: 42px;
+                font-size: 20px;
+            }
+            
+            .agent-info h1 {
+                font-size: 16px;
+            }
+            
+            .chat-messages {
+                padding: 16px;
+                gap: 12px;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+            
+            .chat-input-container {
+                padding: 12px 16px;
+            }
+            
+            .chat-input {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            
+            .property-image {
+                height: 140px;
+            }
+            
+            .property-info {
+                padding: 12px;
+            }
+            
+            .property-title {
+                font-size: 14px;
+            }
+            
+            .property-price {
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .agent-info h1 {
+                font-size: 14px;
+            }
+            
+            .agent-info span {
+                font-size: 11px;
+            }
+            
+            .message {
+                max-width: 92%;
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .property-image {
+                height: 120px;
+            }
+        }
 
         /* Header */
         .chat-header {
@@ -161,6 +247,198 @@
             border: 1px solid var(--border);
             align-self: flex-start;
             border-bottom-right-radius: 6px;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════ */
+        /* 📝 تنسيق مخرجات الوكيل - Professional Formatting */
+        /* ═══════════════════════════════════════════════════════════ */
+        .message.bot p {
+            margin-bottom: 8px;
+        }
+        
+        .message.bot p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .message.bot strong, .message.bot b {
+            color: var(--cyan-light);
+            font-weight: 600;
+        }
+        
+        .message.bot ul, .message.bot ol {
+            margin: 8px 0;
+            padding-right: 20px;
+        }
+        
+        .message.bot li {
+            margin-bottom: 4px;
+            line-height: 1.5;
+        }
+        
+        .message.bot .highlight {
+            background: rgba(107, 184, 201, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--cyan-light);
+        }
+        
+        .message.bot .price-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            margin: 4px 0;
+        }
+        
+        .message.bot .info-box {
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+        
+        .message.bot .info-box-title {
+            color: var(--cyan);
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .message.bot .emoji {
+            font-size: 1.1em;
+        }
+        
+        .message.bot a {
+            color: var(--cyan-light);
+            text-decoration: underline;
+        }
+        
+        .message.bot a:hover {
+            color: var(--cyan);
+        }
+        
+        .message.bot code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .message.bot blockquote {
+            border-right: 3px solid var(--cyan);
+            padding-right: 12px;
+            margin: 8px 0;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        
+        .message.bot hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 12px 0;
+        }
+        
+        .message.bot .section-title {
+            color: var(--cyan);
+            font-weight: 700;
+            font-size: 1.05em;
+            margin: 12px 0 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .message.bot .feature-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 8px 0;
+        }
+        
+        .message.bot .feature-tag {
+            background: rgba(107, 184, 201, 0.15);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: var(--cyan-light);
+        }
+        
+        /* ═══════════════════════════════════════════════════════════ */
+        /* 🏠 تنسيق كروت العقارات في الرد */
+        /* ═══════════════════════════════════════════════════════════ */
+        .message.bot .property-item {
+            background: rgba(10, 22, 40, 0.7);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .message.bot .property-item-header {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            padding: 10px 14px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .message.bot .property-item-content {
+            padding: 12px 14px;
+        }
+        
+        .message.bot .ref-badge {
+            display: inline-block;
+            background: rgba(107, 184, 201, 0.2);
+            color: var(--cyan-light);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .message.bot .price-inline {
+            display: inline-block;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        .message.bot .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+        }
+        
+        .message.bot .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .message.bot .info-label {
+            color: var(--text-muted);
+        }
+        
+        .message.bot .info-value {
+            color: var(--pearl);
+            font-weight: 500;
+        }
+        
+        .message.bot .section-divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 12px 0;
         }
 
         .message.user {
@@ -510,6 +788,191 @@
         <div class="gallery-counter" id="galleryCounter"></div>
     </div>
 
+    <!-- Booking Modal - نظام حجز المعاينة -->
+    <div class="booking-modal" id="bookingModal" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    ">
+        <div class="booking-content" style="
+            background: linear-gradient(135deg, #0A1628, #1E3A5F);
+            border-radius: 20px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(107, 184, 201, 0.2);
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+        ">
+            <!-- Header -->
+            <div style="
+                padding: 20px;
+                border-bottom: 1px solid rgba(107, 184, 201, 0.15);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            ">
+                <h3 style="margin: 0; color: #F8F8F8; font-size: 18px;">📅 حجز موعد معاينة</h3>
+                <button onclick="closeBookingModal()" style="
+                    background: none;
+                    border: none;
+                    color: #F8F8F8;
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 0;
+                    line-height: 1;
+                ">×</button>
+            </div>
+            
+            <!-- Property Info -->
+            <div id="bookingPropertyInfo" style="
+                padding: 15px 20px;
+                background: rgba(107, 184, 201, 0.1);
+                margin: 15px;
+                border-radius: 12px;
+            "></div>
+            
+            <!-- Booking Form -->
+            <div style="padding: 0 20px 20px;">
+                <!-- Client Name -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: rgba(248, 248, 248, 0.7); font-size: 13px; margin-bottom: 6px;">الاسم *</label>
+                    <input type="text" id="bookingName" placeholder="اسمك الكريم" style="
+                        width: 100%;
+                        padding: 12px 15px;
+                        background: rgba(30, 58, 95, 0.6);
+                        border: 1px solid rgba(107, 184, 201, 0.2);
+                        border-radius: 10px;
+                        color: #F8F8F8;
+                        font-family: inherit;
+                        font-size: 14px;
+                        outline: none;
+                        box-sizing: border-box;
+                    ">
+                </div>
+                
+                <!-- Client Phone -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: rgba(248, 248, 248, 0.7); font-size: 13px; margin-bottom: 6px;">رقم الجوال *</label>
+                    <input type="tel" id="bookingPhone" placeholder="05xxxxxxxx" style="
+                        width: 100%;
+                        padding: 12px 15px;
+                        background: rgba(30, 58, 95, 0.6);
+                        border: 1px solid rgba(107, 184, 201, 0.2);
+                        border-radius: 10px;
+                        color: #F8F8F8;
+                        font-family: inherit;
+                        font-size: 14px;
+                        outline: none;
+                        direction: ltr;
+                        text-align: right;
+                        box-sizing: border-box;
+                    ">
+                </div>
+                
+                <!-- Date Selection -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: rgba(248, 248, 248, 0.7); font-size: 13px; margin-bottom: 6px;">التاريخ *</label>
+                    <input type="date" id="bookingDate" style="
+                        width: 100%;
+                        padding: 12px 15px;
+                        background: rgba(30, 58, 95, 0.6);
+                        border: 1px solid rgba(107, 184, 201, 0.2);
+                        border-radius: 10px;
+                        color: #F8F8F8;
+                        font-family: inherit;
+                        font-size: 14px;
+                        outline: none;
+                        box-sizing: border-box;
+                    ">
+                </div>
+                
+                <!-- Time Selection -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: rgba(248, 248, 248, 0.7); font-size: 13px; margin-bottom: 6px;">الوقت *</label>
+                    <select id="bookingTime" style="
+                        width: 100%;
+                        padding: 12px 15px;
+                        background: rgba(30, 58, 95, 0.6);
+                        border: 1px solid rgba(107, 184, 201, 0.2);
+                        border-radius: 10px;
+                        color: #F8F8F8;
+                        font-family: inherit;
+                        font-size: 14px;
+                        outline: none;
+                        box-sizing: border-box;
+                    ">
+                        <option value="">اختر الوقت</option>
+                        <option value="09:00">09:00 صباحاً</option>
+                        <option value="10:00">10:00 صباحاً</option>
+                        <option value="11:00">11:00 صباحاً</option>
+                        <option value="12:00">12:00 ظهراً</option>
+                        <option value="13:00">01:00 مساءً</option>
+                        <option value="14:00">02:00 مساءً</option>
+                        <option value="15:00">03:00 مساءً</option>
+                        <option value="16:00">04:00 مساءً</option>
+                        <option value="17:00">05:00 مساءً</option>
+                        <option value="18:00">06:00 مساءً</option>
+                        <option value="19:00">07:00 مساءً</option>
+                        <option value="20:00">08:00 مساءً</option>
+                    </select>
+                </div>
+                
+                <!-- Notes -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: rgba(248, 248, 248, 0.7); font-size: 13px; margin-bottom: 6px;">ملاحظات (اختياري)</label>
+                    <textarea id="bookingNotes" placeholder="أي ملاحظات إضافية..." rows="2" style="
+                        width: 100%;
+                        padding: 12px 15px;
+                        background: rgba(30, 58, 95, 0.6);
+                        border: 1px solid rgba(107, 184, 201, 0.2);
+                        border-radius: 10px;
+                        color: #F8F8F8;
+                        font-family: inherit;
+                        font-size: 14px;
+                        outline: none;
+                        resize: none;
+                        box-sizing: border-box;
+                    "></textarea>
+                </div>
+                
+                <!-- Submit Button -->
+                <button onclick="submitBooking()" id="bookingSubmitBtn" style="
+                    width: 100%;
+                    padding: 14px;
+                    background: linear-gradient(135deg, #22c55e, #16a34a);
+                    color: white;
+                    border: none;
+                    border-radius: 12px;
+                    font-family: inherit;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                ">
+                    ✅ تأكيد الحجز
+                </button>
+                
+                <!-- Status Message -->
+                <div id="bookingStatus" style="
+                    margin-top: 15px;
+                    padding: 12px;
+                    border-radius: 10px;
+                    text-align: center;
+                    display: none;
+                "></div>
+            </div>
+        </div>
+    </div>
+
     <script src="/config.js"></script>
     <script src="/static/js/auth.js"></script>
     <script>
@@ -529,8 +992,15 @@
                 const data = await response.json();
                 if (data.success && data.settings) {
                     globalAdminSettings = data.settings;
-                    console.log('✅ Global settings loaded from database');
-                    console.log('📋 System Prompt:', globalAdminSettings.systemPrompt ? 'موجود ✅' : 'غير موجود ❌');
+                    
+                    // 🎯 عرض معلومات النموذج في Console
+                    console.log('%c╔══════════════════════════════════════════════════════════╗', 'color: #6BB8C9; font-weight: bold;');
+                    console.log('%c║           🤖 Inify AI Agent Information                  ║', 'color: #6BB8C9; font-weight: bold;');
+                    console.log('%c╠══════════════════════════════════════════════════════════╣', 'color: #6BB8C9; font-weight: bold;');
+                    console.log('%c║ Provider: ' + (globalAdminSettings.aiProvider || 'gemini').toUpperCase().padEnd(46) + '║', 'color: #4ade80; font-weight: bold;');
+                    console.log('%c║ Model: ' + (globalAdminSettings.aiProvider === 'openai' ? (globalAdminSettings.openaiModel || 'gpt-4o') : (globalAdminSettings.aiModel || 'gemini-3-pro-preview')).padEnd(49) + '║', 'color: #4ade80; font-weight: bold;');
+                    console.log('%c║ System Prompt: ' + (globalAdminSettings.systemPrompt ? '✅ Active' : '❌ Not Set').padEnd(41) + '║', 'color: #f59e0b;');
+                    console.log('%c╚══════════════════════════════════════════════════════════╝', 'color: #6BB8C9; font-weight: bold;');
                 }
             } catch (error) {
                 console.error('Error loading global settings:', error);
@@ -616,8 +1086,19 @@
                         ragResults: '5',
                         // صورة الوكيل
                         agentAvatar: data.agent.profileImage || null,
-                        useAvatarImage: !!data.agent.profileImage
+                        useAvatarImage: !!data.agent.profileImage,
+                        // إعدادات السياق الإضافية
+                        pricingPolicy: data.agent.pricingPolicy || '',
+                        viewingPolicy: data.agent.viewingPolicy || '',
+                        workAreas: data.agent.workAreas || '',
+                        services: data.agent.services || '',
+                        contactInfo: data.agent.contactInfo || ''
                     };
+                    
+                    console.log('📋 Agent Context Settings:');
+                    console.log('   - System Prompt:', agentSettings.systemPrompt ? '✅' : '❌');
+                    console.log('   - Pricing Policy:', agentSettings.pricingPolicy ? '✅' : '❌');
+                    console.log('   - Work Areas:', agentSettings.workAreas ? '✅' : '❌');
                 } else {
                     agentSettings = {
                         agentName: 'Inify',
@@ -890,13 +1371,23 @@
                 conversationHistory.push({ role: 'assistant', content: response });
                 
                 // عرض كروت العقارات فقط إذا لم تكن رسالة اهتمام
+                // مع تأخير 5 ثواني لإعطاء المستخدم وقت لقراءة الرد
                 if (!isInterestMessage) {
                     const mentionedProperties = findMentionedProperties(response);
                     if (mentionedProperties.length > 0) {
                         lastSearchedProperties = mentionedProperties;
                         const propertyCards = generatePropertyCards();
                         if (propertyCards) {
-                            addMessage(propertyCards, 'bot', true);
+                            // إظهار مؤشر الكتابة أثناء الانتظار
+                            setTimeout(() => {
+                                showTyping();
+                            }, 2000);
+                            
+                            // عرض العقارات بعد 5 ثواني
+                            setTimeout(() => {
+                                hideTyping();
+                                addMessage(propertyCards, 'bot', true);
+                            }, 5000);
                         }
                     }
                 }
@@ -914,6 +1405,14 @@
         function findMentionedProperties(response) {
             if (!properties || properties.length === 0) return [];
             
+            // ═══════════════════════════════════════════════════════════
+            // إذا العميل اختار عقار، لا نعرض أي كروت جديدة
+            // ═══════════════════════════════════════════════════════════
+            if (clientRequirements.selectedProperty) {
+                console.log('⛔ Property already selected, skipping card display');
+                return [];
+            }
+            
             const responseLower = response.toLowerCase();
             
             // الكلمات التي تدل على عرض عقارات
@@ -925,6 +1424,14 @@
             const foundProperties = [];
             
             for (const prop of properties) {
+                // ═══════════════════════════════════════════════════════════
+                // تخطي العقارات التي تم عرضها بالفعل
+                // ═══════════════════════════════════════════════════════════
+                if (displayedPropertyIds.has(prop.id) || displayedPropertyIds.has(prop.reference_number)) {
+                    console.log('⏭️ Skipping already displayed property:', prop.reference_number);
+                    continue;
+                }
+                
                 // البحث بالحي أو السعر أو المساحة أو الرقم المرجعي
                 const districtMatch = prop.district && responseLower.includes(prop.district.toLowerCase());
                 const priceMatch = prop.price && (
@@ -939,6 +1446,10 @@
                 if (districtMatch || priceMatch || areaMatch || refMatch) {
                     console.log('🏠 Found mentioned property:', prop.title);
                     foundProperties.push(prop);
+                    
+                    // إضافة للقائمة المعروضة
+                    if (prop.id) displayedPropertyIds.add(prop.id);
+                    if (prop.reference_number) displayedPropertyIds.add(prop.reference_number);
                 }
             }
             
@@ -973,6 +1484,34 @@
 
         // Save lead to clients page
         async function saveLeadAndRedirect() {
+            // ═══════════════════════════════════════════════════════════
+            // تحديد العقار المختار فقط (وليس جميع العقارات)
+            // ═══════════════════════════════════════════════════════════
+            let selectedProperties = [];
+            
+            // أولاً: العقار الذي اختاره العميل بالضغط على "مهتم"
+            if (clientRequirements.selectedProperty) {
+                selectedProperties = [{
+                    id: clientRequirements.selectedProperty.id,
+                    title: clientRequirements.selectedProperty.title,
+                    price: clientRequirements.selectedProperty.price
+                }];
+                console.log('✅ Using selected property:', clientRequirements.selectedProperty.title);
+            }
+            // ثانياً: إذا لم يختر عقار محدد ولكن يوجد عقار واحد فقط
+            else if (lastSearchedProperties.length === 1) {
+                selectedProperties = [{
+                    id: lastSearchedProperties[0].id,
+                    title: lastSearchedProperties[0].title,
+                    price: lastSearchedProperties[0].price
+                }];
+                console.log('✅ Using single searched property:', lastSearchedProperties[0].title);
+            }
+            // ثالثاً: لا نضيف أي عقار إذا لم يختر العميل
+            else {
+                console.log('⚠️ No specific property selected - not adding any');
+            }
+            
             // Create client object matching the clients page format
             const client = {
                 id: Date.now(),
@@ -993,11 +1532,7 @@
                     content: m.content,
                     time: new Date().toISOString()
                 })),
-                interestedProperties: lastSearchedProperties.map(p => ({
-                    id: p.id,
-                    title: p.title,
-                    price: p.price
-                })),
+                interestedProperties: selectedProperties,
                 createdAt: new Date().toISOString(),
                 status: 'new'
             };
@@ -1012,11 +1547,9 @@
                     interest: clientRequirements.type || '',
                     looking_for: clientRequirements.listingType === 'rent' ? 'rent' : 'buy',
                     conversation: conversationHistory.map(m => `${m.role === 'user' ? 'العميل' : 'الوكيل'}: ${m.content}`).join('\n'),
-                    interested_properties: lastSearchedProperties.map(p => ({
-                        id: p.id,
-                        title: p.title,
-                        price: p.price
-                    }))
+                    interested_properties: selectedProperties,
+                    // إرسال معرف العقار المختار بشكل صريح
+                    selected_property_id: clientRequirements.selectedProperty?.id || null
                 };
                 console.log('📤 Request body:', requestBody);
                 
@@ -1067,6 +1600,49 @@
             return text.replace(/[&<>"']/g, char => map[char]);
         }
 
+        // تنسيق نص الوكيل - تحويل إلى HTML منسق
+        function formatBotMessage(text) {
+            if (!text) return '';
+            
+            let formatted = text;
+            
+            // إزالة الخطوط العريضة ** و __
+            formatted = formatted.replace(/\*\*(.+?)\*\*/g, '$1');
+            formatted = formatted.replace(/__(.+?)__/g, '$1');
+            formatted = formatted.replace(/\*([^*]+)\*/g, '$1');
+            formatted = formatted.replace(/_([^_]+)_/g, '$1');
+            
+            // تنسيق العقارات - تحويل كل عقار إلى كارد
+            formatted = formatted.replace(/【عقار (\d+)】([^【]*?)(?=【|════|$)/gs, function(match, num, content) {
+                return `<div class="property-item">
+                    <div class="property-item-header">🏠 عقار ${num}</div>
+                    <div class="property-item-content">${content.trim()}</div>
+                </div>`;
+            });
+            
+            // تنسيق الأرقام المرجعية
+            formatted = formatted.replace(/🔖 الرقم المرجعي:\s*([A-Z]{2}-[A-Z]{2}-\d+)/g, '<span class="ref-badge">$1</span>');
+            
+            // تنسيق الأسعار
+            formatted = formatted.replace(/(\d{1,3}(?:,\d{3})*)\s*(ريال\/سنوياً|ريال\/شهرياً|ريال)/g, '<span class="price-inline">$1 $2</span>');
+            
+            // تنسيق الخطوط الفاصلة
+            formatted = formatted.replace(/═{10,}/g, '<hr class="section-divider">');
+            
+            // تنسيق النقاط
+            formatted = formatted.replace(/•\s*([^:]+):\s*(.+)/g, '<div class="info-row"><span class="info-label">$1</span><span class="info-value">$2</span></div>');
+            
+            // تحويل الأسطر الجديدة
+            formatted = formatted.replace(/\n/g, '<br>');
+            
+            // تنظيف الـ <br> الزائدة
+            formatted = formatted.replace(/(<br>){3,}/g, '<br>');
+            formatted = formatted.replace(/<br>\s*<div/g, '<div');
+            formatted = formatted.replace(/<\/div>\s*<br>/g, '</div>');
+            
+            return formatted;
+        }
+        
         // Add message to chat
         function addMessage(content, type, isHtml = false) {
             const messagesContainer = document.getElementById('chatMessages');
@@ -1077,8 +1653,8 @@
                 // HTML content (property cards)
                 messageDiv.innerHTML = content;
             } else if (type === 'bot') {
-                // Bot text content
-                messageDiv.textContent = content;
+                // Bot text content - تنسيق احترافي
+                messageDiv.innerHTML = formatBotMessage(content);
             } else {
                 // User content - always escape
                 messageDiv.textContent = content;
@@ -1124,7 +1700,13 @@
                 });
                 
                 const data = await response.json();
-                console.log('API Response:', data);
+                
+                // 🎯 عرض معلومات النموذج في Console عند كل رد
+                if (data.ai_info) {
+                    console.log('%c🤖 AI Response Info:', 'color: #6BB8C9; font-weight: bold;');
+                    console.log('%c   Provider: ' + data.ai_info.provider.toUpperCase(), 'color: #4ade80;');
+                    console.log('%c   Model: ' + data.ai_info.model, 'color: #4ade80;');
+                }
                 
                 if (!response.ok || !data.success) {
                     console.error('API Error:', data.error);
@@ -1425,22 +2007,38 @@
                                 <div class="property-price">
                                     ${formatPrice(p.price)} ريال${p.listing_type === 'rent' ? ({'yearly': '/سنوي', 'monthly': '/شهري', 'daily': '/يومي'}[p.rent_period || p.price_type] || '/سنوي') : ''}
                                 </div>
-                                <button onclick="selectProperty(${i})" style="
-                                    width: 100%;
-                                    margin-top: 10px;
-                                    padding: 10px;
-                                    background: linear-gradient(135deg, var(--primary), var(--secondary));
-                                    color: white;
-                                    border: none;
-                                    border-radius: 8px;
-                                    font-family: inherit;
-                                    font-size: 13px;
-                                    font-weight: 600;
-                                    cursor: pointer;
-                                    transition: all 0.3s;
-                                " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-                                    ❤️ مهتم بهذا العقار
-                                </button>
+                                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                                    <button onclick="selectProperty(${i})" style="
+                                        flex: 1;
+                                        padding: 10px;
+                                        background: linear-gradient(135deg, #ec4899, #f43f5e);
+                                        color: white;
+                                        border: none;
+                                        border-radius: 8px;
+                                        font-family: inherit;
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                        cursor: pointer;
+                                        transition: all 0.3s;
+                                    " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                        ❤️ مهتم
+                                    </button>
+                                    <button onclick="openBookingModal(${i})" style="
+                                        flex: 1;
+                                        padding: 10px;
+                                        background: linear-gradient(135deg, #22c55e, #16a34a);
+                                        color: white;
+                                        border: none;
+                                        border-radius: 8px;
+                                        font-family: inherit;
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                        cursor: pointer;
+                                        transition: all 0.3s;
+                                    " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                        📅 حجز معاينة
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `).join('')}
@@ -1457,6 +2055,165 @@
         // متغير لتتبع أن المستخدم أبدى اهتمامه بعقار (لمنع عرض الكروت مرة أخرى)
         let isInterestMessage = false;
         
+        // ═══════════════════════════════════════════════════════════
+        // قائمة العقارات التي تم عرضها بالفعل (لمنع التكرار)
+        // ═══════════════════════════════════════════════════════════
+        let displayedPropertyIds = new Set();
+        
+        // ═══════════════════════════════════════════════════════════
+        // نظام حجز المعاينة الاحترافي
+        // ═══════════════════════════════════════════════════════════
+        let currentBookingProperty = null;
+        
+        function openBookingModal(propertyIndex) {
+            const property = lastSearchedProperties[propertyIndex];
+            if (!property) return;
+            
+            currentBookingProperty = property;
+            
+            // عرض معلومات العقار
+            document.getElementById('bookingPropertyInfo').innerHTML = `
+                <div style="color: #F8F8F8; font-weight: 600; margin-bottom: 8px;">${property.title}</div>
+                <div style="color: rgba(248, 248, 248, 0.7); font-size: 13px;">
+                    📍 ${property.cityLabel || property.city}${property.district ? ' - ' + property.district : ''}
+                </div>
+                <div style="color: #22c55e; font-weight: 600; margin-top: 8px;">
+                    ${formatPrice(property.price)} ريال${property.listing_type === 'rent' ? '/سنوي' : ''}
+                </div>
+            `;
+            
+            // تعيين الحد الأدنى للتاريخ (غداً)
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('bookingDate').min = tomorrow.toISOString().split('T')[0];
+            document.getElementById('bookingDate').value = '';
+            
+            // مسح الحقول
+            document.getElementById('bookingName').value = clientInfo.name || '';
+            document.getElementById('bookingPhone').value = clientInfo.phone || '';
+            document.getElementById('bookingTime').value = '';
+            document.getElementById('bookingNotes').value = '';
+            document.getElementById('bookingStatus').style.display = 'none';
+            document.getElementById('bookingSubmitBtn').disabled = false;
+            document.getElementById('bookingSubmitBtn').textContent = '✅ تأكيد الحجز';
+            
+            // عرض Modal
+            document.getElementById('bookingModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            console.log('📅 Booking modal opened for:', property.title);
+        }
+        
+        function closeBookingModal() {
+            document.getElementById('bookingModal').style.display = 'none';
+            document.body.style.overflow = '';
+            currentBookingProperty = null;
+        }
+        
+        async function submitBooking() {
+            const name = document.getElementById('bookingName').value.trim();
+            const phone = document.getElementById('bookingPhone').value.trim();
+            const date = document.getElementById('bookingDate').value;
+            const time = document.getElementById('bookingTime').value;
+            const notes = document.getElementById('bookingNotes').value.trim();
+            
+            // التحقق من الحقول المطلوبة
+            if (!name) {
+                showBookingStatus('❌ الرجاء إدخال الاسم', 'error');
+                return;
+            }
+            if (!phone) {
+                showBookingStatus('❌ الرجاء إدخال رقم الجوال', 'error');
+                return;
+            }
+            if (!date) {
+                showBookingStatus('❌ الرجاء اختيار التاريخ', 'error');
+                return;
+            }
+            if (!time) {
+                showBookingStatus('❌ الرجاء اختيار الوقت', 'error');
+                return;
+            }
+            
+            // التحقق من صحة رقم الجوال
+            const phoneRegex = /^(05|5|966|00966|\+966)\d{8}$/;
+            const cleanPhone = phone.replace(/\s/g, '');
+            if (!phoneRegex.test(cleanPhone)) {
+                showBookingStatus('❌ رقم الجوال غير صحيح', 'error');
+                return;
+            }
+            
+            // تعطيل الزر أثناء الإرسال
+            const submitBtn = document.getElementById('bookingSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ جاري الحجز...';
+            
+            try {
+                // تحضير المحادثة للحفظ
+                const conversationText = conversationHistory.map(m => 
+                    `${m.role === 'user' ? 'العميل' : 'الوكيل'}: ${m.content}`
+                ).join('\n');
+                
+                const response = await fetch(`/api/v1/leads/ai-agent/${agentId}/calendar/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        property_id: currentBookingProperty.id,
+                        client_name: name,
+                        client_phone: cleanPhone,
+                        scheduled_date: date,
+                        scheduled_time: time,
+                        notes: notes,
+                        conversation: conversationText,
+                        conversation_history: conversationHistory
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('📅 Booking response:', data);
+                
+                if (data.success) {
+                    showBookingStatus('✅ تم حجز الموعد بنجاح! سنتواصل معك قريباً', 'success');
+                    
+                    // حفظ معلومات العميل
+                    clientInfo.name = name;
+                    clientInfo.phone = cleanPhone;
+                    
+                    // إرسال رسالة في الشات
+                    setTimeout(() => {
+                        closeBookingModal();
+                        const message = `تم حجز موعد معاينة للعقار: ${currentBookingProperty.title} بتاريخ ${date} الساعة ${time}`;
+                        addMessage(message, 'user');
+                        conversationHistory.push({ role: 'user', content: message });
+                        
+                        // رد الوكيل
+                        setTimeout(() => {
+                            const botResponse = `ممتاز! 🎉 تم تأكيد حجز موعد المعاينة:\n\n📍 العقار: ${currentBookingProperty.title}\n📅 التاريخ: ${date}\n⏰ الوقت: ${time}\n📞 سنتواصل معك على: ${cleanPhone}\n\nشكراً لك، ونتطلع لرؤيتك! 👋`;
+                            addMessage(botResponse, 'bot');
+                            conversationHistory.push({ role: 'assistant', content: botResponse });
+                        }, 1000);
+                    }, 2000);
+                } else {
+                    showBookingStatus(`❌ ${data.message || data.error || 'حدث خطأ في الحجز'}`, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '✅ تأكيد الحجز';
+                }
+            } catch (error) {
+                console.error('Booking error:', error);
+                showBookingStatus('❌ حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✅ تأكيد الحجز';
+            }
+        }
+        
+        function showBookingStatus(message, type) {
+            const statusEl = document.getElementById('bookingStatus');
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+            statusEl.style.background = type === 'success' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+            statusEl.style.color = type === 'success' ? '#22c55e' : '#ef4444';
+        }
+        
         // اختيار عقار والرد على الوكيل
         function selectProperty(propertyIndex) {
             const property = lastSearchedProperties[propertyIndex];
@@ -1464,6 +2221,10 @@
             
             // حفظ العقار المختار
             clientRequirements.selectedProperty = property;
+            
+            // إضافة العقار لقائمة العقارات المعروضة (لمنع عرضه مرة أخرى)
+            if (property.id) displayedPropertyIds.add(property.id);
+            if (property.reference_number) displayedPropertyIds.add(property.reference_number);
             
             // تعيين أن هذه رسالة اهتمام (لمنع عرض الكروت مرة أخرى)
             isInterestMessage = true;

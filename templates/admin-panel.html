@@ -1112,25 +1112,65 @@
                         </div>
                     </div>
 
-                    <!-- AI Model Selection -->
+                    <!-- AI Provider Selection -->
                     <div class="settings-section">
-                        <h3 class="section-title">🤖 نموذج الذكاء الاصطناعي</h3>
-                        <p class="section-desc">اختر النموذج المناسب - النماذج الأسرع أقل دقة والعكس صحيح</p>
+                        <h3 class="section-title">🤖 مزود الذكاء الاصطناعي</h3>
+                        <p class="section-desc">اختر المزود المناسب - يمكنك التبديل بين Gemini و OpenAI</p>
                         
                         <div class="form-group">
-                            <label>النموذج</label>
-                            <select id="aiModel">
-                                <option value="gemini-2.0-flash">⚡ Gemini 2.0 Flash - سريع جداً</option>
-                                <option value="gemini-1.5-flash">⚡ Gemini 1.5 Flash - سريع</option>
-                                <option value="gemini-1.5-pro">🎯 Gemini 1.5 Pro - متوازن</option>
-                                <option value="gemini-2.5-pro-preview-05-06">🏆 Gemini 2.5 Pro - الأفضل جودة</option>
-                                <option value="gemini-2.5-flash-preview-05-20">🚀 Gemini 2.5 Flash - الأحدث والأسرع</option>
-                                <option value="gemini-3-pro-preview" selected>🔥 Gemini 3 Pro - الجيل الثالث</option>
+                            <label>المزود</label>
+                            <select id="aiProvider" onchange="toggleProviderSettings()">
+                                <option value="gemini">🔷 Google Gemini</option>
+                                <option value="openai">🟢 OpenAI GPT</option>
                             </select>
+                        </div>
+                        
+                        <!-- Gemini Settings -->
+                        <div id="geminiSettings">
+                            <div class="form-group">
+                                <label>نموذج Gemini</label>
+                                <select id="aiModel">
+                                    <option value="gemini-2.0-flash">⚡ Gemini 2.0 Flash - سريع جداً</option>
+                                    <option value="gemini-1.5-flash">⚡ Gemini 1.5 Flash - سريع</option>
+                                    <option value="gemini-1.5-pro">🎯 Gemini 1.5 Pro - متوازن</option>
+                                    <option value="gemini-2.5-pro-preview-05-06">🏆 Gemini 2.5 Pro - الأفضل جودة</option>
+                                    <option value="gemini-2.5-flash-preview-05-20">🚀 Gemini 2.5 Flash - الأحدث والأسرع</option>
+                                    <option value="gemini-3-pro-preview" selected>🔥 Gemini 3 Pro - الجيل الثالث</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- OpenAI Settings -->
+                        <div id="openaiSettings" style="display: none;">
+                            <div class="form-group">
+                                <label>نموذج OpenAI</label>
+                                <select id="openaiModel">
+                                    <option value="gpt-4o" selected>🏆 GPT-4o - الأفضل والأذكى</option>
+                                    <option value="gpt-4o-mini">⚡ GPT-4o Mini - سريع وموفر</option>
+                                    <option value="gpt-4.1-mini">✨ GPT-4.1 Mini - جيد</option>
+                                    <option value="gpt-4-turbo">🎯 GPT-4 Turbo - متوازن</option>
+                                    <option value="gpt-3.5-turbo">💰 GPT-3.5 Turbo - اقتصادي</option>
+                                </select>
+                                <small style="color: #4ade80; display: block; margin-top: 5px;">
+                                    ✅ جميع النماذج مختبرة وتعمل بشكل صحيح
+                                </small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>مفتاح OpenAI API</label>
+                                <input type="password" id="openaiApiKey" placeholder="sk-..." style="font-family: monospace;">
+                                <small style="color: var(--text-muted); display: block; margin-top: 5px;">
+                                    🔒 المفتاح محفوظ بشكل آمن في قاعدة البيانات
+                                </small>
+                            </div>
                         </div>
                         
                         <div class="model-info" style="background: rgba(107, 184, 201, 0.1); border-radius: 12px; padding: 16px; margin-top: 12px;">
                             <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                                <div>
+                                    <span style="color: var(--text-muted);">المزود:</span>
+                                    <span id="providerName" style="color: var(--cyan);">Google Gemini</span>
+                                </div>
                                 <div>
                                     <span style="color: var(--text-muted);">السرعة:</span>
                                     <span id="modelSpeed" style="color: var(--cyan);">بطيء</span>
@@ -2223,7 +2263,14 @@
                 
                 if (data.success && data.settings) {
                     const settings = data.settings;
-                    document.getElementById('aiModel').value = settings.aiModel || 'gemini-2.5-pro-preview-05-06';
+                    // Provider settings
+                    document.getElementById('aiProvider').value = settings.aiProvider || 'gemini';
+                    document.getElementById('aiModel').value = settings.aiModel || 'gemini-3-pro-preview';
+                    document.getElementById('openaiModel').value = settings.openaiModel || 'gpt-4o-mini';
+                    if (settings.openaiApiKey) {
+                        document.getElementById('openaiApiKey').value = settings.openaiApiKey;
+                    }
+                    // Other settings
                     document.getElementById('globalSystemPrompt').value = settings.systemPrompt || getDefaultSystemPrompt();
                     document.getElementById('responseStyle').value = settings.responseStyle || 'friendly';
                     document.getElementById('dialect').value = settings.dialect || 'saudi';
@@ -2232,6 +2279,8 @@
                     document.getElementById('suggestSimilar').checked = settings.suggestSimilar !== false;
                     document.getElementById('defaultRules').value = settings.defaultRules || '';
                     console.log('✅ Settings loaded from database');
+                    // Toggle provider settings display
+                    toggleProviderSettings();
                 } else {
                     console.log('⚠️ Using default settings');
                     document.getElementById('globalSystemPrompt').value = getDefaultSystemPrompt();
@@ -2245,19 +2294,53 @@
             updateModelInfo();
         }
         
+        // Toggle provider settings visibility
+        function toggleProviderSettings() {
+            const provider = document.getElementById('aiProvider').value;
+            const geminiSettings = document.getElementById('geminiSettings');
+            const openaiSettings = document.getElementById('openaiSettings');
+            const providerName = document.getElementById('providerName');
+            
+            if (provider === 'openai') {
+                geminiSettings.style.display = 'none';
+                openaiSettings.style.display = 'block';
+                providerName.textContent = 'OpenAI GPT';
+            } else {
+                geminiSettings.style.display = 'block';
+                openaiSettings.style.display = 'none';
+                providerName.textContent = 'Google Gemini';
+            }
+            
+            updateModelInfo();
+        }
+        
         // Update model info based on selection
         function updateModelInfo() {
-            const model = document.getElementById('aiModel').value;
-            const modelInfo = {
-                'gemini-2.0-flash': { speed: 'سريع جداً ⚡⚡⚡', quality: 'جيدة', cost: 'منخفضة' },
-                'gemini-1.5-flash': { speed: 'سريع ⚡⚡', quality: 'جيدة', cost: 'منخفضة' },
-                'gemini-1.5-pro': { speed: 'متوسط ⚡', quality: 'ممتازة', cost: 'متوسطة' },
-                'gemini-2.5-pro-preview-05-06': { speed: 'بطيء', quality: 'ممتازة جداً 🏆', cost: 'عالية' },
-                'gemini-2.5-flash-preview-05-20': { speed: 'سريع جداً ⚡⚡⚡', quality: 'ممتازة 🚀', cost: 'منخفضة' },
-                'gemini-3-pro-preview': { speed: 'سريع ⚡⚡', quality: 'استثنائية 🔥', cost: 'متوسطة' }
-            };
+            const provider = document.getElementById('aiProvider').value;
+            let model, modelInfo;
             
-            const info = modelInfo[model] || modelInfo['gemini-2.5-flash-preview-05-20'];
+            if (provider === 'openai') {
+                model = document.getElementById('openaiModel').value;
+                modelInfo = {
+                    'gpt-4o': { speed: 'سريع ⚡⚡', quality: 'استثنائية 🏆', cost: 'متوسطة' },
+                    'gpt-4o-mini': { speed: 'سريع جداً ⚡⚡⚡', quality: 'ممتازة', cost: 'منخفضة' },
+                    'gpt-4.1-mini': { speed: 'سريع ⚡⚡', quality: 'ممتازة', cost: 'منخفضة' },
+                    'gpt-4-turbo': { speed: 'متوسط ⚡', quality: 'ممتازة جداً', cost: 'عالية' },
+                    'gpt-3.5-turbo': { speed: 'سريع جداً ⚡⚡⚡', quality: 'جيدة', cost: 'منخفضة جداً' }
+                };
+            } else {
+                model = document.getElementById('aiModel').value;
+                modelInfo = {
+                    'gemini-2.0-flash': { speed: 'سريع جداً ⚡⚡⚡', quality: 'جيدة', cost: 'منخفضة' },
+                    'gemini-1.5-flash': { speed: 'سريع ⚡⚡', quality: 'جيدة', cost: 'منخفضة' },
+                    'gemini-1.5-pro': { speed: 'متوسط ⚡', quality: 'ممتازة', cost: 'متوسطة' },
+                    'gemini-2.5-pro-preview-05-06': { speed: 'بطيء', quality: 'ممتازة جداً 🏆', cost: 'عالية' },
+                    'gemini-2.5-flash-preview-05-20': { speed: 'سريع جداً ⚡⚡⚡', quality: 'ممتازة 🚀', cost: 'منخفضة' },
+                    'gemini-3-pro-preview': { speed: 'سريع ⚡⚡', quality: 'استثنائية 🔥', cost: 'متوسطة' }
+                };
+            }
+            
+            const info = modelInfo[model] || { speed: '-', quality: '-', cost: '-' };
             document.getElementById('modelSpeed').textContent = info.speed;
             document.getElementById('modelQuality').textContent = info.quality;
             document.getElementById('modelCost').textContent = info.cost;
@@ -2299,9 +2382,13 @@
 
         // Save AI settings to database
         async function saveAISettings() {
+            const provider = document.getElementById('aiProvider').value;
             const settings = {
                 adminKey: 'inify_admin_2025',
+                aiProvider: provider,
                 aiModel: document.getElementById('aiModel').value,
+                openaiModel: document.getElementById('openaiModel').value,
+                openaiApiKey: document.getElementById('openaiApiKey').value,
                 systemPrompt: document.getElementById('globalSystemPrompt').value,
                 responseStyle: document.getElementById('responseStyle').value,
                 dialect: document.getElementById('dialect').value,
@@ -2324,16 +2411,29 @@
                 const data = await response.json();
                 
                 if (data.success) {
+                    const providerNames = {
+                        'gemini': 'Google Gemini',
+                        'openai': 'OpenAI GPT'
+                    };
                     const modelNames = {
                         'gemini-2.0-flash': 'Gemini 2.0 Flash',
                         'gemini-1.5-flash': 'Gemini 1.5 Flash',
                         'gemini-1.5-pro': 'Gemini 1.5 Pro',
                         'gemini-2.5-pro-preview-05-06': 'Gemini 2.5 Pro',
                         'gemini-2.5-flash-preview-05-20': 'Gemini 2.5 Flash',
-                        'gemini-3-pro-preview': 'Gemini 3 Pro'
+                        'gemini-3-pro-preview': 'Gemini 3 Pro',
+                        'gpt-5': 'GPT-5',
+                        'gpt-5-mini': 'GPT-5 Mini',
+                        'gpt-5-mini-2025-08-07': 'GPT-5 Mini (2025-08-07)',
+                        'gpt-4.1': 'GPT-4.1',
+                        'gpt-4o': 'GPT-4o',
+                        'gpt-4o-mini': 'GPT-4o Mini',
+                        'gpt-4-turbo': 'GPT-4 Turbo',
+                        'gpt-3.5-turbo': 'GPT-3.5 Turbo'
                     };
                     
-                    alert(`✅ تم حفظ إعدادات Inify في قاعدة البيانات!\n\n🤖 النموذج: ${modelNames[settings.aiModel]}\n\nسيتم تطبيق التغييرات على جميع المستخدمين.`);
+                    const currentModel = provider === 'openai' ? settings.openaiModel : settings.aiModel;
+                    alert(`✅ تم حفظ إعدادات Inify في قاعدة البيانات!\n\n🤖 المزود: ${providerNames[provider]}\n📦 النموذج: ${modelNames[currentModel]}\n\nسيتم تطبيق التغييرات على جميع المستخدمين.`);
                 } else {
                     alert('❌ خطأ في الحفظ: ' + data.error);
                 }

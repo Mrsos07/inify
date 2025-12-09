@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.clickjacking import xframe_options_exempt
 import json
 
 
@@ -76,6 +77,7 @@ def admin_panel_view(request):
     return render(request, 'admin-panel.html')
 
 
+@xframe_options_exempt
 def embed_chat_view(request):
     """صفحة الشات المضمنة للعملاء"""
     return render(request, 'embed.html')
@@ -178,22 +180,23 @@ def login_view(request):
                 pass
         
         if user is not None:
+            # التحقق من البريد معطل مؤقتاً
             # Check if email is verified
-            from apps.agents.models import Agent
-            try:
-                agent = Agent.objects.get(user=user)
-                if not agent.is_email_verified:
-                    # Resend verification email
-                    from services.email_service import email_service
-                    if email_service.is_available:
-                        email_service.send_verification_email(user.email, user.first_name or user.username)
-                    return JsonResponse({
-                        'success': False, 
-                        'error': 'يرجى تفعيل حسابك أولاً. تم إرسال رابط التفعيل إلى بريدك الإلكتروني.',
-                        'require_verification': True
-                    })
-            except Agent.DoesNotExist:
-                pass  # Admin users don't need verification
+            # from apps.agents.models import Agent
+            # try:
+            #     agent = Agent.objects.get(user=user)
+            #     if not agent.is_email_verified:
+            #         # Resend verification email
+            #         from services.email_service import email_service
+            #         if email_service.is_available:
+            #             email_service.send_verification_email(user.email, user.first_name or user.username)
+            #         return JsonResponse({
+            #             'success': False, 
+            #             'error': 'يرجى تفعيل حسابك أولاً. تم إرسال رابط التفعيل إلى بريدك الإلكتروني.',
+            #             'require_verification': True
+            #         })
+            # except Agent.DoesNotExist:
+            #     pass  # Admin users don't need verification
             
             login(request, user)
             return JsonResponse({'success': True})
@@ -399,12 +402,13 @@ def dashboard_view(request):
     
     # Get stats
     from apps.properties.models import Property
-    from apps.leads.models import Lead
+    from apps.leads.models import Lead, ViewingAppointment
     from apps.chat.models import Conversation
     
     properties = Property.objects.filter(agent=agent, is_active=True)
     leads = Lead.objects.filter(agent=agent)
     conversations = Conversation.objects.filter(agent=agent)
+    appointments = ViewingAppointment.objects.filter(agent=agent)
     
     # Get recent items
     recent_properties = properties.order_by('-created_at')[:5]
@@ -437,12 +441,14 @@ def dashboard_view(request):
         'user_name': user.get_full_name() or user.username,
         'user_first_name': user.first_name or user.username,
         'user_initials': ''.join([n[0] for n in (user.get_full_name() or user.username).split()[:2]]).upper(),
+        'agent': agent,
         'agent_id': str(agent.id),
         'properties_count': properties.count(),
         'leads_count': leads.count(),
         'conversations_count': total_conversations,
         'views_count': sum(p.views_count for p in properties),
         'interested_count': sum(p.interested_count for p in properties),
+        'appointments_count': appointments.count(),
         'recent_properties': properties_data,
         'recent_leads': leads_data,
         'active_page': 'dashboard'
@@ -634,6 +640,18 @@ def bot_settings_view(request):
         agent.bot_system_prompt = request.POST.get('bot_system_prompt', agent.bot_system_prompt or '')
         agent.bot_collect_leads = request.POST.get('bot_collect_leads') == 'on'
         
+        # Context settings - إعدادات السياق الإضافية
+        if request.POST.get('bot_pricing_policy'):
+            agent.bot_pricing_policy = request.POST.get('bot_pricing_policy')
+        if request.POST.get('bot_viewing_policy'):
+            agent.bot_viewing_policy = request.POST.get('bot_viewing_policy')
+        if request.POST.get('bot_work_areas'):
+            agent.bot_work_areas = request.POST.get('bot_work_areas')
+        if request.POST.get('bot_services'):
+            agent.bot_services = request.POST.get('bot_services')
+        if request.POST.get('bot_contact_info'):
+            agent.bot_contact_info = request.POST.get('bot_contact_info')
+        
         # Handle avatar image upload (base64)
         avatar_data = request.POST.get('bot_avatar')
         if avatar_data and avatar_data.startswith('data:image'):
@@ -800,7 +818,10 @@ def get_global_settings(request):
         return JsonResponse({
             'success': True,
             'settings': {
+                'aiProvider': settings.ai_provider,
                 'aiModel': settings.ai_model,
+                'openaiModel': settings.openai_model,
+                'openaiApiKey': '***' if settings.openai_api_key else '',  # لا نرسل المفتاح الكامل
                 'systemPrompt': settings.system_prompt,
                 'defaultRules': settings.default_rules,
                 'responseStyle': settings.response_style,
@@ -831,8 +852,14 @@ def save_global_settings(request):
         settings = GlobalSettings.get_settings()
         
         # تحديث الإعدادات
+        if 'aiProvider' in data:
+            settings.ai_provider = data['aiProvider']
         if 'aiModel' in data:
             settings.ai_model = data['aiModel']
+        if 'openaiModel' in data:
+            settings.openai_model = data['openaiModel']
+        if 'openaiApiKey' in data and data['openaiApiKey'] and data['openaiApiKey'] != '***':
+            settings.openai_api_key = data['openaiApiKey']
         if 'systemPrompt' in data:
             settings.system_prompt = data['systemPrompt']
         if 'defaultRules' in data:

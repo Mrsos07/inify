@@ -226,7 +226,38 @@ def save_property(request):
         property_obj.is_featured = request.POST.get('is_featured') == 'on'
         property_obj.is_negotiable = request.POST.get('is_negotiable') == 'on'
         
+        # رابط الموقع (Google Maps)
+        location_url = request.POST.get('location_url', '')
+        if location_url:
+            # استخراج الإحداثيات من رابط Google Maps إذا أمكن
+            import re
+            coords_match = re.search(r'@(-?\d+\.?\d*),(-?\d+\.?\d*)', location_url)
+            if coords_match:
+                property_obj.latitude = float(coords_match.group(1))
+                property_obj.longitude = float(coords_match.group(2))
+        
+        # نوع السعر وعدد الدفعات للإيجار
+        if property_obj.status == 'for_rent':
+            price_type = request.POST.get('price_type', 'yearly')
+            property_obj.rent_period = price_type
+        
         property_obj.save()
+        
+        # ═══════════════════════════════════════════════════════════
+        # حفظ المميزات والخدمات (Amenities)
+        # ═══════════════════════════════════════════════════════════
+        amenities = request.POST.getlist('amenities')
+        print(f"Amenities received: {amenities}")
+        
+        # حذف المميزات القديمة وإضافة الجديدة
+        property_obj.amenities.all().delete()
+        for amenity_code in amenities:
+            if amenity_code:
+                PropertyAmenity.objects.create(
+                    property=property_obj,
+                    amenity=amenity_code
+                )
+        print(f"Amenities saved: {property_obj.amenities.count()}")
         
         # رفع الصور
         images = request.FILES.getlist('images')
@@ -374,6 +405,11 @@ def list_properties(request):
             if not primary_image:
                 primary_image = prop.images.first()
             
+            # حساب عدد المعاينات
+            viewing_count = prop.viewing_appointments.filter(
+                status__in=['pending', 'confirmed']
+            ).count()
+            
             data.append({
                 'id': str(prop.id),
                 'reference_number': prop.reference_number,
@@ -397,6 +433,7 @@ def list_properties(request):
                 'createdAt': prop.created_at.isoformat(),
                 'views_count': prop.views_count,
                 'interested_count': prop.interested_count,
+                'viewing_count': viewing_count,
             })
         
         return JsonResponse({'success': True, 'properties': data, 'count': len(data)})
@@ -543,6 +580,12 @@ def get_agent_properties(request, agent_id):
             'language': agent.bot_language or 'ar',
             'color': agent.bot_color or '#000000',
             'profileImage': agent.profile_image.url if agent.profile_image else None,
+            # إعدادات السياق الإضافية
+            'pricingPolicy': getattr(agent, 'bot_pricing_policy', '') or '',
+            'viewingPolicy': getattr(agent, 'bot_viewing_policy', '') or '',
+            'workAreas': getattr(agent, 'bot_work_areas', '') or '',
+            'services': getattr(agent, 'bot_services', '') or '',
+            'contactInfo': getattr(agent, 'bot_contact_info', '') or '',
         }
         
         return JsonResponse({'success': True, 'properties': data, 'agent': agent_data})

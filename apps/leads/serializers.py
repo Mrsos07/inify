@@ -4,7 +4,7 @@ Leads Serializers - محولات بيانات العملاء المحتملين
 """
 
 from rest_framework import serializers
-from .models import Lead, LeadActivity, ViewingAppointment
+from .models import Lead, LeadActivity, ViewingAppointment, PropertyCalendar, CalendarBlockedDate
 
 
 class LeadActivitySerializer(serializers.ModelSerializer):
@@ -26,6 +26,7 @@ class LeadSerializer(serializers.ModelSerializer):
     interested_properties_count = serializers.SerializerMethodField()
     interested_properties_list = serializers.SerializerMethodField()
     conversation = serializers.SerializerMethodField()
+    viewing_appointments = serializers.SerializerMethodField()
     
     class Meta:
         model = Lead
@@ -35,7 +36,7 @@ class LeadSerializer(serializers.ModelSerializer):
             'looking_for', 'city_preference', 'property_type_preference',
             'budget_min', 'budget_max', 'notes',
             'score', 'interested_properties_count', 'interested_properties_list',
-            'conversation', 'created_at', 'last_contact_at'
+            'conversation', 'viewing_appointments', 'created_at', 'last_contact_at'
         ]
     
     def get_interested_properties_count(self, obj):
@@ -95,6 +96,24 @@ class LeadSerializer(serializers.ModelSerializer):
                 return messages
         
         return []
+    
+    def get_viewing_appointments(self, obj):
+        """إرجاع مواعيد المعاينة للعميل"""
+        appointments = obj.viewing_appointments.filter(
+            status__in=['pending', 'confirmed']
+        ).order_by('scheduled_date', 'scheduled_time')[:3]
+        
+        return [
+            {
+                'id': str(a.id),
+                'property_title': a.property.title,
+                'date': str(a.scheduled_date),
+                'time': str(a.scheduled_time),
+                'status': a.status,
+                'booked_by': getattr(a, 'booked_by', None)
+            }
+            for a in appointments
+        ]
 
 
 class LeadDetailSerializer(serializers.ModelSerializer):
@@ -216,16 +235,160 @@ class ViewingAppointmentSerializer(serializers.ModelSerializer):
     lead_phone = serializers.CharField(source='lead.phone', read_only=True)
     property_title = serializers.CharField(source='property.title', read_only=True)
     property_address = serializers.SerializerMethodField()
+    property_image = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    booked_by_display = serializers.SerializerMethodField()
     
     class Meta:
         model = ViewingAppointment
         fields = [
             'id', 'lead', 'lead_name', 'lead_phone', 'property', 'property_title',
-            'property_address', 'scheduled_date', 'scheduled_time', 'status',
-            'status_display', 'notes', 'feedback', 'created_at'
+            'property_address', 'property_image', 'scheduled_date', 'scheduled_time',
+            'end_time', 'duration_minutes', 'status', 'status_display', 'location',
+            'notes', 'feedback', 'rating', 'booked_by', 'booked_by_display',
+            'reminder_sent', 'created_at', 'updated_at'
         ]
     
     def get_property_address(self, obj):
         p = obj.property
         return f"{p.city}, {p.neighborhood}" if p.neighborhood else p.city
+    
+    def get_property_image(self, obj):
+        primary_image = obj.property.images.filter(is_primary=True).first()
+        if not primary_image:
+            primary_image = obj.property.images.first()
+        return primary_image.image.url if primary_image else None
+    
+    def get_booked_by_display(self, obj):
+        mapping = {'agent': 'المسوق', 'ai_agent': 'الوكيل الذكي', 'client': 'العميل'}
+        return mapping.get(obj.booked_by, obj.booked_by)
+
+
+class ViewingAppointmentCreateSerializer(serializers.ModelSerializer):
+    """محول إنشاء موعد معاينة"""
+    
+    class Meta:
+        model = ViewingAppointment
+        fields = [
+            'lead', 'property', 'scheduled_date', 'scheduled_time',
+            'duration_minutes', 'location', 'notes', 'booked_by'
+        ]
+    
+    def validate(self, data):
+        """التحقق من توفر الموعد"""
+        property_obj = data.get('property')
+        date = data.get('scheduled_date')
+        time = data.get('scheduled_time')
+        duration = data.get('duration_minutes', 30)
+        
+        # التحقق من التعارض
+        availability = ViewingAppointment.check_availability(
+            property_id=property_obj.id,
+            date=date,
+            time=time,
+            duration_minutes=duration
+        )
+        
+        if not availability['available']:
+            conflicts = availability['conflicts']
+            raise serializers.ValidationError({
+                'scheduled_time': f"الموعد متعارض مع موعد آخر: {conflicts[0]['time']} - {conflicts[0]['end_time']}"
+            })
+        
+        return data
+
+
+class CalendarBlockedDateSerializer(serializers.ModelSerializer):
+    """محول بيانات التاريخ المحظور"""
+    
+    reason_display = serializers.CharField(source='get_reason_display', read_only=True)
+    
+    class Meta:
+        model = CalendarBlockedDate
+        fields = [
+            'id', 'date', 'reason', 'reason_display', 'notes',
+            'is_partial', 'blocked_start_time', 'blocked_end_time', 'created_at'
+        ]
+
+
+class PropertyCalendarSerializer(serializers.ModelSerializer):
+    """محول بيانات تقويم العقار"""
+    
+    property_title = serializers.CharField(source='property.title', read_only=True)
+    blocked_dates = CalendarBlockedDateSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = PropertyCalendar
+        fields = [
+            'id', 'property', 'property_title', 'default_start_time', 'default_end_time',
+            'slot_duration', 'working_days', 'allow_ai_booking', 'max_bookings_per_day',
+            'min_advance_hours', 'max_advance_days', 'blocked_dates', 'created_at', 'updated_at'
+        ]
+
+
+class PropertyCalendarUpdateSerializer(serializers.ModelSerializer):
+    """محول تحديث تقويم العقار"""
+    
+    class Meta:
+        model = PropertyCalendar
+        fields = [
+            'default_start_time', 'default_end_time', 'slot_duration', 'working_days',
+            'allow_ai_booking', 'max_bookings_per_day', 'min_advance_hours', 'max_advance_days'
+        ]
+
+
+class AvailableSlotsSerializer(serializers.Serializer):
+    """محول الفترات المتاحة"""
+    
+    date = serializers.DateField()
+    slots = serializers.ListField(child=serializers.DictField())
+    is_working_day = serializers.BooleanField()
+    is_blocked = serializers.BooleanField()
+
+
+# ============================================
+# API للوكيل الذكي (AI Agent)
+# ============================================
+
+class AIAgentAvailabilityRequestSerializer(serializers.Serializer):
+    """طلب التحقق من التوفر للوكيل الذكي"""
+    
+    property_id = serializers.UUIDField()
+    date = serializers.DateField()
+    time = serializers.TimeField(required=False)
+    duration_minutes = serializers.IntegerField(default=30)
+
+
+class AIAgentBookingRequestSerializer(serializers.Serializer):
+    """طلب حجز موعد من الوكيل الذكي"""
+    
+    property_id = serializers.UUIDField()
+    lead_id = serializers.UUIDField(required=False)
+    
+    # معلومات العميل (إذا لم يكن موجوداً)
+    client_name = serializers.CharField(max_length=200, required=False)
+    client_phone = serializers.CharField(max_length=100, required=False)
+    client_email = serializers.EmailField(required=False)
+    
+    # معلومات الموعد
+    scheduled_date = serializers.DateField()
+    scheduled_time = serializers.TimeField()
+    duration_minutes = serializers.IntegerField(default=30)
+    notes = serializers.CharField(required=False, allow_blank=True)
+    
+    def validate(self, data):
+        # يجب توفير إما lead_id أو معلومات العميل
+        if not data.get('lead_id') and not data.get('client_name'):
+            raise serializers.ValidationError(
+                "يجب توفير معرف العميل أو اسم العميل على الأقل"
+            )
+        return data
+
+
+class AIAgentBookingResponseSerializer(serializers.Serializer):
+    """استجابة حجز الموعد للوكيل الذكي"""
+    
+    success = serializers.BooleanField()
+    appointment_id = serializers.UUIDField(required=False)
+    message = serializers.CharField()
+    appointment_details = serializers.DictField(required=False)

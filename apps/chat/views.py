@@ -19,7 +19,7 @@ from .models import Conversation, Message, ConversationSummary
 from .serializers import ConversationSerializer, MessageSerializer
 from services.ai_service import NewraAIService
 from services.rag_service import RAGService
-from services.gemini_service import GeminiService
+# GeminiService و OpenAIService يتم استيرادها داخل الدالة حسب الحاجة
 
 logger = logging.getLogger(__name__)
 
@@ -176,44 +176,148 @@ class PublicChatView(View):
                 content=message
             )
             
-            # استخدام RAG مع Gemini للبحث الذكي
+            # استخدام RAG مع AI للبحث الذكي
             rag_service = RAGService()
-            gemini_service = GeminiService(agent=agent)
+            
+            # تحديد مزود الذكاء الاصطناعي من الإعدادات (مع caching)
+            from django.core.cache import cache
+            from apps.agents.models import GlobalSettings
+            
+            # محاولة الحصول على الإعدادات من الكاش
+            cached_settings = cache.get('ai_settings')
+            if cached_settings:
+                ai_provider = cached_settings.get('provider', 'gemini')
+                global_settings = None  # سنستخدم الكاش
+            else:
+                global_settings = GlobalSettings.objects.first()
+                ai_provider = global_settings.ai_provider if global_settings else 'gemini'
+                # حفظ في الكاش لمدة 5 دقائق
+                if global_settings:
+                    cache.set('ai_settings', {
+                        'provider': global_settings.ai_provider,
+                        'openai_model': global_settings.openai_model,
+                        'gemini_model': global_settings.ai_model,
+                    }, 300)
+            
+            # تهيئة الخدمة المناسبة
+            if ai_provider == 'openai':
+                from services.openai_service import OpenAIService
+                ai_service = OpenAIService(agent=agent)
+                ai_model = cached_settings.get('openai_model', 'gpt-4o') if cached_settings else (global_settings.openai_model if global_settings else 'gpt-4o')
+                logger.info(f"AI Provider: OpenAI | Model: {ai_model}")
+            else:
+                from services.gemini_service import GeminiService
+                ai_service = GeminiService(agent=agent)
+                ai_model = global_settings.ai_model if global_settings else 'gemini-3-pro-preview'
+                logger.info(f"AI Provider: Gemini | Model: {ai_model}")
+            
+            # تحليل نية المستخدم باستخدام Intent Service
+            from services.intent_service import intent_service
+            intent_result = intent_service.analyze_intent(message)
+            logger.info(f"Intent detected: {intent_result.intent} (confidence: {intent_result.confidence:.2f})")
+            logger.info(f"Extracted data: {intent_result.extracted_data}")
             
             # الحصول على سياق العقارات
+            # ═══════════════════════════════════════════════════════════
+            # مهم جداً: نرسل سياق العقارات دائماً للـ AI حتى يستطيع الإجابة
+            # على أسئلة العميل عن تفاصيل العقار (مصعد، موقف، إلخ)
+            # ═══════════════════════════════════════════════════════════
             properties_context = rag_service.get_property_context(str(agent.id), message)
+            logger.info(f"Intent: {intent_result.intent} | Category: {intent_result.category.value}")
+            logger.info(f"Properties context length: {len(properties_context)} chars")
             
-            # الحصول على تاريخ المحادثة
+            # إضافة معلومات النية للسياق
+            intent_context = f"""
+═══════════════════════════════════════════════════════════
+🎯 تحليل نية العميل
+═══════════════════════════════════════════════════════════
+• النية: {intent_result.intent}
+• الفئة: {intent_result.category.value}
+• الثقة: {intent_result.confidence:.0%}
+• البيانات المستخرجة: {intent_result.extracted_data}
+• الإجراء المقترح: {intent_result.suggested_action}
+═══════════════════════════════════════════════════════════
+"""
+            
+            # الحصول على تاريخ المحادثة (آخر 6 رسائل فقط للسرعة)
             chat_history = [
                 {'role': msg.role, 'content': msg.content}
-                for msg in conversation.messages.order_by('created_at')[:10]
-            ]
+                for msg in conversation.messages.order_by('-created_at')[:6]
+            ][::-1]  # عكس الترتيب ليكون من الأقدم للأحدث
             
-            # توليد الرد باستخدام Gemini مع RAG
-            if gemini_service.is_available:
-                response = gemini_service.chat_with_context(
+            # ═══════════════════════════════════════════════════════════
+            # تحليل حالة المحادثة لتحديد هل نعرض العقارات أم لا
+            # ═══════════════════════════════════════════════════════════
+            conversation_state = self._analyze_conversation_state(chat_history, message)
+            
+            # تحديد هل نعرض العقارات
+            should_show_properties = conversation_state.get('should_show_properties', True)
+            
+            # إضافة حالة المحادثة للسياق
+            state_context = f"""
+═══════════════════════════════════════════════════════════
+📊 حالة المحادثة
+═══════════════════════════════════════════════════════════
+• المرحلة: {conversation_state.get('stage', 'initial')}
+• العميل اختار عقار: {'نعم ✅' if conversation_state.get('property_selected') else 'لا'}
+• العميل أعطى رقمه: {'نعم ✅' if conversation_state.get('phone_given') else 'لا'}
+• تم حجز معاينة: {'نعم ✅' if conversation_state.get('viewing_scheduled') else 'لا'}
+• عرض العقارات: {'مسموح' if should_show_properties else '⛔ ممنوع - العميل في مرحلة متقدمة'}
+═══════════════════════════════════════════════════════════
+
+⚠️ تعليمات مهمة للمرحلة الحالية:
+{conversation_state.get('instructions', '')}
+"""
+            
+            # دمج سياق العقارات مع تحليل النية (فقط إذا مسموح)
+            if should_show_properties:
+                full_context = f"{intent_context}\n{state_context}\n{properties_context}"
+            else:
+                full_context = f"{intent_context}\n{state_context}\n\n⛔ لا تعرض أي عقارات - العميل في مرحلة متقدمة من المحادثة"
+            
+            # توليد الرد باستخدام AI المحدد
+            if ai_service.is_available:
+                response = ai_service.chat_with_context(
                     user_message=message,
-                    properties_context=properties_context,
+                    properties_context=full_context,
                     chat_history=chat_history
                 )
             else:
-                # استخدام OpenAI كبديل
-                ai_service = NewraAIService(agent=agent)
-                messages = conversation.get_messages_for_ai()
-                response = ai_service.chat(
-                    messages=messages,
-                    conversation_context=conversation.context,
-                    language=conversation.language
-                )
+                # رسالة خطأ إذا الخدمة غير متاحة
+                response = "عذراً، خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى المحاولة لاحقاً."
+                logger.error(f"AI service not available: {ai_provider}")
             
             # الحصول على العقارات المقترحة
-            rag_response = rag_service.generate_property_response(str(agent.id), message)
-            suggested_properties = rag_response.get('suggested_properties', [])
+            suggested_properties = []
+            all_agent_properties = []  # للاستخدام في تحديد العقار المهتم به
+            
+            # ═══════════════════════════════════════════════════════════
+            # قواعد عرض العقارات:
+            # 1. نعرض العقارات فقط عند البحث الجديد (category == 'search')
+            # 2. لا نعرض العقارات عند الأسئلة عن تفاصيل العقار (category == 'result')
+            # 3. لا نعرض العقارات إذا العميل في مرحلة متقدمة
+            # ═══════════════════════════════════════════════════════════
+            is_new_search = intent_result.category.value == 'search'
+            is_property_question = intent_result.intent in ['PropertyQuestion', 'PropertyDetails', 'ShowSimilar', 'Compare']
+            
+            logger.info(f"📊 Show properties decision: is_new_search={is_new_search}, is_property_question={is_property_question}, should_show={should_show_properties}")
+            
+            if is_new_search and not is_property_question:
+                rag_response = rag_service.generate_property_response(str(agent.id), message)
+                all_agent_properties = rag_response.get('suggested_properties', [])
+                
+                # عرض العقارات فقط إذا مسموح
+                if should_show_properties:
+                    suggested_properties = all_agent_properties
+                    logger.info(f"✅ Showing {len(suggested_properties)} properties")
+            else:
+                logger.info(f"⛔ Not showing properties - Intent: {intent_result.intent}")
             
             # تحليل الرسالة لجمع بيانات العملاء
             from services.lead_capture_service import lead_capture_service
             
             lead_created = None
+            viewing_booked = None
             bot_collect_leads = getattr(agent, 'bot_collect_leads', True)
             
             if bot_collect_leads:
@@ -222,21 +326,91 @@ class PublicChatView(View):
                 
                 logger.info(f"Lead analysis: phone={analysis.get('phone')}, has_contact={analysis.get('has_contact_info')}")
                 
+                # الحصول على العقار المهتم به من المحادثة السابقة
+                interested_property_id = None
+                
+                from apps.properties.models import Property
+                import re
+                
+                # تجميع نص المحادثة
+                full_conversation_text = ' '.join([msg.get('content', '') for msg in chat_history]) + ' ' + message
+                agent_properties = Property.objects.filter(agent=agent, is_active=True)
+                
+                # ═══════════════════════════════════════════════════════════
+                # أولاً: البحث عن العقار الذي اختاره العميل صراحة
+                # ═══════════════════════════════════════════════════════════
+                
+                # البحث عن عبارات الاختيار الصريح مثل "مهتم بهذا العقار: شقة فاخرة"
+                selection_patterns = [
+                    r'مهتم\s*ب(?:هذا\s*)?(?:العقار)?[:\s]*(.+?)(?:\n|$)',
+                    r'أبي\s*(?:هذا|هذي|هذه)[:\s]*(.+?)(?:\n|$)',
+                    r'اختار(?:ت)?\s*(.+?)(?:\n|$)',
+                    r'عجبني\s*(.+?)(?:\n|$)',
+                    r'أبي\s*أشوف(?:ه|ها)?[:\s]*(.+?)(?:\n|$)',
+                ]
+                
+                for pattern in selection_patterns:
+                    match = re.search(pattern, full_conversation_text, re.IGNORECASE)
+                    if match:
+                        selected_text = match.group(1).strip()
+                        # البحث عن العقار المطابق
+                        for prop in agent_properties:
+                            if prop.title and (prop.title in selected_text or selected_text in prop.title):
+                                interested_property_id = str(prop.id)
+                                logger.info(f"Found property by explicit selection: {prop.title}")
+                                break
+                        if interested_property_id:
+                            break
+                
+                # ثانياً: البحث عن الرقم المرجعي في عبارات الاختيار
+                if not interested_property_id:
+                    ref_match = re.search(r'([A-Z]{2}-[A-Z]{2}-\d{4})', full_conversation_text)
+                    if ref_match:
+                        ref_number = ref_match.group(1)
+                        try:
+                            prop = Property.objects.get(reference_number=ref_number, agent=agent)
+                            interested_property_id = str(prop.id)
+                            logger.info(f"Found property by reference: {ref_number}")
+                        except Property.DoesNotExist:
+                            pass
+                
+                # ثالثاً: البحث عن آخر عقار ذُكر في رسائل العميل (وليس الوكيل)
+                if not interested_property_id:
+                    user_messages = [msg.get('content', '') for msg in chat_history if msg.get('role') == 'user']
+                    user_messages.append(message)
+                    user_text = ' '.join(user_messages)
+                    
+                    for prop in agent_properties:
+                        if prop.title and prop.title in user_text:
+                            interested_property_id = str(prop.id)
+                            logger.info(f"Found property in user messages: {prop.title}")
+                            break
+                
+                # رابعاً: من العقارات المقترحة أو كل عقارات الوكيل (فقط إذا كان عقار واحد)
+                available_properties = all_agent_properties if all_agent_properties else suggested_properties
+                if not interested_property_id and available_properties and len(available_properties) == 1:
+                    interested_property_id = available_properties[0].get('id')
+                    logger.info(f"Using single available property: {interested_property_id}")
+                
+                # خامساً: إذا كان هناك عقارات وطلب معاينة، استخدم أول عقار
+                if not interested_property_id and available_properties and len(available_properties) > 0:
+                    # فقط للحجز - نستخدم أول عقار إذا طلب العميل معاينة
+                    viewing_keywords = ['معاينة', 'أشوف', 'اشوف', 'موعد', 'زيارة', 'بكرة', 'غدا']
+                    if any(kw in message.lower() for kw in viewing_keywords):
+                        interested_property_id = available_properties[0].get('id')
+                        logger.info(f"Using first available property for viewing: {interested_property_id}")
+                
+                # ⚠️ لا نستخدم أول عقار متاح للـ lead - لكن نسجل التحذير
+                if not interested_property_id:
+                    logger.warning("Could not determine interested property - checking if viewing requested")
+                    # محاولة أخيرة: إذا كان هناك عقار واحد فقط للوكيل
+                    single_property = agent_properties.first()
+                    if single_property and agent_properties.count() == 1:
+                        interested_property_id = str(single_property.id)
+                        logger.info(f"Using agent's only property: {interested_property_id}")
+                
                 # إذا أعطى العميل رقم جواله، أنشئ lead
                 if analysis.get('phone'):
-                    # الحصول على العقار المهتم به من المحادثة السابقة
-                    interested_property_id = None
-                    if suggested_properties:
-                        interested_property_id = suggested_properties[0].get('id')
-                    
-                    # البحث عن العقار في تاريخ المحادثة إذا لم يكن موجوداً
-                    if not interested_property_id:
-                        # جلب آخر عقار تم عرضه في المحادثة
-                        from apps.properties.models import Property
-                        props = Property.objects.filter(agent=agent, is_active=True)
-                        if props.exists():
-                            interested_property_id = str(props.first().id)
-                    
                     logger.info(f"Creating lead: phone={analysis.get('phone')}, property={interested_property_id}")
                     
                     try:
@@ -246,7 +420,7 @@ class PublicChatView(View):
                             extracted_info={
                                 'phone': analysis.get('phone'),
                                 'email': analysis.get('email'),
-                                'name': analysis.get('name') or 'عميل مهتم',
+                                'name': analysis.get('name') or 'عميل من الشات بوت',
                                 'interest_level': 'high'
                             },
                             interested_property_id=interested_property_id
@@ -259,10 +433,74 @@ class PublicChatView(View):
                                 'phone': lead.phone
                             }
                             logger.info(f"Lead created successfully: {lead.id}")
+                            
+                            # تحليل طلب المعاينة من الرسالة الحالية وتاريخ المحادثة
+                            viewing_analysis = lead_capture_service.analyze_viewing_request(message, chat_history)
+                            
+                            # البحث عن طلب معاينة في تاريخ المحادثة إذا لم يكن في الرسالة الحالية
+                            full_conversation = ' '.join([msg.get('content', '') for msg in chat_history])
+                            viewing_keywords_in_history = any(kw in full_conversation.lower() for kw in [
+                                'معاينة', 'أشوف', 'اشوف', 'أشوفه', 'اشوفه', 'أشوفها', 'اشوفها',
+                                'موعد', 'زيارة', 'بكرة', 'بكره', 'غدا', 'غداً', 'العصر', 'الصباح'
+                            ])
+                            
+                            wants_viewing = viewing_analysis.get('wants_viewing') or viewing_keywords_in_history
+                            
+                            logger.info(f"Viewing check: wants_viewing={wants_viewing}, interested_property_id={interested_property_id}")
+                            
+                            if wants_viewing and interested_property_id:
+                                # تحديد التاريخ والوقت
+                                from datetime import datetime, timedelta
+                                
+                                scheduled_date = viewing_analysis.get('suggested_date')
+                                scheduled_time = viewing_analysis.get('suggested_time')
+                                
+                                # البحث عن التاريخ والوقت في تاريخ المحادثة
+                                if not scheduled_date or not scheduled_time:
+                                    history_analysis = lead_capture_service.analyze_viewing_request(full_conversation)
+                                    if not scheduled_date:
+                                        scheduled_date = history_analysis.get('suggested_date')
+                                    if not scheduled_time:
+                                        scheduled_time = history_analysis.get('suggested_time')
+                                
+                                # إذا لم يحدد العميل تاريخ، اقترح غداً
+                                if not scheduled_date:
+                                    tomorrow = datetime.now() + timedelta(days=1)
+                                    scheduled_date = tomorrow.strftime('%Y-%m-%d')
+                                
+                                # إذا لم يحدد وقت، اقترح الساعة 4 عصراً (العصر)
+                                if not scheduled_time:
+                                    # البحث عن كلمة "العصر" في المحادثة
+                                    if 'العصر' in full_conversation.lower():
+                                        scheduled_time = '16:00'
+                                    elif 'الصباح' in full_conversation.lower():
+                                        scheduled_time = '10:00'
+                                    else:
+                                        scheduled_time = '10:00'
+                                
+                                logger.info(f"Attempting to book viewing: date={scheduled_date}, time={scheduled_time}, property={interested_property_id}")
+                                
+                                # حجز الموعد
+                                booking_result = lead_capture_service.book_viewing_appointment(
+                                    agent_id=str(agent.id),
+                                    lead_id=str(lead.id),
+                                    property_id=interested_property_id,
+                                    scheduled_date=scheduled_date,
+                                    scheduled_time=scheduled_time,
+                                    notes=f'تم الحجز عبر الشات بوت - المحادثة: {conversation.id}'
+                                )
+                                
+                                if booking_result.get('success'):
+                                    viewing_booked = booking_result.get('appointment_details')
+                                    logger.info(f"Viewing booked successfully: {booking_result.get('appointment_id')}")
+                                else:
+                                    logger.warning(f"Failed to book viewing: {booking_result.get('message')}")
                         else:
                             logger.error(f"Failed to create lead for phone: {analysis.get('phone')}")
                     except Exception as e:
                         logger.error(f"Exception creating lead: {e}")
+                        import traceback
+                        traceback.print_exc()
             
             # حفظ رد المساعد
             assistant_message = Message.objects.create(
@@ -285,11 +523,14 @@ class PublicChatView(View):
                 'suggested_properties': suggested_properties,
                 'message_id': str(assistant_message.id),
                 'has_properties': len(suggested_properties) > 0,
-                'show_media': rag_response.get('show_media', False)
+                'show_media': should_show_properties and len(suggested_properties) > 0
             }
             
             if lead_created:
                 response_data['lead_created'] = lead_created
+            
+            if viewing_booked:
+                response_data['viewing_booked'] = viewing_booked
             
             return JsonResponse(response_data)
             
@@ -312,6 +553,140 @@ class PublicChatView(View):
         if x_forwarded_for:
             return x_forwarded_for.split(',')[0]
         return request.META.get('REMOTE_ADDR')
+    
+    def _analyze_conversation_state(self, chat_history: list, current_message: str) -> dict:
+        """
+        تحليل حالة المحادثة لتحديد المرحلة الحالية
+        
+        المراحل:
+        1. initial - بداية المحادثة
+        2. searching - العميل يبحث عن عقار
+        3. property_shown - تم عرض العقارات
+        4. property_selected - العميل اختار عقار معين
+        5. contact_requested - طلب التواصل/المعاينة
+        6. phone_given - العميل أعطى رقمه
+        7. viewing_scheduled - تم حجز المعاينة
+        8. completed - اكتملت العملية
+        """
+        import re
+        
+        state = {
+            'stage': 'initial',
+            'property_selected': False,
+            'phone_given': False,
+            'viewing_scheduled': False,
+            'should_show_properties': True,
+            'instructions': ''
+        }
+        
+        # تحليل تاريخ المحادثة
+        full_conversation = ' '.join([msg.get('content', '') for msg in chat_history])
+        full_conversation_lower = full_conversation.lower()
+        
+        # كلمات تدل على اختيار عقار
+        selection_keywords = [
+            'مهتم بهذا العقار', 'أنا مهتم', 'هذا يناسبني', 'أبي هذا', 
+            'اختيار موفق', 'هذي الشقة', 'هذا العقار', 'عجبني هذا',
+            'أبي أشوفه', 'أبي أشوفها', 'ابي اشوفه', 'ابي اشوفها',
+            'الخيار الأول', 'الخيار الثاني', 'رقم 1', 'رقم 2'
+        ]
+        
+        # كلمات تدل على سؤال عن تفاصيل العقار (لا نعرض عقارات جديدة)
+        property_question_keywords = [
+            'هل فيها', 'هل فيه', 'فيها مصعد', 'فيه مصعد', 'موقف سيارة',
+            'مواقف', 'مسبح', 'حديقة', 'تكييف', 'مفروش', 'مؤثث',
+            'كم الطابق', 'أي طابق', 'عمر العقار', 'سنة البناء',
+            'المميزات', 'الخدمات', 'قريب من', 'بلكونة', 'شرفة'
+        ]
+        
+        # كلمات تدل على إعطاء الرقم
+        phone_patterns = [r'05\d{8}', r'٠٥\d{8}']
+        
+        # كلمات تدل على حجز معاينة
+        viewing_keywords = [
+            'تم تثبيت الموعد', 'تم اعتماد', 'تم حجز', 'موعد المعاينة',
+            'بيتواصل معك', 'سيتواصل معك', 'تم حفظ بياناتك'
+        ]
+        
+        # كلمات تدل على طلب بحث جديد
+        new_search_keywords = [
+            'أبي عقار ثاني', 'عندك غيره', 'ورني المزيد', 'خيارات ثانية',
+            'أبي أبحث', 'نبدأ من جديد', 'عقار آخر'
+        ]
+        
+        # التحقق من طلب بحث جديد في الرسالة الحالية
+        current_lower = current_message.lower()
+        if any(kw in current_lower for kw in new_search_keywords):
+            state['stage'] = 'searching'
+            state['should_show_properties'] = True
+            state['instructions'] = 'العميل يريد البحث من جديد. يمكنك عرض العقارات.'
+            return state
+        
+        # ═══════════════════════════════════════════════════════════
+        # التحقق من سؤال عن تفاصيل العقار - لا نعرض عقارات جديدة
+        # ═══════════════════════════════════════════════════════════
+        if any(kw in current_lower for kw in property_question_keywords):
+            state['stage'] = 'property_question'
+            state['should_show_properties'] = False
+            state['instructions'] = '''⛔ ممنوع عرض أي عقارات!
+العميل يسأل عن تفاصيل العقار المختار. فقط:
+- أجب على سؤاله من البيانات المتوفرة
+- إذا لم تجد المعلومة، اعتذر واقترح التواصل مع المسوق
+- لا تعرض عقارات جديدة أبداً'''
+            return state
+        
+        # التحقق من حجز المعاينة
+        if any(kw in full_conversation_lower for kw in viewing_keywords):
+            state['viewing_scheduled'] = True
+            state['stage'] = 'completed'
+            state['should_show_properties'] = False
+            state['instructions'] = '''⛔ ممنوع عرض أي عقارات!
+العميل في مرحلة ما بعد الحجز. فقط:
+- أجب على أسئلته
+- أكد له الموعد
+- اسأله إذا يحتاج شيء آخر
+- لا تعرض عقارات جديدة إلا إذا طلب صراحة'''
+            return state
+        
+        # التحقق من إعطاء الرقم
+        for pattern in phone_patterns:
+            if re.search(pattern, full_conversation):
+                state['phone_given'] = True
+                state['stage'] = 'phone_given'
+                state['should_show_properties'] = False
+                state['instructions'] = '''⛔ ممنوع عرض أي عقارات!
+العميل أعطى رقمه. فقط:
+- أكد استلام الرقم
+- أخبره أن المسوق سيتواصل معه
+- اسأله عن موعد المعاينة إذا لم يحدد
+- لا تعرض عقارات جديدة'''
+                break
+        
+        # التحقق من اختيار عقار
+        if any(kw in full_conversation_lower for kw in selection_keywords):
+            state['property_selected'] = True
+            if not state['phone_given']:
+                state['stage'] = 'property_selected'
+                state['should_show_properties'] = False
+                state['instructions'] = '''⛔ ممنوع عرض أي عقارات!
+العميل اختار عقار. فقط:
+- أكد اختياره
+- اسأله عن موعد المعاينة
+- اطلب رقم جواله للتواصل
+- لا تعرض عقارات أخرى إلا إذا طلب'''
+        
+        # إذا لم يتم تحديد مرحلة متقدمة
+        if state['stage'] == 'initial':
+            # التحقق من وجود عرض عقارات سابق
+            property_shown_keywords = ['عندي', 'تفضل', 'هذا العرض', 'شقة في', 'فيلا في']
+            if any(kw in full_conversation_lower for kw in property_shown_keywords):
+                state['stage'] = 'property_shown'
+                state['should_show_properties'] = True
+                state['instructions'] = 'تم عرض العقارات. انتظر اختيار العميل أو اسأله عن رأيه.'
+            else:
+                state['instructions'] = 'بداية المحادثة. اسأل العميل عن احتياجاته قبل عرض العقارات.'
+        
+        return state
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -505,27 +880,45 @@ class EmbedChatAPI(View):
             # بناء الـ prompt
             system_prompt = self._build_system_prompt(agent, properties_context)
             
-            # استخدام Gemini Service
-            gemini_service = GeminiService(agent=agent)
+            # تحديد مزود الذكاء الاصطناعي من الإعدادات
+            from apps.agents.models import GlobalSettings
+            global_settings = GlobalSettings.objects.first()
+            ai_provider = global_settings.ai_provider if global_settings else 'gemini'
             
-            if not gemini_service.is_available:
+            # استخدام الخدمة المناسبة
+            if ai_provider == 'openai':
+                from services.openai_service import OpenAIService
+                ai_service = OpenAIService(agent=agent)
+                logger.info(f"Embed Chat - AI Provider: OpenAI | Model: {global_settings.openai_model}")
+            else:
+                from services.gemini_service import GeminiService
+                ai_service = GeminiService(agent=agent)
+                logger.info(f"Embed Chat - AI Provider: Gemini | Model: {global_settings.ai_model}")
+            
+            if not ai_service.is_available:
                 return JsonResponse({'success': False, 'error': 'خدمة AI غير متاحة'}, status=503)
             
             # توليد الرد مع الـ System Prompt
-            result = gemini_service.chat_with_context(
+            result = ai_service.chat_with_context(
                 user_message=message,
                 properties_context=properties_context,
                 chat_history=conversation_history[-6:],  # آخر 6 رسائل
-                system_prompt=system_prompt  # إرسال الـ System Prompt
             )
             
             # استخراج النص من الرد
             response_text = result.get('content', '') if isinstance(result, dict) else str(result)
             
+            # تحديد معلومات النموذج للـ response
+            model_info = {
+                'provider': ai_provider,
+                'model': global_settings.openai_model if ai_provider == 'openai' else global_settings.ai_model
+            }
+            
             return JsonResponse({
                 'success': True,
                 'response': response_text,
-                'agent': agent.bot_name or 'Inify'
+                'agent': agent.bot_name or 'Inify',
+                'ai_info': model_info  # معلومات النموذج
             })
             
         except json.JSONDecodeError:
@@ -602,7 +995,10 @@ class EmbedChatAPI(View):
             global_settings = GlobalSettings.objects.first()
             system_prompt = global_settings.system_prompt if global_settings and global_settings.system_prompt else ''
             default_rules = global_settings.default_rules if global_settings and global_settings.default_rules else ''
-        except:
+            logger.info(f"📋 Global System Prompt: {'✅ موجود' if system_prompt else '❌ فارغ'}")
+            logger.info(f"📋 Default Rules: {'✅ موجود' if default_rules else '❌ فارغ'}")
+        except Exception as e:
+            logger.error(f"❌ Error loading global settings: {e}")
             system_prompt = ''
             default_rules = ''
         
@@ -620,6 +1016,18 @@ class EmbedChatAPI(View):
         # تعليمات المسوق الخاصة
         if agent.bot_system_prompt:
             agent_info += f"• تعليمات المسوق: {agent.bot_system_prompt}\n"
+        
+        # إعدادات السياق الإضافية
+        if hasattr(agent, 'bot_pricing_policy') and agent.bot_pricing_policy:
+            agent_info += f"\n📋 سياسة التسعير والدفع:\n{agent.bot_pricing_policy}\n"
+        if hasattr(agent, 'bot_viewing_policy') and agent.bot_viewing_policy:
+            agent_info += f"\n📅 سياسة المعاينة والحجز:\n{agent.bot_viewing_policy}\n"
+        if hasattr(agent, 'bot_work_areas') and agent.bot_work_areas:
+            agent_info += f"\n📍 مناطق العمل:\n{agent.bot_work_areas}\n"
+        if hasattr(agent, 'bot_services') and agent.bot_services:
+            agent_info += f"\n🛠️ الخدمات المقدمة:\n{agent.bot_services}\n"
+        if hasattr(agent, 'bot_contact_info') and agent.bot_contact_info:
+            agent_info += f"\n📞 معلومات التواصل:\n{agent.bot_contact_info}\n"
         
         # ═══════════════════════════════════════════════════════════
         # 3. RAG CONTEXT - العقارات المتاحة

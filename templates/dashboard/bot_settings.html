@@ -988,6 +988,152 @@
         #avatarInput {
             display: none;
         }
+        
+        /* Chat Popup Styles - WhatsApp Style */
+        .chat-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .chat-popup-overlay.active {
+            display: flex;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .chat-popup-container {
+            width: 400px;
+            height: 650px;
+            max-width: 95vw;
+            max-height: 90vh;
+            background: #0b141a;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .chat-popup-header {
+            display: none;
+        }
+        
+        .chat-popup-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .chat-popup-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #25d366, #128c7e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+            overflow: hidden;
+        }
+        
+        .chat-popup-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .chat-popup-info h3 {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .chat-popup-status {
+            color: #25d366;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .chat-popup-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #25d366;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .chat-popup-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .chat-popup-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        #chatPopupFrame {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #0b141a;
+        }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .chat-popup-container {
+                width: 100%;
+                height: 100%;
+                max-width: 100vw;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1021,8 +1167,25 @@
                 <a href="/profile/">حسابي</a>
             </nav>
         </div>
-        <a href="/chat/live/" class="header-btn" style="background: linear-gradient(135deg, var(--blue-mid), var(--cyan)); color: var(--midnight);">🤖 تجربة الشات</a>
+        <button onclick="openChatPopup()" class="header-btn" style="background: linear-gradient(135deg, var(--blue-mid), var(--cyan)); color: var(--midnight); border: none; cursor: pointer;">🤖 تجربة الشات</button>
     </header>
+    
+    <!-- Chat Popup Overlay -->
+    <div id="chatPopupOverlay" class="chat-popup-overlay" onclick="closeChatPopup(event)">
+        <div class="chat-popup-container" onclick="event.stopPropagation()">
+            <div class="chat-popup-header">
+                <div class="chat-popup-title">
+                    <span class="chat-popup-avatar" id="popupAvatar">🤖</span>
+                    <div class="chat-popup-info">
+                        <h3 id="popupAgentName">Inify</h3>
+                        <span class="chat-popup-status">متصل الآن</span>
+                    </div>
+                </div>
+                <button class="chat-popup-close" onclick="closeChatPopup()">&times;</button>
+            </div>
+            <iframe id="chatPopupFrame" src="" frameborder="0"></iframe>
+        </div>
+    </div>
 
     <main class="main-content">
         {% csrf_token %}
@@ -1639,7 +1802,16 @@
             agentDescription: '{{ agent.bot_title|default:"وكيل عقاري ذكي"|escapejs }}',
             welcomeMessage: '{{ agent.bot_welcome_message|default:"مرحباً! 👋 أنا وكيلك العقاري الذكي. كيف يمكنني مساعدتك اليوم؟"|escapejs }}',
             primaryColor: '{{ agent.bot_color|default:"#6BB8C9"|escapejs }}',
-            companyInfo: '{{ agent.bot_system_prompt|default:""|escapejs }}'
+            companyInfo: '{{ agent.bot_system_prompt|default:""|escapejs }}',
+            // إعدادات السياق الإضافية من قاعدة البيانات
+            pricingPolicy: '{{ agent.bot_pricing_policy|default:""|escapejs }}',
+            viewingPolicy: '{{ agent.bot_viewing_policy|default:""|escapejs }}',
+            workAreas: '{{ agent.bot_work_areas|default:""|escapejs }}',
+            services: '{{ agent.bot_services|default:""|escapejs }}',
+            contactInfo: '{{ agent.bot_contact_info|default:""|escapejs }}',
+            // صورة الوكيل من السيرفر
+            serverAvatarUrl: '{% if agent.profile_image %}{{ agent.profile_image.url }}{% endif %}',
+            useAvatarImage: {{ agent.profile_image|yesno:"true,false" }}
         };
         
         let savedSettings = JSON.parse(localStorage.getItem('newra_agent_settings_' + agentId) || '{}');
@@ -1897,6 +2069,13 @@
                 formData.append('bot_welcome_message', settings.welcomeMessage);
                 formData.append('bot_color', settings.primaryColor);
                 formData.append('bot_system_prompt', settings.companyInfo || '');
+                
+                // إعدادات السياق الإضافية
+                formData.append('bot_pricing_policy', settings.pricingPolicy || '');
+                formData.append('bot_viewing_policy', settings.viewingPolicy || '');
+                formData.append('bot_work_areas', settings.workAreas || '');
+                formData.append('bot_services', settings.services || '');
+                formData.append('bot_contact_info', settings.contactInfo || '');
                 
                 // إرسال صورة الوكيل إذا كانت موجودة
                 if (settings.useAvatarImage && settings.agentAvatar) {
@@ -2171,6 +2350,60 @@
 
         // Initial load
         loadSettings();
+        
+        // ═══════════════════════════════════════════════════════════
+        // Chat Popup Functions
+        // ═══════════════════════════════════════════════════════════
+        
+        function openChatPopup() {
+            const overlay = document.getElementById('chatPopupOverlay');
+            const frame = document.getElementById('chatPopupFrame');
+            const popupAgentName = document.getElementById('popupAgentName');
+            const popupAvatar = document.getElementById('popupAvatar');
+            
+            // تحديث اسم الوكيل
+            popupAgentName.textContent = settings.agentName || 'Inify';
+            
+            // تحديث صورة الوكيل
+            const serverAvatar = '{% if agent.profile_image %}{{ agent.profile_image.url }}{% endif %}';
+            if (serverAvatar) {
+                popupAvatar.innerHTML = `<img src="${serverAvatar}" alt="الوكيل">`;
+            } else if (settings.useAvatarImage && settings.agentAvatar) {
+                popupAvatar.innerHTML = `<img src="${settings.agentAvatar}" alt="الوكيل">`;
+            } else {
+                popupAvatar.textContent = '🤖';
+            }
+            
+            // تحميل الشات في الـ iframe
+            frame.src = `/embed/?agent=${agentId}`;
+            
+            // إظهار الـ popup
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeChatPopup(event) {
+            // إذا تم النقر على الـ overlay نفسه وليس المحتوى
+            if (event && event.target !== event.currentTarget) return;
+            
+            const overlay = document.getElementById('chatPopupOverlay');
+            const frame = document.getElementById('chatPopupFrame');
+            
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+            
+            // إيقاف الـ iframe
+            setTimeout(() => {
+                frame.src = '';
+            }, 300);
+        }
+        
+        // إغلاق بالـ Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeChatPopup();
+            }
+        });
     </script>
 </body>
 </html>

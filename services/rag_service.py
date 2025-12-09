@@ -85,29 +85,111 @@ class RAGService:
             return "حدث خطأ في استرجاع العقارات."
     
     def _format_properties_for_context(self, properties) -> str:
-        """تنسيق العقارات كسياق نصي"""
+        """تنسيق العقارات كسياق نصي شامل"""
+        from datetime import datetime
+        
         context_parts = []
         
-        for prop in properties[:20]:  # حد أقصى 20 عقار
+        for prop in properties[:10]:  # حد أقصى 10 عقارات للسرعة
             images = prop.images.all()
             image_info = f"({images.count()} صور متاحة)" if images.exists() else "(لا توجد صور)"
             
+            # حساب عمر العقار
+            property_age = "غير محدد"
+            if prop.year_built:
+                property_age = f"{datetime.now().year - prop.year_built} سنة (بني {prop.year_built})"
+            elif prop.age_years:
+                property_age = f"{prop.age_years} سنة"
+            
+            # حالة التأثيث
+            furnishing_display = {
+                'furnished': 'مفروش بالكامل',
+                'semi_furnished': 'نصف مفروش',
+                'unfurnished': 'غير مفروش'
+            }.get(prop.furnishing, 'غير محدد')
+            
+            # فترة الإيجار
+            rent_info = ""
+            if prop.status == 'for_rent':
+                rent_periods = {'yearly': 'سنوي', 'monthly': 'شهري', 'daily': 'يومي'}
+                rent_info = f"\n- فترة الإيجار: {rent_periods.get(prop.rent_period, 'سنوي')}"
+            
+            # المميزات - تفصيل كامل
+            amenities_obj = prop.amenities.all()
+            amenities_list = [a.get_amenity_display() for a in amenities_obj]
+            amenities_codes = [a.amenity for a in amenities_obj]
+            
+            # تحديد المميزات المهمة بشكل صريح
+            has_elevator = 'elevator' in amenities_codes
+            has_parking = 'parking' in amenities_codes
+            has_pool = 'pool' in amenities_codes
+            has_garden = 'garden' in amenities_codes
+            has_balcony = 'balcony' in amenities_codes
+            has_ac = 'central_ac' in amenities_codes
+            has_security = 'security' in amenities_codes
+            
+            amenities_text = ', '.join(amenities_list) if amenities_list else 'لا توجد مميزات محددة'
+            
+            # إضافة تفاصيل المميزات المهمة
+            important_amenities = f"""
+🔹 مصعد: {'✅ نعم يوجد مصعد' if has_elevator else '❌ لا يوجد مصعد'}
+🔹 موقف سيارات: {'✅ نعم يوجد موقف ({} مواقف)'.format(prop.parking_spaces) if has_parking or prop.parking_spaces > 0 else '❌ لا يوجد موقف خاص'}
+🔹 مسبح: {'✅ نعم' if has_pool else '❌ لا'}
+🔹 حديقة: {'✅ نعم' if has_garden else '❌ لا'}
+🔹 شرفة/بلكونة: {'✅ نعم' if has_balcony else '❌ لا'}
+🔹 تكييف مركزي: {'✅ نعم' if has_ac else '❌ لا'}
+🔹 حراسة أمنية: {'✅ نعم' if has_security else '❌ لا'}"""
+            
+            # الطابق
+            floor_info = f"الطابق {prop.floor_number}" if prop.floor_number else "غير محدد"
+            
             prop_text = f"""
-عقار #{prop.id}:
-- العنوان: {prop.title}
+═══════════════════════════════════════════════════════════
+🏠 عقار: {prop.title}
+🔖 الرقم المرجعي: {prop.reference_number}
+═══════════════════════════════════════════════════════════
+
+📋 المعلومات الأساسية:
 - النوع: {prop.get_property_type_display()}
-- الحالة: {prop.get_status_display()}
+- حالة العرض: {prop.get_status_display()}
+- الوصف: {prop.description if prop.description else 'لا يوجد وصف'}{rent_info}
+
+📍 الموقع:
+- المدينة: {prop.city}
+- الحي: {prop.neighborhood or 'غير محدد'}
+- العنوان: {prop.address or 'غير محدد'}
+- الشارع: {prop.street or 'غير محدد'}
+
+💰 السعر:
 - السعر: {prop.price:,.0f} ريال
+- قابل للتفاوض: {'نعم' if prop.is_negotiable else 'لا'}
+
+📐 التفاصيل:
 - المساحة: {prop.size} م²
-- الغرف: {prop.bedrooms} | الحمامات: {prop.bathrooms}
-- الموقع: {prop.neighborhood}، {prop.city}
-- الوصف: {prop.description[:200] if prop.description else 'لا يوجد وصف'}
+- غرف النوم: {prop.bedrooms}
+- الحمامات: {prop.bathrooms}
+- غرف المعيشة: {prop.living_rooms}
+- عدد الطوابق: {prop.floors}
+- رقم الطابق: {floor_info}
+- مواقف السيارات: {prop.parking_spaces}
+
+🏗️ حالة العقار:
+- التأثيث: {furnishing_display}
+- عمر العقار: {property_age}
+
+✨ المميزات والخدمات:
+{amenities_text}
+
+🏢 تفاصيل المميزات المهمة:
+{important_amenities}
+
+📸 الوسائط:
 - الصور: {image_info}
-- المميزات: {', '.join([a.name for a in prop.amenities.all()[:5]]) if prop.amenities.exists() else 'غير محدد'}
+- الفيديو: {'متوفر' if prop.videos.exists() else 'غير متوفر'}
 """
             context_parts.append(prop_text)
         
-        return "\n---\n".join(context_parts)
+        return "\n".join(context_parts)
     
     def _smart_search(self, query: str, context: str, properties) -> str:
         """بحث ذكي باستخدام Gemini"""
@@ -223,9 +305,10 @@ class RAGService:
         return "\n".join(response_parts)
     
     def get_property_details_with_media(self, property_id) -> Dict[str, Any]:
-        """الحصول على تفاصيل عقار مع صوره وفيديوهاته"""
+        """الحصول على تفاصيل عقار كاملة مع صوره وفيديوهاته"""
         from apps.properties.models import Property
         import uuid
+        from datetime import datetime
         
         try:
             # تحويل property_id إلى UUID إذا كان string
@@ -239,29 +322,90 @@ class RAGService:
             images = prop.images.all()
             videos = prop.videos.all()
             
+            # حساب عمر العقار
+            property_age = None
+            if prop.year_built:
+                property_age = datetime.now().year - prop.year_built
+            elif prop.age_years:
+                property_age = prop.age_years
+            
+            # تحديد فترة الإيجار
+            rent_period_display = None
+            if prop.status == 'for_rent':
+                rent_periods = {
+                    'yearly': 'سنوي',
+                    'monthly': 'شهري',
+                    'daily': 'يومي'
+                }
+                rent_period_display = rent_periods.get(prop.rent_period, 'سنوي')
+            
+            # حالة التأثيث
+            furnishing_display = {
+                'furnished': 'مفروش',
+                'semi_furnished': 'نصف مفروش',
+                'unfurnished': 'غير مفروش'
+            }.get(prop.furnishing, 'غير مفروش')
+            
             return {
+                # المعلومات الأساسية
                 'id': str(prop.id),
+                'reference_number': prop.reference_number,
                 'title': prop.title,
+                'description': prop.description,
                 'type': prop.get_property_type_display(),
+                'type_value': prop.property_type,
                 'status': prop.get_status_display(),
+                'status_value': prop.status,
+                
+                # السعر
                 'price': float(prop.price),
-                'price_display': f"{prop.price:,.0f} ريال",
+                'price_display': prop.get_price_display(),
+                'price_per_sqm': float(prop.price_per_sqm) if prop.price_per_sqm else None,
+                'is_negotiable': prop.is_negotiable,
+                'rent_period': rent_period_display,
+                
+                # الموقع
+                'city': prop.city,
+                'area': prop.area,
+                'neighborhood': prop.neighborhood,
+                'street': prop.street,
+                'address': prop.address,
+                'latitude': float(prop.latitude) if prop.latitude else None,
+                'longitude': float(prop.longitude) if prop.longitude else None,
+                
+                # المساحة والتفاصيل
                 'size': float(prop.size),
+                'size_display': f"{prop.size:,.0f} م²",
                 'bedrooms': prop.bedrooms,
                 'bathrooms': prop.bathrooms,
-                'city': prop.city,
-                'neighborhood': prop.neighborhood,
-                'address': prop.address,
-                'description': prop.description,
+                'living_rooms': prop.living_rooms,
+                'floors': prop.floors,
+                'floor_number': prop.floor_number,
+                'parking_spaces': prop.parking_spaces,
+                
+                # حالة العقار
+                'furnishing': furnishing_display,
+                'furnishing_value': prop.furnishing,
+                'year_built': prop.year_built,
+                'age_years': property_age,
+                
+                # المميزات
+                'amenities': [a.get_amenity_display() for a in prop.amenities.all()],
+                'amenities_values': [a.amenity for a in prop.amenities.all()],
+                
+                # الصور
                 'images': [
                     {
                         'id': str(img.id),
                         'url': img.image.url if img.image else None,
                         'is_primary': img.is_primary,
-                        'alt_text': img.alt_text
+                        'alt_text': img.alt_text,
+                        'order': img.order
                     }
-                    for img in images
+                    for img in images.order_by('order', 'created_at')
                 ],
+                
+                # الفيديوهات
                 'videos': [
                     {
                         'id': str(vid.id),
@@ -271,7 +415,15 @@ class RAGService:
                     }
                     for vid in videos
                 ],
-                'amenities': [a.get_amenity_display() for a in prop.amenities.all()],
+                
+                # إحصائيات
+                'views_count': prop.views_count,
+                'interested_count': prop.interested_count,
+                'is_featured': prop.is_featured,
+                
+                # التواريخ
+                'created_at': prop.created_at.isoformat() if prop.created_at else None,
+                'updated_at': prop.updated_at.isoformat() if prop.updated_at else None,
             }
         except Property.DoesNotExist:
             return None

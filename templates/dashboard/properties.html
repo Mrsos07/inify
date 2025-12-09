@@ -1606,11 +1606,34 @@
                         </div>
                         <div class="form-group">
                             <label>سنة البناء</label>
-                            <input type="number" name="year_built" placeholder="2024">
+                            <input type="number" name="year_built" placeholder="2024" min="1900" max="2030">
                         </div>
                         <div class="form-group">
-                            <label>الطابق</label>
-                            <input type="text" name="floor" placeholder="مثال: الثالث">
+                            <label>عدد مواقف السيارات</label>
+                            <select name="parking_spaces">
+                                <option value="0">لا يوجد</option>
+                                <option value="1">1 موقف</option>
+                                <option value="2">2 موقف</option>
+                                <option value="3">3 مواقف</option>
+                                <option value="4">4+ مواقف</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>رقم الطابق/الدور</label>
+                            <select name="floor">
+                                <option value="">غير محدد</option>
+                                <option value="0">الأرضي</option>
+                                <option value="1">الأول</option>
+                                <option value="2">الثاني</option>
+                                <option value="3">الثالث</option>
+                                <option value="4">الرابع</option>
+                                <option value="5">الخامس</option>
+                                <option value="6">السادس</option>
+                                <option value="7">السابع</option>
+                                <option value="8">الثامن</option>
+                                <option value="9">التاسع</option>
+                                <option value="10">العاشر+</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -1716,7 +1739,7 @@
                             <span class="amenity-label">حديقة</span>
                         </label>
                         <label class="amenity-item" onclick="toggleAmenity(event, this)">
-                            <input type="checkbox" name="amenities" value="ac">
+                            <input type="checkbox" name="amenities" value="central_ac">
                             <div class="amenity-checkbox">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                                     <polyline points="20 6 9 17 4 12"/>
@@ -1726,15 +1749,52 @@
                             <span class="amenity-label">تكييف مركزي</span>
                         </label>
                         <label class="amenity-item" onclick="toggleAmenity(event, this)">
-                            <input type="checkbox" name="amenities" value="furnished">
+                            <input type="checkbox" name="amenities" value="balcony">
                             <div class="amenity-checkbox">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                                     <polyline points="20 6 9 17 4 12"/>
                                 </svg>
                             </div>
-                            <span class="amenity-icon">🛋️</span>
-                            <span class="amenity-label">مفروش</span>
+                            <span class="amenity-icon">🏠</span>
+                            <span class="amenity-label">شرفة/بلكونة</span>
                         </label>
+                        <label class="amenity-item" onclick="toggleAmenity(event, this)">
+                            <input type="checkbox" name="amenities" value="maid_room">
+                            <div class="amenity-checkbox">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </div>
+                            <span class="amenity-icon">🚪</span>
+                            <span class="amenity-label">غرفة خادمة</span>
+                        </label>
+                        <label class="amenity-item" onclick="toggleAmenity(event, this)">
+                            <input type="checkbox" name="amenities" value="kitchen">
+                            <div class="amenity-checkbox">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </div>
+                            <span class="amenity-icon">🍳</span>
+                            <span class="amenity-label">مطبخ</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Furnishing Status -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <span>🛋️</span> حالة التأثيث
+                    </h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>حالة التأثيث</label>
+                            <select name="furnishing">
+                                <option value="unfurnished">غير مفروش</option>
+                                <option value="semi_furnished">نصف مفروش</option>
+                                <option value="furnished">مفروش بالكامل</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -1896,6 +1956,177 @@
             .gallery-nav { width: 44px; height: 44px; }
             .gallery-prev { left: 10px; }
             .gallery-next { right: 10px; }
+        }
+
+        /* Calendar Modal */
+        .calendar-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 22, 40, 0.95);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .calendar-modal-overlay.show {
+            display: flex;
+        }
+        .calendar-modal {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+        .calendar-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .calendar-modal-header h3 {
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .calendar-modal-close {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .calendar-modal-close:hover {
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+        .calendar-appointments {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .appointment-card {
+            background: rgba(10, 22, 40, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        .appointment-card:hover {
+            border-color: var(--cyan);
+        }
+        .appointment-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .appointment-client {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--pearl);
+        }
+        .appointment-datetime {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .appointment-datetime span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .appointment-status {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .appointment-status.pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        .appointment-status.confirmed {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+        .appointment-status.completed {
+            background: rgba(107, 184, 201, 0.2);
+            color: var(--cyan);
+        }
+        .appointment-status.cancelled {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        .appointment-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .appointment-action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .appointment-action-btn:hover {
+            border-color: var(--cyan);
+            color: var(--cyan);
+        }
+        .appointment-action-btn.confirm:hover {
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+        .appointment-action-btn.cancel:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+        .no-appointments {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .no-appointments svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        .booked-by-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        .booked-by-badge.ai_agent {
+            background: rgba(168, 85, 247, 0.2);
+            color: #a855f7;
+        }
+        .booked-by-badge.agent {
+            background: rgba(107, 184, 201, 0.2);
+            color: var(--cyan);
         }
     </style>
 
@@ -2315,7 +2546,8 @@
                         </div>
                         <div class="property-stats" style="display: flex; gap: 15px; margin-top: 8px; font-size: 12px; color: var(--text-muted);">
                             <span title="عدد المشاهدات">👁️ ${property.views_count || 0}</span>
-                            <span title="عدد المهتمين" style="color: ${property.interested_count > 0 ? 'var(--success)' : 'inherit'};">❤️ ${property.interested_count || 0} مهتم</span>
+                            <span title="عدد المهتمين" style="color: ${property.interested_count > 0 ? '#4ade80' : 'inherit'};">❤️ ${property.interested_count || 0} مهتم</span>
+                            <span title="مواعيد المعاينة" style="color: ${property.viewing_count > 0 ? '#f59e0b' : 'inherit'}; cursor: pointer;" onclick="openPropertyCalendar('${property.id}')">📅 ${property.viewing_count || 0} معاينة</span>
                         </div>
                         <div class="property-footer">
                             <div class="property-price">
@@ -2645,6 +2877,178 @@
 
         // Initial render
         renderProperties();
+
+        // ============ Property Calendar Functions ============
+        let currentCalendarPropertyId = null;
+
+        async function openPropertyCalendar(propertyId, propertyTitle) {
+            currentCalendarPropertyId = propertyId;
+            const property = properties.find(p => String(p.id) === String(propertyId));
+            
+            document.getElementById('calendarPropertyTitle').textContent = propertyTitle || property?.title || 'العقار';
+            document.getElementById('calendarAppointmentsList').innerHTML = '<div class="no-appointments"><p>جاري التحميل...</p></div>';
+            document.getElementById('calendarModal').classList.add('show');
+            
+            try {
+                const response = await fetch(`/api/v1/leads/appointments/?property=${propertyId}`);
+                const data = await response.json();
+                
+                // التعامل مع الـ response سواء كان array أو object مع results
+                let appointments = [];
+                if (Array.isArray(data)) {
+                    appointments = data;
+                } else if (data.results && Array.isArray(data.results)) {
+                    appointments = data.results;
+                } else if (response.ok) {
+                    appointments = [];
+                }
+                
+                renderAppointments(appointments);
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                document.getElementById('calendarAppointmentsList').innerHTML = '<div class="no-appointments"><p>خطأ في تحميل المواعيد</p></div>';
+            }
+        }
+
+        function closeCalendarModal() {
+            document.getElementById('calendarModal').classList.remove('show');
+            currentCalendarPropertyId = null;
+        }
+
+        function renderAppointments(appointments) {
+            const listEl = document.getElementById('calendarAppointmentsList');
+            
+            if (!appointments || appointments.length === 0) {
+                listEl.innerHTML = `
+                    <div class="no-appointments">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <p>لا توجد مواعيد معاينة لهذا العقار</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const statusLabels = {
+                'pending': 'قيد الانتظار',
+                'confirmed': 'مؤكد',
+                'completed': 'تم',
+                'cancelled': 'ملغي',
+                'no_show': 'لم يحضر',
+                'rescheduled': 'تم إعادة الجدولة'
+            };
+            
+            const bookedByLabels = {
+                'ai_agent': '🤖 الوكيل الذكي',
+                'agent': '👤 المسوق',
+                'client': '📱 العميل'
+            };
+            
+            listEl.innerHTML = appointments.map(appt => `
+                <div class="appointment-card">
+                    <div class="appointment-info">
+                        <div class="appointment-client">
+                            ${appt.booked_by ? `<span class="booked-by-badge ${appt.booked_by}">${bookedByLabels[appt.booked_by] || appt.booked_by}</span>` : ''}
+                            ${appt.lead_name || 'عميل'}
+                        </div>
+                        <div class="appointment-datetime">
+                            <span>📅 ${appt.scheduled_date}</span>
+                            <span>🕐 ${appt.scheduled_time?.substring(0, 5) || ''}</span>
+                            ${appt.lead_phone ? `<span>📞 ${appt.lead_phone}</span>` : ''}
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="appointment-status ${appt.status}">${statusLabels[appt.status] || appt.status}</span>
+                        ${appt.status === 'pending' ? `
+                            <div class="appointment-actions">
+                                <button class="appointment-action-btn confirm" title="تأكيد" onclick="confirmAppointment('${appt.id}')">✓</button>
+                                <button class="appointment-action-btn cancel" title="إلغاء" onclick="cancelAppointment('${appt.id}')">✕</button>
+                            </div>
+                        ` : ''}
+                        ${appt.status === 'confirmed' ? `
+                            <div class="appointment-actions">
+                                <button class="appointment-action-btn" title="تم" onclick="completeAppointment('${appt.id}')">✓</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function confirmAppointment(appointmentId) {
+            try {
+                const response = await fetch(`/api/v1/leads/appointments/${appointmentId}/confirm/`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    openPropertyCalendar(currentCalendarPropertyId);
+                }
+            } catch (error) {
+                console.error('Error confirming appointment:', error);
+            }
+        }
+
+        async function cancelAppointment(appointmentId) {
+            const reason = prompt('سبب الإلغاء (اختياري):');
+            try {
+                const response = await fetch(`/api/v1/leads/appointments/${appointmentId}/cancel/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: reason || '' })
+                });
+                if (response.ok) {
+                    openPropertyCalendar(currentCalendarPropertyId);
+                }
+            } catch (error) {
+                console.error('Error cancelling appointment:', error);
+            }
+        }
+
+        async function completeAppointment(appointmentId) {
+            const feedback = prompt('ملاحظات بعد المعاينة (اختياري):');
+            try {
+                const response = await fetch(`/api/v1/leads/appointments/${appointmentId}/complete/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ feedback: feedback || '' })
+                });
+                if (response.ok) {
+                    openPropertyCalendar(currentCalendarPropertyId);
+                }
+            } catch (error) {
+                console.error('Error completing appointment:', error);
+            }
+        }
+
+    </script>
+
+    <!-- Calendar Modal -->
+    <div class="calendar-modal-overlay" id="calendarModal">
+        <div class="calendar-modal">
+            <div class="calendar-modal-header">
+                <h3>📅 مواعيد المعاينة - <span id="calendarPropertyTitle"></span></h3>
+                <button class="calendar-modal-close" onclick="closeCalendarModal()">×</button>
+            </div>
+            <div class="calendar-appointments" id="calendarAppointmentsList">
+                <!-- Appointments will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Close calendar modal on outside click
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarModal = document.getElementById('calendarModal');
+            if (calendarModal) {
+                calendarModal.addEventListener('click', (e) => {
+                    if (e.target.id === 'calendarModal') closeCalendarModal();
+                });
+            }
+        });
     </script>
 </body>
 </html>
