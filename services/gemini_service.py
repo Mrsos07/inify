@@ -97,12 +97,25 @@ class GeminiService:
         custom_prompt = ""
         collect_leads = True
         
+        # إعدادات السياق الإضافية
+        pricing_policy = ""
+        viewing_policy = ""
+        work_areas = ""
+        services = ""
+        contact_info = ""
+        
         if self.agent:
             bot_name = self.agent.bot_name or "Inify"
             company_name = self.agent.company_name or ""
             city = self.agent.city or ""
             custom_prompt = getattr(self.agent, 'bot_system_prompt', '') or ''
             collect_leads = getattr(self.agent, 'bot_collect_leads', True)
+            # إعدادات السياق الإضافية
+            pricing_policy = getattr(self.agent, 'bot_pricing_policy', '') or ''
+            viewing_policy = getattr(self.agent, 'bot_viewing_policy', '') or ''
+            work_areas = getattr(self.agent, 'bot_work_areas', '') or ''
+            services = getattr(self.agent, 'bot_services', '') or ''
+            contact_info = getattr(self.agent, 'bot_contact_info', '') or ''
         
         agent_info = f"""
 ═══ معلومات الوكيل ═══
@@ -112,6 +125,18 @@ class GeminiService:
 """
         if custom_prompt:
             agent_info += f"• تعليمات المسوق: {custom_prompt}\n"
+        
+        # إضافة السياق الإضافي
+        if pricing_policy:
+            agent_info += f"\n═══ سياسة التسعير والدفع ═══\n{pricing_policy}\n"
+        if viewing_policy:
+            agent_info += f"\n═══ سياسة المعاينة والحجز ═══\n{viewing_policy}\n"
+        if work_areas:
+            agent_info += f"\n═══ مناطق العمل ═══\n{work_areas}\n"
+        if services:
+            agent_info += f"\n═══ الخدمات المقدمة ═══\n{services}\n"
+        if contact_info:
+            agent_info += f"\n═══ معلومات التواصل ═══\n{contact_info}\n"
         
         # ═══════════════════════════════════════════════════════════
         # 3. LEAD CAPTURE - تعليمات جمع العملاء

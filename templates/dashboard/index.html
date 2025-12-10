@@ -156,8 +156,9 @@
 
     <!-- Sidebar -->
     <aside class="sidebar">
-        <a href="/dashboard/" class="sidebar-logo">
-            <img src="/static/images/inify-logo.png" alt="Inify" style="height: 32px;">
+        <a href="/dashboard/" class="sidebar-logo" style="display: flex; align-items: center; gap: 12px;">
+            <img src="/static/images/newra-logo.png" alt="Newra" style="height: 28px; filter: brightness(0) invert(1);">
+            <img src="/static/images/inify-logo.png" alt="Inify" style="height: 28px;">
         </a>
 
         <div class="nav-section">
@@ -398,10 +399,21 @@
                 
                 // تحميل العملاء
                 const leadsResponse = await fetch('/api/v1/leads/my/');
+                let leads = [];
                 if (leadsResponse.ok) {
                     const leadsData = await leadsResponse.json();
-                    const leads = leadsData.leads || leadsData.results || [];
+                    leads = leadsData.leads || leadsData.results || [];
                     document.getElementById('leadsCount').textContent = leads.length;
+                    
+                    // حساب عدد المواعيد
+                    let totalAppointments = 0;
+                    leads.forEach(lead => {
+                        if (lead.viewing_appointments) {
+                            totalAppointments += lead.viewing_appointments.length;
+                        }
+                    });
+                    const appointmentsEl = document.getElementById('appointmentsCount');
+                    if (appointmentsEl) appointmentsEl.textContent = totalAppointments;
                     
                     // عرض آخر العملاء
                     const recentLeads = document.getElementById('recentLeads');
@@ -433,7 +445,6 @@
                 
                 // تحميل المحادثات من إحصائيات الوكيل
                 try {
-                    // Get agent ID from page context or API
                     const agentId = '{{ agent_id|default:"" }}';
                     if (agentId) {
                         const statsResponse = await fetch(`/api/agent/${agentId}/stats/`);
@@ -447,10 +458,6 @@
                 } catch (e) {
                     console.log('Could not load conversation stats');
                 }
-                
-                // المشاهدات = عدد المحادثات (تقريبي)
-                const convCount = parseInt(document.getElementById('conversationsCount').textContent) || 0;
-                document.getElementById('viewsCount').textContent = convCount;
                 
             } catch (error) {
                 console.error('Error loading stats:', error);

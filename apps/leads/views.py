@@ -684,12 +684,30 @@ def list_leads(request):
             # المحادثة
             conversation = []
             if lead.conversation:
+                # المحادثة من نموذج Conversation
                 for msg in lead.conversation.messages.all().order_by('created_at')[:50]:
                     conversation.append({
                         'role': msg.role,
                         'content': msg.content,
                         'created_at': msg.created_at.isoformat() if msg.created_at else None
                     })
+            elif lead.notes and 'محادثة' in lead.notes:
+                # المحادثة محفوظة في الملاحظات
+                notes_lines = lead.notes.split('\n')
+                for line in notes_lines:
+                    line = line.strip()
+                    if line.startswith('العميل:'):
+                        conversation.append({
+                            'role': 'user',
+                            'content': line.replace('العميل:', '').strip(),
+                            'created_at': None
+                        })
+                    elif line.startswith('الوكيل:'):
+                        conversation.append({
+                            'role': 'assistant',
+                            'content': line.replace('الوكيل:', '').strip(),
+                            'created_at': None
+                        })
             
             data.append({
                 'id': str(lead.id),

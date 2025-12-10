@@ -187,17 +187,84 @@ class PublicChatView(View):
             cached_settings = cache.get('ai_settings')
             if cached_settings:
                 ai_provider = cached_settings.get('provider', 'gemini')
+                use_smart_agent = cached_settings.get('use_smart_agent', True)
                 global_settings = None  # سنستخدم الكاش
             else:
                 global_settings = GlobalSettings.objects.first()
                 ai_provider = global_settings.ai_provider if global_settings else 'gemini'
+                use_smart_agent = getattr(global_settings, 'use_smart_agent', True) if global_settings else True
                 # حفظ في الكاش لمدة 5 دقائق
                 if global_settings:
                     cache.set('ai_settings', {
                         'provider': global_settings.ai_provider,
                         'openai_model': global_settings.openai_model,
                         'gemini_model': global_settings.ai_model,
+                        'use_smart_agent': use_smart_agent,
                     }, 300)
+            
+            # ═══════════════════════════════════════════════════════════
+            # استخدام الوكيل الذكي مع الأدوات (Smart Agent)
+            # ═══════════════════════════════════════════════════════════
+            if ai_provider == 'openai' and use_smart_agent:
+                from services.smart_agent_service import get_smart_agent
+                from apps.properties.models import Property
+                
+                # تحميل العقارات
+                properties = Property.objects.filter(agent=agent, is_active=True)
+                properties_data = []
+                for prop in properties:
+                    properties_data.append({
+                        'id': str(prop.id),
+                        'title': prop.title,
+                        'type': prop.property_type,
+                        'status': prop.status,
+                        'price': float(prop.price) if prop.price else 0,
+                        'city': prop.city,
+                        'district': prop.neighborhood,
+                        'bedrooms': prop.bedrooms,
+                        'bathrooms': prop.bathrooms,
+                        'area': float(prop.size) if prop.size else 0,
+                        'amenities': [a.get_amenity_display() for a in prop.amenities.all()],
+                    })
+                
+                # تاريخ المحادثة
+                chat_history = [
+                    {'role': msg.role, 'content': msg.content}
+                    for msg in conversation.messages.order_by('-created_at')[:6]
+                ][::-1]
+                
+                # استخدام الوكيل الذكي
+                smart_agent = get_smart_agent(agent, properties_data)
+                result = smart_agent.chat(message, chat_history)
+                
+                response = result['response']
+                suggested_properties = result.get('properties') or []
+                
+                logger.info(f"🤖 Smart Agent Response | Tool: {result.get('tool_used')} | Intent: {result.get('intent')}")
+                
+                # حفظ رد المساعد
+                assistant_message = Message.objects.create(
+                    conversation=conversation,
+                    role='assistant',
+                    content=response,
+                    model_used=smart_agent.model
+                )
+                
+                # تحديث عداد الرسائل
+                conversation.messages_count = conversation.messages.count()
+                conversation.save()
+                
+                return JsonResponse({
+                    'response': response,
+                    'conversation_id': str(conversation.id),
+                    'suggested_properties': suggested_properties,
+                    'tool_used': result.get('tool_used'),
+                    'intent': result.get('intent')
+                })
+            
+            # ═══════════════════════════════════════════════════════════
+            # الطريقة التقليدية (Gemini أو OpenAI بدون أدوات)
+            # ═══════════════════════════════════════════════════════════
             
             # تهيئة الخدمة المناسبة
             if ai_provider == 'openai':

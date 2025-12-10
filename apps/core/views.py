@@ -600,7 +600,8 @@ def conversations_view(request):
     context = {
         'conversations': conversations_list,
         'stats': stats,
-        'active_page': 'conversations'
+        'active_page': 'conversations',
+        'agent_id': str(agent.id),
     }
     
     return render(request, 'dashboard/conversations.html', context)

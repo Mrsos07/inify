@@ -28,7 +28,65 @@
             --pearl: #F8F8F8;
             --text-muted: rgba(248, 248, 248, 0.6);
             --card-bg: rgba(30, 58, 95, 0.4);
-            --border: rgba(107, 184, 201, 0.15);
+        }
+        
+        /* Chat Popup Styles */
+        .chat-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chat-popup-overlay.active {
+            display: flex;
+        }
+        
+        .chat-popup-container {
+            width: 400px;
+            height: 650px;
+            max-width: 95vw;
+            max-height: 90vh;
+            background: #0b141a;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .chat-popup-header {
+            display: none;
+        }
+        
+        #chatPopupFrame {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #0b141a;
+        }
+        
+        @media (max-width: 480px) {
+            .chat-popup-container {
+                width: 100%;
+                height: 100%;
+                max-width: 100vw;
+                max-height: 100vh;
+                border-radius: 0;
+            }
         }
 
         body {
@@ -519,12 +577,12 @@
                 <h1>💬 إدارة المحادثات</h1>
                 <p>تتبع محادثات الشات بوت مع العملاء</p>
             </div>
-            <a href="/chat/live/" class="btn btn-primary">
+            <button onclick="openChatPopup()" class="btn btn-primary">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
                 تجربة الشات
-            </a>
+            </button>
         </div>
 
         <div class="stats-grid">
@@ -572,7 +630,7 @@
                         <h3>إجراءات سريعة</h3>
                     </div>
                     <div class="quick-actions-grid">
-                        <a href="/chat/live/" class="quick-action">
+                        <a href="javascript:openChatPopup()" class="quick-action">
                             <div class="quick-action-icon">🤖</div>
                             <span>تجربة الشات</span>
                         </a>
@@ -710,7 +768,52 @@
 
         // Initial render
         renderConversations();
+        
+        // ═══════════════════════════════════════════════════════════
+        // Chat Popup Functions
+        // ═══════════════════════════════════════════════════════════
+        const agentIdForChat = '{{ agent_id|default:"" }}';
+        
+        function openChatPopup() {
+            const overlay = document.getElementById('chatPopupOverlay');
+            const frame = document.getElementById('chatPopupFrame');
+            
+            // تحميل الشات في الـ iframe
+            frame.src = `/embed/?agent=${agentIdForChat}`;
+            
+            // إظهار الـ popup
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeChatPopup(event) {
+            if (event && event.target !== event.currentTarget) return;
+            
+            const overlay = document.getElementById('chatPopupOverlay');
+            const frame = document.getElementById('chatPopupFrame');
+            
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+            
+            setTimeout(() => {
+                frame.src = '';
+            }, 300);
+        }
+        
+        // إغلاق بالـ Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeChatPopup();
+            }
+        });
     </script>
+    
+    <!-- Chat Popup Overlay -->
+    <div id="chatPopupOverlay" class="chat-popup-overlay" onclick="closeChatPopup(event)">
+        <div class="chat-popup-container" onclick="event.stopPropagation()">
+            <iframe id="chatPopupFrame" src="" frameborder="0"></iframe>
+        </div>
+    </div>
 </body>
 </html>
 
