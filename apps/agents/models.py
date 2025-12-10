@@ -46,8 +46,9 @@ class Agent(models.Model):
         help_text='مثال: أنا سعود، مساعدك في شركة روشن العقارية'
     )
     bot_welcome_message = models.TextField(
-        default='مرحباً! 👋 كيف يمكنني مساعدتك اليوم في البحث عن عقارك المثالي؟',
-        verbose_name='رسالة الترحيب'
+        default='أهلاً وسهلاً! 👋',
+        verbose_name='رسالة الترحيب',
+        help_text='سيتم إضافة اسم الموظف والشركة تلقائياً'
     )
     bot_system_prompt = models.TextField(
         blank=True,

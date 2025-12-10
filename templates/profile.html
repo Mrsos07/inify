@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الملف الشخصي - Inify</title>
     <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    
+    <!-- Auto Translation -->
+    <script src="/static/js/auto-translate.js"></script>
+    
     <style>
         @font-face {
             font-family: 'BalooBhaijaan2';
@@ -684,7 +688,8 @@
     <!-- Header -->
     <header class="header">
         <div class="header-right">
-            <a href="/dashboard/" class="logo">
+            <a href="/dashboard/" class="logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="/static/images/newra-icon.png" alt="Newra" style="height: 28px; filter: brightness(0) invert(1);">
                 <img src="/static/images/inify-logo.png" alt="Inify" style="height: 32px;">
             </a>
             <nav class="nav-links">
@@ -695,6 +700,16 @@
                 <a href="/profile/" class="active">حسابي</a>
             </nav>
         </div>
+        <button id="langToggleBtn" onclick="toggleLanguageAndReload()" style="
+            padding: 8px 16px;
+            background: rgba(107, 184, 201, 0.15);
+            border: 1px solid rgba(107, 184, 201, 0.3);
+            border-radius: 8px;
+            color: var(--cyan);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        ">🌐 EN</button>
     </header>
 
     <!-- Main Content -->

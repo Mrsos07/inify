@@ -574,7 +574,7 @@ def get_agent_properties(request, agent_id):
             'city': agent.city or '',
             'phone': agent.phone or '',
             'email': agent.email or '',
-            'welcomeMessage': agent.bot_welcome_message or 'مرحباً! 👋 كيف يمكنني مساعدتك اليوم؟',
+            'welcomeMessage': agent.bot_welcome_message or f"أهلاً وسهلاً! 👋 معك {agent.bot_name or 'المساعد'} من {agent.company_name or 'فريقنا'}. كيف أقدر أساعدك اليوم؟",
             'systemPrompt': agent.bot_system_prompt or '',
             'collectLeads': agent.bot_collect_leads,
             'language': agent.bot_language or 'ar',

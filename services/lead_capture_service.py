@@ -45,19 +45,37 @@ class LeadCaptureService:
             r'(\d{1,2}):(\d{2})',
         ]
         
+        # أوقات بالكلمات العربية
+        self.time_keywords = {
+            'بعد العشاء': '21:00',
+            'بعد العشا': '21:00',
+            'العشاء': '20:00',
+            'العشا': '20:00',
+            'المغرب': '18:00',
+            'بعد المغرب': '19:00',
+            'العصر': '16:00',
+            'بعد الظهر': '14:00',
+            'الظهر': '12:00',
+            'الصباح': '10:00',
+            'الصبح': '09:00',
+            'الفجر': '05:00',
+        }
+        
         # كلمات تدل على رفض أو عدم اهتمام
         self.rejection_keywords = [
             'لا', 'مو', 'ما', 'غالي', 'بعيد', 'صغير', 'كبير', 'مش', 'مب',
             'لاحقاً', 'بعدين', 'أفكر', 'شكراً بس', 'no', 'not'
         ]
         
-        # أنماط استخراج رقم الجوال (السعودي)
+        # أنماط استخراج رقم الجوال (السعودي + عام)
         self.phone_patterns = [
             r'05\d{8}',      # Saudi mobile: 05XXXXXXXX (10 digits)
             r'5\d{8}',       # Without leading 0: 5XXXXXXXX (9 digits)
             r'\+9665\d{8}',  # With country code: +9665XXXXXXXX
             r'009665\d{8}',  # With 00 prefix: 009665XXXXXXXX
             r'9665\d{8}',    # Country code without +: 9665XXXXXXXX
+            r'0\d{9}',       # Any 10-digit number starting with 0
+            r'\d{10}',       # Any 10-digit number
         ]
         
         # أنماط استخراج البريد الإلكتروني
@@ -414,19 +432,26 @@ class LeadCaptureService:
                 result['suggested_date'] = target_date.strftime('%Y-%m-%d')
                 break
         
-        # استخراج الوقت
-        for pattern in self.time_patterns:
-            match = re.search(pattern, message)
-            if match:
-                hour = int(match.group(1))
-                # تحويل إلى 24 ساعة
-                if len(match.groups()) > 1:
-                    period = match.group(2) if len(match.groups()) > 1 else ''
-                    if period and ('م' in period or 'مساء' in period.lower()):
-                        if hour < 12:
-                            hour += 12
-                result['suggested_time'] = f"{hour:02d}:00"
+        # استخراج الوقت من الكلمات العربية أولاً
+        for keyword, time_value in self.time_keywords.items():
+            if keyword in message_lower:
+                result['suggested_time'] = time_value
                 break
+        
+        # إذا لم نجد، نبحث بالأنماط الرقمية
+        if not result['suggested_time']:
+            for pattern in self.time_patterns:
+                match = re.search(pattern, message)
+                if match:
+                    hour = int(match.group(1))
+                    # تحويل إلى 24 ساعة
+                    if len(match.groups()) > 1:
+                        period = match.group(2) if len(match.groups()) > 1 else ''
+                        if period and ('م' in period or 'مساء' in period.lower()):
+                            if hour < 12:
+                                hour += 12
+                    result['suggested_time'] = f"{hour:02d}:00"
+                    break
         
         return result
     

@@ -1076,7 +1076,7 @@
                         city: data.agent.city || '',
                         phone: data.agent.phone || '',
                         email: data.agent.email || '',
-                        welcomeMessage: data.agent.welcomeMessage || 'مرحباً! 👋 كيف يمكنني مساعدتك اليوم؟',
+                        welcomeMessage: data.agent.welcomeMessage || `أهلاً وسهلاً! 👋 معك ${data.agent.name || 'المساعد'} من ${data.agent.company || 'فريقنا'}. كيف أقدر أساعدك اليوم؟`,
                         agentIcon: '🤖',
                         systemPrompt: data.agent.systemPrompt || '',
                         collectLeads: data.agent.collectLeads !== false,
@@ -1108,7 +1108,7 @@
                         city: '',
                         phone: '',
                         email: '',
-                        welcomeMessage: 'مرحباً! 👋 كيف يمكنني مساعدتك اليوم؟',
+                        welcomeMessage: 'أهلاً وسهلاً! 👋 كيف أقدر أساعدك اليوم؟',
                         agentIcon: '🤖',
                         systemPrompt: '',
                         collectLeads: true,
@@ -1220,53 +1220,55 @@
         };
         
         // ═══════════════════════════════════════════════════════════
-        // 🛡️ Rate Limit & Abuse Detection System
+        // 🛡️ Rate Limit & Abuse Detection System (Less Aggressive)
         // ═══════════════════════════════════════════════════════════
         let abuseDetection = {
             offTopicCount: 0,           // عدد الأسئلة خارج الموضوع
-            maxOffTopic: 7,             // الحد الأقصى
+            maxOffTopic: 15,            // الحد الأقصى (زيادة من 7 إلى 15)
             isBlocked: false,           // هل تم حظر المستخدم
             suspiciousPatterns: [
-                // محاولات كسر النموذج
-                'ignore', 'تجاهل', 'انسى', 'forget',
+                // محاولات كسر النموذج فقط (الأكثر خطورة)
                 'system prompt', 'سيستم برومبت',
-                'you are now', 'أنت الآن',
-                'act as', 'تصرف ك',
-                'pretend', 'تظاهر',
                 'jailbreak', 'bypass',
-                'ignore previous', 'تجاهل السابق',
+                'ignore previous instructions',
                 'new instructions', 'تعليمات جديدة',
-                'override', 'تجاوز',
-                'admin', 'أدمن', 'مشرف',
-                'developer', 'مطور',
-                'debug', 'test mode',
                 'what is your prompt', 'ما هو البرومبت',
-                'show me your instructions', 'أرني تعليماتك',
-                'repeat after me', 'كرر ورائي',
-                'say exactly', 'قل بالضبط'
+                'show me your instructions', 'أرني تعليماتك'
             ],
             offTopicPatterns: [
-                // أسئلة خارج العقارات
-                'طبخ', 'وصفة', 'أكل',
+                // أسئلة خارج العقارات بشكل واضح جداً
+                'وصفة طبخ', 'كيف اطبخ',
                 'سياسة', 'حرب', 'انتخابات',
-                'دين', 'فتوى',
-                'برمجة', 'كود', 'python', 'javascript',
-                'قصة', 'حكاية', 'نكتة', 'ضحك',
-                'أغنية', 'فيلم', 'مسلسل',
-                'لعبة', 'game',
-                'رياضة', 'كورة', 'مباراة',
-                'طقس', 'جو',
-                'ترجم', 'translate',
-                'اكتب لي', 'write me',
-                'ما رأيك في', 'what do you think'
+                'فتوى شرعية',
+                'اكتب كود', 'برمج لي',
+                'احكي قصة', 'قول نكتة',
+                'كلمات أغنية',
+                'نتيجة مباراة'
+            ],
+            // كلمات عقارية تلغي الـ off-topic
+            realEstateKeywords: [
+                'شقة', 'فيلا', 'عقار', 'حي', 'أحياء', 'احياء', 'منطقة', 'مناطق',
+                'سعر', 'إيجار', 'ايجار', 'بيع', 'غرف', 'غرفة', 'متر', 'مساحة',
+                'موقع', 'عنوان', 'معاينة', 'زيارة', 'صور', 'تفاصيل',
+                'الرياض', 'جدة', 'مكة', 'الدمام', 'الخبر'
             ]
         };
         
-        // كشف الأسئلة المشبوهة
+        // كشف الأسئلة المشبوهة (أقل عدوانية)
         function detectAbuse(message) {
             const msgLower = message.toLowerCase();
             
-            // كشف محاولات كسر النموذج
+            // ✅ أولاً: تحقق إذا كانت الرسالة تحتوي على كلمات عقارية
+            const hasRealEstateKeyword = abuseDetection.realEstateKeywords.some(keyword => 
+                msgLower.includes(keyword.toLowerCase())
+            );
+            
+            // إذا فيها كلمة عقارية، اعتبرها OK مباشرة
+            if (hasRealEstateKeyword) {
+                return 'ok';
+            }
+            
+            // كشف محاولات كسر النموذج (الخطيرة فقط)
             for (const pattern of abuseDetection.suspiciousPatterns) {
                 if (msgLower.includes(pattern.toLowerCase())) {
                     console.log('🚨 Suspicious pattern detected:', pattern);
@@ -1275,7 +1277,7 @@
                 }
             }
             
-            // كشف الأسئلة خارج الموضوع
+            // كشف الأسئلة خارج الموضوع (بشكل أقل عدوانية)
             for (const pattern of abuseDetection.offTopicPatterns) {
                 if (msgLower.includes(pattern.toLowerCase())) {
                     abuseDetection.offTopicCount++;

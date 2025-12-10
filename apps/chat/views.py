@@ -391,7 +391,7 @@ class PublicChatView(View):
                 # تحليل رسالة المستخدم
                 analysis = lead_capture_service.analyze_message(message, chat_history)
                 
-                logger.info(f"Lead analysis: phone={analysis.get('phone')}, has_contact={analysis.get('has_contact_info')}")
+                logger.info(f"Lead analysis: phone={analysis.get('phone')}, has_contact={analysis.get('has_contact_info')}, message='{message[:50]}...'")
                 
                 # الحصول على العقار المهتم به من المحادثة السابقة
                 interested_property_id = None
@@ -513,7 +513,19 @@ class PublicChatView(View):
                             
                             wants_viewing = viewing_analysis.get('wants_viewing') or viewing_keywords_in_history
                             
-                            logger.info(f"Viewing check: wants_viewing={wants_viewing}, interested_property_id={interested_property_id}")
+                            # إذا أعطى العميل رقمه مع وقت، فهو يريد معاينة
+                            time_keywords = ['بكرة', 'بكره', 'غدا', 'غداً', 'العصر', 'الصباح', 'المغرب', 'العشاء', 'بعد']
+                            has_time = any(kw in full_conversation.lower() for kw in time_keywords)
+                            if has_time and analysis.get('phone'):
+                                wants_viewing = True
+                                logger.info("Client provided phone with time - assuming viewing request")
+                            
+                            logger.info(f"Viewing check: wants_viewing={wants_viewing}, interested_property_id={interested_property_id}, has_time={has_time}")
+                            
+                            # إذا لم يكن هناك عقار محدد، استخدم أول عقار متاح
+                            if wants_viewing and not interested_property_id and available_properties:
+                                interested_property_id = available_properties[0].get('id')
+                                logger.info(f"Using first property for viewing: {interested_property_id}")
                             
                             if wants_viewing and interested_property_id:
                                 # تحديد التاريخ والوقت
@@ -535,15 +547,28 @@ class PublicChatView(View):
                                     tomorrow = datetime.now() + timedelta(days=1)
                                     scheduled_date = tomorrow.strftime('%Y-%m-%d')
                                 
-                                # إذا لم يحدد وقت، اقترح الساعة 4 عصراً (العصر)
+                                # إذا لم يحدد وقت، نبحث في المحادثة
                                 if not scheduled_time:
-                                    # البحث عن كلمة "العصر" في المحادثة
-                                    if 'العصر' in full_conversation.lower():
+                                    conv_lower = full_conversation.lower()
+                                    # البحث عن الأوقات بالكلمات العربية
+                                    if 'بعد العشاء' in conv_lower or 'بعد العشا' in conv_lower:
+                                        scheduled_time = '21:00'
+                                    elif 'بعد المغرب' in conv_lower:
+                                        scheduled_time = '19:00'
+                                    elif 'بعد العصر' in conv_lower:
+                                        scheduled_time = '17:00'
+                                    elif 'العشاء' in conv_lower or 'العشا' in conv_lower:
+                                        scheduled_time = '20:00'
+                                    elif 'المغرب' in conv_lower:
+                                        scheduled_time = '18:00'
+                                    elif 'العصر' in conv_lower:
                                         scheduled_time = '16:00'
-                                    elif 'الصباح' in full_conversation.lower():
+                                    elif 'الظهر' in conv_lower:
+                                        scheduled_time = '12:00'
+                                    elif 'الصباح' in conv_lower or 'الصبح' in conv_lower:
                                         scheduled_time = '10:00'
                                     else:
-                                        scheduled_time = '10:00'
+                                        scheduled_time = '17:00'  # افتراضي: 5 مساءً
                                 
                                 logger.info(f"Attempting to book viewing: date={scheduled_date}, time={scheduled_time}, property={interested_property_id}")
                                 

@@ -140,32 +140,49 @@ class AgentTools:
                 "type": "function",
                 "function": {
                     "name": "book_viewing",
-                    "description": "حجز موعد معاينة لعقار. استخدم هذه الأداة عندما يريد العميل حجز معاينة أو زيارة عقار.",
+                    "description": """حجز موعد معاينة لعقار. استخدم هذه الأداة عندما يريد العميل حجز معاينة أو زيارة عقار.
+                    
+مهم جداً: يجب جمع المعلومات التالية قبل الحجز:
+1. اسم العميل (client_name) - اسأله: "وش اسمك الكريم؟"
+2. رقم الجوال (client_phone) - اسأله: "وش رقم جوالك؟"
+3. التاريخ (preferred_date) - بصيغة YYYY-MM-DD
+4. الوقت (preferred_time) - بصيغة HH:MM (24 ساعة)
+
+تحويل الأوقات:
+- "بعد العشاء" = 21:00
+- "المغرب" = 18:00
+- "العصر" = 16:00
+- "الظهر" = 12:00
+- "الصباح" = 10:00
+
+تحويل التواريخ:
+- "بكرة/غداً" = تاريخ الغد
+- "بعد بكرة" = بعد غد""",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "property_id": {
                                 "type": "string",
-                                "description": "معرف العقار"
+                                "description": "معرف العقار (اختياري)"
                             },
                             "client_name": {
                                 "type": "string",
-                                "description": "اسم العميل"
+                                "description": "اسم العميل الكامل - مطلوب"
                             },
                             "client_phone": {
                                 "type": "string",
-                                "description": "رقم هاتف العميل"
+                                "description": "رقم هاتف العميل - مطلوب"
                             },
                             "preferred_date": {
                                 "type": "string",
-                                "description": "التاريخ المفضل"
+                                "description": "التاريخ المفضل بصيغة YYYY-MM-DD"
                             },
                             "preferred_time": {
                                 "type": "string",
-                                "description": "الوقت المفضل"
+                                "description": "الوقت المفضل بصيغة HH:MM (مثال: 21:00 لبعد العشاء)"
                             }
                         },
-                        "required": ["client_phone"]
+                        "required": ["client_name", "client_phone"]
                     }
                 }
             },
@@ -393,9 +410,14 @@ class AgentTools:
         return f"العقار: {prop.get('title')}\nالسعر: {prop.get('price', 0):,.0f} ريال\nالموقع: {prop.get('city')} - {prop.get('district', '')}"
     
     def _book_viewing(self, args: Dict) -> ToolResult:
-        """حجز معاينة"""
+        """حجز معاينة فعلي في قاعدة البيانات"""
         phone = args.get('client_phone')
+        client_name = args.get('client_name', '')
+        property_id = args.get('property_id')
+        preferred_date = args.get('preferred_date')
+        preferred_time = args.get('preferred_time')
         
+        # التحقق من رقم الجوال
         if not phone:
             return ToolResult(
                 success=False,
@@ -404,18 +426,154 @@ class AgentTools:
                 tool_type=ToolType.BOOK_VIEWING
             )
         
-        return ToolResult(
-            success=True,
-            data={
-                'phone': phone,
-                'name': args.get('client_name', ''),
-                'property_id': args.get('property_id'),
-                'date': args.get('preferred_date'),
-                'time': args.get('preferred_time')
-            },
-            message=f"تم تسجيل طلب المعاينة! سنتواصل معك على {phone} لتأكيد الموعد 📅",
-            tool_type=ToolType.BOOK_VIEWING
-        )
+        # التحقق من اسم العميل
+        if not client_name:
+            return ToolResult(
+                success=False,
+                data={'needs': 'name', 'phone': phone},
+                message="ممتاز! وش اسمك الكريم؟ 😊",
+                tool_type=ToolType.BOOK_VIEWING
+            )
+        
+        try:
+            from apps.leads.models import Lead, ViewingAppointment, LeadActivity
+            from apps.properties.models import Property
+            from apps.agents.models import Agent
+            from datetime import datetime, timedelta
+            import uuid
+            
+            # الحصول على الوكيل
+            agent_id = self.context.get('agent_id')
+            if not agent_id:
+                return ToolResult(
+                    success=False,
+                    data={},
+                    message="حدث خطأ، يرجى المحاولة لاحقاً",
+                    tool_type=ToolType.BOOK_VIEWING
+                )
+            
+            agent = Agent.objects.get(id=agent_id)
+            
+            # البحث عن العميل أو إنشاؤه
+            lead, created = Lead.objects.get_or_create(
+                agent=agent,
+                phone=phone,
+                defaults={
+                    'name': client_name,
+                    'source': 'chatbot',
+                    'status': 'new'
+                }
+            )
+            
+            if not created and client_name:
+                lead.name = client_name
+                lead.save()
+            
+            # تحديد التاريخ والوقت
+            if preferred_date:
+                try:
+                    scheduled_date = datetime.strptime(preferred_date, '%Y-%m-%d').date()
+                except:
+                    scheduled_date = datetime.now().date() + timedelta(days=1)
+            else:
+                # افتراضي: غداً
+                scheduled_date = datetime.now().date() + timedelta(days=1)
+            
+            if preferred_time:
+                try:
+                    scheduled_time = datetime.strptime(preferred_time, '%H:%M').time()
+                except:
+                    scheduled_time = datetime.strptime('18:00', '%H:%M').time()
+            else:
+                # افتراضي: 6 مساءً
+                scheduled_time = datetime.strptime('18:00', '%H:%M').time()
+            
+            # الحصول على العقار إذا موجود
+            property_obj = None
+            if property_id:
+                try:
+                    property_obj = Property.objects.get(id=property_id, agent=agent)
+                except:
+                    # محاولة الحصول على آخر عقار تم عرضه
+                    property_obj = Property.objects.filter(agent=agent).first()
+            else:
+                # الحصول على آخر عقار
+                property_obj = Property.objects.filter(agent=agent).first()
+            
+            # التحقق من عدم وجود تعارض في المواعيد
+            existing = ViewingAppointment.objects.filter(
+                lead__agent=agent,
+                scheduled_date=scheduled_date,
+                scheduled_time=scheduled_time,
+                status__in=['pending', 'confirmed']
+            ).exists()
+            
+            if existing:
+                # اقتراح وقت بديل
+                alt_time = datetime.combine(scheduled_date, scheduled_time) + timedelta(hours=1)
+                return ToolResult(
+                    success=False,
+                    data={'conflict': True, 'suggested_time': alt_time.strftime('%H:%M')},
+                    message=f"للأسف الموعد محجوز، ما رأيك الساعة {alt_time.strftime('%I:%M %p')}؟",
+                    tool_type=ToolType.BOOK_VIEWING
+                )
+            
+            # إنشاء موعد المعاينة
+            appointment = ViewingAppointment.objects.create(
+                lead=lead,
+                property=property_obj,
+                scheduled_date=scheduled_date,
+                scheduled_time=scheduled_time,
+                status='pending',
+                notes=f'تم الحجز عبر الشات بوت - العقار: {property_obj.title if property_obj else "غير محدد"}'
+            )
+            
+            # تسجيل النشاط
+            LeadActivity.objects.create(
+                lead=lead,
+                activity_type='viewing',
+                description=f'تم حجز موعد معاينة: {scheduled_date} الساعة {scheduled_time}',
+                metadata={
+                    'appointment_id': str(appointment.id),
+                    'property_id': str(property_obj.id) if property_obj else None,
+                    'source': 'chatbot'
+                }
+            )
+            
+            # تحديث حالة العميل
+            lead.status = 'interested'
+            lead.save()
+            
+            # تنسيق الرسالة
+            day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+            day_name = day_names[scheduled_date.weekday()]
+            time_str = scheduled_time.strftime('%I:%M %p').replace('AM', 'صباحاً').replace('PM', 'مساءً')
+            
+            property_info = f" للعقار '{property_obj.title}'" if property_obj else ""
+            
+            return ToolResult(
+                success=True,
+                data={
+                    'appointment_id': str(appointment.id),
+                    'lead_id': str(lead.id),
+                    'phone': phone,
+                    'name': client_name,
+                    'date': str(scheduled_date),
+                    'time': str(scheduled_time),
+                    'property': property_obj.title if property_obj else None
+                },
+                message=f"تم حجز موعد المعاينة{property_info} ✅\n\n📅 {day_name} {scheduled_date}\n⏰ {time_str}\n👤 {client_name}\n📱 {phone}\n\nسيتم التواصل معك للتأكيد قريباً إن شاء الله! 🙏",
+                tool_type=ToolType.BOOK_VIEWING
+            )
+            
+        except Exception as e:
+            logger.error(f"Error booking viewing: {str(e)}")
+            return ToolResult(
+                success=False,
+                data={'error': str(e)},
+                message=f"تم تسجيل طلبك! سنتواصل معك على {phone} لتأكيد الموعد 📅",
+                tool_type=ToolType.BOOK_VIEWING
+            )
     
     def _get_agent_info(self, args: Dict) -> ToolResult:
         """الحصول على معلومات الوكيل"""

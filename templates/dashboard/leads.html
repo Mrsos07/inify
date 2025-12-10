@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>العملاء المحتملين - Inify</title>
     <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    
+    <!-- Auto Translation -->
+    <script src="/static/js/auto-translate.js"></script>
+    
     <style>
         @font-face {
             font-family: 'BalooBhaijaan2';
@@ -759,7 +763,8 @@
 
     <header class="header">
         <div class="header-right">
-            <a href="/dashboard/" class="logo">
+            <a href="/dashboard/" class="logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="/static/images/newra-icon.png" alt="Newra" style="height: 28px; filter: brightness(0) invert(1);">
                 <img src="/static/images/inify-logo.png" alt="Inify" style="height: 32px;">
             </a>
             <nav class="nav-links">
@@ -770,6 +775,16 @@
                 <a href="/profile/">حسابي</a>
             </nav>
         </div>
+        <button id="langToggleBtn" onclick="toggleLanguageAndReload()" style="
+            padding: 8px 16px;
+            background: rgba(107, 184, 201, 0.1);
+            border: 1px solid rgba(107, 184, 201, 0.2);
+            border-radius: 8px;
+            color: var(--cyan);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        ">🌐 EN</button>
     </header>
 
     <main class="main-content">
@@ -1671,6 +1686,123 @@
                 });
             }
         });
+        
+        // ═══════════════════════════════════════════════════════════
+        // Language Toggle
+        // ═══════════════════════════════════════════════════════════
+        function getCurrentLanguage() {
+            return localStorage.getItem('inify_language') || 'ar';
+        }
+        
+        function toggleLanguageAndReload() {
+            const currentLang = getCurrentLanguage();
+            const newLang = currentLang === 'ar' ? 'en' : 'ar';
+            localStorage.setItem('inify_language', newLang);
+            location.reload();
+        }
+        
+        (function initLanguage() {
+            const lang = getCurrentLanguage();
+            const btn = document.getElementById('langToggleBtn');
+            
+            if (lang === 'en') {
+                document.documentElement.dir = 'ltr';
+                document.documentElement.lang = 'en';
+                if (btn) btn.innerHTML = '🌐 عربي';
+                translateToEnglish();
+            } else {
+                if (btn) btn.innerHTML = '🌐 EN';
+            }
+        })();
+        
+        function translateToEnglish() {
+            const t = {
+                // Navigation
+                'لوحة التحكم': 'Dashboard',
+                'العقارات': 'Properties',
+                'المحادثات': 'Conversations',
+                'العملاء': 'Leads',
+                'حسابي': 'My Account',
+                
+                // Page Header
+                'العملاء المحتملين': 'Potential Leads',
+                'قائمة العملاء الذين تواصلوا عبر الشات بوت': 'List of clients who contacted via chatbot',
+                'إدارة العملاء': 'Lead Management',
+                
+                // Status
+                'جديد': 'New',
+                'تم التواصل': 'Contacted',
+                'مهتم': 'Interested',
+                'موعد معاينة': 'Viewing Scheduled',
+                'مؤهل': 'Qualified',
+                'مغلق': 'Closed',
+                'قيد الانتظار': 'Pending',
+                'مؤكد': 'Confirmed',
+                'ملغي': 'Cancelled',
+                'مكتمل': 'Completed',
+                
+                // Lead Details
+                'تفاصيل العميل': 'Lead Details',
+                'الاسم': 'Name',
+                'رقم الهاتف': 'Phone',
+                'البريد الإلكتروني': 'Email',
+                'الحالة': 'Status',
+                'تاريخ التسجيل': 'Registration Date',
+                'ملخص المحادثة': 'Conversation Summary',
+                'العقارات المهتم بها': 'Interested Properties',
+                'لا توجد محادثة محفوظة': 'No saved conversation',
+                'غير محدد': 'Not specified',
+                'عميل من الشات بوت': 'Client from chatbot',
+                'عميل من الشات': 'Client from chat',
+                'عميل جديد': 'New Lead',
+                
+                // Appointments
+                'مواعيد المعاينة': 'Viewing Appointments',
+                'المواعيد السابقة': 'Previous Appointments',
+                'حجز موعد معاينة': 'Book Viewing',
+                'تاريخ الموعد': 'Appointment Date',
+                'وقت الموعد': 'Appointment Time',
+                
+                // Actions
+                'عرض': 'View',
+                'تعديل': 'Edit',
+                'حذف': 'Delete',
+                'إغلاق': 'Close',
+                'تواصل عبر واتساب': 'Contact via WhatsApp',
+                'اتصال': 'Call',
+                
+                // Stats
+                'إجمالي العملاء': 'Total Leads',
+                'عملاء اليوم': 'Today\'s Leads',
+                'عملاء هذا الأسبوع': 'This Week\'s Leads',
+                
+                // Empty States
+                'لا يوجد عملاء': 'No leads',
+                'لا يوجد عملاء بعد': 'No leads yet',
+                'سيظهر العملاء هنا': 'Leads will appear here',
+                
+                // Property related
+                'شقة': 'Apartment',
+                'فيلا': 'Villa',
+                'للإيجار': 'For Rent',
+                'للبيع': 'For Sale',
+                'ريال': 'SAR',
+            };
+            
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+            
+            nodes.forEach(node => {
+                let text = node.textContent;
+                Object.keys(t).forEach(ar => {
+                    if (text.includes(ar)) text = text.replace(ar, t[ar]);
+                });
+                node.textContent = text;
+            });
+            
+            document.title = 'Leads - Inify';
+        }
     </script>
 </body>
 </html>

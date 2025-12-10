@@ -9,6 +9,7 @@ import logging
 from typing import Dict, List, Optional, Any
 import google.generativeai as genai
 from django.conf import settings
+from prompts.system_prompt import NEWRA_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -50,11 +51,6 @@ class GeminiService:
             from apps.agents.models import GlobalSettings
             settings = GlobalSettings.objects.first()
             if settings:
-                logger.info(f"✅ Loaded GlobalSettings from Admin:")
-                logger.info(f"   - AI Model: {settings.ai_model}")
-                logger.info(f"   - System Prompt: {settings.system_prompt[:100] if settings.system_prompt else 'Empty'}...")
-                print(f"✅ Using AI Model from Admin: {settings.ai_model}")
-                print(f"✅ Using System Prompt from Admin: {settings.system_prompt[:100] if settings.system_prompt else 'Empty'}...")
                 return {
                     'ai_model': settings.ai_model,
                     'system_prompt': settings.system_prompt,
@@ -83,10 +79,11 @@ class GeminiService:
         from services.lead_capture_service import lead_capture_service
         
         # ═══════════════════════════════════════════════════════════
-        # 1. SYSTEM PROMPT من الأدمن
+        # 1. SYSTEM PROMPT من الأدمن (يتم جلبه في كل مرة للحصول على آخر تحديث)
         # ═══════════════════════════════════════════════════════════
-        admin_system_prompt = self.global_settings.get('system_prompt', '')
-        admin_rules = self.global_settings.get('default_rules', '')
+        fresh_settings = self._get_global_settings()
+        admin_system_prompt = fresh_settings.get('system_prompt', '') or NEWRA_SYSTEM_PROMPT
+        admin_rules = fresh_settings.get('default_rules', '')
         
         # ═══════════════════════════════════════════════════════════
         # 2. AGENT INFO - معلومات المسوق

@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>المحادثات - Inify</title>
     <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    
+    <!-- Auto Translation -->
+    <script src="/static/js/auto-translate.js"></script>
+    
     <style>
         @font-face {
             font-family: 'BalooBhaijaan2';
@@ -558,7 +562,8 @@
 
     <header class="header">
         <div class="header-right">
-            <a href="/dashboard/" class="logo">
+            <a href="/dashboard/" class="logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="/static/images/newra-icon.png" alt="Newra" style="height: 28px; filter: brightness(0) invert(1);">
                 <img src="/static/images/inify-logo.png" alt="Inify" style="height: 32px;">
             </a>
             <nav class="nav-links">
@@ -568,7 +573,20 @@
                 <a href="/dashboard/leads/">العملاء</a>
             </nav>
         </div>
-        <a href="/dashboard/bot-settings/" class="header-btn">⚙️ الإعدادات</a>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button id="langToggleBtn" onclick="toggleLanguageAndReload()" style="
+                padding: 8px 16px;
+                background: rgba(107, 184, 201, 0.1);
+                border: 1px solid rgba(107, 184, 201, 0.2);
+                border-radius: 8px;
+                color: var(--cyan);
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            ">🌐 EN</button>
+            <a href="/dashboard/bot-settings/" class="header-btn">⚙️ الإعدادات</a>
+        </div>
     </header>
 
     <main class="main-content">
@@ -806,6 +824,98 @@
                 closeChatPopup();
             }
         });
+        
+        // ═══════════════════════════════════════════════════════════
+        // Language Toggle
+        // ═══════════════════════════════════════════════════════════
+        function getCurrentLanguage() {
+            return localStorage.getItem('inify_language') || 'ar';
+        }
+        
+        function toggleLanguageAndReload() {
+            const currentLang = getCurrentLanguage();
+            const newLang = currentLang === 'ar' ? 'en' : 'ar';
+            localStorage.setItem('inify_language', newLang);
+            location.reload();
+        }
+        
+        (function initLanguage() {
+            const lang = getCurrentLanguage();
+            const btn = document.getElementById('langToggleBtn');
+            
+            if (lang === 'en') {
+                document.documentElement.dir = 'ltr';
+                document.documentElement.lang = 'en';
+                if (btn) btn.innerHTML = '🌐 عربي';
+                translateToEnglish();
+            } else {
+                if (btn) btn.innerHTML = '🌐 EN';
+            }
+        })();
+        
+        function translateToEnglish() {
+            const t = {
+                // Navigation
+                'لوحة التحكم': 'Dashboard',
+                'العقارات': 'Properties',
+                'المحادثات': 'Conversations',
+                'العملاء': 'Leads',
+                'الإعدادات': 'Settings',
+                
+                // Page Header
+                'إدارة المحادثات': 'Conversation Management',
+                'تتبع محادثات الشات بوت مع العملاء': 'Track chatbot conversations with clients',
+                'تجربة الشات': 'Try Chat',
+                
+                // Stats
+                'إجمالي المحادثات': 'Total Conversations',
+                'محادثات اليوم': 'Today\'s Conversations',
+                'إجمالي الرسائل': 'Total Messages',
+                'عملاء من المحادثات': 'Leads from Chats',
+                
+                // Sections
+                'المحادثات الأخيرة': 'Recent Conversations',
+                'إجراءات سريعة': 'Quick Actions',
+                'تفاصيل المحادثة': 'Conversation Details',
+                
+                // Status
+                'نشط': 'Active',
+                'مغلق': 'Closed',
+                'جديد': 'New',
+                
+                // Empty States
+                'لا توجد محادثات': 'No conversations',
+                'لا توجد محادثات بعد': 'No conversations yet',
+                'ستظهر المحادثات هنا عندما يتفاعل العملاء مع الشات بوت': 'Conversations will appear here when clients interact with the chatbot',
+                
+                // Actions
+                'عرض': 'View',
+                'حذف': 'Delete',
+                'إغلاق': 'Close',
+                
+                // Chat
+                'العميل': 'Client',
+                'الوكيل': 'Agent',
+                'البوت': 'Bot',
+                'رسالة': 'Message',
+                'رسائل': 'Messages',
+                'عميل جديد': 'New Client',
+            };
+            
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+            
+            nodes.forEach(node => {
+                let text = node.textContent;
+                Object.keys(t).forEach(ar => {
+                    if (text.includes(ar)) text = text.replace(ar, t[ar]);
+                });
+                node.textContent = text;
+            });
+            
+            document.title = 'Conversations - Inify';
+        }
     </script>
     
     <!-- Chat Popup Overlay -->

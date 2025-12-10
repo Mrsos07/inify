@@ -41,7 +41,7 @@ def chat_demo(request):
             'agent_id': str(agent.id),
             'bot_name': agent.bot_name or 'Inify',
             'bot_title': agent.bot_title or 'المساعد العقاري الذكي',
-            'bot_welcome_message': agent.bot_welcome_message or 'مرحباً! 👋 كيف يمكنني مساعدتك؟',
+            'bot_welcome_message': agent.bot_welcome_message or f"أهلاً وسهلاً! 👋 معك {agent.bot_name or 'المساعد'} من {agent.company_name or 'فريقنا'}. كيف أقدر أساعدك اليوم؟",
             'bot_color': agent.bot_color or '#000000',
             'company_name': agent.company_name or '',
         }

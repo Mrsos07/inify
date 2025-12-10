@@ -39,8 +39,10 @@ class OpenAIService:
             logger.warning("⚠️ OpenAI API key not configured")
     
     def _build_system_prompt(self) -> str:
-        """بناء System Prompt مع إعدادات الوكيل"""
-        base_prompt = self.global_settings.get('system_prompt', '')
+        """بناء System Prompt مع إعدادات الوكيل (يتم جلبه من الأدمن في كل مرة)"""
+        # جلب الإعدادات من الأدمن في كل مرة للحصول على آخر تحديث
+        fresh_settings = self._get_global_settings()
+        base_prompt = fresh_settings.get('system_prompt', '')
         
         if not self.agent:
             return base_prompt
@@ -128,8 +130,8 @@ class OpenAIService:
             # بناء الرسائل
             messages = []
             
-            # System Prompt
-            system_content = self.system_prompt
+            # System Prompt (يتم جلبه من الأدمن في كل مرة)
+            system_content = self._build_system_prompt()
             if properties_context:
                 system_content += f"""
 
@@ -216,7 +218,7 @@ class OpenAIService:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": self.system_prompt},
+                    {"role": "system", "content": self._build_system_prompt()},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,

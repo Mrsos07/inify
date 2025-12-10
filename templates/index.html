@@ -12,6 +12,9 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
     
+    <!-- Auto Translation -->
+    <script src="/static/js/auto-translate.js"></script>
+    
     <style>
         @font-face {
             font-family: 'Chillax';
@@ -755,6 +758,13 @@
             font-size: 11px;
             font-weight: 700;
         }
+        
+        /* English version */
+        html[lang="en"] .pricing-card.enterprise::before {
+            content: '⭐ Best for Companies';
+            left: 20px;
+            right: auto;
+        }
 
         .pricing-card.enterprise h3 {
             color: var(--cyan);
@@ -1190,6 +1200,17 @@
         
         <!-- اليسار: الأزرار -->
         <div class="header-left">
+            <button id="langToggleBtn" onclick="toggleLanguageAndReload()" style="
+                padding: 8px 16px;
+                background: rgba(107, 184, 201, 0.15);
+                border: 1px solid rgba(107, 184, 201, 0.3);
+                border-radius: 8px;
+                color: var(--cyan);
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s;
+            ">🌐 EN</button>
             <a href="/dashboard/" class="nav-link-btn">إدارة وكيلك</a>
             <a href="/auth/register/" class="header-btn">أنشئ وكيلك الذكي</a>
         </div>
@@ -1344,7 +1365,7 @@
     </section>
 
     <!-- Steps Section - 3 خطوات -->
-    <section class="steps-section">
+    <section class="steps-section" id="steps">
         <h2 class="steps-title">3 خطوات لتشغيل وكيلك الذكي</h2>
         <div class="steps-grid">
             <div class="step-card">
@@ -1505,6 +1526,188 @@
         const session = JSON.parse(localStorage.getItem('newra_session') || '{}');
         if (session.loggedIn) {
             window.location.href = '/dashboard/';
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // Language Toggle
+        // ═══════════════════════════════════════════════════════════
+        function getCurrentLanguage() {
+            return localStorage.getItem('inify_language') || 'ar';
+        }
+        
+        function toggleLanguageAndReload() {
+            const currentLang = getCurrentLanguage();
+            const newLang = currentLang === 'ar' ? 'en' : 'ar';
+            localStorage.setItem('inify_language', newLang);
+            location.reload();
+        }
+        
+        (function initLanguage() {
+            const lang = getCurrentLanguage();
+            const btn = document.getElementById('langToggleBtn');
+            
+            if (lang === 'en') {
+                document.documentElement.dir = 'ltr';
+                document.documentElement.lang = 'en';
+                if (btn) btn.innerHTML = '🌐 عربي';
+                translateToEnglish();
+            } else {
+                if (btn) btn.innerHTML = '🌐 EN';
+            }
+        })();
+        
+        function translateToEnglish() {
+            const t = {
+                // Header
+                'المميزات': 'Features',
+                'الإشتراكات': 'Pricing',
+                'كيف يعمل': 'How it Works',
+                'إدارة وكيلك': 'Manage Agent',
+                'أنشئ وكيلك الذكي': 'Create Your Agent',
+                
+                // Hero
+                'أول وكيل عقاري ذكي يدير مبيعاتك نيابة عنك': 'The First AI Real Estate Agent That Manages Your Sales',
+                'يستقبل رسائل عملائك، يفرز الجادين، يقترح العقارات المناسبة،': 'Receives client messages, filters serious buyers, suggests suitable properties,',
+                'ويحوّل المحادثات اليومية إلى صفقات منجزة.. كل ذلك بشكل تلقائي وعلى مدار الساعة.': 'and converts daily conversations into closed deals... all automatically, 24/7.',
+                
+                // Features Section
+                'لماذا': 'Why',
+                'مميزات تجعل وكيلك الذكي شريكك الأمثل': 'Features That Make Your Smart Agent The Perfect Partner',
+                'محادثات ذكية': 'Smart Conversations',
+                'محادثات ذكية بالعربية والإنجليزية مع فهم لاحتياجات العملاء، لضمان ردود دقيقة وسريعة.': 'Smart conversations in Arabic and English with understanding of client needs, ensuring accurate and fast responses.',
+                'تحويل العملاء': 'Lead Conversion',
+                'بحث متقدم وتصفية حسب الموقع والسعر والمواصفات، مع نظام إدارة موحّد لكل عقاراتك.': 'Advanced search and filtering by location, price, and specifications, with a unified management system for all your properties.',
+                'تحليلات ذكية': 'Smart Analytics',
+                'لوحة تحكم تعرض بيانات دقيقة وتوقعات تساعدك على اتخاذ القرارات وتحسين الأداء.': 'Dashboard showing accurate data and forecasts to help you make decisions and improve performance.',
+                'تكامل سهل': 'Easy Integration',
+                'جدولة المعاينات': 'Viewing Scheduling',
+                'حجز مواعيد معاينة العقارات تلقائياً مع تذكيرات فورية لضمان عدم تفويت أي فرصة.': 'Automatic property viewing appointments with instant reminders to ensure no opportunity is missed.',
+                
+                // Customization Section
+                'وكيلك الذكي بأسلوبك وهويتك': 'Your Smart Agent With Your Style and Identity',
+                'إنيفاي يسمح لك ببناء وكيل عقاري ذكي يحمل اسم مكتبك، ولهجتك، وطريقة ردك – ويظهر للعملاء كجزء من علامتك التجارية.': 'Inify allows you to build a smart real estate agent with your office name, dialect, and response style – appearing to clients as part of your brand.',
+                'اسم مكتبك': 'Your Office Name',
+                'اختر الاسم الذي سيظهر لعملائك داخل المحادثة': 'Choose the name that will appear to your clients in the conversation',
+                'شعارك': 'Your Logo',
+                'ارفع شعار مكتبك ليكون جزءاً من واجهة الوكيل': 'Upload your office logo to be part of the agent interface',
+                'ألوانك': 'Your Colors',
+                'خصص ألوان المحادثة لتتطابق مع هويتك البصرية': 'Customize conversation colors to match your visual identity',
+                'رسالة الترحيب': 'Welcome Message',
+                'ابدأ كل محادثة بتحية ونبرة تعبر عن مكتبك': 'Start every conversation with a greeting that represents your office',
+                'أسلوب الرد': 'Response Style',
+                'اختر: رسمي، ودّي، مهني، سريع...': 'Choose: formal, friendly, professional, quick...',
+                
+                // Chat Demo
+                'مكتبك العقاري': 'Your Real Estate Office',
+                'متصل الآن': 'Online Now',
+                'أهلاً وسهلاً!': 'Welcome!',
+                'كيف أقدر أساعدك اليوم؟': 'How can I help you today?',
+                'أبي شقة 3 غرف في الرياض': 'I want a 3-bedroom apartment in Riyadh',
+                'عندي خيارات ممتازة!': 'I have excellent options!',
+                'خليني أوريك أفضل 3 شقق...': 'Let me show you the best 3 apartments...',
+                
+                // Steps Section
+                '3 خطوات لتشغيل وكيلك الذكي': '3 Steps to Launch Your Smart Agent',
+                'أضف بيانات مكتبك، اسم الوكيل، وصفه، ورسالة الترحيب التي ستظهر لعملائك.': 'Add your office data, agent name, description, and welcome message for your clients.',
+                'حمّل قوائم عقاراتك أو اربط مصدر بياناتك ليتمكن الوكيل من ترشيح الخيارات المناسبة.': 'Upload your property listings or connect your data source so the agent can suggest suitable options.',
+                'جهّز الوكيل للرد': 'Prepare Agent for Response',
+                'اختر أسلوب الرد، الأسئلة الأساسية، وقواعد التصفية حسب الجدية والميزانية والموقع.': 'Choose response style, basic questions, and filtering rules by seriousness, budget, and location.',
+                
+                // Benefits
+                'تصفية دقيقة للعقارات المناسبة لكل عميل': 'Accurate filtering of suitable properties for each client',
+                'عملاء أكثر جدية بدل من الرسائل العشوائية': 'More serious clients instead of random messages',
+                'تنظيم كامل لبيانات العملاء والمحادثات': 'Complete organization of client data and conversations',
+                'ردود ذكية ومحسوبة تزيد فرصة الإغلاق': 'Smart calculated responses that increase closing chances',
+                'مبيعات أفضل... بدون ما ترفع سماعة الجوال': 'Better sales... without picking up the phone',
+                
+                // Pricing Section
+                'الخطة المجانية': 'Free Plan',
+                'للبدء واستكشاف المنصة': 'To start and explore the platform',
+                'ريال': 'SAR',
+                'إضافة حتى 5 عقارات': 'Add up to 5 properties',
+                'لوحة تحكم أساسية': 'Basic dashboard',
+                'محادثات محدودة (50/شهر)': 'Limited conversations (50/month)',
+                'تحليلات متقدمة': 'Advanced analytics',
+                'دعم فني أولوية': 'Priority support',
+                'ربط مع المنصات': 'Platform integration',
+                'ابدأ Free': 'Start Free',
+                
+                'خطة المسوق': 'Marketer Plan',
+                'الأكثر شعبية للمسوقين': 'Most popular for marketers',
+                'ريال / شهر': 'SAR / month',
+                'عقارات غير محدودة': 'Unlimited properties',
+                'محادثات غير محدودة': 'Unlimited conversations',
+                'لوحة تحكم متقدمة': 'Advanced dashboard',
+                'تخصيص الشات بوت': 'Chatbot customization',
+                'تقارير وتحليلات متقدمة': 'Advanced reports and analytics',
+                'White Label (علامتك التجارية)': 'White Label (Your Brand)',
+                
+                'خطة الشركات': 'Enterprise Plan',
+                'الأفضل للشركات': 'Best for Companies',
+                'للشركات والمكاتب العقارية الكبرى': 'For large companies and real estate offices',
+                'نموذج ذكاء اصطناعي عالي الجودة': 'High-quality AI model',
+                'نشر العقارات للمنصات العقارية': 'Publish properties to real estate platforms',
+                'تحليلات وتقارير شاملة': 'Comprehensive analytics and reports',
+                'دعم فني على مدار الساعة': '24/7 technical support',
+                'ربط WhatsApp Business': 'WhatsApp Business integration',
+                'API مخصص للتكامل': 'Custom API for integration',
+                'Webhooks للإشعارات': 'Webhooks for notifications',
+                
+                // Security
+                'نعمل بمعايير أمن عالية وحماية كاملة لبيانات العملاء.': 'We operate with high security standards and complete protection of client data.',
+                
+                // Missing translations - Features
+                'ذكاء اصطناعي متقدم': 'Advanced AI',
+                'إدارة العقارات': 'Property Management',
+                'بالعربية والإنجليزية مع فهم لاحتياجات العملاء، لضمان ردود دقيقة وسريعة.': 'in Arabic and English with understanding of client needs, ensuring accurate and fast responses.',
+                
+                // Steps
+                'أضف عقاراتك': 'Add Properties',
+                'أضف بيانات مكتبك، اسم الوكيل، وصفه، و': 'Add your office data, agent name, description, and ',
+                'التي ستظهر لعملائك.': 'that will appear to your clients.',
+                'اختر ': 'Choose ',
+                '، الأسئلة الأساسية، وقواعد التصفية حسب الجدية والميزانية والموقع.': ', basic questions, and filtering rules by seriousness, budget, and location.',
+                
+                // Pricing buttons
+                'ابدأ مجاناً': 'Start Free',
+                'اشترك الآن': 'Subscribe Now',
+                'تواصل معنا': 'Contact Us',
+                'شهر': 'month',
+                'تقارير و': 'Reports and ',
+                'علامتك التجارية': 'Your Brand',
+                
+                // Pricing features
+                'محادثات محدودة': 'Limited conversations',
+                
+                // Footer
+                'الدعم الفني': 'Technical Support',
+                'راسل الفريق': 'Contact Team',
+                'الشراكات والتعاون': 'Partnerships',
+                'الانضمام كوكيل': 'Join as Agent',
+                'لوحة التحكم': 'Dashboard',
+                'أسعار الباقات': 'Pricing Plans',
+                'تكامل واتس آب بزنس': 'WhatsApp Business Integration',
+                'عن Inify': 'About Inify',
+                'الخصوصية والسياسات': 'Privacy Policy',
+                'الشروط والأحكام': 'Terms & Conditions',
+                'الأسئلة الشائعة': 'FAQ',
+                'إتاحة النظام': 'System Status',
+                'جميع الحقوق محفوظة': 'All Rights Reserved',
+            };
+            
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+            
+            nodes.forEach(node => {
+                let text = node.textContent;
+                Object.keys(t).forEach(ar => {
+                    if (text.includes(ar)) text = text.replace(new RegExp(ar, 'g'), t[ar]);
+                });
+                node.textContent = text;
+            });
+            
+            document.title = 'Inify - AI Real Estate Agent | The New Era of Real Estate Intelligence in Saudi Arabia';
         }
     </script>
 </body>
