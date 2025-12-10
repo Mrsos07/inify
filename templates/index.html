@@ -192,6 +192,98 @@
             font-size: 24px;
             cursor: pointer;
             color: var(--pearl);
+            z-index: 1002;
+            position: relative;
+        }
+
+        /* Mobile Menu Overlay - Hidden by default, shown only on mobile */
+        .mobile-menu-overlay {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 22, 40, 0.95);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            pointer-events: none;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(180deg, var(--midnight) 0%, var(--dark-blue) 100%);
+            z-index: 1002;
+            padding: 80px 30px 30px;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu-close {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 28px;
+            color: var(--pearl);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 10px;
+        }
+
+        .mobile-menu-links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .mobile-menu-links a {
+            color: var(--pearl);
+            text-decoration: none;
+            font-size: 18px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mobile-menu-links a:hover {
+            background: rgba(107, 184, 201, 0.2);
+        }
+
+        .mobile-menu-links .btn-primary-mobile {
+            background: linear-gradient(135deg, var(--cyan) 0%, var(--blue-mid) 100%);
+            color: var(--midnight);
+            font-weight: 600;
+        }
+
+        /* Only show mobile menu elements on mobile */
+        @media (min-width: 769px) {
+            .mobile-menu-overlay,
+            .mobile-menu {
+                display: none !important;
+            }
         }
 
         /* Hero Section */
@@ -1216,8 +1308,21 @@
         </div>
         
         <!-- أيقونة القائمة للموبايل -->
-        <div class="menu-icon">☰</div>
+        <div class="menu-icon" onclick="openMobileMenu()">☰</div>
     </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="mobile-menu-close" onclick="closeMobileMenu()">✕</button>
+        <div class="mobile-menu-links">
+            <a href="#features">✨ المميزات</a>
+            <a href="#pricing">💰 الأسعار</a>
+            <a href="/dashboard/">📊 إدارة وكيلك</a>
+            <a href="/auth/login/">🔐 تسجيل الدخول</a>
+            <a href="/auth/register/" class="btn-primary-mobile">🚀 أنشئ وكيلك الذكي</a>
+        </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -1709,6 +1814,24 @@
             
             document.title = 'Inify - AI Real Estate Agent | The New Era of Real Estate Intelligence in Saudi Arabia';
         }
+
+        // Mobile Menu Functions
+        function openMobileMenu() {
+            document.getElementById('mobileMenu').classList.add('active');
+            document.querySelector('.mobile-menu-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            document.getElementById('mobileMenu').classList.remove('active');
+            document.querySelector('.mobile-menu-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close menu when clicking on a link
+        document.querySelectorAll('.mobile-menu-links a').forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
     </script>
 </body>
 </html>

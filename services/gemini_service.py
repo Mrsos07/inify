@@ -143,6 +143,33 @@ class GeminiService:
             lead_capture_prompt = lead_capture_service.generate_lead_capture_prompt(custom_prompt)
         
         # ═══════════════════════════════════════════════════════════
+        # إضافة التاريخ والوقت الحالي
+        # ═══════════════════════════════════════════════════════════
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        day_names_ar = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+        current_day = day_names_ar[now.weekday()]
+        tomorrow = now + timedelta(days=1)
+        tomorrow_day = day_names_ar[tomorrow.weekday()]
+        
+        datetime_info = f"""
+═══════════════════════════════════════════════════════════
+📅 التاريخ والوقت الحالي (مهم جداً للمواعيد!)
+═══════════════════════════════════════════════════════════
+• اليوم: {current_day}
+• التاريخ: {now.strftime('%Y-%m-%d')}
+• الوقت الآن: {now.strftime('%H:%M')}
+• غداً/بكرة: {tomorrow_day} {tomorrow.strftime('%Y-%m-%d')}
+
+⚠️ عند حجز موعد:
+• "بكرة" أو "غداً" = {tomorrow.strftime('%Y-%m-%d')} ({tomorrow_day})
+• "بعد العصر" = الساعة 5:00 مساءً
+• "بعد المغرب" = الساعة 7:00 مساءً
+• "بعد العشاء" = الساعة 9:00 مساءً
+═══════════════════════════════════════════════════════════
+"""
+        
+        # ═══════════════════════════════════════════════════════════
         # بناء الـ Prompt النهائي
         # ═══════════════════════════════════════════════════════════
         if admin_system_prompt:
@@ -156,6 +183,7 @@ class GeminiService:
             
             # إضافة الأقسام
             prompt += f"\n{agent_info}"
+            prompt += datetime_info  # إضافة التاريخ والوقت الحالي
             
             if admin_rules:
                 prompt += f"\n═══ قواعد إضافية ═══\n{admin_rules}"

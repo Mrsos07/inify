@@ -53,6 +53,7 @@ class AgentTools:
     def _load_agent_context(self):
         """تحميل سياق الوكيل"""
         self.context = {
+            'agent_id': str(self.agent.id) if self.agent and hasattr(self.agent, 'id') else None,
             'bot_name': getattr(self.agent, 'bot_name', 'Inify') if self.agent else 'Inify',
             'company': getattr(self.agent, 'company_name', '') if self.agent else '',
             'city': getattr(self.agent, 'city', '') if self.agent else '',
@@ -411,6 +412,8 @@ class AgentTools:
     
     def _book_viewing(self, args: Dict) -> ToolResult:
         """حجز معاينة فعلي في قاعدة البيانات"""
+        logger.info(f"📅 book_viewing called with args: {args}")
+        
         phone = args.get('client_phone')
         client_name = args.get('client_name', '')
         property_id = args.get('property_id')
@@ -495,10 +498,19 @@ class AgentTools:
                     property_obj = Property.objects.get(id=property_id, agent=agent)
                 except:
                     # محاولة الحصول على آخر عقار تم عرضه
-                    property_obj = Property.objects.filter(agent=agent).first()
+                    property_obj = Property.objects.filter(agent=agent, is_active=True).first()
             else:
-                # الحصول على آخر عقار
-                property_obj = Property.objects.filter(agent=agent).first()
+                # الحصول على أول عقار نشط
+                property_obj = Property.objects.filter(agent=agent, is_active=True).first()
+            
+            # التحقق من وجود عقار
+            if not property_obj:
+                return ToolResult(
+                    success=False,
+                    data={'error': 'no_property'},
+                    message=f"تم تسجيل طلبك! سنتواصل معك على {phone} لتحديد العقار المناسب 📞",
+                    tool_type=ToolType.BOOK_VIEWING
+                )
             
             # التحقق من عدم وجود تعارض في المواعيد
             existing = ViewingAppointment.objects.filter(
@@ -522,9 +534,11 @@ class AgentTools:
             appointment = ViewingAppointment.objects.create(
                 lead=lead,
                 property=property_obj,
+                agent=agent,
                 scheduled_date=scheduled_date,
                 scheduled_time=scheduled_time,
                 status='pending',
+                duration_minutes=30,
                 notes=f'تم الحجز عبر الشات بوت - العقار: {property_obj.title if property_obj else "غير محدد"}'
             )
             
@@ -541,8 +555,10 @@ class AgentTools:
             )
             
             # تحديث حالة العميل
-            lead.status = 'interested'
+            lead.status = 'viewing_scheduled'
             lead.save()
+            
+            logger.info(f"✅ Viewing booked successfully! Appointment ID: {appointment.id}, Lead: {lead.id}, Property: {property_obj.title}")
             
             # تنسيق الرسالة
             day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']

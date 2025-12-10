@@ -819,3 +819,177 @@ def save_lead_from_chat(request, agent_id):
         print(f"Save lead error: {e}")
         print(traceback.format_exc())
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def book_viewing_from_chat(request, agent_id):
+    """
+    حجز موعد معاينة من الشات بوت
+    
+    POST /api/v1/leads/book-viewing/<agent_id>/
+    
+    Body:
+    {
+        "client_name": "أحمد",
+        "client_phone": "0555123456",
+        "property_id": "uuid" (optional),
+        "property_title": "شقة في الصفا" (optional),
+        "scheduled_date": "2025-12-11",
+        "scheduled_time": "17:00",
+        "notes": "ملاحظات" (optional)
+    }
+    """
+    from apps.properties.models import Property
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Get agent
+        agent = Agent.objects.get(id=agent_id)
+        
+        # Extract data
+        client_name = data.get('client_name', 'عميل من الشات')
+        client_phone = data.get('client_phone', '')
+        property_id = data.get('property_id')
+        property_title = data.get('property_title', '')
+        scheduled_date = data.get('scheduled_date')
+        scheduled_time = data.get('scheduled_time', '17:00')
+        notes = data.get('notes', '')
+        
+        # Validation
+        if not client_phone:
+            return JsonResponse({'success': False, 'error': 'رقم الجوال مطلوب'}, status=400)
+        
+        if not scheduled_date:
+            # Default to tomorrow
+            scheduled_date = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+        
+        # Get or create lead
+        lead, created = Lead.objects.get_or_create(
+            agent=agent,
+            phone=client_phone,
+            defaults={
+                'name': client_name,
+                'source': 'chatbot',
+                'status': 'new'
+            }
+        )
+        
+        if not created and client_name and client_name != 'عميل من الشات':
+            lead.name = client_name
+            lead.save()
+        
+        # Get property
+        property_obj = None
+        if property_id:
+            try:
+                property_obj = Property.objects.get(id=property_id)
+            except Property.DoesNotExist:
+                pass
+        
+        # If no property_id but property_title, try to find it
+        if not property_obj and property_title:
+            property_obj = Property.objects.filter(
+                agent=agent, 
+                title__icontains=property_title,
+                is_active=True
+            ).first()
+        
+        # If still no property, use first available
+        if not property_obj:
+            property_obj = Property.objects.filter(agent=agent, is_active=True).first()
+        
+        if not property_obj:
+            return JsonResponse({
+                'success': False, 
+                'error': 'لا يوجد عقارات متاحة للحجز'
+            }, status=400)
+        
+        # Parse date and time
+        try:
+            date_obj = datetime.strptime(scheduled_date, '%Y-%m-%d').date()
+        except:
+            date_obj = (datetime.now() + timedelta(days=1)).date()
+        
+        try:
+            time_obj = datetime.strptime(scheduled_time, '%H:%M').time()
+        except:
+            time_obj = datetime.strptime('17:00', '%H:%M').time()
+        
+        # Check for conflicts
+        existing = ViewingAppointment.objects.filter(
+            lead__agent=agent,
+            scheduled_date=date_obj,
+            scheduled_time=time_obj,
+            status__in=['pending', 'confirmed']
+        ).exists()
+        
+        if existing:
+            # Suggest alternative time (1 hour later)
+            alt_time = (datetime.combine(date_obj, time_obj) + timedelta(hours=1)).time()
+            return JsonResponse({
+                'success': False,
+                'error': 'الموعد محجوز',
+                'suggested_time': alt_time.strftime('%H:%M')
+            }, status=409)
+        
+        # Create appointment
+        appointment = ViewingAppointment.objects.create(
+            lead=lead,
+            property=property_obj,
+            agent=agent,
+            scheduled_date=date_obj,
+            scheduled_time=time_obj,
+            duration_minutes=30,
+            notes=notes or f'تم الحجز عبر الشات بوت',
+            status='pending'
+        )
+        
+        # Update lead status
+        lead.status = 'viewing_scheduled'
+        lead.save()
+        
+        # Create activity
+        LeadActivity.objects.create(
+            lead=lead,
+            activity_type='viewing',
+            description=f'تم حجز موعد معاينة للعقار {property_obj.title} بتاريخ {scheduled_date} الساعة {scheduled_time}',
+            metadata={
+                'appointment_id': str(appointment.id),
+                'property_id': str(property_obj.id),
+                'booked_by': 'chatbot'
+            }
+        )
+        
+        # Format response
+        day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+        day_name = day_names[date_obj.weekday()]
+        time_str = time_obj.strftime('%I:%M %p').replace('AM', 'صباحاً').replace('PM', 'مساءً')
+        
+        return JsonResponse({
+            'success': True,
+            'appointment_id': str(appointment.id),
+            'lead_id': str(lead.id),
+            'message': 'تم حجز الموعد بنجاح',
+            'appointment_details': {
+                'date': str(date_obj),
+                'day_name': day_name,
+                'time': scheduled_time,
+                'time_formatted': time_str,
+                'property': property_obj.title,
+                'property_id': str(property_obj.id),
+                'client_name': lead.name,
+                'client_phone': lead.phone
+            }
+        })
+        
+    except Agent.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
+    except Exception as e:
+        import traceback
+        print(f"Book viewing error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

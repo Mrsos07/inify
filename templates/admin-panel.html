@@ -1526,6 +1526,7 @@
                             <div class="action-btns">
                                 <button class="action-btn btn-view" onclick="viewUser('${user.id}')">عرض</button>
                                 <button class="action-btn btn-upgrade" onclick="changeUserPlan('${user.id}')">تغيير الباقة</button>
+                                <button class="action-btn btn-delete" onclick="deleteUser('${user.id}')" style="background: #ef4444; color: white;">حذف</button>
                             </div>
                         </td>
                     </tr>
@@ -1745,7 +1746,7 @@
             }
         }
 
-        function deleteUser(userId) {
+        async function deleteUser(userId) {
             console.log('Deleting user:', userId);
             const user = allUsers.find(u => String(u.id) === String(userId));
             console.log('Found user:', user);
@@ -1754,19 +1755,53 @@
                 return;
             }
 
-            if (confirm(`⚠️ هل أنت متأكد من حذف المستخدم ${user.name || user.email}؟\n\nسيتم حذف جميع بياناته (العقارات، العملاء، الإعدادات)`)) {
-                // Delete user data
-                localStorage.removeItem(`newra_properties_${user.id}`);
-                localStorage.removeItem(`newra_clients_${user.id}`);
-                localStorage.removeItem(`newra_agent_settings_${user.id}`);
-                
-                // Remove from users array
-                allUsers = allUsers.filter(u => String(u.id) !== String(userId));
-                localStorage.setItem('newra_users', JSON.stringify(allUsers));
-                
-                loadUsers();
-                alert('تم حذف المستخدم بنجاح ✅');
+            if (confirm(`⚠️ هل أنت متأكد من حذف المستخدم ${user.name || user.email}؟\n\nسيتم حذف جميع بياناته (العقارات، العملاء، الإعدادات، المحادثات)`)) {
+                try {
+                    // Delete via API
+                    const response = await fetch(`/api/admin/users/${userId}/delete/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // Remove from local array
+                        allUsers = allUsers.filter(u => String(u.id) !== String(userId));
+                        
+                        // Also clean localStorage
+                        localStorage.removeItem(`newra_properties_${user.id}`);
+                        localStorage.removeItem(`newra_clients_${user.id}`);
+                        localStorage.removeItem(`newra_agent_settings_${user.id}`);
+                        
+                        loadUsers();
+                        alert('تم حذف المستخدم بنجاح ✅');
+                    } else {
+                        const data = await response.json();
+                        alert('خطأ في حذف المستخدم: ' + (data.error || 'حدث خطأ'));
+                    }
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    alert('خطأ في الاتصال بالخادم');
+                }
             }
+        }
+        
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
         }
 
         // Close modal on outside click

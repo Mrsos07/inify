@@ -242,6 +242,156 @@ class PublicChatView(View):
                 
                 logger.info(f"🤖 Smart Agent Response | Tool: {result.get('tool_used')} | Intent: {result.get('intent')}")
                 
+                # ═══════════════════════════════════════════════════════════
+                # التحقق من نتيجة الحجز من SmartAgent
+                # ═══════════════════════════════════════════════════════════
+                lead_created = None
+                viewing_booked = None
+                
+                # إذا تم استخدام أداة الحجز بنجاح
+                if result.get('viewing_booked'):
+                    viewing_booked = result.get('viewing_booked')
+                    logger.info(f"✅ Viewing booked via SmartAgent tool: {viewing_booked}")
+                
+                # ═══════════════════════════════════════════════════════════
+                # إنشاء العميل وحجز المعاينة (Smart Agent Path - Fallback)
+                # ═══════════════════════════════════════════════════════════
+                from services.lead_capture_service import lead_capture_service
+                
+                bot_collect_leads = getattr(agent, 'bot_collect_leads', True)
+                
+                if bot_collect_leads:
+                    # تحليل الرسالة لاستخراج بيانات العميل
+                    analysis = lead_capture_service.analyze_message(message, chat_history)
+                    
+                    if analysis.get('phone'):
+                        logger.info(f"📱 Smart Agent: Creating lead with phone: {analysis.get('phone')}")
+                        
+                        # تحديد العقار المهتم به
+                        interested_property_id = None
+                        if suggested_properties and len(suggested_properties) > 0:
+                            interested_property_id = suggested_properties[0].get('id')
+                        
+                        # إذا لم يكن هناك عقار مقترح، استخدم أول عقار متاح
+                        if not interested_property_id and properties_data and len(properties_data) > 0:
+                            interested_property_id = properties_data[0].get('id')
+                            logger.info(f"📱 Smart Agent: Using first property: {interested_property_id}")
+                        
+                        try:
+                            lead = lead_capture_service.create_lead_from_conversation(
+                                agent_id=str(agent.id),
+                                conversation_id=str(conversation.id),
+                                extracted_info={
+                                    'phone': analysis.get('phone'),
+                                    'email': analysis.get('email'),
+                                    'name': analysis.get('name') or 'عميل من الشات بوت',
+                                    'interest_level': 'high'
+                                },
+                                interested_property_id=interested_property_id
+                            )
+                            
+                            if lead:
+                                lead_created = {
+                                    'id': str(lead.id),
+                                    'name': lead.name,
+                                    'phone': lead.phone
+                                }
+                                logger.info(f"✅ Smart Agent: Lead created: {lead.id}")
+                                
+                                # تحليل طلب المعاينة
+                                full_conversation = ' '.join([msg.get('content', '') for msg in chat_history]) + ' ' + message
+                                viewing_analysis = lead_capture_service.analyze_viewing_request(message, chat_history)
+                                
+                                viewing_keywords = ['معاينة', 'أشوف', 'اشوف', 'موعد', 'زيارة', 'بكرة', 'بكره', 'غدا', 'غداً', 'العصر', 'الصباح']
+                                wants_viewing = viewing_analysis.get('wants_viewing') or any(kw in full_conversation.lower() for kw in viewing_keywords)
+                                
+                                print(f"🔍 DEBUG Smart Agent: wants_viewing={wants_viewing}, interested_property_id={interested_property_id}, viewing_booked={viewing_booked}")
+                                
+                                # تجنب الحجز المزدوج - إذا تم الحجز بالفعل من الأداة
+                                if wants_viewing and not viewing_booked:
+                                    from datetime import datetime, timedelta
+                                    import requests
+                                    
+                                    scheduled_date = viewing_analysis.get('suggested_date')
+                                    scheduled_time = viewing_analysis.get('suggested_time')
+                                    
+                                    if not scheduled_date:
+                                        tomorrow = datetime.now() + timedelta(days=1)
+                                        scheduled_date = tomorrow.strftime('%Y-%m-%d')
+                                    
+                                    if not scheduled_time:
+                                        conv_lower = full_conversation.lower()
+                                        if 'بعد العصر' in conv_lower:
+                                            scheduled_time = '17:00'
+                                        elif 'بعد المغرب' in conv_lower:
+                                            scheduled_time = '19:00'
+                                        elif 'بعد العشاء' in conv_lower:
+                                            scheduled_time = '21:00'
+                                        else:
+                                            scheduled_time = '17:00'
+                                    
+                                    # استخدام API لحجز الموعد
+                                    try:
+                                        from apps.leads.models import Lead as LeadModel, ViewingAppointment, LeadActivity
+                                        from apps.properties.models import Property
+                                        
+                                        # الحصول على العقار
+                                        property_obj = None
+                                        if interested_property_id:
+                                            try:
+                                                property_obj = Property.objects.get(id=interested_property_id)
+                                            except:
+                                                pass
+                                        
+                                        if not property_obj:
+                                            property_obj = Property.objects.filter(agent=agent, is_active=True).first()
+                                        
+                                        if property_obj:
+                                            # تحويل التاريخ والوقت
+                                            date_obj = datetime.strptime(scheduled_date, '%Y-%m-%d').date()
+                                            time_obj = datetime.strptime(scheduled_time, '%H:%M').time()
+                                            
+                                            # إنشاء الموعد
+                                            appointment = ViewingAppointment.objects.create(
+                                                lead=lead,
+                                                property=property_obj,
+                                                agent=agent,
+                                                scheduled_date=date_obj,
+                                                scheduled_time=time_obj,
+                                                duration_minutes=30,
+                                                notes='تم الحجز عبر Smart Agent',
+                                                status='pending'
+                                            )
+                                            
+                                            # تحديث حالة العميل
+                                            lead.status = 'viewing_scheduled'
+                                            lead.save()
+                                            
+                                            # تسجيل النشاط
+                                            LeadActivity.objects.create(
+                                                lead=lead,
+                                                activity_type='viewing',
+                                                description=f'تم حجز موعد معاينة للعقار {property_obj.title}',
+                                                metadata={
+                                                    'appointment_id': str(appointment.id),
+                                                    'property_id': str(property_obj.id),
+                                                    'booked_by': 'smart_agent'
+                                                }
+                                            )
+                                            
+                                            day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+                                            viewing_booked = {
+                                                'date': str(date_obj),
+                                                'day_name': day_names[date_obj.weekday()],
+                                                'time': scheduled_time,
+                                                'property': property_obj.title
+                                            }
+                                            logger.info(f"✅ Smart Agent: Viewing booked: {appointment.id}")
+                                    except Exception as booking_error:
+                                        logger.error(f"❌ Smart Agent: Booking error: {booking_error}")
+                        except Exception as e:
+                            logger.error(f"❌ Smart Agent: Error creating lead: {e}")
+                
                 # حفظ رد المساعد
                 assistant_message = Message.objects.create(
                     conversation=conversation,
@@ -254,13 +404,20 @@ class PublicChatView(View):
                 conversation.messages_count = conversation.messages.count()
                 conversation.save()
                 
-                return JsonResponse({
+                response_data = {
                     'response': response,
                     'conversation_id': str(conversation.id),
                     'suggested_properties': suggested_properties,
                     'tool_used': result.get('tool_used'),
                     'intent': result.get('intent')
-                })
+                }
+                
+                if lead_created:
+                    response_data['lead_created'] = lead_created
+                if viewing_booked:
+                    response_data['viewing_booked'] = viewing_booked
+                
+                return JsonResponse(response_data)
             
             # ═══════════════════════════════════════════════════════════
             # الطريقة التقليدية (Gemini أو OpenAI بدون أدوات)
@@ -369,10 +526,11 @@ class PublicChatView(View):
             
             logger.info(f"📊 Show properties decision: is_new_search={is_new_search}, is_property_question={is_property_question}, should_show={should_show_properties}")
             
+            # دائماً نجلب العقارات للاستخدام في تحديد العقار المهتم به وحجز المعاينة
+            rag_response = rag_service.generate_property_response(str(agent.id), message)
+            all_agent_properties = rag_response.get('suggested_properties', [])
+            
             if is_new_search and not is_property_question:
-                rag_response = rag_service.generate_property_response(str(agent.id), message)
-                all_agent_properties = rag_response.get('suggested_properties', [])
-                
                 # عرض العقارات فقط إذا مسموح
                 if should_show_properties:
                     suggested_properties = all_agent_properties
@@ -387,10 +545,12 @@ class PublicChatView(View):
             viewing_booked = None
             bot_collect_leads = getattr(agent, 'bot_collect_leads', True)
             
+            print(f"🔍 DEBUG: bot_collect_leads = {bot_collect_leads}")
             if bot_collect_leads:
                 # تحليل رسالة المستخدم
                 analysis = lead_capture_service.analyze_message(message, chat_history)
                 
+                print(f"🔍 DEBUG: analysis = {analysis}")
                 logger.info(f"Lead analysis: phone={analysis.get('phone')}, has_contact={analysis.get('has_contact_info')}, message='{message[:50]}...'")
                 
                 # الحصول على العقار المهتم به من المحادثة السابقة
@@ -477,7 +637,9 @@ class PublicChatView(View):
                         logger.info(f"Using agent's only property: {interested_property_id}")
                 
                 # إذا أعطى العميل رقم جواله، أنشئ lead
+                print(f"🔍 DEBUG: analysis.phone = {analysis.get('phone')}")
                 if analysis.get('phone'):
+                    print(f"✅ DEBUG: Creating lead with phone: {analysis.get('phone')}")
                     logger.info(f"Creating lead: phone={analysis.get('phone')}, property={interested_property_id}")
                     
                     try:
@@ -504,8 +666,8 @@ class PublicChatView(View):
                             # تحليل طلب المعاينة من الرسالة الحالية وتاريخ المحادثة
                             viewing_analysis = lead_capture_service.analyze_viewing_request(message, chat_history)
                             
-                            # البحث عن طلب معاينة في تاريخ المحادثة إذا لم يكن في الرسالة الحالية
-                            full_conversation = ' '.join([msg.get('content', '') for msg in chat_history])
+                            # البحث عن طلب معاينة في تاريخ المحادثة + الرسالة الحالية
+                            full_conversation = ' '.join([msg.get('content', '') for msg in chat_history]) + ' ' + message
                             viewing_keywords_in_history = any(kw in full_conversation.lower() for kw in [
                                 'معاينة', 'أشوف', 'اشوف', 'أشوفه', 'اشوفه', 'أشوفها', 'اشوفها',
                                 'موعد', 'زيارة', 'بكرة', 'بكره', 'غدا', 'غداً', 'العصر', 'الصباح'
@@ -526,6 +688,8 @@ class PublicChatView(View):
                             if wants_viewing and not interested_property_id and available_properties:
                                 interested_property_id = available_properties[0].get('id')
                                 logger.info(f"Using first property for viewing: {interested_property_id}")
+                            
+                            logger.info(f"🔍 Viewing decision: wants_viewing={wants_viewing}, interested_property_id={interested_property_id}, available_properties_count={len(available_properties) if available_properties else 0}")
                             
                             if wants_viewing and interested_property_id:
                                 # تحديد التاريخ والوقت

@@ -76,22 +76,52 @@ class SmartAgentService:
         prompt = prompt.replace('{company_name}', company)
         prompt = prompt.replace('{city}', city)
         
+        # إضافة التاريخ والوقت الحالي
+        from datetime import datetime
+        now = datetime.now()
+        day_names_ar = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+        current_day = day_names_ar[now.weekday()]
+        current_date = now.strftime('%Y-%m-%d')
+        current_time = now.strftime('%H:%M')
+        tomorrow_date = (now + __import__('datetime').timedelta(days=1)).strftime('%Y-%m-%d')
+        
         # إضافة تعليمات استخدام الأدوات
         tools_instructions = f"""
 
 أنت {bot_name}، وكيل عقاري ذكي ومحترف.
 
+📅 التاريخ والوقت الحالي:
+- اليوم: {current_day}
+- التاريخ: {current_date}
+- الوقت: {current_time}
+- تاريخ الغد (بكرة): {tomorrow_date}
+
 🚨 قواعد إلزامية:
 1. ردودك قصيرة ومباشرة (3 أسطر كحد أقصى)
 2. عند الاهتمام بعقار، اطلب رقم الجوال للتواصل
 3. لا تكرر عرض العقارات إذا عُرضت سابقاً
-4. استخدم الأدوات المتاحة عند الحاجة للبحث أو الحصول على تفاصيل
+4. استخدم الأدوات المتاحة عند الحاجة
 
-متى تستخدم الأدوات:
+🔧 متى تستخدم الأدوات (مهم جداً):
 - search_properties: عند طلب البحث عن عقارات
 - get_property_details: عند السؤال عن تفاصيل (مصعد، موقف، مساحة)
-- book_viewing: عند طلب حجز معاينة
+- book_viewing: 🚨 استخدمها فوراً عندما يذكر العميل:
+  * يوم أو تاريخ (بكرة، غداً، الخميس، بعد بكرة...)
+  * وقت (العصر، المغرب، بعد العشاء، الساعة 5...)
+  * كلمات مثل: معاينة، أشوف، زيارة، موعد، أحجز
+  * يجب أن يكون لديك: اسم العميل + رقم الجوال + اليوم/الوقت
 - get_agent_info: عند السؤال عن الشركة أو الخدمات
+
+⚠️ تحويل الأوقات:
+- "بعد العشاء" = 21:00
+- "المغرب" = 18:00  
+- "العصر" = 16:00
+- "الظهر" = 12:00
+- "الصباح" = 10:00
+
+⚠️ تحويل التواريخ:
+- "بكرة/غداً" = {tomorrow_date}
+- "بعد بكرة" = تاريخ بعد غد
 """
         
         return prompt + tools_instructions
@@ -165,6 +195,8 @@ class SmartAgentService:
                 tool_results = []
                 properties_to_show = []
                 
+                booking_result = None
+                
                 for tool_call in assistant_message.tool_calls:
                     tool_name = tool_call.function.name
                     tool_args = json.loads(tool_call.function.arguments)
@@ -182,6 +214,11 @@ class SmartAgentService:
                     # جمع العقارات للعرض
                     if tool_name == "search_properties" and result.success:
                         properties_to_show = result.data
+                    
+                    # حفظ نتيجة الحجز
+                    if tool_name == "book_viewing":
+                        booking_result = result
+                        logger.info(f"📅 Booking result: success={result.success}, data={result.data}")
                 
                 # 5. إرسال نتائج الأدوات للـ AI للحصول على رد نهائي
                 messages.append(assistant_message)
@@ -201,13 +238,20 @@ class SmartAgentService:
                     max_tokens=500
                 )
                 
-                return {
+                result_data = {
                     'response': final_response.choices[0].message.content,
                     'tool_used': tool_results[0]['tool'] if tool_results else None,
                     'tool_result': tool_results[0]['result'].data if tool_results else None,
                     'properties': properties_to_show if properties_to_show else None,
                     'intent': intent_result.intent
                 }
+                
+                # إضافة نتيجة الحجز إذا تم استخدام أداة الحجز
+                if booking_result and booking_result.success:
+                    result_data['viewing_booked'] = booking_result.data
+                    logger.info(f"✅ Viewing booked and added to response: {booking_result.data}")
+                
+                return result_data
             
             # 5. رد بدون استخدام أداة
             return {

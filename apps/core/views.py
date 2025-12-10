@@ -1061,6 +1061,63 @@ def update_user_plan(request):
 
 
 @csrf_exempt
+def delete_user(request, user_id):
+    """حذف مستخدم (للأدمن فقط)"""
+    from apps.agents.models import Agent
+    from apps.properties.models import Property
+    from apps.leads.models import Lead, ViewingAppointment
+    from apps.chat.models import Conversation, Message
+    
+    if request.method != 'DELETE':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        # Get agent
+        agent = Agent.objects.get(id=user_id)
+        agent_name = agent.bot_name or agent.company_name or str(agent.id)
+        
+        # Delete related data
+        # 1. Delete viewing appointments
+        ViewingAppointment.objects.filter(agent=agent).delete()
+        
+        # 2. Delete leads
+        Lead.objects.filter(agent=agent).delete()
+        
+        # 3. Delete messages and conversations
+        conversations = Conversation.objects.filter(agent=agent)
+        for conv in conversations:
+            Message.objects.filter(conversation=conv).delete()
+        conversations.delete()
+        
+        # 4. Delete properties
+        Property.objects.filter(agent=agent).delete()
+        
+        # 5. Delete the user (agent)
+        user = agent.user
+        agent.delete()
+        
+        # 6. Delete Django user if exists
+        if user:
+            user.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'تم حذف المستخدم {agent_name} وجميع بياناته بنجاح'
+        })
+        
+    except Agent.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'المستخدم غير موجود'}, status=404)
+    except Exception as e:
+        import traceback
+        print(f"Delete user error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
 def increment_conversation(request, agent_id):
     """زيادة عداد المحادثات للوكيل"""
     from apps.agents.models import Agent

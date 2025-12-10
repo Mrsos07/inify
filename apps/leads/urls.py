@@ -7,7 +7,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     LeadViewSet, ViewingAppointmentViewSet, PropertyCalendarViewSet,
-    AIAgentCalendarAPI, save_lead_from_chat, list_leads
+    AIAgentCalendarAPI, save_lead_from_chat, list_leads, book_viewing_from_chat
 )
 
 # Router للمواعيد والتقويمات
@@ -25,6 +25,9 @@ urlpatterns = [
     
     # API للشات
     path('chat/<uuid:agent_id>/', save_lead_from_chat, name='save-lead-from-chat'),
+    
+    # API لحجز المواعيد من الشات بوت
+    path('book-viewing/<uuid:agent_id>/', book_viewing_from_chat, name='book-viewing-from-chat'),
     
     # API للوكيل الذكي - التقويم والحجز
     path('ai-agent/<uuid:agent_id>/calendar/', AIAgentCalendarAPI.as_view(), name='ai-agent-calendar'),

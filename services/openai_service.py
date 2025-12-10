@@ -87,7 +87,32 @@ class OpenAIService:
         if contact_info:
             agent_info += f"\n═══ معلومات التواصل ═══\n{contact_info}\n"
         
-        return prompt + agent_info
+        # إضافة التاريخ والوقت الحالي
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        day_names_ar = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+        current_day = day_names_ar[now.weekday()]
+        tomorrow = now + timedelta(days=1)
+        tomorrow_day = day_names_ar[tomorrow.weekday()]
+        
+        datetime_info = f"""
+═══════════════════════════════════════════════════════════
+📅 التاريخ والوقت الحالي (مهم جداً للمواعيد!)
+═══════════════════════════════════════════════════════════
+• اليوم: {current_day}
+• التاريخ: {now.strftime('%Y-%m-%d')}
+• الوقت الآن: {now.strftime('%H:%M')}
+• غداً/بكرة: {tomorrow_day} {tomorrow.strftime('%Y-%m-%d')}
+
+⚠️ عند حجز موعد:
+• "بكرة" أو "غداً" = {tomorrow.strftime('%Y-%m-%d')} ({tomorrow_day})
+• "بعد العصر" = الساعة 5:00 مساءً
+• "بعد المغرب" = الساعة 7:00 مساءً
+• "بعد العشاء" = الساعة 9:00 مساءً
+═══════════════════════════════════════════════════════════
+"""
+        
+        return prompt + agent_info + datetime_info
     
     def _get_global_settings(self) -> dict:
         """جلب الإعدادات العامة من قاعدة البيانات"""
