@@ -10,6 +10,9 @@
     
     <link rel="stylesheet" href="/static/css/dashboard.css">
     
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="/static/css/theme.css">
+    
     <!-- Auto Translation -->
     <script src="/static/js/auto-translate.js"></script>
     
@@ -223,6 +226,27 @@
         </div>
 
         <div class="sidebar-footer">
+            <!-- زر تبديل الوضع الفاتح/الداكن -->
+            <button id="themeToggleBtn" onclick="toggleTheme()" style="
+                width: 100%;
+                padding: 10px 16px;
+                margin-bottom: 12px;
+                background: rgba(107, 184, 201, 0.1);
+                border: 1px solid rgba(107, 184, 201, 0.2);
+                border-radius: 8px;
+                color: var(--cyan);
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                transition: all 0.3s ease;
+            " onmouseover="this.style.background='rgba(107, 184, 201, 0.2)'" onmouseout="this.style.background='rgba(107, 184, 201, 0.1)'">
+                ☀️ الوضع الفاتح
+            </button>
+            
             <!-- زر تبديل اللغة -->
             <button id="langToggleBtn" onclick="toggleLanguageAndReload()" style="
                 width: 100%;
@@ -691,6 +715,9 @@
             document.title = 'Dashboard - Inify';
         }
     </script>
+    
+    <!-- Theme Toggle Script -->
+    <script src="/static/js/theme.js"></script>
 </body>
 </html>
 

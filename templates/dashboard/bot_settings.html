@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الإعدادات - Inify</title>
     <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="/static/css/theme.css">
+    
     <style>
         @font-face {
             font-family: 'Chillax';
@@ -1228,6 +1232,18 @@
                 <a href="/dashboard/bot-settings/" class="active">⚙️ الإعدادات</a>
                 <a href="/profile/">👤 حسابي</a>
             </nav>
+            <button id="themeToggleBtn" onclick="toggleTheme()" style="
+                width: 100%;
+                padding: 12px 16px;
+                margin-top: 16px;
+                background: rgba(107, 184, 201, 0.1);
+                border: 1px solid rgba(107, 184, 201, 0.2);
+                border-radius: 8px;
+                color: var(--cyan);
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+            ">☀️ الوضع الفاتح</button>
         </div>
     </div>
     
@@ -1362,6 +1378,16 @@
                 <!-- General Settings -->
                 <div class="tab-content active" id="generalTab">
                     <div class="settings-section">
+                        <h3 class="section-title">🏢 معلومات الشركة</h3>
+                        
+                        <div class="form-group">
+                            <label>اسم الشركة</label>
+                            <input type="text" id="companyName" placeholder="مثال: شركة روشن العقارية">
+                            <p class="form-hint">اسم شركتك العقارية</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
                         <h3 class="section-title">🤖 معلومات الوكيل</h3>
                         
                         <div class="form-group">
@@ -1379,6 +1405,46 @@
                             <label>رسالة الترحيب</label>
                             <textarea id="welcomeMessage" placeholder="مرحباً! أنا وكيلك العقاري الذكي. كيف يمكنني مساعدتك اليوم؟"></textarea>
                             <p class="form-hint">الرسالة التي تظهر عند بدء المحادثة</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3 class="section-title">🕐 أوقات المعاينة</h3>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label>بداية أوقات المعاينة</label>
+                                <select id="viewingStartHour">
+                                    <option value="6">6:00 صباحاً</option>
+                                    <option value="7">7:00 صباحاً</option>
+                                    <option value="8" selected>8:00 صباحاً</option>
+                                    <option value="9">9:00 صباحاً</option>
+                                    <option value="10">10:00 صباحاً</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>نهاية أوقات المعاينة</label>
+                                <select id="viewingEndHour">
+                                    <option value="18">6:00 مساءً</option>
+                                    <option value="19">7:00 مساءً</option>
+                                    <option value="20">8:00 مساءً</option>
+                                    <option value="21" selected>9:00 مساءً</option>
+                                    <option value="22">10:00 مساءً</option>
+                                    <option value="23">11:00 مساءً</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>مدة فترة المعاينة</label>
+                            <select id="viewingSlotDuration">
+                                <option value="15">15 دقيقة</option>
+                                <option value="30" selected>30 دقيقة</option>
+                                <option value="45">45 دقيقة</option>
+                                <option value="60">ساعة كاملة</option>
+                            </select>
+                            <p class="form-hint">مدة كل موعد معاينة</p>
                         </div>
                     </div>
 
@@ -1957,6 +2023,11 @@
             welcomeMessage: '{{ agent.bot_welcome_message|default:"مرحباً! 👋 أنا وكيلك العقاري الذكي. كيف يمكنني مساعدتك اليوم؟"|escapejs }}',
             primaryColor: '{{ agent.bot_color|default:"#6BB8C9"|escapejs }}',
             companyInfo: '{{ agent.bot_system_prompt|default:""|escapejs }}',
+            // اسم الشركة وأوقات المعاينة
+            companyName: '{{ agent.company_name|default:""|escapejs }}',
+            viewingStartHour: '{{ agent_settings.viewing_start_hour|default:"8" }}',
+            viewingEndHour: '{{ agent_settings.viewing_end_hour|default:"21" }}',
+            viewingSlotDuration: '{{ agent_settings.viewing_slot_duration|default:"30" }}',
             // إعدادات السياق الإضافية من قاعدة البيانات
             pricingPolicy: '{{ agent.bot_pricing_policy|default:""|escapejs }}',
             viewingPolicy: '{{ agent.bot_viewing_policy|default:""|escapejs }}',
@@ -1977,6 +2048,12 @@
             document.getElementById('agentName').value = settings.agentName || '';
             document.getElementById('agentDescription').value = settings.agentDescription || '';
             document.getElementById('welcomeMessage').value = settings.welcomeMessage || '';
+            
+            // Company and viewing settings
+            document.getElementById('companyName').value = settings.companyName || '';
+            document.getElementById('viewingStartHour').value = settings.viewingStartHour || '8';
+            document.getElementById('viewingEndHour').value = settings.viewingEndHour || '21';
+            document.getElementById('viewingSlotDuration').value = settings.viewingSlotDuration || '30';
             
             // Context settings
             document.getElementById('pricingPolicy').value = settings.pricingPolicy || '';
@@ -2178,6 +2255,12 @@
                 agentName: document.getElementById('agentName').value || defaultSettings.agentName,
                 agentDescription: document.getElementById('agentDescription').value,
                 welcomeMessage: document.getElementById('welcomeMessage').value || defaultSettings.welcomeMessage,
+                // Company settings
+                companyName: document.getElementById('companyName').value,
+                // Viewing time settings
+                viewingStartHour: document.getElementById('viewingStartHour').value,
+                viewingEndHour: document.getElementById('viewingEndHour').value,
+                viewingSlotDuration: document.getElementById('viewingSlotDuration').value,
                 // AI Provider settings (Invy - internal)
                 aiProvider: 'invy',
                 model: 'invy-realestate-v1',
@@ -2223,6 +2306,12 @@
                 formData.append('bot_welcome_message', settings.welcomeMessage);
                 formData.append('bot_color', settings.primaryColor);
                 formData.append('bot_system_prompt', settings.companyInfo || '');
+                
+                // إعدادات الشركة وأوقات المعاينة
+                formData.append('company_name', settings.companyName || '');
+                formData.append('viewing_start_hour', settings.viewingStartHour || '8');
+                formData.append('viewing_end_hour', settings.viewingEndHour || '21');
+                formData.append('viewing_slot_duration', settings.viewingSlotDuration || '30');
                 
                 // إعدادات السياق الإضافية
                 formData.append('bot_pricing_policy', settings.pricingPolicy || '');
@@ -2560,6 +2649,9 @@
             }
         });
     </script>
+    
+    <!-- Theme Toggle Script -->
+    <script src="/static/js/theme.js"></script>
 </body>
 </html>
 

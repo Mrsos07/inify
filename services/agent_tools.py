@@ -140,31 +140,56 @@ class AgentTools:
             {
                 "type": "function",
                 "function": {
+                    "name": "check_viewing_availability",
+                    "description": """التحقق من المواعيد المتاحة للمعاينة لعقار معين. استخدم هذه الأداة قبل حجز المعاينة للتأكد من توفر الموعد.
+                    
+استخدمها عندما:
+- يسأل العميل عن المواعيد المتاحة
+- قبل حجز موعد للتأكد من التوفر""",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "property_id": {
+                                "type": "string",
+                                "description": "معرف العقار"
+                            },
+                            "date": {
+                                "type": "string",
+                                "description": "التاريخ المطلوب بصيغة YYYY-MM-DD (اختياري)"
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
                     "name": "book_viewing",
                     "description": """حجز موعد معاينة لعقار. استخدم هذه الأداة عندما يريد العميل حجز معاينة أو زيارة عقار.
                     
-مهم جداً: يجب جمع المعلومات التالية قبل الحجز:
+🚨 مهم جداً: يجب جمع المعلومات التالية قبل الحجز:
 1. اسم العميل (client_name) - اسأله: "وش اسمك الكريم؟"
 2. رقم الجوال (client_phone) - اسأله: "وش رقم جوالك؟"
 3. التاريخ (preferred_date) - بصيغة YYYY-MM-DD
 4. الوقت (preferred_time) - بصيغة HH:MM (24 ساعة)
 
-تحويل الأوقات:
+⚠️ تحويل الأوقات:
 - "بعد العشاء" = 21:00
 - "المغرب" = 18:00
 - "العصر" = 16:00
 - "الظهر" = 12:00
 - "الصباح" = 10:00
 
-تحويل التواريخ:
+⚠️ تحويل التواريخ:
 - "بكرة/غداً" = تاريخ الغد
-- "بعد بكرة" = بعد غد""",
+- "بعد بكرة" = بعد غد
+- "السبت/الأحد/..." = أقرب يوم من هذا الأسبوع""",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "property_id": {
                                 "type": "string",
-                                "description": "معرف العقار (اختياري)"
+                                "description": "معرف العقار (اختياري - سيتم استخدام آخر عقار تم عرضه)"
                             },
                             "client_name": {
                                 "type": "string",
@@ -176,14 +201,14 @@ class AgentTools:
                             },
                             "preferred_date": {
                                 "type": "string",
-                                "description": "التاريخ المفضل بصيغة YYYY-MM-DD"
+                                "description": "التاريخ المفضل بصيغة YYYY-MM-DD - مطلوب"
                             },
                             "preferred_time": {
                                 "type": "string",
-                                "description": "الوقت المفضل بصيغة HH:MM (مثال: 21:00 لبعد العشاء)"
+                                "description": "الوقت المفضل بصيغة HH:MM (مثال: 16:00 للعصر، 21:00 لبعد العشاء) - مطلوب"
                             }
                         },
-                        "required": ["client_name", "client_phone"]
+                        "required": ["client_name", "client_phone", "preferred_date", "preferred_time"]
                     }
                 }
             },
@@ -245,6 +270,8 @@ class AgentTools:
             return self._search_properties(arguments)
         elif tool_name == "get_property_details":
             return self._get_property_details(arguments)
+        elif tool_name == "check_viewing_availability":
+            return self._check_viewing_availability(arguments)
         elif tool_name == "book_viewing":
             return self._book_viewing(arguments)
         elif tool_name == "get_agent_info":
@@ -409,6 +436,144 @@ class AgentTools:
         
         # إجابة عامة
         return f"العقار: {prop.get('title')}\nالسعر: {prop.get('price', 0):,.0f} ريال\nالموقع: {prop.get('city')} - {prop.get('district', '')}"
+    
+    def _check_viewing_availability(self, args: Dict) -> ToolResult:
+        """التحقق من المواعيد المتاحة للمعاينة"""
+        logger.info(f"📅 check_viewing_availability called with args: {args}")
+        
+        try:
+            from apps.properties.models import Property, PropertyViewingSlot
+            from apps.leads.models import ViewingAppointment
+            from apps.agents.models import Agent
+            from datetime import datetime, timedelta
+            
+            property_id = args.get('property_id')
+            date_str = args.get('date')
+            
+            # الحصول على الوكيل
+            agent_id = self.context.get('agent_id')
+            if not agent_id:
+                return ToolResult(
+                    success=False,
+                    data={},
+                    message="حدث خطأ، يرجى المحاولة لاحقاً",
+                    tool_type=ToolType.BOOK_VIEWING
+                )
+            
+            agent = Agent.objects.get(id=agent_id)
+            
+            # الحصول على العقار
+            if property_id:
+                try:
+                    property_obj = Property.objects.get(id=property_id, agent=agent)
+                except:
+                    property_obj = Property.objects.filter(agent=agent, is_active=True).first()
+            else:
+                property_obj = Property.objects.filter(agent=agent, is_active=True).first()
+            
+            if not property_obj:
+                return ToolResult(
+                    success=False,
+                    data={},
+                    message="لا يوجد عقار متاح للمعاينة حالياً",
+                    tool_type=ToolType.BOOK_VIEWING
+                )
+            
+            # تحديد التاريخ
+            if date_str:
+                try:
+                    target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                except:
+                    target_date = datetime.now().date() + timedelta(days=1)
+            else:
+                target_date = datetime.now().date() + timedelta(days=1)
+            
+            # الحصول على فترات المعاينة لهذا اليوم
+            day_of_week = target_date.weekday()
+            viewing_slots = PropertyViewingSlot.objects.filter(
+                property=property_obj,
+                day_of_week=day_of_week,
+                is_active=True
+            )
+            
+            if not viewing_slots.exists():
+                # البحث عن أقرب يوم متاح
+                available_days = PropertyViewingSlot.objects.filter(
+                    property=property_obj,
+                    is_active=True
+                ).values_list('day_of_week', flat=True).distinct()
+                
+                if available_days:
+                    day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+                    available_day_names = [day_names[d] for d in available_days]
+                    return ToolResult(
+                        success=True,
+                        data={
+                            'property_id': str(property_obj.id),
+                            'property_title': property_obj.title,
+                            'date': date_str,
+                            'available': False,
+                            'available_days': list(available_days)
+                        },
+                        message=f"للأسف هذا اليوم غير متاح للمعاينة. الأيام المتاحة: {', '.join(available_day_names)}",
+                        tool_type=ToolType.BOOK_VIEWING
+                    )
+                else:
+                    return ToolResult(
+                        success=False,
+                        data={},
+                        message="لا توجد مواعيد معاينة متاحة لهذا العقار حالياً",
+                        tool_type=ToolType.BOOK_VIEWING
+                    )
+            
+            # جمع الأوقات المتاحة
+            available_times = []
+            for slot in viewing_slots:
+                times = slot.get_available_times(target_date)
+                for t in times:
+                    if t['is_available']:
+                        available_times.append(t['time'])
+            
+            if not available_times:
+                return ToolResult(
+                    success=True,
+                    data={
+                        'property_id': str(property_obj.id),
+                        'property_title': property_obj.title,
+                        'date': target_date.strftime('%Y-%m-%d'),
+                        'available': False
+                    },
+                    message=f"للأسف جميع المواعيد محجوزة في هذا اليوم. جرب يوم آخر؟",
+                    tool_type=ToolType.BOOK_VIEWING
+                )
+            
+            day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+            day_name = day_names[target_date.weekday()]
+            
+            return ToolResult(
+                success=True,
+                data={
+                    'property_id': str(property_obj.id),
+                    'property_title': property_obj.title,
+                    'date': target_date.strftime('%Y-%m-%d'),
+                    'day_name': day_name,
+                    'available': True,
+                    'available_times': available_times
+                },
+                message=f"المواعيد المتاحة يوم {day_name} ({target_date.strftime('%Y-%m-%d')}):\n" + 
+                        "\n".join([f"• {t}" for t in available_times[:5]]) +
+                        (f"\n... و{len(available_times)-5} مواعيد أخرى" if len(available_times) > 5 else ""),
+                tool_type=ToolType.BOOK_VIEWING
+            )
+            
+        except Exception as e:
+            logger.error(f"Error checking viewing availability: {e}")
+            return ToolResult(
+                success=False,
+                data={'error': str(e)},
+                message="حدث خطأ أثناء التحقق من المواعيد",
+                tool_type=ToolType.BOOK_VIEWING
+            )
     
     def _book_viewing(self, args: Dict) -> ToolResult:
         """حجز معاينة فعلي في قاعدة البيانات"""

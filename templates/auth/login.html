@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تسجيل الدخول - Newra</title>
     
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="/static/css/theme.css">
+    
     <style>
         @font-face {
             font-family: 'BalooBhaijaan2';
@@ -348,7 +351,29 @@
                 <span>أو</span>
             </div>
 
-            <div class="social-login">
+            <!-- Google Sign-In Button الرسمي -->
+            <div id="google-signin-container" style="display: flex; justify-content: center; margin-bottom: 16px;">
+                <div id="g_id_onload"
+                     data-client_id="142965408040-4bl73chs659tqnmoukkn1a4rdi7rmgr1.apps.googleusercontent.com"
+                     data-context="signin"
+                     data-ux_mode="popup"
+                     data-callback="handleGoogleCredential"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="signin_with"
+                     data-size="large"
+                     data-locale="ar"
+                     data-logo_alignment="center"
+                     data-width="350">
+                </div>
+            </div>
+            
+            <!-- زر بديل في حال عدم تحميل Google -->
+            <div class="social-login" id="fallback-google-btn" style="display: none;">
                 <button class="social-btn google-btn" type="button" onclick="loginWithGoogle()">
                     <svg width="18" height="18" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -402,12 +427,63 @@
             }
         });
 
-        // Google Login
-        function loginWithGoogle() {
-            // TODO: Implement Google OAuth
-            alert('تسجيل الدخول بـ Google قيد التطوير');
+        // Google Sign-In Callback - الرسمي
+        function handleGoogleCredential(response) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = 'جاري تسجيل الدخول...';
+            errorDiv.style.background = 'rgba(107, 184, 201, 0.15)';
+            errorDiv.style.borderColor = 'rgba(107, 184, 201, 0.4)';
+            errorDiv.style.color = '#6BB8C9';
+            errorDiv.classList.add('show');
+            
+            fetch('/auth/google/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    credential: response.credential
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect || '/dashboard/';
+                } else {
+                    errorDiv.textContent = data.error || 'فشل تسجيل الدخول';
+                    errorDiv.style.background = 'rgba(255, 100, 100, 0.15)';
+                    errorDiv.style.borderColor = 'rgba(255, 100, 100, 0.4)';
+                    errorDiv.style.color = '#ff8080';
+                }
+            })
+            .catch(error => {
+                console.error('Google Auth Error:', error);
+                errorDiv.textContent = 'حدث خطأ في الاتصال';
+                errorDiv.style.background = 'rgba(255, 100, 100, 0.15)';
+                errorDiv.style.borderColor = 'rgba(255, 100, 100, 0.4)';
+                errorDiv.style.color = '#ff8080';
+            });
         }
+
+        // Fallback Google Login (django-allauth)
+        function loginWithGoogle() {
+            window.location.href = '/accounts/google/login/?next=/dashboard/';
+        }
+        
+        // إظهار الزر البديل إذا فشل تحميل Google
+        setTimeout(function() {
+            const gsiBtn = document.querySelector('.g_id_signin iframe');
+            if (!gsiBtn) {
+                document.getElementById('fallback-google-btn').style.display = 'block';
+            }
+        }, 3000);
     </script>
+    
+    <!-- Google Sign-In Library -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Theme Toggle Script -->
+    <script src="/static/js/theme.js"></script>
 </body>
 </html>
 

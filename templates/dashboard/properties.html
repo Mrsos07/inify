@@ -8,6 +8,9 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
     
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="/static/css/theme.css">
+    
     <!-- Auto Translation -->
     <script src="/static/js/auto-translate.js"></script>
     
@@ -1550,6 +1553,7 @@
                 <a href="/dashboard/leads/">👥 العملاء</a>
                 <a href="/profile/">👤 حسابي</a>
             </nav>
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="mobile-lang-btn" style="margin-bottom: 10px;">☀️ الوضع الفاتح</button>
             <button id="langToggleBtnMobile" onclick="toggleLanguageAndReload()" class="mobile-lang-btn">🌐 EN</button>
         </div>
     </div>
@@ -3603,6 +3607,9 @@
             document.title = 'Properties - Inify';
         }
     </script>
+    
+    <!-- Theme Toggle Script -->
+    <script src="/static/js/theme.js"></script>
 </body>
 </html>
 

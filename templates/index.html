@@ -1267,6 +1267,232 @@
             .feature-icon { width: 40px; height: 40px; font-size: 18px; }
             .pricing-grid { max-width: 100%; }
         }
+
+        /* ═══════════════════════════════════════════════════════════ */
+        /* Light Mode Styles */
+        /* ═══════════════════════════════════════════════════════════ */
+        body.light-mode {
+            --midnight: #F8F9FA;
+            --dark-blue: #E9ECEF;
+            --pearl: #1A1A2E;
+            --text-muted: rgba(26, 26, 46, 0.7);
+            background: #F8F9FA;
+            color: #1A1A2E;
+        }
+
+        body.light-mode .header {
+            background: rgba(248, 249, 250, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        body.light-mode .header-logo img {
+            filter: none;
+        }
+
+        body.light-mode .logo-text {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .header-brand-tagline {
+            color: rgba(26, 26, 46, 0.6);
+        }
+
+        body.light-mode .header-center a {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .header-center a:hover {
+            color: var(--blue-mid);
+            background: rgba(74, 144, 164, 0.1);
+        }
+
+        body.light-mode .nav-link-btn {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .nav-link-btn:hover {
+            color: var(--blue-mid);
+        }
+
+        body.light-mode .menu-icon {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .hero::before {
+            background: linear-gradient(180deg, rgba(248,249,250,0.7) 0%, rgba(248,249,250,0.5) 50%, rgba(248,249,250,0.8) 100%);
+        }
+
+        body.light-mode .hero-icon img {
+            filter: none;
+        }
+
+        body.light-mode .hero h1 {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .hero-subtitle {
+            color: rgba(26, 26, 46, 0.7);
+        }
+
+        body.light-mode .features {
+            background: #F8F9FA;
+        }
+
+        body.light-mode .feature-card {
+            background: #FFFFFF;
+            border: 1px solid rgba(74, 144, 164, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode .feature-card h3 {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .feature-card p {
+            color: rgba(26, 26, 46, 0.7);
+        }
+
+        body.light-mode .agent-section {
+            background: #F8F9FA;
+        }
+
+        body.light-mode .steps-section {
+            background: #F8F9FA;
+        }
+
+        body.light-mode .steps-title {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .step-card {
+            background: #FFFFFF;
+            border: 1px solid rgba(74, 144, 164, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode .step-card h3 {
+            color: var(--blue-mid);
+        }
+
+        body.light-mode .step-card p {
+            color: rgba(26, 26, 46, 0.7);
+        }
+
+        body.light-mode .benefits-section {
+            background: #F8F9FA;
+        }
+
+        body.light-mode .benefit-item p {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .pricing-section {
+            background: #F8F9FA;
+        }
+
+        body.light-mode .pricing-card {
+            background: #FFFFFF;
+            border: 1px solid rgba(74, 144, 164, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode .pricing-card h3 {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .pricing-card .pricing-subtitle {
+            color: rgba(26, 26, 46, 0.6);
+        }
+
+        body.light-mode .pricing-features li {
+            color: rgba(26, 26, 46, 0.7);
+        }
+
+        body.light-mode .pricing-card.free {
+            background: #FFFFFF;
+        }
+
+        body.light-mode .security-banner {
+            background: #F8F9FA;
+            border-top: 1px solid rgba(74, 144, 164, 0.2);
+        }
+
+        body.light-mode .security-banner p {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .footer {
+            background: #E9ECEF;
+        }
+
+        body.light-mode .footer-brand .logo-text {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .footer-col h4 {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .footer-col a {
+            color: rgba(26, 26, 46, 0.7);
+        }
+
+        body.light-mode .footer-col a:hover {
+            color: var(--blue-mid);
+        }
+
+        body.light-mode .footer-bottom .company,
+        body.light-mode .footer-bottom .copyright {
+            color: rgba(26, 26, 46, 0.6);
+        }
+
+        body.light-mode .mobile-menu-overlay {
+            background: rgba(248, 249, 250, 0.95);
+        }
+
+        body.light-mode .mobile-menu {
+            background: linear-gradient(180deg, #FFFFFF 0%, #F8F9FA 100%);
+        }
+
+        body.light-mode .mobile-menu-close {
+            color: #1A1A2E;
+        }
+
+        body.light-mode .mobile-menu-links a {
+            color: #1A1A2E;
+            background: rgba(74, 144, 164, 0.08);
+        }
+
+        body.light-mode .mobile-menu-links a:hover {
+            background: rgba(74, 144, 164, 0.15);
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle-btn {
+            padding: 8px 12px;
+            background: rgba(107, 184, 201, 0.15);
+            border: 1px solid rgba(107, 184, 201, 0.3);
+            border-radius: 8px;
+            color: var(--cyan);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle-btn:hover {
+            background: rgba(107, 184, 201, 0.25);
+            transform: scale(1.05);
+        }
+
+        body.light-mode .theme-toggle-btn {
+            background: rgba(74, 144, 164, 0.15);
+            border: 1px solid rgba(74, 144, 164, 0.3);
+            color: var(--blue-mid);
+        }
     </style>
 </head>
 <body>
@@ -1292,6 +1518,7 @@
         
         <!-- اليسار: الأزرار -->
         <div class="header-left">
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="تبديل الوضع">🌙</button>
             <button id="langToggleBtn" onclick="toggleLanguageAndReload()" style="
                 padding: 8px 16px;
                 background: rgba(107, 184, 201, 0.15);
@@ -1321,6 +1548,7 @@
             <a href="/dashboard/">📊 إدارة وكيلك</a>
             <a href="/auth/login/">🔐 تسجيل الدخول</a>
             <a href="/auth/register/" class="btn-primary-mobile">🚀 أنشئ وكيلك الذكي</a>
+            <a href="#" onclick="toggleTheme(); return false;" class="btn-primary-mobile" style="background: rgba(107, 184, 201, 0.2); color: var(--pearl);">🌙 تبديل الوضع</a>
         </div>
     </div>
 
@@ -1832,6 +2060,54 @@
         document.querySelectorAll('.mobile-menu-links a').forEach(link => {
             link.addEventListener('click', closeMobileMenu);
         });
+
+        // ═══════════════════════════════════════════════════════════
+        // Theme Toggle (Dark/Light Mode)
+        // ═══════════════════════════════════════════════════════════
+        function getTheme() {
+            return localStorage.getItem('inify_theme') || 'dark';
+        }
+
+        function setTheme(theme) {
+            localStorage.setItem('inify_theme', theme);
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+            } else {
+                document.body.classList.remove('light-mode');
+            }
+            updateThemeButton();
+        }
+
+        function toggleTheme() {
+            const currentTheme = getTheme();
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        }
+
+        function updateThemeButton() {
+            const theme = getTheme();
+            const btn = document.getElementById('themeToggleBtn');
+            const mobileThemeLinks = document.querySelectorAll('.mobile-menu-links a[onclick*="toggleTheme"]');
+            
+            if (btn) {
+                btn.innerHTML = theme === 'dark' ? '☀️' : '🌙';
+                btn.title = theme === 'dark' ? 'التبديل للوضع الفاتح' : 'التبديل للوضع الداكن';
+            }
+            
+            mobileThemeLinks.forEach(link => {
+                if (theme === 'dark') {
+                    link.innerHTML = '☀️ الوضع الفاتح';
+                } else {
+                    link.innerHTML = '🌙 الوضع الداكن';
+                }
+            });
+        }
+
+        // Initialize theme on page load
+        (function initTheme() {
+            const theme = getTheme();
+            setTheme(theme);
+        })();
     </script>
 </body>
 </html>

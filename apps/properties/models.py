@@ -372,3 +372,110 @@ class PropertyDocument(models.Model):
     
     def __str__(self):
         return f"{self.name} - {self.property.title}"
+
+
+class PropertyViewingSlot(models.Model):
+    """
+    فترات المعاينة المتاحة لكل عقار
+    يحدد المسوق أوقات المعاينة المتاحة لكل عقار
+    """
+    
+    DAY_CHOICES = [
+        (0, 'الاثنين'),
+        (1, 'الثلاثاء'),
+        (2, 'الأربعاء'),
+        (3, 'الخميس'),
+        (4, 'الجمعة'),
+        (5, 'السبت'),
+        (6, 'الأحد'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    property = models.ForeignKey(
+        Property,
+        on_delete=models.CASCADE,
+        related_name='viewing_slots',
+        verbose_name='العقار'
+    )
+    day_of_week = models.IntegerField(
+        choices=DAY_CHOICES,
+        verbose_name='يوم الأسبوع'
+    )
+    start_time = models.TimeField(verbose_name='وقت البداية')
+    end_time = models.TimeField(verbose_name='وقت النهاية')
+    slot_duration = models.PositiveIntegerField(
+        default=30,
+        verbose_name='مدة الفترة (دقائق)',
+        help_text='مدة كل موعد معاينة بالدقائق'
+    )
+    is_active = models.BooleanField(default=True, verbose_name='نشط')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'فترة معاينة'
+        verbose_name_plural = 'فترات المعاينة'
+        ordering = ['day_of_week', 'start_time']
+        unique_together = ['property', 'day_of_week', 'start_time']
+    
+    def __str__(self):
+        day_name = dict(self.DAY_CHOICES).get(self.day_of_week, '')
+        return f"{self.property.title} - {day_name} {self.start_time.strftime('%H:%M')}-{self.end_time.strftime('%H:%M')}"
+    
+    def get_available_times(self, date):
+        """الحصول على الأوقات المتاحة لتاريخ معين"""
+        from datetime import datetime, timedelta
+        from apps.leads.models import ViewingAppointment
+        
+        times = []
+        current = datetime.combine(date, self.start_time)
+        end = datetime.combine(date, self.end_time)
+        
+        while current < end:
+            time_slot = current.time()
+            
+            # التحقق من عدم وجود حجز
+            is_booked = ViewingAppointment.objects.filter(
+                property=self.property,
+                scheduled_date=date,
+                scheduled_time=time_slot,
+                status__in=['pending', 'confirmed']
+            ).exists()
+            
+            times.append({
+                'time': time_slot.strftime('%H:%M'),
+                'is_available': not is_booked
+            })
+            
+            current += timedelta(minutes=self.slot_duration)
+        
+        return times
+
+
+class PropertyViewingCalendar(models.Model):
+    """
+    تقويم المعاينة - لتحديد أيام محددة متاحة أو غير متاحة
+    """
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    property = models.ForeignKey(
+        Property,
+        on_delete=models.CASCADE,
+        related_name='viewing_calendar',
+        verbose_name='العقار'
+    )
+    date = models.DateField(verbose_name='التاريخ')
+    is_available = models.BooleanField(default=True, verbose_name='متاح')
+    start_time = models.TimeField(null=True, blank=True, verbose_name='وقت البداية')
+    end_time = models.TimeField(null=True, blank=True, verbose_name='وقت النهاية')
+    notes = models.CharField(max_length=200, blank=True, verbose_name='ملاحظات')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'يوم تقويم'
+        verbose_name_plural = 'تقويم المعاينة'
+        ordering = ['date']
+        unique_together = ['property', 'date']
+    
+    def __str__(self):
+        status = 'متاح' if self.is_available else 'غير متاح'
+        return f"{self.property.title} - {self.date} ({status})"

@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 import json
 
-from .models import Property, PropertyImage, PropertyAmenity, PropertyVideo
+from .models import Property, PropertyImage, PropertyAmenity, PropertyVideo, PropertyViewingSlot, PropertyViewingCalendar
 from .serializers import (
     PropertySerializer, PropertyDetailSerializer,
     PropertyCreateSerializer, PropertyImageSerializer
@@ -591,3 +591,355 @@ def get_agent_properties(request, agent_id):
         return JsonResponse({'success': True, 'properties': data, 'agent': agent_data})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e), 'properties': []}, status=500)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# تقويم المعاينة APIs
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@csrf_exempt
+def get_property_viewing_calendar(request, property_id):
+    """
+    الحصول على تقويم المعاينة لعقار معين
+    GET /api/properties/<property_id>/viewing-calendar/
+    """
+    try:
+        from datetime import datetime, timedelta
+        from apps.leads.models import ViewingAppointment
+        
+        property_obj = Property.objects.get(id=property_id)
+        
+        # الحصول على فترات المعاينة المتاحة
+        viewing_slots = PropertyViewingSlot.objects.filter(
+            property=property_obj,
+            is_active=True
+        )
+        
+        # الحصول على الأيام الـ 14 القادمة
+        today = datetime.now().date()
+        calendar_data = []
+        
+        for i in range(14):
+            date = today + timedelta(days=i)
+            day_of_week = date.weekday()
+            
+            # التحقق من وجود تقويم مخصص لهذا اليوم
+            custom_calendar = PropertyViewingCalendar.objects.filter(
+                property=property_obj,
+                date=date
+            ).first()
+            
+            if custom_calendar and not custom_calendar.is_available:
+                # اليوم غير متاح
+                calendar_data.append({
+                    'date': date.strftime('%Y-%m-%d'),
+                    'day_name': ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'][day_of_week],
+                    'is_available': False,
+                    'slots': [],
+                    'notes': custom_calendar.notes
+                })
+                continue
+            
+            # الحصول على فترات هذا اليوم
+            day_slots = viewing_slots.filter(day_of_week=day_of_week)
+            
+            if not day_slots.exists():
+                # لا توجد فترات لهذا اليوم
+                calendar_data.append({
+                    'date': date.strftime('%Y-%m-%d'),
+                    'day_name': ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'][day_of_week],
+                    'is_available': False,
+                    'slots': []
+                })
+                continue
+            
+            # جمع جميع الأوقات المتاحة
+            all_times = []
+            for slot in day_slots:
+                times = slot.get_available_times(date)
+                all_times.extend(times)
+            
+            # إزالة التكرارات وترتيب الأوقات
+            unique_times = {t['time']: t for t in all_times}
+            sorted_times = sorted(unique_times.values(), key=lambda x: x['time'])
+            
+            has_available = any(t['is_available'] for t in sorted_times)
+            
+            calendar_data.append({
+                'date': date.strftime('%Y-%m-%d'),
+                'day_name': ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'][day_of_week],
+                'is_available': has_available,
+                'slots': sorted_times
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'property_id': str(property_id),
+            'property_title': property_obj.title,
+            'calendar': calendar_data
+        })
+        
+    except Property.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def book_property_viewing(request, property_id):
+    """
+    حجز موعد معاينة لعقار
+    POST /api/properties/<property_id>/book-viewing/
+    
+    Body:
+    {
+        "client_name": "اسم العميل",
+        "client_phone": "رقم الجوال",
+        "date": "2024-01-15",
+        "time": "16:00",
+        "notes": "ملاحظات اختيارية"
+    }
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        from datetime import datetime
+        from apps.leads.models import Lead, ViewingAppointment, LeadActivity
+        
+        data = json.loads(request.body)
+        
+        # التحقق من البيانات المطلوبة
+        client_name = data.get('client_name', '').strip()
+        client_phone = data.get('client_phone', '').strip()
+        date_str = data.get('date', '').strip()
+        time_str = data.get('time', '').strip()
+        notes = data.get('notes', '').strip()
+        
+        if not client_phone:
+            return JsonResponse({'success': False, 'error': 'رقم الجوال مطلوب'}, status=400)
+        if not date_str:
+            return JsonResponse({'success': False, 'error': 'التاريخ مطلوب'}, status=400)
+        if not time_str:
+            return JsonResponse({'success': False, 'error': 'الوقت مطلوب'}, status=400)
+        
+        # الحصول على العقار
+        property_obj = Property.objects.get(id=property_id)
+        agent = property_obj.agent
+        
+        # تحويل التاريخ والوقت
+        try:
+            scheduled_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            scheduled_time = datetime.strptime(time_str, '%H:%M').time()
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'صيغة التاريخ أو الوقت غير صحيحة'}, status=400)
+        
+        # التحقق من أن التاريخ في المستقبل
+        if scheduled_date < datetime.now().date():
+            return JsonResponse({'success': False, 'error': 'لا يمكن الحجز في تاريخ ماضي'}, status=400)
+        
+        # التحقق من توفر الموعد
+        existing = ViewingAppointment.objects.filter(
+            property=property_obj,
+            scheduled_date=scheduled_date,
+            scheduled_time=scheduled_time,
+            status__in=['pending', 'confirmed']
+        ).exists()
+        
+        if existing:
+            return JsonResponse({'success': False, 'error': 'هذا الموعد محجوز مسبقاً'}, status=400)
+        
+        # إنشاء أو تحديث العميل
+        lead, created = Lead.objects.get_or_create(
+            agent=agent,
+            phone=client_phone,
+            defaults={
+                'name': client_name or 'عميل جديد',
+                'source': 'chatbot',
+                'status': 'new'
+            }
+        )
+        
+        if not created and client_name:
+            lead.name = client_name
+            lead.save()
+        
+        # إنشاء موعد المعاينة
+        appointment = ViewingAppointment.objects.create(
+            lead=lead,
+            property=property_obj,
+            agent=agent,
+            scheduled_date=scheduled_date,
+            scheduled_time=scheduled_time,
+            status='pending',
+            duration_minutes=30,
+            notes=notes or f'تم الحجز عبر الشات بوت'
+        )
+        
+        # تسجيل النشاط
+        LeadActivity.objects.create(
+            lead=lead,
+            activity_type='viewing',
+            description=f'تم حجز موعد معاينة للعقار: {property_obj.title}',
+            metadata={
+                'appointment_id': str(appointment.id),
+                'property_id': str(property_obj.id),
+                'source': 'chatbot_calendar'
+            }
+        )
+        
+        # تحديث حالة العميل
+        lead.status = 'viewing_scheduled'
+        lead.save()
+        
+        # تنسيق الرد
+        day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+        day_name = day_names[scheduled_date.weekday()]
+        time_formatted = scheduled_time.strftime('%I:%M %p').replace('AM', 'صباحاً').replace('PM', 'مساءً')
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'تم حجز موعد المعاينة بنجاح ✅',
+            'appointment': {
+                'id': str(appointment.id),
+                'property_id': str(property_obj.id),
+                'property_title': property_obj.title,
+                'lead_id': str(lead.id),
+                'client_name': lead.name,
+                'client_phone': lead.phone,
+                'date': date_str,
+                'day_name': day_name,
+                'time': time_str,
+                'time_formatted': time_formatted,
+                'status': 'pending'
+            }
+        })
+        
+    except Property.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'بيانات غير صالحة'}, status=400)
+    except Exception as e:
+        import logging
+        logging.error(f"Error booking viewing: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@login_required
+def manage_viewing_slots(request, property_id):
+    """
+    إدارة فترات المعاينة لعقار
+    GET: الحصول على الفترات الحالية
+    POST: إضافة فترة جديدة
+    DELETE: حذف فترة
+    """
+    try:
+        property_obj = Property.objects.get(id=property_id)
+        
+        # التحقق من ملكية العقار
+        if hasattr(request.user, 'agent_profile'):
+            if property_obj.agent != request.user.agent_profile:
+                return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+        else:
+            return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+        
+        if request.method == 'GET':
+            slots = PropertyViewingSlot.objects.filter(property=property_obj)
+            slots_data = []
+            for slot in slots:
+                slots_data.append({
+                    'id': str(slot.id),
+                    'day_of_week': slot.day_of_week,
+                    'day_name': dict(PropertyViewingSlot.DAY_CHOICES).get(slot.day_of_week, ''),
+                    'start_time': slot.start_time.strftime('%H:%M'),
+                    'end_time': slot.end_time.strftime('%H:%M'),
+                    'slot_duration': slot.slot_duration,
+                    'is_active': slot.is_active
+                })
+            return JsonResponse({'success': True, 'slots': slots_data})
+        
+        elif request.method == 'POST':
+            data = json.loads(request.body)
+            
+            from datetime import datetime
+            
+            slot = PropertyViewingSlot.objects.create(
+                property=property_obj,
+                day_of_week=data.get('day_of_week', 0),
+                start_time=datetime.strptime(data.get('start_time', '09:00'), '%H:%M').time(),
+                end_time=datetime.strptime(data.get('end_time', '18:00'), '%H:%M').time(),
+                slot_duration=data.get('slot_duration', 30),
+                is_active=data.get('is_active', True)
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم إضافة فترة المعاينة',
+                'slot_id': str(slot.id)
+            })
+        
+        elif request.method == 'DELETE':
+            data = json.loads(request.body)
+            slot_id = data.get('slot_id')
+            
+            if slot_id:
+                PropertyViewingSlot.objects.filter(id=slot_id, property=property_obj).delete()
+                return JsonResponse({'success': True, 'message': 'تم حذف الفترة'})
+            
+            return JsonResponse({'success': False, 'error': 'معرف الفترة مطلوب'}, status=400)
+        
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+        
+    except Property.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def get_property_appointments(request, property_id):
+    """
+    الحصول على مواعيد المعاينة لعقار معين
+    GET /api/properties/<property_id>/appointments/
+    """
+    try:
+        from apps.leads.models import ViewingAppointment
+        
+        property_obj = Property.objects.get(id=property_id)
+        
+        appointments = ViewingAppointment.objects.filter(
+            property=property_obj
+        ).select_related('lead').order_by('-scheduled_date', '-scheduled_time')
+        
+        appointments_data = []
+        for apt in appointments:
+            day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+            day_name = day_names[apt.scheduled_date.weekday()]
+            
+            appointments_data.append({
+                'id': str(apt.id),
+                'lead_id': str(apt.lead.id),
+                'client_name': apt.lead.name,
+                'client_phone': apt.lead.phone,
+                'date': apt.scheduled_date.strftime('%Y-%m-%d'),
+                'day_name': day_name,
+                'time': apt.scheduled_time.strftime('%H:%M'),
+                'status': apt.status,
+                'status_display': apt.get_status_display(),
+                'notes': apt.notes,
+                'created_at': apt.created_at.strftime('%Y-%m-%d %H:%M')
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'property_id': str(property_id),
+            'property_title': property_obj.title,
+            'appointments': appointments_data,
+            'total': len(appointments_data)
+        })
+        
+    except Property.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

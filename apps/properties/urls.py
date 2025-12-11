@@ -9,7 +9,9 @@ from .views import (
     PropertyViewSet, PublicPropertyViewSet,
     save_property, get_property, delete_property,
     delete_property_image, delete_property_video,
-    list_properties, save_property_json, get_agent_properties
+    list_properties, save_property_json, get_agent_properties,
+    get_property_viewing_calendar, book_property_viewing,
+    manage_viewing_slots, get_property_appointments
 )
 
 router = DefaultRouter()
@@ -29,6 +31,12 @@ urlpatterns = [
     # Public API
     path('public/', PublicPropertyViewSet.as_view({'get': 'list'}), name='public-properties'),
     path('public/<uuid:pk>/', PublicPropertyViewSet.as_view({'get': 'retrieve'}), name='public-property-detail'),
+    
+    # تقويم المعاينة APIs
+    path('<uuid:property_id>/viewing-calendar/', get_property_viewing_calendar, name='property-viewing-calendar'),
+    path('<uuid:property_id>/book-viewing/', book_property_viewing, name='book-property-viewing'),
+    path('<uuid:property_id>/viewing-slots/', manage_viewing_slots, name='manage-viewing-slots'),
+    path('<uuid:property_id>/appointments/', get_property_appointments, name='property-appointments'),
     
     # REST API
     path('', include(router.urls)),
