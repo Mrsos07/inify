@@ -179,6 +179,9 @@ def login_view(request):
             try:
                 user_obj = User.objects.get(email__iexact=username)
                 print(f"[LOGIN] Found user by email: {user_obj.username}")
+                print(f"[LOGIN] User is_active: {user_obj.is_active}")
+                print(f"[LOGIN] User has_usable_password: {user_obj.has_usable_password()}")
+                print(f"[LOGIN] User password hash: {user_obj.password[:50]}...")
                 
                 # تحقق إذا كان الحساب مسجل عبر Google (بدون كلمة مرور)
                 if not user_obj.has_usable_password():
@@ -188,13 +191,16 @@ def login_view(request):
                         'error': 'هذا الحساب مسجل عبر Google. يرجى تسجيل الدخول باستخدام زر Google.'
                     })
                 
-                user = authenticate(request, username=user_obj.username, password=password)
-                print(f"[LOGIN] Second auth attempt result: {user}")
+                # تحقق من كلمة المرور يدوياً أولاً
+                password_check = user_obj.check_password(password)
+                print(f"[LOGIN] Manual password check: {password_check}")
                 
-                # إذا فشل التحقق، تحقق من كلمة المرور يدوياً
-                if user is None and user_obj.check_password(password):
-                    print(f"[LOGIN] Password check passed manually, logging in")
+                if password_check:
+                    # كلمة المرور صحيحة، سجل الدخول مباشرة
+                    print(f"[LOGIN] Password correct, logging in directly")
                     user = user_obj
+                else:
+                    print(f"[LOGIN] Password incorrect for user: {user_obj.username}")
             except User.DoesNotExist:
                 print(f"[LOGIN] User not found by email: {username}")
         
