@@ -585,7 +585,7 @@ class AgentTools:
         preferred_date = args.get('preferred_date')
         preferred_time = args.get('preferred_time')
         
-        # التحقق من رقم الجوال
+        # التحقق من رقم الجوال - مطلوب
         if not phone:
             return ToolResult(
                 success=False,
@@ -594,12 +594,30 @@ class AgentTools:
                 tool_type=ToolType.BOOK_VIEWING
             )
         
-        # التحقق من اسم العميل
+        # التحقق من اسم العميل - مطلوب
         if not client_name:
             return ToolResult(
                 success=False,
                 data={'needs': 'name', 'phone': phone},
                 message="ممتاز! وش اسمك الكريم؟ 😊",
+                tool_type=ToolType.BOOK_VIEWING
+            )
+        
+        # التحقق من التاريخ - مطلوب
+        if not preferred_date:
+            return ToolResult(
+                success=False,
+                data={'needs': 'date', 'phone': phone, 'name': client_name},
+                message="متى يناسبك موعد المعاينة؟ (مثال: بكرة، السبت، أو تاريخ محدد) 📅",
+                tool_type=ToolType.BOOK_VIEWING
+            )
+        
+        # التحقق من الوقت - مطلوب
+        if not preferred_time:
+            return ToolResult(
+                success=False,
+                data={'needs': 'time', 'phone': phone, 'name': client_name, 'date': preferred_date},
+                message="أي وقت يناسبك؟ (مثال: العصر، المغرب، بعد العشاء) ⏰",
                 tool_type=ToolType.BOOK_VIEWING
             )
         
@@ -637,24 +655,21 @@ class AgentTools:
                 lead.name = client_name
                 lead.save()
             
-            # تحديد التاريخ والوقت
-            if preferred_date:
-                try:
-                    scheduled_date = datetime.strptime(preferred_date, '%Y-%m-%d').date()
-                except:
-                    scheduled_date = datetime.now().date() + timedelta(days=1)
-            else:
-                # افتراضي: غداً
+            # تحويل التاريخ
+            try:
+                scheduled_date = datetime.strptime(preferred_date, '%Y-%m-%d').date()
+            except ValueError:
+                # محاولة تحويل التاريخ بصيغ أخرى
+                logger.warning(f"Invalid date format: {preferred_date}, using tomorrow")
                 scheduled_date = datetime.now().date() + timedelta(days=1)
             
-            if preferred_time:
-                try:
-                    scheduled_time = datetime.strptime(preferred_time, '%H:%M').time()
-                except:
-                    scheduled_time = datetime.strptime('18:00', '%H:%M').time()
-            else:
-                # افتراضي: 6 مساءً
-                scheduled_time = datetime.strptime('18:00', '%H:%M').time()
+            # تحويل الوقت
+            try:
+                scheduled_time = datetime.strptime(preferred_time, '%H:%M').time()
+            except ValueError:
+                # محاولة تحويل الوقت بصيغ أخرى
+                logger.warning(f"Invalid time format: {preferred_time}, using 17:00")
+                scheduled_time = datetime.strptime('17:00', '%H:%M').time()
             
             # الحصول على العقار إذا موجود
             property_obj = None
@@ -677,23 +692,46 @@ class AgentTools:
                     tool_type=ToolType.BOOK_VIEWING
                 )
             
-            # التحقق من عدم وجود تعارض في المواعيد
-            existing = ViewingAppointment.objects.filter(
-                lead__agent=agent,
-                scheduled_date=scheduled_date,
-                scheduled_time=scheduled_time,
-                status__in=['pending', 'confirmed']
-            ).exists()
+            # ═══════════════════════════════════════════════════════════
+            # التحقق من تعارض المواعيد - استخدام دالة check_availability
+            # ═══════════════════════════════════════════════════════════
+            availability = ViewingAppointment.check_availability(
+                property_id=property_obj.id,
+                date=scheduled_date,
+                time=scheduled_time,
+                duration_minutes=30
+            )
             
-            if existing:
-                # اقتراح وقت بديل
-                alt_time = datetime.combine(scheduled_date, scheduled_time) + timedelta(hours=1)
-                return ToolResult(
-                    success=False,
-                    data={'conflict': True, 'suggested_time': alt_time.strftime('%H:%M')},
-                    message=f"للأسف الموعد محجوز، ما رأيك الساعة {alt_time.strftime('%I:%M %p')}؟",
-                    tool_type=ToolType.BOOK_VIEWING
+            if not availability['available']:
+                # البحث عن أقرب موعد متاح
+                available_slots = ViewingAppointment.get_available_slots(
+                    property_id=property_obj.id,
+                    date=scheduled_date
                 )
+                
+                if available_slots:
+                    # اقتراح أول موعد متاح
+                    suggested_slot = available_slots[0]
+                    return ToolResult(
+                        success=False,
+                        data={
+                            'conflict': True, 
+                            'suggested_time': suggested_slot['time'],
+                            'available_slots': available_slots[:5]
+                        },
+                        message=f"للأسف هذا الموعد محجوز مسبقاً ⚠️\n\nالمواعيد المتاحة:\n" + 
+                                "\n".join([f"• {s['time']}" for s in available_slots[:5]]) +
+                                f"\n\nهل يناسبك الساعة {suggested_slot['time']}؟",
+                        tool_type=ToolType.BOOK_VIEWING
+                    )
+                else:
+                    # لا توجد مواعيد متاحة في هذا اليوم
+                    return ToolResult(
+                        success=False,
+                        data={'conflict': True, 'no_slots': True},
+                        message="للأسف جميع المواعيد محجوزة في هذا اليوم 😔\nهل تريد اختيار يوم آخر؟",
+                        tool_type=ToolType.BOOK_VIEWING
+                    )
             
             # إنشاء موعد المعاينة
             appointment = ViewingAppointment.objects.create(

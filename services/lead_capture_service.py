@@ -291,7 +291,33 @@ class LeadCaptureService:
             # التحقق من وجود عميل بنفس الرقم
             phone = extracted_info.get('phone')
             if phone:
+                # تنظيف رقم الجوال للمقارنة
+                clean_phone = re.sub(r'[^\d]', '', phone)  # إزالة كل شيء ما عدا الأرقام
+                if clean_phone.startswith('966'):
+                    clean_phone = clean_phone[3:]  # إزالة كود الدولة
+                if clean_phone.startswith('0'):
+                    clean_phone = clean_phone[1:]  # إزالة الصفر البادئ
+                
+                # البحث عن عميل موجود بأي تنسيق للرقم
                 existing_lead = Lead.objects.filter(agent=agent, phone=phone).first()
+                
+                # إذا لم نجد، نبحث بالرقم المنظف
+                if not existing_lead:
+                    # البحث بالرقم بدون صفر
+                    existing_lead = Lead.objects.filter(
+                        agent=agent, 
+                        phone__endswith=clean_phone
+                    ).first()
+                
+                # البحث بالرقم مع صفر
+                if not existing_lead and not phone.startswith('0'):
+                    existing_lead = Lead.objects.filter(
+                        agent=agent, 
+                        phone='0' + clean_phone
+                    ).first()
+                
+                logger.info(f"📱 Lead lookup: phone={phone}, clean={clean_phone}, found={existing_lead is not None}")
+                
                 if existing_lead:
                     # تحديث العميل الموجود
                     if interested_property_id:
@@ -300,6 +326,13 @@ class LeadCaptureService:
                             existing_lead.interested_properties.add(prop)
                         except Property.DoesNotExist:
                             pass
+                    
+                    # تحديث الاسم إذا كان الاسم الحالي افتراضي والاسم الجديد حقيقي
+                    new_name = extracted_info.get('name')
+                    if new_name and new_name not in ['عميل من الشات', 'عميل من الشات بوت', 'عميل جديد', '']:
+                        if existing_lead.name in ['عميل من الشات', 'عميل من الشات بوت', 'عميل جديد', '']:
+                            existing_lead.name = new_name
+                            logger.info(f"👤 Updated lead name to: {new_name}")
                     
                     # تحديث الملاحظات
                     existing_lead.notes += f"\n[{timezone.now().strftime('%Y-%m-%d %H:%M')}] تواصل جديد عبر الشات"

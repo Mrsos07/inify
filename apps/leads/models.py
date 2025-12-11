@@ -323,6 +323,19 @@ class ViewingAppointment(models.Model):
         if not self.agent and self.property:
             self.agent = self.property.agent
         
+        # ⚠️ منع تكرار الحجز بنفس الوقت والتاريخ والعقار
+        if not self.pk:  # فقط عند الإنشاء الجديد
+            existing = ViewingAppointment.objects.filter(
+                property=self.property,
+                scheduled_date=self.scheduled_date,
+                scheduled_time=self.scheduled_time,
+                status__in=['pending', 'confirmed']
+            ).exists()
+            
+            if existing:
+                from django.core.exceptions import ValidationError
+                raise ValidationError(f'يوجد موعد محجوز بالفعل في {self.scheduled_date} الساعة {self.scheduled_time}')
+        
         super().save(*args, **kwargs)
     
     @classmethod

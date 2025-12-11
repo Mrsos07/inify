@@ -98,6 +98,9 @@ class Agent(models.Model):
     # التحقق من الإيميل
     is_email_verified = models.BooleanField(default=False, verbose_name='تم التحقق من الإيميل')
     
+    # Google OAuth
+    google_id = models.CharField(max_length=100, blank=True, null=True, verbose_name='Google ID')
+    
     # إعدادات الإشعارات
     notify_email = models.BooleanField(default=True, verbose_name='إشعارات البريد')
     notify_whatsapp = models.BooleanField(default=False, verbose_name='إشعارات واتساب')
@@ -194,6 +197,23 @@ class AgentSettings(models.Model):
     working_hours_start = models.TimeField(null=True, blank=True, verbose_name='بداية العمل')
     working_hours_end = models.TimeField(null=True, blank=True, verbose_name='نهاية العمل')
     working_days = models.CharField(max_length=50, default='0,1,2,3,4', verbose_name='أيام العمل')
+    
+    # أوقات المعاينة
+    viewing_start_hour = models.PositiveIntegerField(
+        default=8,
+        verbose_name='بداية أوقات المعاينة',
+        help_text='الساعة التي تبدأ فيها المعاينات (مثال: 8 = 8 صباحاً)'
+    )
+    viewing_end_hour = models.PositiveIntegerField(
+        default=21,
+        verbose_name='نهاية أوقات المعاينة',
+        help_text='الساعة التي تنتهي فيها المعاينات (مثال: 21 = 9 مساءً)'
+    )
+    viewing_slot_duration = models.PositiveIntegerField(
+        default=30,
+        verbose_name='مدة فترة المعاينة (بالدقائق)',
+        help_text='مدة كل موعد معاينة بالدقائق'
+    )
     
     class Meta:
         verbose_name = 'إعدادات المسوق'

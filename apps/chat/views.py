@@ -5,6 +5,7 @@ Chat Views - واجهات برمجة المحادثات
 
 import json
 import logging
+import re
 from django.conf import settings
 from django.http import JsonResponse
 from django.views import View
@@ -22,6 +23,337 @@ from services.rag_service import RAGService
 # GeminiService و OpenAIService يتم استيرادها داخل الدالة حسب الحاجة
 
 logger = logging.getLogger(__name__)
+
+
+def is_time_allowed(time_str, agent=None):
+    """
+    التحقق من أن الوقت مسموح به للحجز بناءً على إعدادات الوكيل
+    
+    Args:
+        time_str: الوقت بصيغة HH:MM
+        agent: كائن الوكيل (اختياري) لاستخدام إعداداته
+    
+    Returns:
+        tuple: (is_allowed: bool, message: str)
+    """
+    try:
+        from datetime import datetime
+        time_obj = datetime.strptime(time_str, '%H:%M').time()
+        hour = time_obj.hour
+        
+        # القيم الافتراضية
+        start_hour = 8
+        end_hour = 21
+        
+        # استخدام إعدادات الوكيل إذا كانت متاحة
+        if agent:
+            try:
+                from apps.agents.models import AgentSettings
+                agent_settings = AgentSettings.objects.filter(agent=agent).first()
+                if agent_settings:
+                    start_hour = agent_settings.viewing_start_hour or 8
+                    end_hour = agent_settings.viewing_end_hour or 21
+            except:
+                pass
+        
+        # التحقق من الوقت
+        if hour < start_hour or hour >= end_hour:
+            start_display = f"{start_hour}:00 صباحاً" if start_hour < 12 else f"{start_hour-12 if start_hour > 12 else 12}:00 مساءً"
+            end_display = f"{end_hour}:00 صباحاً" if end_hour < 12 else f"{end_hour-12 if end_hour > 12 else 12}:00 مساءً"
+            return False, f"للأسف المواعيد المتاحة من {start_display} إلى {end_display}. اختر وقت ثاني يناسبك 🙏"
+        
+        return True, ""
+    except:
+        return True, ""  # إذا فشل التحويل، نسمح بالحجز
+
+
+def extract_last_time_from_conversation(messages, current_message=''):
+    """
+    استخراج آخر وقت مذكور في المحادثة
+    مهم: نبحث عن آخر وقت وليس أول وقت لأن العميل قد يوافق على وقت بديل
+    
+    الاستراتيجية:
+    1. إذا وافق العميل (ممتاز، تمام، أوكي) على وقت مقترح من الوكيل، نستخدم وقت الوكيل
+    2. وإلا نبحث عن آخر وقت ذكره العميل
+    """
+    
+    def parse_time_from_text(text):
+        """استخراج الوقت من نص معين"""
+        text_lower = text.lower()
+        
+        # ═══════════════════════════════════════════════════════════
+        # 1. أنماط الوقت الدقيقة (أعلى أولوية)
+        # ═══════════════════════════════════════════════════════════
+        
+        # HH:MM أو H:MM (مثل 9:30، 10:00، 17:30)
+        time_exact = re.search(r'(\d{1,2}):(\d{2})', text)
+        if time_exact:
+            hour = int(time_exact.group(1))
+            minute = time_exact.group(2)
+            if 'صباح' in text_lower or 'صباحا' in text_lower or 'صباحاً' in text_lower:
+                pass
+            elif 'مساء' in text_lower or 'مساءً' in text_lower or 'مساءا' in text_lower:
+                if hour < 12:
+                    hour += 12
+            elif hour >= 8 and hour <= 11:
+                pass  # صباح افتراضي
+            elif hour < 6:
+                hour += 12
+            return f'{hour:02d}:{minute}'
+        
+        # ═══════════════════════════════════════════════════════════
+        # 2. أنماط "الساعة X" بأشكال مختلفة
+        # ═══════════════════════════════════════════════════════════
+        
+        # الساعة 10، الساعه 9، ساعة 8، ساعه 7
+        time_patterns_ar = [
+            r'(?:ال)?ساعة?\s*(\d{1,2})(?::(\d{2}))?',
+            r'(?:ال)?ساعه?\s*(\d{1,2})(?::(\d{2}))?',
+        ]
+        for pattern in time_patterns_ar:
+            match = re.search(pattern, text)
+            if match:
+                hour = int(match.group(1))
+                minute = match.group(2) or '00'
+                if 'صباح' in text_lower:
+                    pass
+                elif 'مساء' in text_lower:
+                    if hour < 12:
+                        hour += 12
+                elif hour >= 8 and hour <= 11:
+                    pass
+                elif hour < 6:
+                    hour += 12
+                return f'{hour:02d}:{minute}'
+        
+        # ═══════════════════════════════════════════════════════════
+        # 3. أنماط الوقت مع صباح/مساء
+        # ═══════════════════════════════════════════════════════════
+        
+        time_with_period = [
+            (r'(\d{1,2})(?::(\d{2}))?\s*(?:صباح|صباحا|صباحاً|ص)', 'am'),
+            (r'(\d{1,2})(?::(\d{2}))?\s*(?:مساء|مساءً|مساءا|م)', 'pm'),
+            (r'(\d{1,2})(?::(\d{2}))?\s*(?:am|AM|a\.m\.)', 'am'),
+            (r'(\d{1,2})(?::(\d{2}))?\s*(?:pm|PM|p\.m\.)', 'pm'),
+        ]
+        for pattern, period in time_with_period:
+            match = re.search(pattern, text)
+            if match:
+                hour = int(match.group(1))
+                minute = match.group(2) or '00'
+                if period == 'pm' and hour < 12:
+                    hour += 12
+                elif period == 'am' and hour == 12:
+                    hour = 0
+                return f'{hour:02d}:{minute}'
+        
+        # ═══════════════════════════════════════════════════════════
+        # 4. أوقات الصلاة والفترات (بالعربي)
+        # ═══════════════════════════════════════════════════════════
+        
+        prayer_times = {
+            # بعد الصلاة
+            'بعد الفجر': '05:30',
+            'بعد الشروق': '07:00',
+            'بعد الضحى': '09:00',
+            'بعد الظهر': '13:00',
+            'بعد العصر': '17:00',
+            'بعد المغرب': '19:00',
+            'بعد العشاء': '21:00',
+            'بعد العشا': '21:00',
+            # وقت الصلاة
+            'وقت الفجر': '05:00',
+            'وقت الشروق': '06:30',
+            'وقت الضحى': '08:30',
+            'وقت الظهر': '12:30',
+            'وقت العصر': '16:00',
+            'وقت المغرب': '18:30',
+            'وقت العشاء': '20:00',
+            'وقت العشا': '20:00',
+            # الصلاة فقط
+            'الفجر': '05:00',
+            'الشروق': '06:30',
+            'الضحى': '09:00',
+            'الظهر': '12:00',
+            'العصر': '16:00',
+            'المغرب': '18:30',
+            'العشاء': '20:00',
+            'العشا': '20:00',
+        }
+        
+        for phrase, time_val in prayer_times.items():
+            if phrase in text_lower:
+                return time_val
+        
+        # ═══════════════════════════════════════════════════════════
+        # 5. فترات اليوم
+        # ═══════════════════════════════════════════════════════════
+        
+        day_periods = {
+            # الصباح
+            'في الصباح': '10:00',
+            'بالصباح': '10:00',
+            'صباحا': '10:00',
+            'صباحاً': '10:00',
+            'الصباح الباكر': '07:00',
+            'الصبح الباكر': '07:00',
+            'بداية الصباح': '08:00',
+            'الصباح': '10:00',
+            'الصبح': '10:00',
+            # الظهر
+            'نص النهار': '12:00',
+            'نصف النهار': '12:00',
+            'الضهر': '12:00',
+            'وقت الغداء': '12:00',
+            'وقت الغدا': '12:00',
+            'بعد الغداء': '14:00',
+            'بعد الغدا': '14:00',
+            # العصر
+            'العصرية': '16:00',
+            'وقت العصرية': '16:00',
+            'قبل المغرب': '17:30',
+            # المساء
+            'في المساء': '19:00',
+            'بالمساء': '19:00',
+            'مساءً': '19:00',
+            'مساءا': '19:00',
+            'المسا': '19:00',
+            'المساء': '19:00',
+            # الليل
+            'في الليل': '21:00',
+            'الليل': '21:00',
+            'بالليل': '21:00',
+            'ليلا': '21:00',
+            'ليلاً': '21:00',
+        }
+        
+        for phrase, time_val in day_periods.items():
+            if phrase in text_lower:
+                return time_val
+        
+        # ═══════════════════════════════════════════════════════════
+        # 6. أرقام مع سياق الوقت
+        # ═══════════════════════════════════════════════════════════
+        
+        # X ونص (مثل 9 ونص = 9:30)
+        half_hour = re.search(r'(\d{1,2})\s*(?:ونص|و\s*نص|ونصف|و\s*نصف)', text)
+        if half_hour:
+            hour = int(half_hour.group(1))
+            if hour >= 8 and hour <= 11:
+                pass
+            elif hour < 6:
+                hour += 12
+            return f'{hour:02d}:30'
+        
+        # X وربع (مثل 9 وربع = 9:15)
+        quarter_hour = re.search(r'(\d{1,2})\s*(?:وربع|و\s*ربع)', text)
+        if quarter_hour:
+            hour = int(quarter_hour.group(1))
+            if hour >= 8 and hour <= 11:
+                pass
+            elif hour < 6:
+                hour += 12
+            return f'{hour:02d}:15'
+        
+        # X إلا ربع (مثل 10 إلا ربع = 9:45)
+        quarter_to = re.search(r'(\d{1,2})\s*(?:الا|إلا|الى|إلى)\s*(?:ربع|رُبع)', text)
+        if quarter_to:
+            hour = int(quarter_to.group(1)) - 1
+            if hour >= 8 and hour <= 11:
+                pass
+            elif hour < 6:
+                hour += 12
+            return f'{hour:02d}:45'
+        
+        # ═══════════════════════════════════════════════════════════
+        # 7. أرقام عربية وهندية
+        # ═══════════════════════════════════════════════════════════
+        
+        arabic_nums = {
+            '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+            '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9'
+        }
+        
+        # تحويل الأرقام العربية للإنجليزية
+        text_converted = text
+        for ar, en in arabic_nums.items():
+            text_converted = text_converted.replace(ar, en)
+        
+        # إعادة البحث بعد التحويل إذا كان هناك أرقام عربية
+        if text_converted != text:
+            converted_time = re.search(r'(\d{1,2}):(\d{2})', text_converted)
+            if converted_time:
+                hour = int(converted_time.group(1))
+                minute = converted_time.group(2)
+                if hour >= 8 and hour <= 11:
+                    pass
+                elif hour < 6:
+                    hour += 12
+                return f'{hour:02d}:{minute}'
+        
+        # ═══════════════════════════════════════════════════════════
+        # 8. أرقام منفردة (أقل أولوية)
+        # ═══════════════════════════════════════════════════════════
+        
+        single_num = re.search(r'\b(\d{1,2})\b', text)
+        if single_num:
+            hour = int(single_num.group(1))
+            if hour >= 1 and hour <= 23:
+                if 'صباح' in text_lower:
+                    return f'{hour:02d}:00'
+                elif 'مساء' in text_lower:
+                    if hour < 12:
+                        hour += 12
+                    return f'{hour:02d}:00'
+                elif hour >= 8 and hour <= 11:
+                    return f'{hour:02d}:00'
+                elif hour < 6:
+                    return f'{hour + 12:02d}:00'
+                else:
+                    return f'{hour:02d}:00'
+        
+        return None
+    
+    # ═══════════════════════════════════════════════════════════
+    # التحقق من موافقة العميل على وقت مقترح
+    # ═══════════════════════════════════════════════════════════
+    
+    approval_words = [
+        'ممتاز', 'تمام', 'أوكي', 'اوكي', 'موافق', 'يناسب', 'مناسب', 
+        'ايه', 'نعم', 'اي', 'ok', 'yes', 'حلو', 'طيب', 'زين', 'خلاص',
+        'اوك', 'أوك', 'يس', 'ماشي', 'تم', 'اكيد', 'أكيد', 'بالتأكيد'
+    ]
+    current_lower = current_message.lower().strip()
+    
+    # إذا كانت الرسالة الحالية موافقة قصيرة، نبحث عن الوقت في رسالة الوكيل السابقة
+    is_approval = any(word in current_lower for word in approval_words) and len(current_message) < 30
+    
+    if is_approval and messages:
+        for msg in reversed(messages):
+            if msg.get('role') == 'assistant':
+                assistant_time = parse_time_from_text(msg.get('content', ''))
+                if assistant_time:
+                    return assistant_time
+                break
+    
+    # ═══════════════════════════════════════════════════════════
+    # البحث في الرسالة الحالية أولاً، ثم الرسائل السابقة
+    # ═══════════════════════════════════════════════════════════
+    
+    # الرسالة الحالية لها أعلى أولوية
+    if current_message:
+        current_time = parse_time_from_text(current_message)
+        if current_time:
+            return current_time
+    
+    # البحث في رسائل المستخدم السابقة من الأحدث للأقدم
+    for msg in reversed(messages):
+        if msg.get('role') == 'user':
+            msg_time = parse_time_from_text(msg.get('content', ''))
+            if msg_time:
+                return msg_time
+    
+    return None
 
 
 class ChatViewSet(viewsets.ModelViewSet):
@@ -308,6 +640,7 @@ class PublicChatView(View):
                                 print(f"🔍 DEBUG Smart Agent: wants_viewing={wants_viewing}, interested_property_id={interested_property_id}, viewing_booked={viewing_booked}")
                                 
                                 # تجنب الحجز المزدوج - إذا تم الحجز بالفعل من الأداة
+                                # ⚠️ مهم: نحجز فقط إذا حدد العميل التاريخ والوقت بشكل صريح
                                 if wants_viewing and not viewing_booked:
                                     from datetime import datetime, timedelta
                                     import requests
@@ -315,82 +648,210 @@ class PublicChatView(View):
                                     scheduled_date = viewing_analysis.get('suggested_date')
                                     scheduled_time = viewing_analysis.get('suggested_time')
                                     
-                                    if not scheduled_date:
-                                        tomorrow = datetime.now() + timedelta(days=1)
-                                        scheduled_date = tomorrow.strftime('%Y-%m-%d')
-                                    
+                                    # البحث عن آخر وقت في المحادثة (مهم للموعد البديل)
                                     if not scheduled_time:
-                                        conv_lower = full_conversation.lower()
-                                        if 'بعد العصر' in conv_lower:
-                                            scheduled_time = '17:00'
-                                        elif 'بعد المغرب' in conv_lower:
-                                            scheduled_time = '19:00'
-                                        elif 'بعد العشاء' in conv_lower:
-                                            scheduled_time = '21:00'
-                                        else:
-                                            scheduled_time = '17:00'
+                                        scheduled_time = extract_last_time_from_conversation(chat_history, message)
                                     
-                                    # استخدام API لحجز الموعد
-                                    try:
-                                        from apps.leads.models import Lead as LeadModel, ViewingAppointment, LeadActivity
-                                        from apps.properties.models import Property
-                                        
-                                        # الحصول على العقار
-                                        property_obj = None
-                                        if interested_property_id:
-                                            try:
-                                                property_obj = Property.objects.get(id=interested_property_id)
-                                            except:
-                                                pass
-                                        
-                                        if not property_obj:
-                                            property_obj = Property.objects.filter(agent=agent, is_active=True).first()
-                                        
-                                        if property_obj:
-                                            # تحويل التاريخ والوقت
-                                            date_obj = datetime.strptime(scheduled_date, '%Y-%m-%d').date()
-                                            time_obj = datetime.strptime(scheduled_time, '%H:%M').time()
+                                    logger.info(f"📅 SmartAgent: Extracted time={scheduled_time}, date={scheduled_date}")
+                                    
+                                    # لا نحجز بدون تاريخ محدد من العميل
+                                    if not scheduled_date:
+                                        logger.info(f"⚠️ Smart Agent: Skipping booking - no date specified by client")
+                                    
+                                    # حجز الموعد فقط إذا حدد العميل التاريخ والوقت
+                                    if scheduled_date and scheduled_time:
+                                        try:
+                                            from apps.leads.models import Lead as LeadModel, ViewingAppointment, LeadActivity
+                                            from apps.properties.models import Property
                                             
-                                            # إنشاء الموعد
-                                            appointment = ViewingAppointment.objects.create(
-                                                lead=lead,
-                                                property=property_obj,
-                                                agent=agent,
-                                                scheduled_date=date_obj,
-                                                scheduled_time=time_obj,
-                                                duration_minutes=30,
-                                                notes='تم الحجز عبر Smart Agent',
-                                                status='pending'
-                                            )
+                                            # الحصول على العقار
+                                            property_obj = None
+                                            if interested_property_id:
+                                                try:
+                                                    property_obj = Property.objects.get(id=interested_property_id)
+                                                except:
+                                                    pass
                                             
-                                            # تحديث حالة العميل
-                                            lead.status = 'viewing_scheduled'
-                                            lead.save()
+                                            if not property_obj:
+                                                property_obj = Property.objects.filter(agent=agent, is_active=True).first()
                                             
-                                            # تسجيل النشاط
-                                            LeadActivity.objects.create(
-                                                lead=lead,
-                                                activity_type='viewing',
-                                                description=f'تم حجز موعد معاينة للعقار {property_obj.title}',
-                                                metadata={
-                                                    'appointment_id': str(appointment.id),
-                                                    'property_id': str(property_obj.id),
-                                                    'booked_by': 'smart_agent'
-                                                }
-                                            )
-                                            
-                                            day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
-                                            viewing_booked = {
-                                                'date': str(date_obj),
-                                                'day_name': day_names[date_obj.weekday()],
-                                                'time': scheduled_time,
-                                                'property': property_obj.title
-                                            }
-                                            logger.info(f"✅ Smart Agent: Viewing booked: {appointment.id}")
-                                    except Exception as booking_error:
-                                        logger.error(f"❌ Smart Agent: Booking error: {booking_error}")
+                                            if property_obj:
+                                                # تحويل التاريخ والوقت
+                                                date_obj = datetime.strptime(scheduled_date, '%Y-%m-%d').date()
+                                                time_obj = datetime.strptime(scheduled_time, '%H:%M').time()
+                                                
+                                                # ═══════════════════════════════════════════════════════════
+                                                # التحقق من تعارض المواعيد قبل الحجز
+                                                # ═══════════════════════════════════════════════════════════
+                                                availability = ViewingAppointment.check_availability(
+                                                    property_id=property_obj.id,
+                                                    date=date_obj,
+                                                    time=time_obj,
+                                                    duration_minutes=30
+                                                )
+                                                
+                                                # التحقق من الأوقات الممنوعة
+                                                time_allowed, time_error_msg = is_time_allowed(scheduled_time, agent)
+                                                if not time_allowed:
+                                                    logger.warning(f"⚠️ Smart Agent: Time not allowed: {scheduled_time}")
+                                                    # لا نحجز - الوقت ممنوع
+                                                elif not availability['available']:
+                                                    logger.warning(f"⚠️ Smart Agent: Time slot conflict for {date_obj} {time_obj}")
+                                                    # لا نحجز - الموعد متعارض
+                                                else:
+                                                    # إنشاء الموعد
+                                                    appointment = ViewingAppointment.objects.create(
+                                                        lead=lead,
+                                                        property=property_obj,
+                                                        agent=agent,
+                                                        scheduled_date=date_obj,
+                                                        scheduled_time=time_obj,
+                                                        duration_minutes=30,
+                                                        notes='تم الحجز عبر Smart Agent',
+                                                        status='pending'
+                                                    )
+                                                    
+                                                    # تحديث حالة العميل
+                                                    lead.status = 'viewing_scheduled'
+                                                    lead.save()
+                                                    
+                                                    # تسجيل النشاط
+                                                    LeadActivity.objects.create(
+                                                        lead=lead,
+                                                        activity_type='viewing',
+                                                        description=f'تم حجز موعد معاينة للعقار {property_obj.title}',
+                                                        metadata={
+                                                            'appointment_id': str(appointment.id),
+                                                            'property_id': str(property_obj.id),
+                                                            'booked_by': 'smart_agent'
+                                                        }
+                                                    )
+                                                    
+                                                    day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+                                                    viewing_booked = {
+                                                        'date': str(date_obj),
+                                                        'day_name': day_names[date_obj.weekday()],
+                                                        'time': scheduled_time,
+                                                        'property': property_obj.title
+                                                    }
+                                                    logger.info(f"✅ Smart Agent: Viewing booked: {appointment.id}")
+                                        except Exception as booking_error:
+                                            logger.error(f"❌ Smart Agent: Booking error: {booking_error}")
                         except Exception as e:
                             logger.error(f"❌ Smart Agent: Error creating lead: {e}")
+                
+                # ═══════════════════════════════════════════════════════════
+                # حجز موعد بديل للعميل الموجود (عند اختيار وقت جديد بعد التعارض)
+                # ═══════════════════════════════════════════════════════════
+                if not viewing_booked and client_phone:
+                    from apps.leads.models import Lead as LeadModel, ViewingAppointment as VA, LeadActivity as LA
+                    existing_lead = LeadModel.objects.filter(
+                        agent=agent,
+                        phone=client_phone
+                    ).order_by('-created_at').first()
+                    
+                    if existing_lead:
+                        logger.info(f"📅 SmartAgent: Trying to book alternative time for existing lead: {existing_lead.id}")
+                        
+                        try:
+                            full_conv = ' '.join([msg.get('content', '') for msg in chat_history]) + ' ' + message
+                            viewing_analysis = lead_capture_service.analyze_viewing_request(full_conv)
+                            alt_date = viewing_analysis.get('suggested_date')
+                            alt_time = viewing_analysis.get('suggested_time')
+                            
+                            # البحث عن الوقت في الرسالة الحالية
+                            msg_lower = message.lower()
+                            if 'بعد العشاء' in msg_lower or 'بعد العشا' in msg_lower:
+                                alt_time = '21:00'
+                            elif 'بعد المغرب' in msg_lower:
+                                alt_time = '19:00'
+                            elif 'بعد العصر' in msg_lower:
+                                alt_time = '17:00'
+                            elif 'العشاء' in msg_lower or 'العشا' in msg_lower or '9' in message or '٩' in message:
+                                alt_time = '21:00'
+                            elif 'المغرب' in msg_lower or '7' in message or '٧' in message:
+                                alt_time = '19:00'
+                            elif 'العصر' in msg_lower or '5' in message or '٥' in message:
+                                alt_time = '17:00'
+                            elif 'الظهر' in msg_lower or '12' in message:
+                                alt_time = '12:00'
+                            elif 'الصباح' in msg_lower or 'الصبح' in msg_lower or '10' in message:
+                                alt_time = '10:00'
+                            elif '6' in message or '٦' in message:
+                                alt_time = '18:00'
+                            elif '8' in message or '٨' in message:
+                                alt_time = '20:00'
+                            elif '4' in message or '٤' in message:
+                                alt_time = '16:00'
+                            
+                            # البحث عن التاريخ
+                            if not alt_date:
+                                from datetime import date as dt_date, timedelta
+                                today = dt_date.today()
+                                if 'بكرة' in full_conv.lower() or 'بكره' in full_conv.lower() or 'غدا' in full_conv.lower():
+                                    alt_date = (today + timedelta(days=1)).strftime('%Y-%m-%d')
+                                elif 'بعد بكرة' in full_conv.lower() or 'بعد بكره' in full_conv.lower():
+                                    alt_date = (today + timedelta(days=2)).strftime('%Y-%m-%d')
+                                elif 'اليوم' in full_conv.lower():
+                                    alt_date = today.strftime('%Y-%m-%d')
+                            
+                            if alt_date and alt_time and properties.exists():
+                                prop_obj = properties.first()
+                                date_obj = datetime.strptime(alt_date, '%Y-%m-%d').date()
+                                time_obj = datetime.strptime(alt_time, '%H:%M').time()
+                                
+                                avail = VA.check_availability(
+                                    property_id=prop_obj.id,
+                                    date=date_obj,
+                                    time=time_obj,
+                                    duration_minutes=30
+                                )
+                                
+                                day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+                                day_name = day_names[date_obj.weekday()]
+                                
+                                if avail['available']:
+                                    appt = VA.objects.create(
+                                        lead=existing_lead,
+                                        property=prop_obj,
+                                        agent=agent,
+                                        scheduled_date=date_obj,
+                                        scheduled_time=time_obj,
+                                        duration_minutes=30,
+                                        notes='تم الحجز عبر Smart Agent - موعد بديل',
+                                        booked_by='ai_agent',
+                                        status='pending'
+                                    )
+                                    
+                                    existing_lead.status = 'viewing_scheduled'
+                                    existing_lead.save()
+                                    
+                                    LA.objects.create(
+                                        lead=existing_lead,
+                                        activity_type='viewing',
+                                        description=f'تم حجز موعد معاينة بديل للعقار {prop_obj.title}',
+                                        metadata={
+                                            'appointment_id': str(appt.id),
+                                            'property_id': str(prop_obj.id),
+                                            'booked_by': 'smart_agent_alternative'
+                                        }
+                                    )
+                                    
+                                    viewing_booked = {
+                                        'id': str(appt.id),
+                                        'date': str(date_obj),
+                                        'day_name': day_name,
+                                        'time': alt_time,
+                                        'property': prop_obj.title,
+                                        'status': 'confirmed'
+                                    }
+                                    
+                                    time_12h = time_obj.strftime('%I:%M %p').replace('AM', 'صباحاً').replace('PM', 'مساءً')
+                                    response = f"تمام يا {existing_lead.name}! تم حجز موعدك ✅\n\n📅 {day_name} {date_obj}\n⏰ {time_12h}\n\nراح نتواصل معك على الواتساب للتأكيد 👍"
+                                    
+                                    logger.info(f"✅ SmartAgent: Alternative viewing booked: {appt.id}")
+                        except Exception as alt_err:
+                            logger.error(f"❌ SmartAgent: Alternative booking error: {alt_err}")
                 
                 # حفظ رد المساعد
                 assistant_message = Message.objects.create(
@@ -547,8 +1008,27 @@ class PublicChatView(View):
             
             print(f"🔍 DEBUG: bot_collect_leads = {bot_collect_leads}")
             if bot_collect_leads:
-                # تحليل رسالة المستخدم
+                # تحليل رسالة المستخدم الحالية
                 analysis = lead_capture_service.analyze_message(message, chat_history)
+                
+                # إذا لم نجد رقم في الرسالة الحالية، نبحث في المحادثة السابقة
+                if not analysis.get('phone'):
+                    full_conversation = ' '.join([msg.get('content', '') for msg in chat_history if msg.get('role') == 'user'])
+                    full_analysis = lead_capture_service.analyze_message(full_conversation + ' ' + message, chat_history)
+                    if full_analysis.get('phone'):
+                        analysis['phone'] = full_analysis['phone']
+                        analysis['has_contact_info'] = True
+                        print(f"📱 DEBUG: Found phone in conversation history: {analysis['phone']}")
+                
+                # البحث عن الاسم في المحادثة السابقة إذا لم نجده
+                if not analysis.get('name'):
+                    for msg in chat_history:
+                        if msg.get('role') == 'user':
+                            name_analysis = lead_capture_service.analyze_message(msg.get('content', ''), [])
+                            if name_analysis.get('name'):
+                                analysis['name'] = name_analysis['name']
+                                print(f"👤 DEBUG: Found name in conversation history: {analysis['name']}")
+                                break
                 
                 print(f"🔍 DEBUG: analysis = {analysis}")
                 logger.info(f"Lead analysis: phone={analysis.get('phone')}, has_contact={analysis.get('has_contact_info')}, message='{message[:50]}...'")
@@ -627,17 +1107,28 @@ class PublicChatView(View):
                         interested_property_id = available_properties[0].get('id')
                         logger.info(f"Using first available property for viewing: {interested_property_id}")
                 
-                # ⚠️ لا نستخدم أول عقار متاح للـ lead - لكن نسجل التحذير
+                # ⚠️ محاولة أخيرة: استخدام أول عقار متاح إذا طلب العميل معاينة
                 if not interested_property_id:
                     logger.warning("Could not determine interested property - checking if viewing requested")
-                    # محاولة أخيرة: إذا كان هناك عقار واحد فقط للوكيل
-                    single_property = agent_properties.first()
-                    if single_property and agent_properties.count() == 1:
-                        interested_property_id = str(single_property.id)
+                    # البحث عن كلمات المعاينة
+                    viewing_words = ['معاينة', 'أشوف', 'اشوف', 'موعد', 'زيارة', 'بكرة', 'غدا', 'العصر', 'المغرب', 'العشاء']
+                    full_text = ' '.join([msg.get('content', '') for msg in chat_history]) + ' ' + message
+                    wants_to_view = any(word in full_text.lower() for word in viewing_words)
+                    
+                    if wants_to_view and agent_properties.exists():
+                        # استخدم أول عقار متاح
+                        first_property = agent_properties.first()
+                        interested_property_id = str(first_property.id)
+                        logger.info(f"Using first available property for viewing request: {interested_property_id}")
+                    elif agent_properties.count() == 1:
+                        # إذا كان هناك عقار واحد فقط
+                        interested_property_id = str(agent_properties.first().id)
                         logger.info(f"Using agent's only property: {interested_property_id}")
                 
                 # إذا أعطى العميل رقم جواله، أنشئ lead
                 print(f"🔍 DEBUG: analysis.phone = {analysis.get('phone')}")
+                print(f"🔍 DEBUG: interested_property_id = {interested_property_id}")
+                logger.info(f"📊 Final state: phone={analysis.get('phone')}, property_id={interested_property_id}")
                 if analysis.get('phone'):
                     print(f"✅ DEBUG: Creating lead with phone: {analysis.get('phone')}")
                     logger.info(f"Creating lead: phone={analysis.get('phone')}, property={interested_property_id}")
@@ -662,101 +1153,215 @@ class PublicChatView(View):
                                 'phone': lead.phone
                             }
                             logger.info(f"Lead created successfully: {lead.id}")
+                            print(f"🟢 LEAD CREATED: {lead.id}")
                             
-                            # تحليل طلب المعاينة من الرسالة الحالية وتاريخ المحادثة
-                            viewing_analysis = lead_capture_service.analyze_viewing_request(message, chat_history)
-                            
-                            # البحث عن طلب معاينة في تاريخ المحادثة + الرسالة الحالية
+                            # ═══════════════════════════════════════════════════════════
+                            # حجز المعاينة - فقط إذا حدد العميل التاريخ والوقت
+                            # ═══════════════════════════════════════════════════════════
                             full_conversation = ' '.join([msg.get('content', '') for msg in chat_history]) + ' ' + message
-                            viewing_keywords_in_history = any(kw in full_conversation.lower() for kw in [
-                                'معاينة', 'أشوف', 'اشوف', 'أشوفه', 'اشوفه', 'أشوفها', 'اشوفها',
-                                'موعد', 'زيارة', 'بكرة', 'بكره', 'غدا', 'غداً', 'العصر', 'الصباح'
-                            ])
                             
-                            wants_viewing = viewing_analysis.get('wants_viewing') or viewing_keywords_in_history
+                            # الحصول على أول عقار للوكيل
+                            first_prop = agent_properties.first()
+                            print(f"🟢 FIRST PROP: {first_prop.id if first_prop else 'NONE'}")
                             
-                            # إذا أعطى العميل رقمه مع وقت، فهو يريد معاينة
-                            time_keywords = ['بكرة', 'بكره', 'غدا', 'غداً', 'العصر', 'الصباح', 'المغرب', 'العشاء', 'بعد']
-                            has_time = any(kw in full_conversation.lower() for kw in time_keywords)
-                            if has_time and analysis.get('phone'):
-                                wants_viewing = True
-                                logger.info("Client provided phone with time - assuming viewing request")
+                            if first_prop:
+                                interested_property_id = str(first_prop.id)
                             
-                            logger.info(f"Viewing check: wants_viewing={wants_viewing}, interested_property_id={interested_property_id}, has_time={has_time}")
-                            
-                            # إذا لم يكن هناك عقار محدد، استخدم أول عقار متاح
-                            if wants_viewing and not interested_property_id and available_properties:
-                                interested_property_id = available_properties[0].get('id')
-                                logger.info(f"Using first property for viewing: {interested_property_id}")
-                            
-                            logger.info(f"🔍 Viewing decision: wants_viewing={wants_viewing}, interested_property_id={interested_property_id}, available_properties_count={len(available_properties) if available_properties else 0}")
-                            
-                            if wants_viewing and interested_property_id:
-                                # تحديد التاريخ والوقت
+                            # تحليل المحادثة للحصول على التاريخ والوقت
+                            if first_prop:
                                 from datetime import datetime, timedelta
                                 
+                                viewing_analysis = lead_capture_service.analyze_viewing_request(full_conversation)
                                 scheduled_date = viewing_analysis.get('suggested_date')
                                 scheduled_time = viewing_analysis.get('suggested_time')
                                 
-                                # البحث عن التاريخ والوقت في تاريخ المحادثة
-                                if not scheduled_date or not scheduled_time:
-                                    history_analysis = lead_capture_service.analyze_viewing_request(full_conversation)
-                                    if not scheduled_date:
-                                        scheduled_date = history_analysis.get('suggested_date')
-                                    if not scheduled_time:
-                                        scheduled_time = history_analysis.get('suggested_time')
-                                
-                                # إذا لم يحدد العميل تاريخ، اقترح غداً
-                                if not scheduled_date:
-                                    tomorrow = datetime.now() + timedelta(days=1)
-                                    scheduled_date = tomorrow.strftime('%Y-%m-%d')
-                                
-                                # إذا لم يحدد وقت، نبحث في المحادثة
+                                # البحث عن آخر وقت في المحادثة (مهم للموعد البديل)
                                 if not scheduled_time:
-                                    conv_lower = full_conversation.lower()
-                                    # البحث عن الأوقات بالكلمات العربية
-                                    if 'بعد العشاء' in conv_lower or 'بعد العشا' in conv_lower:
-                                        scheduled_time = '21:00'
-                                    elif 'بعد المغرب' in conv_lower:
-                                        scheduled_time = '19:00'
-                                    elif 'بعد العصر' in conv_lower:
-                                        scheduled_time = '17:00'
-                                    elif 'العشاء' in conv_lower or 'العشا' in conv_lower:
-                                        scheduled_time = '20:00'
-                                    elif 'المغرب' in conv_lower:
-                                        scheduled_time = '18:00'
-                                    elif 'العصر' in conv_lower:
-                                        scheduled_time = '16:00'
-                                    elif 'الظهر' in conv_lower:
-                                        scheduled_time = '12:00'
-                                    elif 'الصباح' in conv_lower or 'الصبح' in conv_lower:
-                                        scheduled_time = '10:00'
-                                    else:
-                                        scheduled_time = '17:00'  # افتراضي: 5 مساءً
+                                    scheduled_time = extract_last_time_from_conversation(chat_history, message)
                                 
-                                logger.info(f"Attempting to book viewing: date={scheduled_date}, time={scheduled_time}, property={interested_property_id}")
+                                logger.info(f"📅 PublicChat: Extracted time={scheduled_time}, date={scheduled_date}")
                                 
-                                # حجز الموعد
-                                booking_result = lead_capture_service.book_viewing_appointment(
-                                    agent_id=str(agent.id),
-                                    lead_id=str(lead.id),
-                                    property_id=interested_property_id,
-                                    scheduled_date=scheduled_date,
-                                    scheduled_time=scheduled_time,
-                                    notes=f'تم الحجز عبر الشات بوت - المحادثة: {conversation.id}'
-                                )
-                                
-                                if booking_result.get('success'):
-                                    viewing_booked = booking_result.get('appointment_details')
-                                    logger.info(f"Viewing booked successfully: {booking_result.get('appointment_id')}")
+                                # ⚠️ إصلاح: نحجز فقط إذا حدد العميل التاريخ والوقت بشكل صريح
+                                # لا نستخدم قيم افتراضية للتاريخ
+                                if scheduled_date and scheduled_time:
+                                    print(f"🟢 BOOKING VIEWING FOR LEAD: {lead.id}")
+                                    logger.info(f"Attempting to book viewing: date={scheduled_date}, time={scheduled_time}, property={interested_property_id}")
+                                    
+                                    try:
+                                        from apps.leads.models import ViewingAppointment
+                                        import uuid
+                                        
+                                        property_obj = Property.objects.get(id=uuid.UUID(interested_property_id))
+                                        date_obj = datetime.strptime(scheduled_date, '%Y-%m-%d').date()
+                                        time_obj = datetime.strptime(scheduled_time, '%H:%M').time()
+                                        
+                                        # ═══════════════════════════════════════════════════════════
+                                        # التحقق من تعارض المواعيد قبل الحجز
+                                        # ═══════════════════════════════════════════════════════════
+                                        availability = ViewingAppointment.check_availability(
+                                            property_id=property_obj.id,
+                                            date=date_obj,
+                                            time=time_obj,
+                                            duration_minutes=30
+                                        )
+                                        
+                                        # التحقق من الأوقات الممنوعة
+                                        time_allowed, time_error_msg = is_time_allowed(scheduled_time, agent)
+                                        if not time_allowed:
+                                            logger.warning(f"⚠️ PublicChat: Time not allowed: {scheduled_time}")
+                                            # لا نحجز - الوقت ممنوع
+                                        elif not availability['available']:
+                                            logger.warning(f"⚠️ Time slot conflict for {date_obj} {time_obj}")
+                                            # لا نحجز - الموعد متعارض
+                                        else:
+                                            appointment = ViewingAppointment.objects.create(
+                                                lead=lead,
+                                                property=property_obj,
+                                                agent=agent,
+                                                scheduled_date=date_obj,
+                                                scheduled_time=time_obj,
+                                                duration_minutes=30,
+                                                notes=f'تم الحجز عبر الشات بوت - المحادثة: {conversation.id}',
+                                                booked_by='ai_agent',
+                                                status='pending'
+                                            )
+                                            
+                                            # تحديث حالة العميل
+                                            lead.status = 'viewing_scheduled'
+                                            lead.save()
+                                            
+                                            viewing_booked = {
+                                                'id': str(appointment.id),
+                                                'date': str(appointment.scheduled_date),
+                                                'time': str(appointment.scheduled_time),
+                                                'property': property_obj.title
+                                            }
+                                            logger.info(f"✅ Viewing booked successfully: {appointment.id}")
+                                    except Exception as booking_error:
+                                        logger.error(f"❌ Failed to book viewing: {booking_error}")
+                                        import traceback
+                                        traceback.print_exc()
                                 else:
-                                    logger.warning(f"Failed to book viewing: {booking_result.get('message')}")
+                                    logger.info(f"⚠️ Skipping booking - date={scheduled_date}, time={scheduled_time} (both required)")
                         else:
                             logger.error(f"Failed to create lead for phone: {analysis.get('phone')}")
                     except Exception as e:
                         logger.error(f"Exception creating lead: {e}")
                         import traceback
                         traceback.print_exc()
+            
+            # ═══════════════════════════════════════════════════════════
+            # حجز موعد بديل للعميل الموجود (عند اختيار وقت جديد بعد التعارض)
+            # ═══════════════════════════════════════════════════════════
+            if not viewing_booked and analysis.get('phone'):
+                from apps.leads.models import Lead as LeadModel, ViewingAppointment as VA, LeadActivity as LA
+                existing_lead = LeadModel.objects.filter(
+                    agent=agent,
+                    phone=analysis.get('phone')
+                ).order_by('-created_at').first()
+                
+                if existing_lead:
+                    logger.info(f"📅 PublicChat: Trying to book alternative time for existing lead: {existing_lead.id}")
+                    
+                    try:
+                        full_conv = ' '.join([msg.get('content', '') for msg in chat_history]) + ' ' + message
+                        viewing_analysis = lead_capture_service.analyze_viewing_request(full_conv)
+                        alt_date = viewing_analysis.get('suggested_date')
+                        alt_time = viewing_analysis.get('suggested_time')
+                        
+                        # البحث عن الوقت في الرسالة الحالية
+                        msg_lower = message.lower()
+                        if 'بعد العشاء' in msg_lower or 'بعد العشا' in msg_lower:
+                            alt_time = '21:00'
+                        elif 'بعد المغرب' in msg_lower:
+                            alt_time = '19:00'
+                        elif 'بعد العصر' in msg_lower:
+                            alt_time = '17:00'
+                        elif 'العشاء' in msg_lower or 'العشا' in msg_lower or '9' in message or '٩' in message:
+                            alt_time = '21:00'
+                        elif 'المغرب' in msg_lower or '7' in message or '٧' in message:
+                            alt_time = '19:00'
+                        elif 'العصر' in msg_lower or '5' in message or '٥' in message:
+                            alt_time = '17:00'
+                        elif 'الظهر' in msg_lower or '12' in message:
+                            alt_time = '12:00'
+                        elif 'الصباح' in msg_lower or 'الصبح' in msg_lower or '10' in message:
+                            alt_time = '10:00'
+                        elif '6' in message or '٦' in message:
+                            alt_time = '18:00'
+                        elif '8' in message or '٨' in message:
+                            alt_time = '20:00'
+                        elif '4' in message or '٤' in message:
+                            alt_time = '16:00'
+                        
+                        # البحث عن التاريخ
+                        if not alt_date:
+                            from datetime import date as dt_date
+                            today = dt_date.today()
+                            if 'بكرة' in full_conv.lower() or 'بكره' in full_conv.lower() or 'غدا' in full_conv.lower():
+                                alt_date = (today + timedelta(days=1)).strftime('%Y-%m-%d')
+                            elif 'بعد بكرة' in full_conv.lower() or 'بعد بكره' in full_conv.lower():
+                                alt_date = (today + timedelta(days=2)).strftime('%Y-%m-%d')
+                            elif 'اليوم' in full_conv.lower():
+                                alt_date = today.strftime('%Y-%m-%d')
+                        
+                        if alt_date and alt_time and agent_properties.exists():
+                            prop_obj = agent_properties.first()
+                            date_obj = datetime.strptime(alt_date, '%Y-%m-%d').date()
+                            time_obj = datetime.strptime(alt_time, '%H:%M').time()
+                            
+                            avail = VA.check_availability(
+                                property_id=prop_obj.id,
+                                date=date_obj,
+                                time=time_obj,
+                                duration_minutes=30
+                            )
+                            
+                            day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+                            day_name = day_names[date_obj.weekday()]
+                            
+                            if avail['available']:
+                                appt = VA.objects.create(
+                                    lead=existing_lead,
+                                    property=prop_obj,
+                                    agent=agent,
+                                    scheduled_date=date_obj,
+                                    scheduled_time=time_obj,
+                                    duration_minutes=30,
+                                    notes=f'تم الحجز عبر الشات بوت - موعد بديل - المحادثة: {conversation.id}',
+                                    booked_by='ai_agent',
+                                    status='pending'
+                                )
+                                
+                                existing_lead.status = 'viewing_scheduled'
+                                existing_lead.save()
+                                
+                                LA.objects.create(
+                                    lead=existing_lead,
+                                    activity_type='viewing',
+                                    description=f'تم حجز موعد معاينة بديل للعقار {prop_obj.title}',
+                                    metadata={
+                                        'appointment_id': str(appt.id),
+                                        'property_id': str(prop_obj.id),
+                                        'booked_by': 'public_chat_alternative'
+                                    }
+                                )
+                                
+                                viewing_booked = {
+                                    'id': str(appt.id),
+                                    'date': str(date_obj),
+                                    'day_name': day_name,
+                                    'time': alt_time,
+                                    'property': prop_obj.title,
+                                    'status': 'confirmed'
+                                }
+                                
+                                time_12h = time_obj.strftime('%I:%M %p').replace('AM', 'صباحاً').replace('PM', 'مساءً')
+                                response['content'] = f"تمام يا {existing_lead.name}! تم حجز موعدك ✅\n\n📅 {day_name} {date_obj}\n⏰ {time_12h}\n\nراح نتواصل معك على الواتساب للتأكيد 👍"
+                                
+                                logger.info(f"✅ PublicChat: Alternative viewing booked: {appt.id}")
+                    except Exception as alt_err:
+                        logger.error(f"❌ PublicChat: Alternative booking error: {alt_err}")
             
             # حفظ رد المساعد
             assistant_message = Message.objects.create(
@@ -1164,18 +1769,568 @@ class EmbedChatAPI(View):
             # استخراج النص من الرد
             response_text = result.get('content', '') if isinstance(result, dict) else str(result)
             
+            # ═══════════════════════════════════════════════════════════
+            # منطق الحجز: عرض المواعيد المتاحة عند الاهتمام
+            # ═══════════════════════════════════════════════════════════
+            from services.lead_capture_service import lead_capture_service
+            from apps.leads.models import Lead, ViewingAppointment, LeadActivity
+            from apps.agents.models import AgentSettings
+            from datetime import datetime, timedelta, date as date_class
+            
+            msg_lower = message.lower()
+            analysis_temp = lead_capture_service.analyze_message(message, conversation_history)
+            
+            # جلب إعدادات الوكيل
+            agent_settings = AgentSettings.objects.filter(agent=agent).first()
+            start_hour = agent_settings.viewing_start_hour if agent_settings else 8
+            end_hour = agent_settings.viewing_end_hour if agent_settings else 21
+            slot_duration = agent_settings.viewing_slot_duration if agent_settings else 30
+            
+            # ═══════════════════════════════════════════════════════════
+            # 1️⃣ التحقق إذا العميل أعطى اسمه بالفعل
+            # ═══════════════════════════════════════════════════════════
+            client_name = None
+            for msg in reversed(conversation_history):
+                if msg.get('role') == 'user':
+                    msg_content = msg.get('content', '').strip()
+                    msg_idx = conversation_history.index(msg)
+                    if msg_idx > 0:
+                        prev_msg = conversation_history[msg_idx - 1]
+                        if prev_msg.get('role') == 'assistant':
+                            prev_content = prev_msg.get('content', '').lower()
+                            if 'اسم' in prev_content:
+                                potential_name = msg_content
+                                for prefix in ['اسمي', 'انا', 'أنا', 'اني', 'أني']:
+                                    if potential_name.lower().startswith(prefix):
+                                        potential_name = potential_name[len(prefix):].strip()
+                                if potential_name and len(potential_name) > 1 and len(potential_name) < 30:
+                                    client_name = potential_name
+                                    break
+            
+            # إذا الرسالة الحالية هي الاسم (بعد سؤال الوكيل عن الاسم)
+            if not client_name and conversation_history:
+                last_assistant = None
+                for msg in reversed(conversation_history):
+                    if msg.get('role') == 'assistant':
+                        last_assistant = msg.get('content', '').lower()
+                        break
+                if last_assistant and 'اسم' in last_assistant:
+                    potential_name = message.strip()
+                    for prefix in ['اسمي', 'انا', 'أنا', 'اني', 'أني']:
+                        if potential_name.lower().startswith(prefix):
+                            potential_name = potential_name[len(prefix):].strip()
+                    if potential_name and len(potential_name) > 1 and len(potential_name) < 30 and not any(c.isdigit() for c in potential_name):
+                        client_name = potential_name
+                        # العميل أعطى اسمه - نطلب الرقم
+                        response_text = f"والنعم يا {client_name}! ممكن رقم جوالك؟"
+                        logger.info(f"✅ EmbedChat: Got name '{client_name}', asking for phone")
+            
+            # ═══════════════════════════════════════════════════════════
+            # 2️⃣ إذا العميل مهتم → عرض المواعيد المتاحة لعدة أيام
+            # ═══════════════════════════════════════════════════════════
+            interest_words = ['مهتم', 'ابي اشوفها', 'أبي أشوفها', 'ابغى اشوفها', 'أبغى أشوفها', 
+                             'نبي نشوفها', 'ابي معاينة', 'أبي معاينة', 'حابب اشوفها', 'حابب أشوفها',
+                             'ودي اشوفها', 'ودي أشوفها', 'اشوفها', 'أشوفها', 'معاينة', 'زيارة']
+            
+            is_interested = any(word in msg_lower for word in interest_words)
+            
+            if is_interested and properties.exists() and not analysis_temp.get('phone') and not client_name:
+                property_obj = properties.first()
+                day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+                
+                # جلب المواعيد المتاحة لأقرب 3 أيام
+                available_days = []
+                for i in range(1, 8):  # البحث في أسبوع
+                    check_date = date_class.today() + timedelta(days=i)
+                    slots = ViewingAppointment.get_available_slots(
+                        property_id=property_obj.id, date=check_date,
+                        start_hour=start_hour, end_hour=end_hour, slot_duration=slot_duration
+                    )
+                    if slots:
+                        day_name = day_names[check_date.weekday()]
+                        available_days.append({
+                            'date': check_date,
+                            'day_name': day_name,
+                            'slots': slots[:4]  # أول 4 مواعيد
+                        })
+                    if len(available_days) >= 3:  # نعرض 3 أيام كحد أقصى
+                        break
+                
+                if available_days:
+                    response_lines = ["ممتاز! 🏠 المواعيد المتاحة:"]
+                    for day_info in available_days:
+                        slots_text = " | ".join([s['time'] for s in day_info['slots']])
+                        response_lines.append(f"• {day_info['day_name']}: {slots_text}")
+                    response_lines.append("\nأي يوم ووقت يناسبك؟")
+                    response_text = "\n".join(response_lines)
+                else:
+                    response_text = "للأسف المواعيد القريبة محجوزة، تبي أشيك على أيام ثانية؟"
+                
+                logger.info(f"📅 EmbedChat: Showing available slots for interested client")
+            
+            # ═══════════════════════════════════════════════════════════
+            # 3️⃣ إذا العميل اختار وقت → تأكيد الموعد وطلب الاسم
+            # ═══════════════════════════════════════════════════════════
+            elif not client_name:
+                # استخراج الوقت من الرسالة الحالية
+                requested_time = extract_last_time_from_conversation(conversation_history, message)
+                
+                # استخراج التاريخ
+                full_conv_text = ' '.join([msg.get('content', '') for msg in conversation_history]) + ' ' + message
+                conv_lower = full_conv_text.lower()
+                
+                requested_date = None
+                day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+                
+                # البحث عن اسم اليوم في الرسالة
+                day_mapping = {
+                    'السبت': 5, 'الاحد': 6, 'الأحد': 6, 'الاثنين': 0, 'الإثنين': 0,
+                    'الثلاثاء': 1, 'الاربعاء': 2, 'الأربعاء': 2, 'الخميس': 3, 'الجمعة': 4
+                }
+                
+                for day_word, day_num in day_mapping.items():
+                    if day_word in msg_lower:
+                        # حساب التاريخ لهذا اليوم
+                        today = date_class.today()
+                        days_ahead = day_num - today.weekday()
+                        if days_ahead <= 0:
+                            days_ahead += 7
+                        requested_date = (today + timedelta(days=days_ahead)).strftime('%Y-%m-%d')
+                        break
+                
+                if not requested_date:
+                    if 'بكرة' in conv_lower or 'بكره' in conv_lower or 'غدا' in conv_lower or 'غداً' in conv_lower:
+                        requested_date = (date_class.today() + timedelta(days=1)).strftime('%Y-%m-%d')
+                    elif 'اليوم' in conv_lower:
+                        requested_date = date_class.today().strftime('%Y-%m-%d')
+                    elif 'بعد بكرة' in conv_lower or 'بعد بكره' in conv_lower:
+                        requested_date = (date_class.today() + timedelta(days=2)).strftime('%Y-%m-%d')
+                
+                # إذا لم نجد تاريخ لكن وجدنا وقت، نفترض بكرة
+                if requested_time and not requested_date:
+                    requested_date = (date_class.today() + timedelta(days=1)).strftime('%Y-%m-%d')
+                
+                logger.info(f"📅 EmbedChat: Extracted - date={requested_date}, time={requested_time}")
+                
+                # إذا العميل حدد وقت ولم يعطِ رقمه بعد
+                if requested_date and requested_time and not analysis_temp.get('phone') and properties.exists():
+                    property_obj = properties.first()
+                    date_obj = datetime.strptime(requested_date, '%Y-%m-%d').date()
+                    time_obj = datetime.strptime(requested_time, '%H:%M').time()
+                    
+                    # التحقق من الأوقات الممنوعة
+                    time_allowed, time_error_msg = is_time_allowed(requested_time, agent)
+                    if not time_allowed:
+                        available_slots = ViewingAppointment.get_available_slots(
+                            property_id=property_obj.id, date=date_obj,
+                            start_hour=start_hour, end_hour=end_hour, slot_duration=slot_duration
+                        )
+                        if available_slots:
+                            slots_text = " | ".join([s['time'] for s in available_slots[:5]])
+                            response_text = f"{time_error_msg}\n\nالمواعيد المتاحة: {slots_text}"
+                        else:
+                            response_text = time_error_msg
+                    else:
+                        # التحقق من توفر الموعد
+                        availability = ViewingAppointment.check_availability(
+                            property_id=property_obj.id, date=date_obj, time=time_obj, duration_minutes=30
+                        )
+                        
+                        day_name = day_names[date_obj.weekday()]
+                        
+                        if availability['available']:
+                            # ✅ الموعد متاح - نطلب الاسم
+                            time_12h = time_obj.strftime('%I:%M').lstrip('0')
+                            period = 'صباحاً' if time_obj.hour < 12 else 'مساءً'
+                            response_text = f"تمام {day_name} الساعة {time_12h} {period}! وش اسمك الكريم؟"
+                            logger.info(f"✅ EmbedChat: Time available: {requested_time}")
+                        else:
+                            # ❌ الموعد غير متاح - عرض البدائل
+                            available_slots = ViewingAppointment.get_available_slots(
+                                property_id=property_obj.id, date=date_obj,
+                                start_hour=start_hour, end_hour=end_hour, slot_duration=slot_duration
+                            )
+                            if available_slots:
+                                slots_text = " | ".join([s['time'] for s in available_slots[:5]])
+                                response_text = f"للأسف هالوقت محجوز 😔 المواعيد المتاحة: {slots_text}. أي وقت يناسبك؟"
+                            else:
+                                response_text = f"للأسف كل مواعيد يوم {day_name} محجوزة، تبي يوم ثاني؟"
+                            logger.info(f"⚠️ EmbedChat: Time not available: {requested_time}")
+            
+            # ═══════════════════════════════════════════════════════════
+            # تحليل الرسالة لجمع بيانات العملاء وحجز المواعيد
+            # ═══════════════════════════════════════════════════════════
+            lead_created = None
+            viewing_booked = None
+            existing_lead = None
+            
+            # تحليل رسالة المستخدم
+            analysis = lead_capture_service.analyze_message(message, conversation_history)
+            
+            # البحث عن رقم الجوال في المحادثة السابقة إذا لم نجده
+            if not analysis.get('phone'):
+                full_conversation = ' '.join([msg.get('content', '') for msg in conversation_history if msg.get('role') == 'user'])
+                full_analysis = lead_capture_service.analyze_message(full_conversation + ' ' + message, conversation_history)
+                if full_analysis.get('phone'):
+                    analysis['phone'] = full_analysis['phone']
+            
+            # البحث عن الاسم في المحادثة السابقة
+            if not analysis.get('name'):
+                # البحث في رسائل المستخدم من الأحدث للأقدم
+                for msg in reversed(conversation_history):
+                    if msg.get('role') == 'user':
+                        msg_content = msg.get('content', '')
+                        name_analysis = lead_capture_service.analyze_message(msg_content, [])
+                        if name_analysis.get('name'):
+                            analysis['name'] = name_analysis['name']
+                            logger.info(f"👤 EmbedChat: Found name '{analysis['name']}' in message: {msg_content[:50]}")
+                            break
+                        
+                        # البحث اليدوي عن الاسم إذا لم يُستخرج
+                        # نبحث عن رسائل قصيرة (كلمة أو كلمتين) بعد سؤال الوكيل عن الاسم
+                        msg_words = msg_content.strip().split()
+                        if len(msg_words) <= 3 and len(msg_content) < 30:
+                            # تحقق إذا كانت الرسالة السابقة من الوكيل تسأل عن الاسم
+                            msg_idx = conversation_history.index(msg)
+                            if msg_idx > 0:
+                                prev_msg = conversation_history[msg_idx - 1]
+                                if prev_msg.get('role') == 'assistant':
+                                    prev_content = prev_msg.get('content', '').lower()
+                                    if 'اسم' in prev_content or 'name' in prev_content:
+                                        # هذه الرسالة هي الاسم
+                                        potential_name = msg_content.strip()
+                                        # تنظيف الاسم من الكلمات الزائدة
+                                        for prefix in ['اسمي', 'انا', 'أنا', 'اني', 'أني']:
+                                            if potential_name.lower().startswith(prefix):
+                                                potential_name = potential_name[len(prefix):].strip()
+                                        if potential_name and len(potential_name) > 1:
+                                            analysis['name'] = potential_name
+                                            logger.info(f"👤 EmbedChat: Extracted name '{analysis['name']}' from context")
+                                            break
+            
+            # ═══════════════════════════════════════════════════════════
+            # البحث عن عميل موجود بناءً على رقم الجوال من المحادثة
+            # هذا مهم لحجز موعد بديل عند التعارض
+            # ═══════════════════════════════════════════════════════════
+            phone_for_lookup = analysis.get('phone')
+            if phone_for_lookup:
+                from apps.leads.models import Lead
+                existing_lead = Lead.objects.filter(
+                    agent=agent,
+                    phone=phone_for_lookup
+                ).order_by('-created_at').first()
+                
+                if existing_lead:
+                    logger.info(f"📱 EmbedChat: Found existing lead by current phone: {existing_lead.id}")
+            
+            # إذا لم نجد عميل، نبحث بالرقم من المحادثة السابقة (مهم للموعد البديل)
+            if not existing_lead and not phone_for_lookup:
+                # البحث عن رقم جوال في المحادثة السابقة
+                for msg in reversed(conversation_history):
+                    if msg.get('role') == 'user':
+                        msg_analysis = lead_capture_service.analyze_message(msg.get('content', ''), [])
+                        if msg_analysis.get('phone'):
+                            phone_for_lookup = msg_analysis['phone']
+                            from apps.leads.models import Lead
+                            existing_lead = Lead.objects.filter(
+                                agent=agent,
+                                phone=phone_for_lookup
+                            ).order_by('-created_at').first()
+                            if existing_lead:
+                                logger.info(f"📱 EmbedChat: Found existing lead by history phone: {existing_lead.id}")
+                                break
+            
+            # إذا أعطى العميل رقم جواله، أنشئ lead
+            if analysis.get('phone'):
+                logger.info(f"📱 EmbedChat: Creating lead with phone: {analysis.get('phone')}")
+                
+                # تحديد العقار المهتم به
+                interested_property_id = None
+                if properties.exists():
+                    interested_property_id = str(properties.first().id)
+                
+                try:
+                    lead = lead_capture_service.create_lead_from_conversation(
+                        agent_id=str(agent.id),
+                        conversation_id=None,
+                        extracted_info={
+                            'phone': analysis.get('phone'),
+                            'email': analysis.get('email'),
+                            'name': analysis.get('name') or 'عميل من الشات',
+                            'interest_level': 'high'
+                        },
+                        interested_property_id=interested_property_id
+                    )
+                    
+                    if lead:
+                        lead_created = {
+                            'id': str(lead.id),
+                            'name': lead.name,
+                            'phone': lead.phone
+                        }
+                        logger.info(f"✅ EmbedChat: Lead created: {lead.id}")
+                        
+                        # تحليل طلب المعاينة
+                        full_conversation = ' '.join([msg.get('content', '') for msg in conversation_history]) + ' ' + message
+                        viewing_analysis = lead_capture_service.analyze_viewing_request(full_conversation)
+                        scheduled_date = viewing_analysis.get('suggested_date')
+                        scheduled_time = viewing_analysis.get('suggested_time')
+                        
+                        # البحث عن آخر وقت في المحادثة (مهم للموعد البديل)
+                        if not scheduled_time:
+                            scheduled_time = extract_last_time_from_conversation(conversation_history, message)
+                        
+                        logger.info(f"📅 EmbedChat: Extracted time={scheduled_time}, date={scheduled_date}")
+                        
+                        # حجز الموعد فقط إذا حدد العميل التاريخ والوقت
+                        if scheduled_date and scheduled_time and interested_property_id:
+                            try:
+                                property_obj = properties.first()
+                                date_obj = datetime.strptime(scheduled_date, '%Y-%m-%d').date()
+                                time_obj = datetime.strptime(scheduled_time, '%H:%M').time()
+                                
+                                # التحقق من تعارض المواعيد
+                                availability = ViewingAppointment.check_availability(
+                                    property_id=property_obj.id,
+                                    date=date_obj,
+                                    time=time_obj,
+                                    duration_minutes=30
+                                )
+                                
+                                day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+                                day_name = day_names[date_obj.weekday()]
+                                
+                                # التحقق من الأوقات الممنوعة
+                                time_allowed, time_error_msg = is_time_allowed(scheduled_time, agent)
+                                if not time_allowed:
+                                    logger.warning(f"⚠️ EmbedChat: Time not allowed: {scheduled_time}")
+                                    response_text = time_error_msg
+                                elif availability['available']:
+                                    try:
+                                        appointment = ViewingAppointment.objects.create(
+                                            lead=lead,
+                                            property=property_obj,
+                                            agent=agent,
+                                            scheduled_date=date_obj,
+                                            scheduled_time=time_obj,
+                                            duration_minutes=30,
+                                            notes='تم الحجز عبر Embed Chat',
+                                            booked_by='ai_agent',
+                                            status='pending'
+                                        )
+                                        
+                                        lead.status = 'viewing_scheduled'
+                                        lead.save()
+                                        
+                                        LeadActivity.objects.create(
+                                            lead=lead,
+                                            activity_type='viewing',
+                                            description=f'تم حجز موعد معاينة للعقار {property_obj.title}',
+                                            metadata={
+                                                'appointment_id': str(appointment.id),
+                                                'property_id': str(property_obj.id),
+                                                'booked_by': 'embed_chat'
+                                            }
+                                        )
+                                        
+                                        viewing_booked = {
+                                            'id': str(appointment.id),
+                                            'date': str(date_obj),
+                                            'day_name': day_name,
+                                            'time': scheduled_time,
+                                            'property': property_obj.title,
+                                            'status': 'confirmed'
+                                        }
+                                        # تعديل الرد ليتضمن تأكيد الحجز
+                                        time_12h = time_obj.strftime('%I:%M %p').replace('AM', 'صباحاً').replace('PM', 'مساءً')
+                                        response_text = f"تم حجز موعد المعاينة بنجاح ✅\n\n📅 {day_name} {date_obj}\n⏰ {time_12h}\n👤 {lead.name}\n📱 {lead.phone}\n\nسيتم التواصل معك على الواتساب لتأكيد الموعد إن شاء الله! 🙏"
+                                        
+                                        logger.info(f"✅ EmbedChat: Viewing booked: {appointment.id}")
+                                    except Exception as create_error:
+                                        logger.warning(f"⚠️ EmbedChat: Duplicate booking prevented: {create_error}")
+                                else:
+                                    # الموعد محجوز - إخبار العميل واقتراح بديل
+                                    logger.warning(f"⚠️ EmbedChat: Time slot conflict for {date_obj} {time_obj}")
+                                    
+                                    # البحث عن مواعيد متاحة باستخدام إعدادات الوكيل
+                                    from apps.agents.models import AgentSettings
+                                    agent_settings = AgentSettings.objects.filter(agent=agent).first()
+                                    start_hour = agent_settings.viewing_start_hour if agent_settings else 8
+                                    end_hour = agent_settings.viewing_end_hour if agent_settings else 21
+                                    slot_duration = agent_settings.viewing_slot_duration if agent_settings else 30
+                                    
+                                    available_slots = ViewingAppointment.get_available_slots(
+                                        property_id=property_obj.id,
+                                        date=date_obj,
+                                        start_hour=start_hour,
+                                        end_hour=end_hour,
+                                        slot_duration=slot_duration
+                                    )
+                                    
+                                    if available_slots:
+                                        # فلترة المواعيد الممنوعة (قبل ساعة البداية)
+                                        allowed_slots = [s for s in available_slots if int(s['time'].split(':')[0]) >= start_hour]
+                                        if allowed_slots:
+                                            slots_text = " | ".join([s['time'] for s in allowed_slots[:5]])
+                                            response_text = f"للأسف هالوقت محجوز 😔 المواعيد المتاحة: {slots_text}. أي وقت يناسبك؟"
+                                        else:
+                                            response_text = f"للأسف كل المواعيد يوم {day_name} محجوزة، تبي يوم ثاني؟"
+                                    else:
+                                        response_text = f"للأسف جميع المواعيد يوم {day_name} محجوزة 😔\n\nهل تريد اختيار يوم آخر؟"
+                                    
+                                    viewing_booked = {
+                                        'status': 'conflict',
+                                        'requested_date': str(date_obj),
+                                        'requested_time': scheduled_time,
+                                        'available_slots': available_slots[:5] if available_slots else []
+                                    }
+                            except Exception as booking_error:
+                                logger.error(f"❌ EmbedChat: Booking error: {booking_error}")
+                except Exception as e:
+                    logger.error(f"❌ EmbedChat: Error creating lead: {e}")
+            
+            # ═══════════════════════════════════════════════════════════
+            # حجز موعد بديل للعميل الموجود (عند اختيار وقت جديد بعد التعارض)
+            # ═══════════════════════════════════════════════════════════
+            if existing_lead and (not viewing_booked or (isinstance(viewing_booked, dict) and viewing_booked.get('status') == 'conflict')):
+                # العميل موجود مسبقاً ولم يتم حجز موعد بعد
+                # نحاول حجز موعد بناءً على الوقت الجديد المذكور في الرسالة الحالية
+                logger.info(f"📅 EmbedChat: Trying to book alternative time for existing lead: {existing_lead.id}")
+                
+                try:
+                    # تحليل الوقت الجديد من الرسالة الحالية
+                    full_conversation = ' '.join([msg.get('content', '') for msg in conversation_history]) + ' ' + message
+                    viewing_analysis = lead_capture_service.analyze_viewing_request(full_conversation)
+                    scheduled_date = viewing_analysis.get('suggested_date')
+                    scheduled_time = viewing_analysis.get('suggested_time')
+                    
+                    # استخدام الدالة المحسنة لاستخراج الوقت (تدعم موافقة العميل على وقت مقترح)
+                    extracted_time = extract_last_time_from_conversation(conversation_history, message)
+                    if extracted_time:
+                        scheduled_time = extracted_time
+                        logger.info(f"📅 EmbedChat Alt: Extracted time from conversation: {scheduled_time}")
+                    
+                    # البحث عن التاريخ
+                    if not scheduled_date:
+                        conv_lower = full_conversation.lower()
+                        from datetime import date, timedelta
+                        today = date.today()
+                        if 'بكرة' in conv_lower or 'بكره' in conv_lower or 'غدا' in conv_lower or 'غداً' in conv_lower:
+                            scheduled_date = (today + timedelta(days=1)).strftime('%Y-%m-%d')
+                        elif 'بعد بكرة' in conv_lower or 'بعد بكره' in conv_lower:
+                            scheduled_date = (today + timedelta(days=2)).strftime('%Y-%m-%d')
+                        elif 'اليوم' in conv_lower:
+                            scheduled_date = today.strftime('%Y-%m-%d')
+                    
+                    if scheduled_date and scheduled_time and properties.exists():
+                        property_obj = properties.first()
+                        date_obj = datetime.strptime(scheduled_date, '%Y-%m-%d').date()
+                        time_obj = datetime.strptime(scheduled_time, '%H:%M').time()
+                        
+                        # التحقق من تعارض المواعيد
+                        availability = ViewingAppointment.check_availability(
+                            property_id=property_obj.id,
+                            date=date_obj,
+                            time=time_obj,
+                            duration_minutes=30
+                        )
+                        
+                        day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+                        day_name = day_names[date_obj.weekday()]
+                        
+                        # التحقق من الأوقات الممنوعة
+                        time_allowed, time_error_msg = is_time_allowed(scheduled_time, agent)
+                        if not time_allowed:
+                            logger.warning(f"⚠️ EmbedChat Alt: Time not allowed: {scheduled_time}")
+                            response_text = time_error_msg
+                        elif availability['available']:
+                            appointment = ViewingAppointment.objects.create(
+                                lead=existing_lead,
+                                property=property_obj,
+                                agent=agent,
+                                scheduled_date=date_obj,
+                                scheduled_time=time_obj,
+                                duration_minutes=30,
+                                notes='تم الحجز عبر Embed Chat - موعد بديل',
+                                booked_by='ai_agent',
+                                status='pending'
+                            )
+                            
+                            existing_lead.status = 'viewing_scheduled'
+                            existing_lead.save()
+                            
+                            LeadActivity.objects.create(
+                                lead=existing_lead,
+                                activity_type='viewing',
+                                description=f'تم حجز موعد معاينة بديل للعقار {property_obj.title}',
+                                metadata={
+                                    'appointment_id': str(appointment.id),
+                                    'property_id': str(property_obj.id),
+                                    'booked_by': 'embed_chat_alternative'
+                                }
+                            )
+                            
+                            viewing_booked = {
+                                'id': str(appointment.id),
+                                'date': str(date_obj),
+                                'day_name': day_name,
+                                'time': scheduled_time,
+                                'property': property_obj.title,
+                                'status': 'confirmed'
+                            }
+                            
+                            time_12h = time_obj.strftime('%I:%M %p').replace('AM', 'صباحاً').replace('PM', 'مساءً')
+                            response_text = f"تمام يا {existing_lead.name}! تم حجز موعدك ✅\n\n📅 {day_name} {date_obj}\n⏰ {time_12h}\n\nراح نتواصل معك على الواتساب للتأكيد 👍"
+                            
+                            logger.info(f"✅ EmbedChat: Alternative viewing booked: {appointment.id}")
+                        else:
+                            # الموعد البديل أيضاً محجوز - استخدام إعدادات الوكيل
+                            from apps.agents.models import AgentSettings
+                            agent_settings = AgentSettings.objects.filter(agent=agent).first()
+                            start_hour = agent_settings.viewing_start_hour if agent_settings else 8
+                            end_hour = agent_settings.viewing_end_hour if agent_settings else 21
+                            slot_duration = agent_settings.viewing_slot_duration if agent_settings else 30
+                            
+                            available_slots = ViewingAppointment.get_available_slots(
+                                property_id=property_obj.id,
+                                date=date_obj,
+                                start_hour=start_hour,
+                                end_hour=end_hour,
+                                slot_duration=slot_duration
+                            )
+                            
+                            if available_slots:
+                                # فلترة المواعيد الممنوعة (قبل ساعة البداية)
+                                allowed_slots = [s for s in available_slots if int(s['time'].split(':')[0]) >= start_hour]
+                                if allowed_slots:
+                                    slots_text = " | ".join([s['time'] for s in allowed_slots[:5]])
+                                    response_text = f"للأسف هالوقت بعد محجوز 😔 المواعيد المتاحة: {slots_text}. أي وقت يناسبك؟"
+                                else:
+                                    response_text = f"للأسف كل المواعيد يوم {day_name} محجوزة، تبي يوم ثاني؟"
+                            else:
+                                response_text = f"للأسف كل مواعيد يوم {day_name} محجوزة، تبي يوم ثاني؟"
+                except Exception as alt_booking_error:
+                    logger.error(f"❌ EmbedChat: Alternative booking error: {alt_booking_error}")
+            
             # تحديد معلومات النموذج للـ response
             model_info = {
                 'provider': ai_provider,
                 'model': global_settings.openai_model if ai_provider == 'openai' else global_settings.ai_model
             }
             
-            return JsonResponse({
+            response_data = {
                 'success': True,
                 'response': response_text,
                 'agent': agent.bot_name or 'Inify',
-                'ai_info': model_info  # معلومات النموذج
-            })
+                'ai_info': model_info
+            }
+            
+            if lead_created:
+                response_data['lead_created'] = lead_created
+            if viewing_booked:
+                response_data['viewing_booked'] = viewing_booked
+            
+            return JsonResponse(response_data)
             
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'error': 'بيانات غير صالحة'}, status=400)

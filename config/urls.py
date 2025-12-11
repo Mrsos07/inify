@@ -46,6 +46,9 @@ urlpatterns = [
     
     path('admin/', admin.site.urls),
     
+    # Google OAuth (django-allauth)
+    path('accounts/', include('allauth.urls')),
+    
     # API endpoints
     path('api/v1/properties/', include('apps.properties.urls')),
     path('api/v1/chat/', include('apps.chat.urls')),
