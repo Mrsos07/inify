@@ -165,42 +165,40 @@ def login_view(request):
         return redirect('/dashboard/')
     
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        
+        print(f"[LOGIN] Attempting login for: {username}")
         
         # Try to authenticate with username or email
         user = authenticate(request, username=username, password=password)
+        print(f"[LOGIN] First auth attempt result: {user}")
         
         if user is None:
             # Try with email
             try:
-                user_obj = User.objects.get(email=username)
+                user_obj = User.objects.get(email__iexact=username)
+                print(f"[LOGIN] Found user by email: {user_obj.username}")
                 user = authenticate(request, username=user_obj.username, password=password)
+                print(f"[LOGIN] Second auth attempt result: {user}")
+                
+                # إذا فشل التحقق، تحقق من كلمة المرور يدوياً
+                if user is None and user_obj.check_password(password):
+                    print(f"[LOGIN] Password check passed manually, logging in")
+                    user = user_obj
             except User.DoesNotExist:
-                pass
+                print(f"[LOGIN] User not found by email: {username}")
         
         if user is not None:
-            # التحقق من البريد معطل مؤقتاً
-            # Check if email is verified
-            # from apps.agents.models import Agent
-            # try:
-            #     agent = Agent.objects.get(user=user)
-            #     if not agent.is_email_verified:
-            #         # Resend verification email
-            #         from services.email_service import email_service
-            #         if email_service.is_available:
-            #             email_service.send_verification_email(user.email, user.first_name or user.username)
-            #         return JsonResponse({
-            #             'success': False, 
-            #             'error': 'يرجى تفعيل حسابك أولاً. تم إرسال رابط التفعيل إلى بريدك الإلكتروني.',
-            #             'require_verification': True
-            #         })
-            # except Agent.DoesNotExist:
-            #     pass  # Admin users don't need verification
-            
-            login(request, user)
-            return JsonResponse({'success': True})
+            if user.is_active:
+                login(request, user)
+                print(f"[LOGIN] Login successful for: {user.username}")
+                return JsonResponse({'success': True})
+            else:
+                print(f"[LOGIN] User is inactive: {user.username}")
+                return JsonResponse({'success': False, 'error': 'الحساب غير مفعل'})
         else:
+            print(f"[LOGIN] Login failed for: {username}")
             return JsonResponse({'success': False, 'error': 'بيانات الدخول غير صحيحة'})
     
     return render(request, 'auth/login.html')
@@ -296,6 +294,116 @@ def logout_view(request):
     """تسجيل الخروج"""
     logout(request)
     return redirect('/')
+
+
+@csrf_exempt
+def google_auth_callback(request):
+    """
+    Google Sign-In Callback - التحقق من JWT token من Google
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        token = data.get('token') or data.get('credential')
+        
+        if not token:
+            return JsonResponse({'success': False, 'error': 'Token is required'}, status=400)
+        
+        # التحقق من الـ token مع Google
+        from google.oauth2 import id_token
+        from google.auth.transport import requests as google_requests
+        import os
+        
+        GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+        
+        if not GOOGLE_CLIENT_ID:
+            return JsonResponse({'success': False, 'error': 'Google OAuth not configured'}, status=500)
+        
+        # التحقق من الـ token
+        idinfo = id_token.verify_oauth2_token(
+            token, 
+            google_requests.Request(), 
+            GOOGLE_CLIENT_ID
+        )
+        
+        # استخراج بيانات المستخدم
+        email = idinfo.get('email')
+        name = idinfo.get('name', '')
+        first_name = idinfo.get('given_name', '')
+        last_name = idinfo.get('family_name', '')
+        picture = idinfo.get('picture', '')
+        google_id = idinfo.get('sub')
+        
+        if not email:
+            return JsonResponse({'success': False, 'error': 'Email not provided by Google'}, status=400)
+        
+        # البحث عن المستخدم أو إنشاء حساب جديد
+        user = User.objects.filter(email=email).first()
+        
+        if not user:
+            # إنشاء مستخدم جديد
+            username = email.split('@')[0]
+            base_username = username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                first_name=first_name or name.split()[0] if name else '',
+                last_name=last_name or (name.split()[-1] if name and len(name.split()) > 1 else ''),
+            )
+            user.set_unusable_password()  # لا يمكن تسجيل الدخول بكلمة مرور
+            user.save()
+            
+            # إنشاء Agent profile
+            from apps.agents.models import Agent
+            agent = Agent.objects.create(
+                user=user,
+                email=email,
+                phone='',
+                city='',
+                company_name='',
+                is_email_verified=True,  # Google verified
+                google_id=google_id,
+            )
+            
+            is_new_user = True
+        else:
+            is_new_user = False
+            # تحديث Google ID إذا لم يكن موجود
+            from apps.agents.models import Agent
+            agent = Agent.objects.filter(user=user).first()
+            if agent and not agent.google_id:
+                agent.google_id = google_id
+                agent.is_email_verified = True
+                agent.save()
+        
+        # تسجيل الدخول
+        login(request, user)
+        
+        return JsonResponse({
+            'success': True,
+            'is_new_user': is_new_user,
+            'user': {
+                'email': email,
+                'name': name,
+                'picture': picture
+            },
+            'redirect': '/dashboard/'
+        })
+        
+    except ValueError as e:
+        # Token غير صالح
+        return JsonResponse({'success': False, 'error': f'Invalid token: {str(e)}'}, status=401)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 def verify_email_view(request):
@@ -641,6 +749,22 @@ def bot_settings_view(request):
         agent.bot_system_prompt = request.POST.get('bot_system_prompt', agent.bot_system_prompt or '')
         agent.bot_collect_leads = request.POST.get('bot_collect_leads') == 'on'
         
+        # Company name - اسم الشركة
+        if request.POST.get('company_name'):
+            agent.company_name = request.POST.get('company_name')
+        
+        # Viewing time settings - أوقات المعاينة
+        from apps.agents.models import AgentSettings
+        agent_settings, created = AgentSettings.objects.get_or_create(agent=agent)
+        
+        if request.POST.get('viewing_start_hour'):
+            agent_settings.viewing_start_hour = int(request.POST.get('viewing_start_hour'))
+        if request.POST.get('viewing_end_hour'):
+            agent_settings.viewing_end_hour = int(request.POST.get('viewing_end_hour'))
+        if request.POST.get('viewing_slot_duration'):
+            agent_settings.viewing_slot_duration = int(request.POST.get('viewing_slot_duration'))
+        agent_settings.save()
+        
         # Context settings - إعدادات السياق الإضافية
         if request.POST.get('bot_pricing_policy'):
             agent.bot_pricing_policy = request.POST.get('bot_pricing_policy')
@@ -680,11 +804,16 @@ def bot_settings_view(request):
         
         return JsonResponse({'status': 'success', 'avatar_url': agent.profile_image.url if agent.profile_image else None})
     
+    # Get agent settings for viewing times
+    from apps.agents.models import AgentSettings
+    agent_settings, created = AgentSettings.objects.get_or_create(agent=agent)
+    
     context = {
         'agent': agent,
         'agent_id': str(agent.id),
         'chat_url': f'/embed/?agent={agent.id}',
-        'active_page': 'bot_settings'
+        'active_page': 'bot_settings',
+        'agent_settings': agent_settings
     }
     
     return render(request, 'dashboard/bot_settings.html', context)
