@@ -179,6 +179,15 @@ def login_view(request):
             try:
                 user_obj = User.objects.get(email__iexact=username)
                 print(f"[LOGIN] Found user by email: {user_obj.username}")
+                
+                # تحقق إذا كان الحساب مسجل عبر Google (بدون كلمة مرور)
+                if not user_obj.has_usable_password():
+                    print(f"[LOGIN] User has no usable password (Google account): {user_obj.username}")
+                    return JsonResponse({
+                        'success': False, 
+                        'error': 'هذا الحساب مسجل عبر Google. يرجى تسجيل الدخول باستخدام زر Google.'
+                    })
+                
                 user = authenticate(request, username=user_obj.username, password=password)
                 print(f"[LOGIN] Second auth attempt result: {user}")
                 
