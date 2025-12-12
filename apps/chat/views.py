@@ -2201,9 +2201,25 @@ class EmbedChatAPI(View):
             # ═══════════════════════════════════════════════════════════
             # حجز موعد بديل للعميل الموجود (عند اختيار وقت جديد بعد التعارض)
             # ═══════════════════════════════════════════════════════════
-            # التحقق من أن العميل ليس لديه موعد محجوز بالفعل
+            # التحقق من أن العميل ليس لديه موعد محجوز بالفعل (سواء existing_lead أو lead الجديد)
             has_existing_appointment = False
-            if existing_lead:
+            
+            # التحقق من viewing_booked - إذا تم الحجز بنجاح، لا نحتاج لمحاولة حجز بديل
+            if viewing_booked and isinstance(viewing_booked, dict):
+                booking_status = viewing_booked.get('status', '')
+                if booking_status in ['confirmed', 'already_booked']:
+                    has_existing_appointment = True
+                    logger.info(f"✅ EmbedChat: Booking already done with status={booking_status}, skipping alternative booking")
+            
+            # التحقق من lead الجديد
+            if not has_existing_appointment and lead:
+                has_existing_appointment = ViewingAppointment.objects.filter(
+                    lead=lead,
+                    status__in=['pending', 'confirmed']
+                ).exists() or (hasattr(lead, 'status') and lead.status == 'viewing_scheduled')
+            
+            # التحقق من existing_lead
+            if not has_existing_appointment and existing_lead:
                 has_existing_appointment = ViewingAppointment.objects.filter(
                     lead=existing_lead,
                     status__in=['pending', 'confirmed']
