@@ -936,14 +936,17 @@ class EmbedChatAPI(View):
             
             # ═══════════════════════════════════════════════════════════
             # 2️⃣ إذا العميل مهتم → عرض المواعيد المتاحة لعدة أيام
+            # 🔴 معطل مؤقتاً - DISABLED: لا نعرض المواعيد تلقائياً
             # ═══════════════════════════════════════════════════════════
+            SHOW_AUTO_SLOTS = False  # تغيير إلى True لتفعيل عرض المواعيد
+            
             interest_words = ['مهتم', 'ابي اشوفها', 'أبي أشوفها', 'ابغى اشوفها', 'أبغى أشوفها', 
                              'نبي نشوفها', 'ابي معاينة', 'أبي معاينة', 'حابب اشوفها', 'حابب أشوفها',
                              'ودي اشوفها', 'ودي أشوفها', 'اشوفها', 'أشوفها', 'معاينة', 'زيارة']
             
             is_interested = any(word in msg_lower for word in interest_words)
             
-            if is_interested and properties.exists() and not analysis_temp.get('phone') and not client_name:
+            if SHOW_AUTO_SLOTS and is_interested and properties.exists() and not analysis_temp.get('phone') and not client_name:
                 property_obj = properties.first()
                 day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
                 
@@ -1228,7 +1231,12 @@ class EmbedChatAPI(View):
                         
                         logger.info(f"📅 EmbedChat: Extracted time={scheduled_time}, date={scheduled_date}")
                         
-                        # حجز الموعد فقط إذا حدد العميل التاريخ والوقت
+                        # ═══════════════════════════════════════════════════════════
+                        # 🔴 الحجز الآلي معطل مؤقتاً - AUTOMATIC BOOKING DISABLED
+                        # سيتم إرسال بيانات العميل للوكيل للحجز اليدوي
+                        # ═══════════════════════════════════════════════════════════
+                        ENABLE_AUTO_BOOKING = False  # تغيير إلى True لتفعيل الحجز الآلي
+                        
                         # التحقق أولاً: هل العميل لديه موعد محجوز بالفعل؟
                         lead_has_appointment = ViewingAppointment.objects.filter(
                             lead=lead,
@@ -1238,6 +1246,11 @@ class EmbedChatAPI(View):
                         if lead_has_appointment:
                             logger.info(f"✅ EmbedChat: Lead {lead.id} already has appointment - skipping new booking")
                             viewing_booked = {'status': 'already_booked'}
+                        elif not ENABLE_AUTO_BOOKING:
+                            # الحجز الآلي معطل - إرسال رسالة للعميل
+                            logger.info(f"📋 EmbedChat: Auto booking disabled - Lead {lead.id} will be contacted manually")
+                            response_text = f"شكراً {lead.name}! ✅\n\nتم حفظ بياناتك بنجاح 📝\n📱 {lead.phone}\n\nسيتواصل معك أحد ممثلينا قريباً لتحديد موعد المعاينة المناسب لك 🙏"
+                            viewing_booked = {'status': 'pending_manual', 'lead_id': str(lead.id)}
                         elif scheduled_date and scheduled_time and interested_property_id:
                             try:
                                 property_obj = properties.first()
@@ -1347,8 +1360,9 @@ class EmbedChatAPI(View):
             # ═══════════════════════════════════════════════════════════
             # حجز موعد بديل للعميل الموجود (عند اختيار وقت جديد بعد التعارض)
             # ═══════════════════════════════════════════════════════════
-            # تخطي هذا القسم إذا تم الحجز بنجاح أو العميل لديه موعد بالفعل
-            skip_alternative_booking = client_already_has_booking  # استخدام الفحص المبكر
+            # 🔴 معطل مؤقتاً - TEMPORARILY DISABLED
+            skip_alternative_booking = True  # تعطيل مؤقت لحجز الموعد البديل
+            # skip_alternative_booking = client_already_has_booking  # استخدام الفحص المبكر (الكود الأصلي)
             
             # إذا تم الحجز بنجاح، لا نحتاج لحجز بديل
             if not skip_alternative_booking and viewing_booked and isinstance(viewing_booked, dict):
