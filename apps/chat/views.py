@@ -2192,7 +2192,15 @@ class EmbedChatAPI(View):
             # ═══════════════════════════════════════════════════════════
             # حجز موعد بديل للعميل الموجود (عند اختيار وقت جديد بعد التعارض)
             # ═══════════════════════════════════════════════════════════
-            if existing_lead and (not viewing_booked or (isinstance(viewing_booked, dict) and viewing_booked.get('status') == 'conflict')):
+            # التحقق من أن العميل ليس لديه موعد محجوز بالفعل
+            has_existing_appointment = False
+            if existing_lead:
+                has_existing_appointment = ViewingAppointment.objects.filter(
+                    lead=existing_lead,
+                    status__in=['pending', 'confirmed']
+                ).exists() or existing_lead.status == 'viewing_scheduled'
+            
+            if existing_lead and not has_existing_appointment and (not viewing_booked or (isinstance(viewing_booked, dict) and viewing_booked.get('status') == 'conflict')):
                 # العميل موجود مسبقاً ولم يتم حجز موعد بعد
                 # نحاول حجز موعد بناءً على الوقت الجديد المذكور في الرسالة الحالية
                 logger.info(f"📅 EmbedChat: Trying to book alternative time for existing lead: {existing_lead.id}")
