@@ -2083,7 +2083,16 @@ class EmbedChatAPI(View):
                         logger.info(f"📅 EmbedChat: Extracted time={scheduled_time}, date={scheduled_date}")
                         
                         # حجز الموعد فقط إذا حدد العميل التاريخ والوقت
-                        if scheduled_date and scheduled_time and interested_property_id:
+                        # التحقق أولاً: هل العميل لديه موعد محجوز بالفعل؟
+                        lead_has_appointment = ViewingAppointment.objects.filter(
+                            lead=lead,
+                            status__in=['pending', 'confirmed']
+                        ).exists()
+                        
+                        if lead_has_appointment:
+                            logger.info(f"✅ EmbedChat: Lead {lead.id} already has appointment - skipping new booking")
+                            viewing_booked = {'status': 'already_booked'}
+                        elif scheduled_date and scheduled_time and interested_property_id:
                             try:
                                 property_obj = properties.first()
                                 date_obj = datetime.strptime(scheduled_date, '%Y-%m-%d').date()
