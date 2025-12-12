@@ -79,13 +79,15 @@ body.light-mode .menu-icon {
 
 /* Hero Section */
 body.light-mode .hero {
+    background-color: #FFFFFF !important;
     background-image: url('/static/2x/light.png') !important;
-    background-size: cover !important;
+    background-size: contain !important;
     background-position: center bottom !important;
+    background-repeat: no-repeat !important;
 }
 
 body.light-mode .hero::before {
-    background: linear-gradient(180deg, rgba(248,249,250,0.3) 0%, rgba(248,249,250,0.2) 50%, rgba(248,249,250,0.4) 100%) !important;
+    background: transparent !important;
 }
 
 body.light-mode .hero-icon img {
@@ -109,7 +111,7 @@ body.light-mode .steps-section,
 body.light-mode .benefits-section,
 body.light-mode .pricing-section,
 body.light-mode section {
-    background: #F8F9FA !important;
+    background: #FFFFFF !important;
 }
 
 /* Cards */
@@ -715,7 +717,7 @@ body.light-mode .container,
 body.light-mode .wrapper,
 body.light-mode .content,
 body.light-mode .page-content {
-    background: #F8F9FA !important;
+    background: #FFFFFF !important;
 }
 
 /* Global Boxes & Panels */
@@ -1163,6 +1165,1078 @@ body.light-mode ::-webkit-scrollbar-thumb {
 
 body.light-mode ::-webkit-scrollbar-thumb:hover {
     background: rgba(74, 144, 164, 0.5);
+}
+
+/* Form Cards - Properties Page */
+body.light-mode .form-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .form-section-title {
+    color: #1F2937 !important;
+    border-bottom-color: #E5E7EB !important;
+}
+
+body.light-mode .form-group label {
+    color: #374151 !important;
+}
+
+body.light-mode .form-group input,
+body.light-mode .form-group select,
+body.light-mode .form-group textarea {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .form-group input::placeholder,
+body.light-mode .form-group textarea::placeholder {
+    color: #9CA3AF !important;
+}
+
+body.light-mode .image-upload-area {
+    background: #F9FAFB !important;
+    border-color: #D1D5DB !important;
+}
+
+body.light-mode .image-upload-area:hover {
+    background: #EEF2FF !important;
+    border-color: #2563EB !important;
+}
+
+body.light-mode .upload-text {
+    color: #374151 !important;
+}
+
+body.light-mode .upload-hint {
+    color: #6B7280 !important;
+}
+
+/* Clients Section */
+body.light-mode .clients-section {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .section-header {
+    border-bottom-color: #E5E7EB !important;
+}
+
+body.light-mode .section-header h2 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .search-box input {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .filter-select {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .table-header {
+    background: #F9FAFB !important;
+    color: #374151 !important;
+}
+
+body.light-mode .client-row {
+    border-bottom-color: #E5E7EB !important;
+}
+
+body.light-mode .client-row:hover {
+    background: #F9FAFB !important;
+}
+
+body.light-mode .client-name {
+    color: #1F2937 !important;
+}
+
+body.light-mode .client-email,
+body.light-mode .client-phone {
+    color: #6B7280 !important;
+}
+
+body.light-mode .interest-tag {
+    color: #374151 !important;
+}
+
+/* Stats Cards */
+body.light-mode .stat-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .stat-card .stat-value {
+    color: #1F2937 !important;
+}
+
+body.light-mode .stat-card .stat-label {
+    color: #6B7280 !important;
+}
+
+/* Premium Background Hide in Light Mode */
+body.light-mode .premium-bg {
+    background: #FFFFFF !important;
+    animation: none !important;
+}
+
+/* Card Background Override */
+body.light-mode .card-bg,
+body.light-mode [class*="card-bg"] {
+    background: #FFFFFF !important;
+}
+
+/* Tabs */
+body.light-mode .tabs {
+    background: #F3F4F6 !important;
+}
+
+body.light-mode .tab {
+    color: #6B7280 !important;
+}
+
+body.light-mode .tab.active {
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9) !important;
+    color: #FFFFFF !important;
+}
+
+body.light-mode .tab:hover:not(.active) {
+    color: #1F2937 !important;
+}
+
+/* Status Badges */
+body.light-mode .status-badge.new {
+    background: #D1FAE5 !important;
+    color: #065F46 !important;
+}
+
+body.light-mode .status-badge.interested {
+    background: #DBEAFE !important;
+    color: #1E40AF !important;
+}
+
+body.light-mode .status-badge.contacted {
+    background: #FEF3C7 !important;
+    color: #92400E !important;
+}
+
+body.light-mode .status-badge.converted {
+    background: #EDE9FE !important;
+    color: #5B21B6 !important;
+}
+
+/* Client Avatar */
+body.light-mode .client-avatar {
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9) !important;
+    color: #FFFFFF !important;
+}
+
+/* Action Buttons */
+body.light-mode .action-btn {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    color: #374151 !important;
+}
+
+body.light-mode .action-btn:hover {
+    background: #F3F4F6 !important;
+    border-color: #D1D5DB !important;
+}
+
+body.light-mode .action-btn.whatsapp {
+    background: #D1FAE5 !important;
+    border-color: #A7F3D0 !important;
+    color: #059669 !important;
+}
+
+/* Nav Links */
+body.light-mode .nav-links a {
+    color: #6B7280 !important;
+}
+
+body.light-mode .nav-links a:hover,
+body.light-mode .nav-links a.active {
+    color: #2563EB !important;
+}
+
+/* Page Header */
+body.light-mode .page-header h1 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .page-header p {
+    color: #6B7280 !important;
+}
+
+/* Stat Icon */
+body.light-mode .stat-card .stat-icon {
+    background: #F3F4F6 !important;
+}
+
+body.light-mode .stat-card.new .stat-icon {
+    background: #D1FAE5 !important;
+}
+
+body.light-mode .stat-card.interested .stat-icon {
+    background: #DBEAFE !important;
+}
+
+body.light-mode .stat-card.contacted .stat-icon {
+    background: #FEF3C7 !important;
+}
+
+body.light-mode .stat-card.converted .stat-icon {
+    background: #EDE9FE !important;
+}
+
+/* Bot Settings Page - Light Mode */
+body.light-mode .settings-section {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .section-title {
+    color: #1F2937 !important;
+}
+
+body.light-mode .preview-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .preview-title {
+    color: #1F2937 !important;
+}
+
+body.light-mode .chat-preview {
+    background: #F3F4F6 !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .chat-preview-header {
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9) !important;
+}
+
+body.light-mode .chat-preview-info h4 {
+    color: #FFFFFF !important;
+}
+
+body.light-mode .chat-preview-info span {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+body.light-mode .chat-preview-messages {
+    background: #FFFFFF !important;
+}
+
+body.light-mode .preview-message.bot {
+    background: #F3F4F6 !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .preview-message.user {
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9) !important;
+    color: #FFFFFF !important;
+}
+
+body.light-mode .chat-preview-input {
+    background: #F9FAFB !important;
+    border-top: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .chat-preview-input input {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .embed-section {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .embed-title {
+    color: #1F2937 !important;
+}
+
+body.light-mode .embed-code {
+    background: #F3F4F6 !important;
+    color: #1F2937 !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .form-hint {
+    color: #6B7280 !important;
+}
+
+body.light-mode .btn-secondary {
+    background: #F9FAFB !important;
+    color: #374151 !important;
+    border: 1px solid #D1D5DB !important;
+}
+
+body.light-mode .btn-secondary:hover {
+    background: #F3F4F6 !important;
+    border-color: #9CA3AF !important;
+}
+
+body.light-mode .settings-grid .settings-section h3,
+body.light-mode .settings-grid .settings-section h4 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .api-key-group input {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .standalone-link-section {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .standalone-link-section h3 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .standalone-link-section p {
+    color: #6B7280 !important;
+}
+
+/* Platform Items - Light Mode */
+body.light-mode .platform-item {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .platform-item:hover {
+    border-color: #4A90A4 !important;
+    background: #F9FAFB !important;
+}
+
+body.light-mode .platform-item.selected {
+    background: #EEF2FF !important;
+    border-color: #4A90A4 !important;
+}
+
+body.light-mode .platform-name {
+    color: #1F2937 !important;
+}
+
+body.light-mode .platform-status {
+    color: #6B7280 !important;
+}
+
+body.light-mode .platform-status.connected {
+    color: #059669 !important;
+}
+
+body.light-mode .platform-status.disconnected {
+    color: #DC2626 !important;
+}
+
+/* Integration Cards - Light Mode */
+body.light-mode .integration-card,
+body.light-mode .connect-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .integration-card:hover,
+body.light-mode .connect-card:hover {
+    border-color: #D1D5DB !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .integration-card h3,
+body.light-mode .connect-card h3 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .integration-card p,
+body.light-mode .connect-card p {
+    color: #6B7280 !important;
+}
+
+/* WhatsApp Business Section - Light Mode */
+body.light-mode .whatsapp-section,
+body.light-mode .whatsapp-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .whatsapp-section h3,
+body.light-mode .whatsapp-card h3 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .whatsapp-section p,
+body.light-mode .whatsapp-card p {
+    color: #6B7280 !important;
+}
+
+/* Appearance/Theme Section - Light Mode */
+body.light-mode .appearance-section,
+body.light-mode .theme-section {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .appearance-section h3,
+body.light-mode .theme-section h3 {
+    color: #1F2937 !important;
+}
+
+/* Color Options - Light Mode */
+body.light-mode .color-option span {
+    color: #374151 !important;
+}
+
+/* Generic Card Backgrounds - Light Mode Override */
+body.light-mode [class*="-card"],
+body.light-mode [class*="-section"] {
+    background: #FFFFFF !important;
+}
+
+body.light-mode [class*="-card"] h3,
+body.light-mode [class*="-card"] h4,
+body.light-mode [class*="-section"] h3,
+body.light-mode [class*="-section"] h4 {
+    color: #1F2937 !important;
+}
+
+body.light-mode [class*="-card"] p,
+body.light-mode [class*="-section"] p {
+    color: #6B7280 !important;
+}
+
+/* Status Tags - Light Mode */
+body.light-mode .status-tag,
+body.light-mode .connection-status {
+    background: #F3F4F6 !important;
+    color: #374151 !important;
+}
+
+body.light-mode .status-tag.connected,
+body.light-mode .connection-status.connected {
+    background: #D1FAE5 !important;
+    color: #065F46 !important;
+}
+
+body.light-mode .status-tag.disconnected,
+body.light-mode .connection-status.disconnected {
+    background: #FEE2E2 !important;
+    color: #991B1B !important;
+}
+
+/* Dashboard Sections - Light Mode */
+body.light-mode .dashboard-section,
+body.light-mode .dashboard-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+/* Conversations Page - Light Mode */
+body.light-mode .conversation-list,
+body.light-mode .conversation-item {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .conversation-item:hover {
+    background: #F9FAFB !important;
+}
+
+body.light-mode .conversation-name {
+    color: #1F2937 !important;
+}
+
+body.light-mode .conversation-preview {
+    color: #6B7280 !important;
+}
+
+body.light-mode .conversation-time {
+    color: #9CA3AF !important;
+}
+
+/* Leads Page - Light Mode */
+body.light-mode .leads-section,
+body.light-mode .lead-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .lead-card:hover {
+    background: #F9FAFB !important;
+}
+
+/* Profile Page - Light Mode */
+body.light-mode .profile-section {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .profile-section h3 {
+    color: #1F2937 !important;
+}
+
+/* Info Cards - Light Mode */
+body.light-mode .info-card,
+body.light-mode .info-box {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .info-card p,
+body.light-mode .info-box p {
+    color: #374151 !important;
+}
+
+/* Connect Buttons - Light Mode */
+body.light-mode .connect-btn,
+body.light-mode .link-btn {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    color: #374151 !important;
+}
+
+body.light-mode .connect-btn:hover,
+body.light-mode .link-btn:hover {
+    background: #F3F4F6 !important;
+    border-color: #9CA3AF !important;
+}
+
+/* QR Code Section - Light Mode */
+body.light-mode .qr-section,
+body.light-mode .qr-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+/* Settings Tabs - Light Mode */
+body.light-mode .settings-tabs,
+body.light-mode .tab-list {
+    background: #F3F4F6 !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .settings-tab,
+body.light-mode .tab-item {
+    color: #6B7280 !important;
+    background: transparent !important;
+}
+
+body.light-mode .settings-tab.active,
+body.light-mode .tab-item.active {
+    background: #FFFFFF !important;
+    color: #1F2937 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Feature Cards - Light Mode */
+body.light-mode .feature-item,
+body.light-mode .feature-box {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .feature-item h4,
+body.light-mode .feature-box h4 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .feature-item p,
+body.light-mode .feature-box p {
+    color: #6B7280 !important;
+}
+
+/* Toggle Switches - Light Mode */
+body.light-mode .toggle-switch {
+    background: #D1D5DB !important;
+}
+
+body.light-mode .toggle-switch.active {
+    background: #4A90A4 !important;
+}
+
+/* Input Groups - Light Mode */
+body.light-mode .input-group {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+}
+
+body.light-mode .input-group input {
+    background: transparent !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .input-group button {
+    background: #F3F4F6 !important;
+    color: #374151 !important;
+    border-left: 1px solid #D1D5DB !important;
+}
+
+/* URL/Link Display - Light Mode */
+body.light-mode .url-display,
+body.light-mode .link-display {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+    color: #374151 !important;
+}
+
+/* Copy Button - Light Mode */
+body.light-mode .copy-btn {
+    background: #F3F4F6 !important;
+    color: #374151 !important;
+    border: 1px solid #D1D5DB !important;
+}
+
+body.light-mode .copy-btn:hover {
+    background: #E5E7EB !important;
+}
+
+/* Platform Connect Items - Light Mode */
+body.light-mode .platform-connect-item {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .platform-connect-item:hover {
+    border-color: #4A90A4 !important;
+    background: #F9FAFB !important;
+}
+
+body.light-mode .platform-connect-item.connected {
+    border-color: #22C55E !important;
+    background: #F0FDF4 !important;
+}
+
+body.light-mode .platform-connect-item h3,
+body.light-mode .platform-connect-item strong {
+    color: #1F2937 !important;
+}
+
+body.light-mode .platform-connect-item p,
+body.light-mode .platform-connect-item span {
+    color: #6B7280 !important;
+}
+
+/* Provider Cards - Light Mode */
+body.light-mode .provider-card {
+    background: #FFFFFF !important;
+    border: 2px solid #E5E7EB !important;
+}
+
+body.light-mode .provider-option input:checked + .provider-card {
+    border-color: #4A90A4 !important;
+    background: #EEF2FF !important;
+}
+
+body.light-mode .provider-name {
+    color: #1F2937 !important;
+}
+
+/* Guide Steps - Light Mode */
+body.light-mode .guide-step {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .guide-step strong,
+body.light-mode .step-content strong {
+    color: #1F2937 !important;
+}
+
+body.light-mode .guide-step p,
+body.light-mode .step-content p {
+    color: #6B7280 !important;
+}
+
+body.light-mode .webhook-url {
+    background: #F3F4F6 !important;
+    color: #374151 !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+/* Feature Item Box - Light Mode */
+body.light-mode .feature-item-box {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .feature-item-box strong {
+    color: #1F2937 !important;
+}
+
+body.light-mode .feature-item-box p {
+    color: #6B7280 !important;
+}
+
+/* Tabs in Settings - Light Mode */
+body.light-mode .tabs {
+    background: #F3F4F6 !important;
+}
+
+body.light-mode .tab {
+    color: #6B7280 !important;
+}
+
+body.light-mode .tab.active {
+    background: #FFFFFF !important;
+    color: #1F2937 !important;
+}
+
+/* All rgba backgrounds override - Light Mode */
+body.light-mode [style*="rgba(10, 22, 40"] {
+    background: #FFFFFF !important;
+}
+
+body.light-mode [style*="rgba(30, 58, 95"] {
+    background: #FFFFFF !important;
+}
+
+/* Card-bg variable override */
+body.light-mode .card-bg,
+body.light-mode [class*="card-bg"] {
+    background: #FFFFFF !important;
+}
+
+/* All sections with var(--card-bg) */
+body.light-mode .settings-section,
+body.light-mode .preview-section,
+body.light-mode .embed-section,
+body.light-mode .form-card,
+body.light-mode .stat-card,
+body.light-mode .clients-section,
+body.light-mode .preview-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+/* Status badges in platform items */
+body.light-mode .platform-connect-item .status {
+    color: #6B7280 !important;
+}
+
+body.light-mode .platform-connect-item .status.connected {
+    color: #059669 !important;
+}
+
+/* Link/Connect buttons */
+body.light-mode .platform-connect-item .btn,
+body.light-mode .platform-connect-item button {
+    background: #F3F4F6 !important;
+    color: #374151 !important;
+    border: 1px solid #D1D5DB !important;
+}
+
+body.light-mode .platform-connect-item .btn:hover,
+body.light-mode .platform-connect-item button:hover {
+    background: #E5E7EB !important;
+}
+
+body.light-mode .platform-connect-item .btn-primary,
+body.light-mode .platform-connect-item button.btn-primary {
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+}
+
+/* Platform Connect Specific - Light Mode */
+body.light-mode .platform-connect-name {
+    color: #1F2937 !important;
+}
+
+body.light-mode .platform-connect-desc {
+    color: #6B7280 !important;
+}
+
+body.light-mode .platform-connect-status {
+    background: #F3F4F6 !important;
+    color: #6B7280 !important;
+}
+
+body.light-mode .platform-connect-status.connected {
+    background: #D1FAE5 !important;
+    color: #059669 !important;
+}
+
+/* Avatar Upload Section - Light Mode */
+body.light-mode .avatar-upload-section {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .avatar-upload-controls h4 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .avatar-upload-controls p {
+    color: #6B7280 !important;
+}
+
+body.light-mode .avatar-btn.use-emoji {
+    background: #EEF2FF !important;
+    border: 1px solid #C7D2FE !important;
+    color: #4338CA !important;
+}
+
+/* Connection Stats - Light Mode */
+body.light-mode .conn-stat-number {
+    color: #4A90A4 !important;
+}
+
+body.light-mode .conn-stat-label {
+    color: #6B7280 !important;
+}
+
+/* All dark backgrounds override - Light Mode */
+body.light-mode [style*="background: rgba(10"],
+body.light-mode [style*="background:rgba(10"],
+body.light-mode [style*="background: var(--card-bg)"],
+body.light-mode [style*="background:var(--card-bg)"] {
+    background: #FFFFFF !important;
+}
+
+/* Form inputs in light mode - ensure white background */
+body.light-mode .form-group input,
+body.light-mode .form-group select,
+body.light-mode .form-group textarea {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .form-group input::placeholder,
+body.light-mode .form-group textarea::placeholder {
+    color: #9CA3AF !important;
+}
+
+/* Section titles - Light Mode */
+body.light-mode .section-title,
+body.light-mode .settings-section h3,
+body.light-mode .settings-section h4 {
+    color: #1F2937 !important;
+}
+
+/* Modal in Light Mode */
+body.light-mode .modal,
+body.light-mode .modal-content,
+body.light-mode .popup,
+body.light-mode .popup-content {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .modal-header,
+body.light-mode .popup-header {
+    border-bottom: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .modal-header h2,
+body.light-mode .modal-header h3,
+body.light-mode .popup-header h2,
+body.light-mode .popup-header h3 {
+    color: #1F2937 !important;
+}
+
+/* Dropdown menus - Light Mode */
+body.light-mode .dropdown-menu,
+body.light-mode .select-dropdown {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode .dropdown-item {
+    color: #374151 !important;
+}
+
+body.light-mode .dropdown-item:hover {
+    background: #F3F4F6 !important;
+}
+
+/* Text colors override - Light Mode */
+body.light-mode [style*="color: var(--pearl)"],
+body.light-mode [style*="color:var(--pearl)"] {
+    color: #1F2937 !important;
+}
+
+body.light-mode [style*="color: var(--text-muted)"],
+body.light-mode [style*="color:var(--text-muted)"] {
+    color: #6B7280 !important;
+}
+
+/* Dashboard - Properties Table Light Mode */
+body.light-mode .property-row,
+body.light-mode .properties-table .property-row {
+    border-bottom-color: #E5E7EB !important;
+}
+
+body.light-mode .property-row [style*="color: var(--text-primary)"],
+body.light-mode .properties-table [style*="color: var(--text-primary)"] {
+    color: #1F2937 !important;
+}
+
+body.light-mode .property-row [style*="font-weight: 600"],
+body.light-mode .properties-table [style*="font-weight: 600"] {
+    color: #1F2937 !important;
+}
+
+body.light-mode .property-row [style*="color: var(--text-muted)"],
+body.light-mode .properties-table [style*="color: var(--text-muted)"] {
+    color: #6B7280 !important;
+}
+
+body.light-mode .property-info h4,
+body.light-mode .property-info div:first-child {
+    color: #1F2937 !important;
+}
+
+body.light-mode .property-info p,
+body.light-mode .property-info div:last-child {
+    color: #6B7280 !important;
+}
+
+body.light-mode .property-price {
+    color: #4A90A4 !important;
+}
+
+/* Dashboard Cards Text - Light Mode */
+body.light-mode .card [style*="font-weight: 600"] {
+    color: #1F2937 !important;
+}
+
+body.light-mode .card [style*="font-size: 12px"] {
+    color: #6B7280 !important;
+}
+
+body.light-mode .card [style*="color: var(--accent-primary)"] {
+    color: #4A90A4 !important;
+}
+
+/* Leads List - Light Mode */
+body.light-mode #recentLeads [style*="font-weight: 600"] {
+    color: #1F2937 !important;
+}
+
+body.light-mode #recentLeads [style*="color: var(--text-muted)"] {
+    color: #6B7280 !important;
+}
+
+body.light-mode #recentLeads [style*="border-bottom"] {
+    border-bottom-color: #E5E7EB !important;
+}
+
+/* Dashboard Properties Table - All Text Black in Light Mode */
+body.light-mode #propertiesTable div {
+    color: #1F2937 !important;
+}
+
+body.light-mode #propertiesTable [style*="color: var(--text-primary)"] {
+    color: #1F2937 !important;
+}
+
+body.light-mode #propertiesTable [style*="color: var(--text-muted)"] {
+    color: #6B7280 !important;
+}
+
+body.light-mode #propertiesTable [style*="color: var(--accent-primary)"] {
+    color: #4A90A4 !important;
+}
+
+body.light-mode #propertiesTable [style*="border-bottom"] {
+    border-bottom-color: #E5E7EB !important;
+}
+
+/* Properties Page - Video Upload Area Light Mode */
+body.light-mode .video-upload-area {
+    background: #FFFFFF !important;
+    border: 2px dashed #D1D5DB !important;
+}
+
+body.light-mode .video-upload-area:hover {
+    background: #F9FAFB !important;
+    border-color: #4A90A4 !important;
+}
+
+body.light-mode .video-upload-area .upload-text {
+    color: #1F2937 !important;
+}
+
+body.light-mode .video-upload-area .upload-hint {
+    color: #6B7280 !important;
+}
+
+body.light-mode .video-preview {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .video-info {
+    background: #F9FAFB !important;
+}
+
+body.light-mode .video-name {
+    color: #1F2937 !important;
+}
+
+/* Properties Page - Amenities Grid Light Mode */
+body.light-mode .amenities-grid {
+    background: #FFFFFF !important;
+}
+
+body.light-mode .amenity-item {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .amenity-item:hover {
+    background: #F9FAFB !important;
+    border-color: #4A90A4 !important;
+}
+
+body.light-mode .amenity-item.selected,
+body.light-mode .amenity-item:has(input:checked) {
+    background: #EEF2FF !important;
+    border-color: #4A90A4 !important;
+}
+
+body.light-mode .amenity-label {
+    color: #1F2937 !important;
+}
+
+body.light-mode .amenity-checkbox {
+    background: #F3F4F6 !important;
+    border: 1px solid #D1D5DB !important;
+}
+
+body.light-mode .amenity-item.selected .amenity-checkbox,
+body.light-mode .amenity-item:has(input:checked) .amenity-checkbox {
+    background: #4A90A4 !important;
+    border-color: #4A90A4 !important;
+}
+
+/* Form Section Light Mode */
+body.light-mode .form-section {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .form-section-title {
+    color: #1F2937 !important;
+    border-bottom-color: #E5E7EB !important;
+}
+
+body.light-mode .form-section-title span[style*="color: var(--text-muted)"] {
+    color: #6B7280 !important;
 }
 
 /* Smooth Transition */

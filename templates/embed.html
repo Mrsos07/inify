@@ -153,6 +153,243 @@
                 height: 120px;
             }
         }
+        
+        /* ═══════════════════════════════════════════════════════════ */
+        /* 📱 Enhanced Mobile Responsive - Full Screen Experience */
+        /* ═══════════════════════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            /* Gallery Modal - Mobile */
+            .gallery-modal {
+                padding: 0;
+            }
+            
+            .gallery-image {
+                max-width: 100%;
+                max-height: 70vh;
+                border-radius: 0;
+            }
+            
+            .gallery-close {
+                top: 10px;
+                right: 10px;
+                width: 40px;
+                height: 40px;
+                font-size: 24px;
+            }
+            
+            .gallery-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .gallery-nav.prev { right: 10px; }
+            .gallery-nav.next { left: 10px; }
+            
+            .gallery-counter {
+                bottom: 20px;
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+            
+            .gallery-property-info {
+                bottom: 60px;
+            }
+            
+            .gallery-property-info h3 {
+                font-size: 14px;
+            }
+            
+            .gallery-property-info p {
+                font-size: 12px;
+            }
+            
+            /* Property Cards - Mobile */
+            .property-card {
+                border-radius: 12px;
+            }
+            
+            .property-content {
+                padding: 12px;
+            }
+            
+            .property-details {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .property-badge {
+                top: 8px;
+                right: 8px;
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            
+            /* Send Button - Mobile Touch Friendly */
+            .send-btn {
+                width: 48px;
+                height: 48px;
+                min-width: 48px;
+            }
+            
+            /* Input wrapper - Mobile */
+            .chat-input-wrapper {
+                padding: 10px 14px;
+            }
+            
+            /* Powered By - Mobile */
+            .powered-by {
+                padding: 8px;
+                font-size: 10px;
+            }
+            
+            /* Error Container - Mobile */
+            .error-container {
+                padding: 20px;
+            }
+            
+            .error-icon {
+                font-size: 48px;
+            }
+            
+            .error-title {
+                font-size: 18px;
+            }
+        }
+        
+        /* Extra Small Screens */
+        @media (max-width: 360px) {
+            .chat-header {
+                padding: 10px 12px;
+                gap: 10px;
+            }
+            
+            .agent-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+                border-radius: 10px;
+            }
+            
+            .agent-info h1 {
+                font-size: 13px;
+            }
+            
+            .agent-info span {
+                font-size: 10px;
+            }
+            
+            .chat-messages {
+                padding: 12px;
+                gap: 10px;
+            }
+            
+            .message {
+                padding: 8px 10px;
+                font-size: 12px;
+                border-radius: 14px;
+            }
+            
+            .chat-input-container {
+                padding: 10px 12px;
+            }
+            
+            .chat-input {
+                font-size: 13px;
+            }
+            
+            .send-btn {
+                width: 42px;
+                height: 42px;
+                min-width: 42px;
+                border-radius: 10px;
+            }
+            
+            .property-image {
+                height: 100px;
+            }
+            
+            .property-title {
+                font-size: 13px;
+            }
+            
+            .property-price {
+                font-size: 14px;
+            }
+            
+            .property-location {
+                font-size: 11px;
+            }
+            
+            .property-details {
+                font-size: 11px;
+                gap: 6px;
+            }
+        }
+        
+        /* Landscape Mode - Mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #chatContainer {
+                max-height: 100vh;
+            }
+            
+            .chat-header {
+                padding: 8px 16px;
+            }
+            
+            .agent-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+            
+            .chat-messages {
+                padding: 10px 16px;
+            }
+            
+            .chat-input-container {
+                padding: 8px 16px;
+            }
+            
+            .powered-by {
+                padding: 4px;
+                font-size: 9px;
+            }
+        }
+        
+        /* Touch Optimization */
+        @media (hover: none) and (pointer: coarse) {
+            .send-btn:active {
+                transform: scale(0.95);
+            }
+            
+            .property-image:active img {
+                transform: scale(1.02);
+            }
+            
+            .gallery-nav:active,
+            .gallery-close:active {
+                transform: scale(0.9);
+            }
+            
+            /* Remove hover effects on touch devices */
+            .property-image::after {
+                display: none;
+            }
+        }
+        
+        /* Safe Area for notched phones */
+        @supports (padding: max(0px)) {
+            @media (max-width: 768px) {
+                .chat-header {
+                    padding-top: max(12px, env(safe-area-inset-top));
+                }
+                
+                .chat-input-container {
+                    padding-bottom: max(12px, env(safe-area-inset-bottom));
+                }
+            }
+        }
 
         /* Header */
         .chat-header {

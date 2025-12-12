@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>العملاء المحتملين - Inify</title>
     <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    <link rel="stylesheet" href="/static/css/theme.css">
     <style>
         @font-face {
             font-family: 'BalooBhaijaan2';
@@ -625,6 +626,7 @@
                 <a href="/profile/">حسابي</a>
             </nav>
         </div>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">☀️</button>
     </header>
 
     <main class="main-content">
@@ -709,6 +711,7 @@
     </div>
 
     <script src="/static/js/auth.js"></script>
+    <script src="/static/js/theme.js"></script>
     <script>
         // التحقق من تسجيل الدخول
         if (!InifyAuth.requireAuth()) {

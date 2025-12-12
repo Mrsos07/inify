@@ -7,6 +7,7 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    <link rel="stylesheet" href="/static/css/theme.css">
     
     <style>
         /* Chillax Font - English */
@@ -1455,6 +1456,7 @@
                 <a href="/profile/">حسابي</a>
             </nav>
         </div>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">☀️</button>
     </header>
 
     <!-- Main Content -->
@@ -1904,6 +1906,7 @@
     </style>
 
     <script src="/static/js/auth.js"></script>
+    <script src="/static/js/theme.js"></script>
     <script>
         // التحقق من تسجيل الدخول
         if (!InifyAuth.requireAuth()) {

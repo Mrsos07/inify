@@ -1,0 +1,237 @@
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إكمال التسجيل - Inify</title>
+    
+    <style>
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-display: swap;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', 'Segoe UI', sans-serif;
+            background: linear-gradient(160deg, var(--midnight) 0%, var(--dark-blue) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo img {
+            height: 80px;
+            margin-bottom: 25px;
+        }
+
+        .auth-header h1 {
+            color: var(--pearl);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .auth-header p {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .auth-card {
+            background: rgba(30, 58, 95, 0.4);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid rgba(107, 184, 201, 0.15);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            margin-bottom: 30px;
+        }
+
+        .user-avatar {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .user-details h3 {
+            color: var(--pearl);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .user-details p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--pearl);
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 16px 18px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid rgba(107, 184, 201, 0.2);
+            border-radius: 14px;
+            color: var(--pearl);
+            font-family: inherit;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 3px rgba(107, 184, 201, 0.15);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--blue-mid) 0%, var(--cyan) 100%);
+            color: var(--midnight);
+            border: none;
+            border-radius: 14px;
+            font-family: inherit;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(107, 184, 201, 0.3);
+        }
+
+        .error-list {
+            background: rgba(255, 100, 100, 0.15);
+            border: 1px solid rgba(255, 100, 100, 0.4);
+            color: #ff8080;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .error-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="logo">
+                <img src="/static/images/inify-icon.png" alt="Inify">
+            </div>
+            <h1>إكمال التسجيل</h1>
+            <p>أكمل بياناتك للمتابعة</p>
+        </div>
+
+        <div class="auth-card">
+            {% if sociallogin.account.extra_data %}
+            <div class="user-info">
+                <div class="user-avatar">
+                    {{ sociallogin.account.extra_data.name|slice:":1"|upper }}
+                </div>
+                <div class="user-details">
+                    <h3>{{ sociallogin.account.extra_data.name }}</h3>
+                    <p>{{ sociallogin.account.extra_data.email }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if form.errors %}
+            <div class="error-list">
+                <ul>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div class="form-group">
+                    <label>{{ field.label }}</label>
+                    {{ field }}
+                </div>
+                {% endfor %}
+                
+                <button type="submit" class="submit-btn">إكمال التسجيل</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

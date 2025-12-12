@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خطأ في المصادقة - Inify</title>
+    
+    <style>
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-display: swap;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --cyan: #6BB8C9;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+            --error: #ff6b6b;
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', 'Segoe UI', sans-serif;
+            background: linear-gradient(160deg, var(--midnight) 0%, var(--dark-blue) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .error-container {
+            width: 100%;
+            max-width: 440px;
+            text-align: center;
+        }
+
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 107, 107, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+        }
+
+        .error-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--error);
+        }
+
+        h1 {
+            color: var(--pearl);
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+
+        .btn-retry {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #4A90A4 0%, var(--cyan) 100%);
+            color: var(--midnight);
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            margin-left: 12px;
+        }
+
+        .btn-retry:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(107, 184, 201, 0.3);
+        }
+
+        .btn-back {
+            display: inline-block;
+            padding: 14px 32px;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid rgba(107, 184, 201, 0.3);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .btn-back:hover {
+            border-color: var(--cyan);
+            color: var(--pearl);
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+        </div>
+        
+        <h1>حدث خطأ في المصادقة</h1>
+        <p>
+            عذراً، لم نتمكن من إتمام عملية تسجيل الدخول عبر Google.
+            يرجى المحاولة مرة أخرى أو استخدام طريقة تسجيل دخول أخرى.
+        </p>
+        
+        <a href="/accounts/google/login/" class="btn-retry">إعادة المحاولة</a>
+        <a href="/auth/login/" class="btn-back">العودة</a>
+    </div>
+</body>
+</html>
