@@ -31,36 +31,36 @@
 }
 
 :root {
-    /* Newra Brand Colors - Blue to Cyan Spectrum */
-    --newra-black: #0A1628;
-    --newra-white: #F8F8F8;
-    --newra-gray-50: #f8f9fa;
-    --newra-gray-100: #e8f4f8;
-    --newra-gray-200: #d1e9f0;
-    --newra-gray-300: #b8dce8;
-    --newra-gray-400: #8cc4d6;
-    --newra-gray-500: #5ea8bc;
-    --newra-gray-600: #3d8a9e;
-    --newra-gray-700: #2d6a7e;
-    --newra-gray-800: #1E3A5F;
-    --newra-gray-900: #0A1628;
+    /* Newra Brand Colors - Professional & Formal */
+    --newra-black: #1a1a2e;
+    --newra-white: #ffffff;
+    --newra-gray-50: #fafbfc;
+    --newra-gray-100: #f1f3f5;
+    --newra-gray-200: #e9ecef;
+    --newra-gray-300: #dee2e6;
+    --newra-gray-400: #adb5bd;
+    --newra-gray-500: #6c757d;
+    --newra-gray-600: #495057;
+    --newra-gray-700: #343a40;
+    --newra-gray-800: #212529;
+    --newra-gray-900: #1a1a2e;
     
-    --newra-primary: #2E5A8B;
-    --newra-primary-light: #4A90A4;
-    --newra-accent: #6BB8C9;
-    --newra-accent-light: #8DD4E3;
-    --newra-gradient: linear-gradient(160deg, #0A1628 0%, #1E3A5F 40%, #2E5A8B 100%);
-    --newra-gradient-accent: linear-gradient(135deg, #4A90A4 0%, #6BB8C9 100%);
+    --newra-primary: #2c3e50;
+    --newra-primary-light: #34495e;
+    --newra-accent: #3498db;
+    --newra-accent-light: #5dade2;
+    --newra-gradient: linear-gradient(145deg, #2c3e50 0%, #34495e 50%, #3498db 100%);
+    --newra-gradient-accent: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
     
     --chat-width: 420px;
     --chat-height: 650px;
     --border-radius: 24px;
     --border-radius-md: 16px;
     --border-radius-sm: 12px;
-    --shadow-sm: 0 2px 8px rgba(10, 22, 40, 0.08);
-    --shadow-md: 0 8px 30px rgba(10, 22, 40, 0.15);
-    --shadow-lg: 0 20px 60px rgba(10, 22, 40, 0.25);
-    --shadow-glow: 0 0 40px rgba(107, 184, 201, 0.3);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1), 0 6px 10px rgba(0, 0, 0, 0.08);
+    --shadow-glow: 0 0 20px rgba(52, 152, 219, 0.15);
     
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -297,7 +297,7 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    background: linear-gradient(180deg, var(--newra-gray-50) 0%, var(--newra-gray-100) 100%);
+    background: #f8f9fa;
 }
 
 .newra-chat-messages::-webkit-scrollbar {
@@ -351,18 +351,18 @@
 }
 
 .newra-message.user .bubble {
-    background: var(--newra-gradient);
-    color: var(--newra-white);
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: #ffffff;
     border-bottom-right-radius: 6px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.2);
 }
 
 .newra-message.bot .bubble {
-    background: var(--newra-white);
-    color: var(--newra-gray-800);
+    background: #ffffff;
+    color: #2c3e50;
     border-bottom-left-radius: 6px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e9ecef;
 }
 
 .newra-message .time {
@@ -402,9 +402,9 @@
 }
 
 .newra-typing .dot {
-    width: 10px;
-    height: 10px;
-    background: var(--newra-accent);
+    width: 8px;
+    height: 8px;
+    background: #3498db;
     border-radius: 50%;
     animation: typingDot 1.4s infinite;
 }
@@ -419,19 +419,20 @@
 
 /* ==================== Property Card ==================== */
 .newra-property-card {
-    background: var(--newra-white);
+    background: #ffffff;
     border-radius: var(--border-radius-md);
     overflow: hidden;
     margin-top: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     cursor: pointer;
     transition: all var(--transition-normal);
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    border: 1px solid #e9ecef;
 }
 
 .newra-property-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    border-color: #3498db;
 }
 
 .newra-property-card .media-container {
@@ -498,8 +499,8 @@
 
 .newra-property-card .price {
     font-size: 18px;
-    font-weight: 800;
-    color: var(--newra-primary);
+    font-weight: 700;
+    color: #2c3e50;
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -721,17 +722,17 @@
     display: flex;
     gap: 12px;
     align-items: center;
-    background: var(--newra-gray-50);
+    background: #f8f9fa;
     border-radius: 28px;
     padding: 6px 6px 6px 20px;
-    border: 2px solid transparent;
+    border: 1px solid #e9ecef;
     transition: all var(--transition-fast);
 }
 
 .newra-chat-input .input-wrapper:focus-within {
-    border-color: var(--newra-primary);
-    background: var(--newra-white);
-    box-shadow: 0 0 0 4px rgba(15, 76, 117, 0.1);
+    border-color: #3498db;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
 .newra-chat-input input {
@@ -749,9 +750,9 @@
 }
 
 .newra-chat-input .send-btn {
-    width: 48px;
-    height: 48px;
-    background: var(--newra-gradient);
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -759,12 +760,12 @@
     align-items: center;
     justify-content: center;
     transition: all var(--transition-fast);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
 }
 
 .newra-chat-input .send-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
 }
 
 .newra-chat-input .send-btn:disabled {
@@ -790,12 +791,13 @@
 
 .newra-quick-actions button {
     padding: 10px 16px;
-    background: var(--newra-white);
-    border: 1px solid var(--newra-gray-200);
-    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
     font-family: inherit;
     font-size: 13px;
     font-weight: 500;
+    color: #495057;
     cursor: pointer;
     transition: all var(--transition-fast);
     display: flex;
@@ -804,32 +806,32 @@
 }
 
 .newra-quick-actions button:hover {
-    background: var(--newra-gradient);
-    color: var(--newra-white);
-    border-color: transparent;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: #3498db;
+    color: #ffffff;
+    border-color: #3498db;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.25);
 }
 
 /* ==================== Footer ==================== */
 .newra-chat-footer {
     padding: 12px;
     text-align: center;
-    font-size: 12px;
-    color: var(--newra-gray-400);
-    background: var(--newra-gray-50);
-    border-top: 1px solid var(--newra-gray-100);
+    font-size: 11px;
+    color: #adb5bd;
+    background: #fafbfc;
+    border-top: 1px solid #e9ecef;
 }
 
 .newra-chat-footer a {
-    color: var(--newra-primary);
+    color: #3498db;
     text-decoration: none;
-    font-weight: 700;
+    font-weight: 600;
     transition: color var(--transition-fast);
 }
 
 .newra-chat-footer a:hover {
-    color: var(--newra-accent);
+    color: #2980b9;
 }
 
 /* ==================== Responsive ==================== */

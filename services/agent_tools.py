@@ -640,6 +640,25 @@ class AgentTools:
             
             agent = Agent.objects.get(id=agent_id)
             
+            # ═══════════════════════════════════════════════════════════
+            # 🚫 فلتر مهم: التحقق من وجود موعد نشط للعميل
+            # ═══════════════════════════════════════════════════════════
+            existing_lead = Lead.objects.filter(agent=agent, phone=phone).first()
+            if existing_lead:
+                active_appointment = ViewingAppointment.objects.filter(
+                    lead=existing_lead,
+                    status__in=['pending', 'confirmed']
+                ).exists()
+                
+                if active_appointment:
+                    logger.info(f"🚫 Booking blocked: Lead {existing_lead.id} already has active appointment")
+                    return ToolResult(
+                        success=False,
+                        data={'already_booked': True},
+                        message=f"العفو يا {existing_lead.name}! موعدك محجوز بالفعل 👍",
+                        tool_type=ToolType.BOOK_VIEWING
+                    )
+            
             # البحث عن العميل أو إنشاؤه
             lead, created = Lead.objects.get_or_create(
                 agent=agent,
