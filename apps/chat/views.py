@@ -2202,31 +2202,34 @@ class EmbedChatAPI(View):
             # ═══════════════════════════════════════════════════════════
             # حجز موعد بديل للعميل الموجود (عند اختيار وقت جديد بعد التعارض)
             # ═══════════════════════════════════════════════════════════
-            # التحقق من أن العميل ليس لديه موعد محجوز بالفعل (سواء existing_lead أو lead الجديد)
-            has_existing_appointment = False
+            # تخطي هذا القسم إذا تم الحجز بنجاح أو العميل لديه موعد بالفعل
+            skip_alternative_booking = False
             
-            # التحقق من viewing_booked - إذا تم الحجز بنجاح، لا نحتاج لمحاولة حجز بديل
+            # إذا تم الحجز بنجاح، لا نحتاج لحجز بديل
             if viewing_booked and isinstance(viewing_booked, dict):
-                booking_status = viewing_booked.get('status', '')
-                if booking_status in ['confirmed', 'already_booked']:
-                    has_existing_appointment = True
-                    logger.info(f"✅ EmbedChat: Booking already done with status={booking_status}, skipping alternative booking")
+                if viewing_booked.get('status') in ['confirmed', 'already_booked']:
+                    skip_alternative_booking = True
+                    logger.info(f"✅ EmbedChat: Booking already done, skipping alternative booking")
             
-            # التحقق من lead الجديد
-            if not has_existing_appointment and lead:
-                has_existing_appointment = ViewingAppointment.objects.filter(
-                    lead=lead,
-                    status__in=['pending', 'confirmed']
-                ).exists() or (hasattr(lead, 'status') and lead.status == 'viewing_scheduled')
+            # التحقق من أن العميل (سواء lead أو existing_lead) ليس لديه موعد محجوز
+            if not skip_alternative_booking:
+                # التحقق من lead الجديد
+                if lead:
+                    if ViewingAppointment.objects.filter(lead=lead, status__in=['pending', 'confirmed']).exists():
+                        skip_alternative_booking = True
+                        logger.info(f"✅ EmbedChat: Lead {lead.id} already has appointment")
+                
+                # التحقق من existing_lead
+                if not skip_alternative_booking and existing_lead:
+                    if ViewingAppointment.objects.filter(lead=existing_lead, status__in=['pending', 'confirmed']).exists():
+                        skip_alternative_booking = True
+                        logger.info(f"✅ EmbedChat: Existing lead {existing_lead.id} already has appointment")
+                    elif existing_lead.status == 'viewing_scheduled':
+                        skip_alternative_booking = True
+                        logger.info(f"✅ EmbedChat: Existing lead {existing_lead.id} status is viewing_scheduled")
             
-            # التحقق من existing_lead
-            if not has_existing_appointment and existing_lead:
-                has_existing_appointment = ViewingAppointment.objects.filter(
-                    lead=existing_lead,
-                    status__in=['pending', 'confirmed']
-                ).exists() or existing_lead.status == 'viewing_scheduled'
-            
-            if existing_lead and not has_existing_appointment and (not viewing_booked or (isinstance(viewing_booked, dict) and viewing_booked.get('status') == 'conflict')):
+            # فقط نحاول الحجز البديل إذا كان هناك تعارض وليس حجز ناجح
+            if existing_lead and not skip_alternative_booking and viewing_booked and isinstance(viewing_booked, dict) and viewing_booked.get('status') == 'conflict':
                 # العميل موجود مسبقاً ولم يتم حجز موعد بعد
                 # نحاول حجز موعد بناءً على الوقت الجديد المذكور في الرسالة الحالية
                 logger.info(f"📅 EmbedChat: Trying to book alternative time for existing lead: {existing_lead.id}")
