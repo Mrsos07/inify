@@ -2041,8 +2041,21 @@ class EmbedChatAPI(View):
                                 logger.info(f"📱 EmbedChat: Found existing lead by history phone: {existing_lead.id}")
                                 break
             
-            # إذا أعطى العميل رقم جواله، أنشئ lead
-            if analysis.get('phone'):
+            # ═══════════════════════════════════════════════════════════
+            # تخطي كل منطق الحجز إذا كان العميل لديه موعد محجوز بالفعل
+            # هذا يمنع رسالة "للأسف" بعد الحجز الناجح
+            # ═══════════════════════════════════════════════════════════
+            client_already_has_booking = False
+            if existing_lead:
+                client_already_has_booking = ViewingAppointment.objects.filter(
+                    lead=existing_lead,
+                    status__in=['pending', 'confirmed']
+                ).exists()
+                if client_already_has_booking:
+                    logger.info(f"✅ EmbedChat: Client {existing_lead.id} already has booking - skipping all booking logic")
+            
+            # إذا أعطى العميل رقم جواله، أنشئ lead (فقط إذا لم يكن لديه موعد محجوز)
+            if analysis.get('phone') and not client_already_has_booking:
                 logger.info(f"📱 EmbedChat: Creating lead with phone: {analysis.get('phone')}")
                 
                 # تحديد العقار المهتم به
@@ -2203,10 +2216,10 @@ class EmbedChatAPI(View):
             # حجز موعد بديل للعميل الموجود (عند اختيار وقت جديد بعد التعارض)
             # ═══════════════════════════════════════════════════════════
             # تخطي هذا القسم إذا تم الحجز بنجاح أو العميل لديه موعد بالفعل
-            skip_alternative_booking = False
+            skip_alternative_booking = client_already_has_booking  # استخدام الفحص المبكر
             
             # إذا تم الحجز بنجاح، لا نحتاج لحجز بديل
-            if viewing_booked and isinstance(viewing_booked, dict):
+            if not skip_alternative_booking and viewing_booked and isinstance(viewing_booked, dict):
                 if viewing_booked.get('status') in ['confirmed', 'already_booked']:
                     skip_alternative_booking = True
                     logger.info(f"✅ EmbedChat: Booking already done, skipping alternative booking")
