@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Email Service - خدمة الإيميلات
+Supports: Resend API (primary) and Django SMTP (fallback)
 """
 
 import os
@@ -9,6 +10,7 @@ import secrets
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.cache import cache
+from django.core.mail import send_mail, EmailMultiAlternatives
 
 logger = logging.getLogger(__name__)
 
@@ -18,23 +20,90 @@ try:
     RESEND_AVAILABLE = True
 except ImportError:
     RESEND_AVAILABLE = False
-    logger.warning("Resend not installed. Email features disabled.")
+    logger.warning("Resend not installed. Will use Django SMTP as fallback.")
 
 
 class EmailService:
-    """خدمة إرسال الإيميلات"""
+    """خدمة إرسال الإيميلات - تدعم Resend و Django SMTP"""
     
     def __init__(self):
         self.api_key = os.getenv('RESEND_API_KEY', '')
-        self.from_email = os.getenv('FROM_EMAIL', 'Inify <noreply@inify.ai>')
-        self.site_url = os.getenv('SITE_URL', 'https://inify.ai')
+        self.from_email = os.getenv('FROM_EMAIL', '') or getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@inify.ai')
+        self.site_url = os.getenv('SITE_URL', '') or 'https://inify.ai'
         
-        if self.api_key and RESEND_AVAILABLE:
+        # Check Resend availability
+        self.resend_available = bool(self.api_key and RESEND_AVAILABLE)
+        if self.resend_available:
             resend.api_key = self.api_key
-            self.is_available = True
-        else:
-            self.is_available = False
-            logger.warning("Email service not configured")
+            logger.info("Email service initialized with Resend API")
+        
+        # Check Django SMTP availability
+        self.smtp_available = bool(getattr(settings, 'EMAIL_HOST_USER', '') and getattr(settings, 'EMAIL_HOST_PASSWORD', ''))
+        
+        # Service is available if either method works
+        self.is_available = self.resend_available or self.smtp_available
+        
+        if not self.is_available:
+            logger.warning("Email service not configured - neither Resend API nor SMTP is set up")
+        elif not self.resend_available and self.smtp_available:
+            logger.info("Email service initialized with Django SMTP (Resend not configured)")
+    
+    def _send_via_resend(self, to_email: str, subject: str, html_content: str) -> dict:
+        """إرسال عبر Resend API"""
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": subject,
+                "html": html_content
+            })
+            logger.info(f"Email sent via Resend to {to_email}")
+            return {'success': True, 'response': response, 'method': 'resend'}
+        except Exception as e:
+            logger.error(f"Resend failed: {e}")
+            return {'success': False, 'error': str(e), 'method': 'resend'}
+    
+    def _send_via_smtp(self, to_email: str, subject: str, html_content: str, text_content: str = None) -> dict:
+        """إرسال عبر Django SMTP"""
+        try:
+            if not text_content:
+                # Simple text version
+                text_content = "Please view this email in an HTML-capable email client."
+            
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=self.from_email,
+                to=[to_email]
+            )
+            email.attach_alternative(html_content, "text/html")
+            email.send(fail_silently=False)
+            
+            logger.info(f"Email sent via SMTP to {to_email}")
+            return {'success': True, 'method': 'smtp'}
+        except Exception as e:
+            logger.error(f"SMTP failed: {e}")
+            return {'success': False, 'error': str(e), 'method': 'smtp'}
+    
+    def _send_email(self, to_email: str, subject: str, html_content: str) -> dict:
+        """إرسال الإيميل باستخدام الطريقة المتاحة"""
+        if not self.is_available:
+            logger.error("Email service not available - no sending method configured")
+            return {'success': False, 'error': 'Email service not configured. Please set RESEND_API_KEY or SMTP settings.'}
+        
+        # Try Resend first
+        if self.resend_available:
+            result = self._send_via_resend(to_email, subject, html_content)
+            if result['success']:
+                return result
+            # Fall back to SMTP if Resend fails
+            logger.warning(f"Resend failed, trying SMTP fallback: {result.get('error')}")
+        
+        # Try SMTP
+        if self.smtp_available:
+            return self._send_via_smtp(to_email, subject, html_content)
+        
+        return {'success': False, 'error': 'All email sending methods failed'}
     
     def send_verification_email(self, user_email: str, user_name: str) -> dict:
         """إرسال إيميل التحقق"""
@@ -87,20 +156,15 @@ class EmailService:
         </html>
         """
         
-        try:
-            response = resend.Emails.send({
-                "from": self.from_email,
-                "to": [user_email],
-                "subject": "🏠 تفعيل حسابك في Inify",
-                "html": html_content
-            })
-            
-            logger.info(f"Verification email sent to {user_email}")
-            return {'success': True, 'token': token, 'response': response}
-            
-        except Exception as e:
-            logger.error(f"Failed to send verification email: {e}")
-            return {'success': False, 'error': str(e)}
+        result = self._send_email(user_email, "🏠 تفعيل حسابك في Inify", html_content)
+        
+        if result['success']:
+            result['token'] = token
+            logger.info(f"Verification email sent to {user_email} via {result.get('method', 'unknown')}")
+        else:
+            logger.error(f"Failed to send verification email to {user_email}: {result.get('error')}")
+        
+        return result
     
     def send_password_reset_email(self, user_email: str, user_name: str) -> dict:
         """إرسال إيميل استعادة كلمة المرور"""
@@ -157,20 +221,15 @@ class EmailService:
         </html>
         """
         
-        try:
-            response = resend.Emails.send({
-                "from": self.from_email,
-                "to": [user_email],
-                "subject": "🔐 استعادة كلمة المرور - Inify",
-                "html": html_content
-            })
-            
-            logger.info(f"Password reset email sent to {user_email}")
-            return {'success': True, 'token': token, 'response': response}
-            
-        except Exception as e:
-            logger.error(f"Failed to send password reset email: {e}")
-            return {'success': False, 'error': str(e)}
+        result = self._send_email(user_email, "🔐 استعادة كلمة المرور - Inify", html_content)
+        
+        if result['success']:
+            result['token'] = token
+            logger.info(f"Password reset email sent to {user_email} via {result.get('method', 'unknown')}")
+        else:
+            logger.error(f"Failed to send password reset email to {user_email}: {result.get('error')}")
+        
+        return result
     
     def verify_token(self, token: str, token_type: str = 'email_verify') -> str:
         """التحقق من صحة التوكن وإرجاع الإيميل"""
@@ -183,6 +242,20 @@ class EmailService:
             return email
         
         return None
+    
+    def get_diagnostic_info(self) -> dict:
+        """إرجاع معلومات تشخيصية عن حالة خدمة البريد"""
+        return {
+            'is_available': self.is_available,
+            'resend_available': self.resend_available,
+            'smtp_available': self.smtp_available,
+            'resend_api_key_set': bool(self.api_key),
+            'from_email': self.from_email,
+            'site_url': self.site_url,
+            'smtp_host': getattr(settings, 'EMAIL_HOST', 'not set'),
+            'smtp_user_set': bool(getattr(settings, 'EMAIL_HOST_USER', '')),
+            'smtp_password_set': bool(getattr(settings, 'EMAIL_HOST_PASSWORD', '')),
+        }
 
 
 # Singleton instance

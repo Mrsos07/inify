@@ -6,6 +6,9 @@
     <title>العملاء المحتملين - Inify</title>
     <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
     
+    <!-- Dashboard CSS for Sidebar -->
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    
     <!-- Theme CSS -->
     <link rel="stylesheet" href="/static/css/theme.css">
     
@@ -158,6 +161,7 @@
             font-weight: 700;
             background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-light) 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -758,37 +762,106 @@
     <div class="vignette"></div>
 
     <script>
-        // Django handles authentication
         function logout() {
             window.location.href = '/auth/logout/';
         }
     </script>
 
-    <header class="header">
-        <div class="header-right">
-            <a href="/dashboard/" class="logo" style="display: flex; align-items: center; gap: 10px;">
-                <img src="/static/images/newra-icon.png" alt="Newra" style="height: 28px; filter: brightness(0) invert(1);">
-                <img src="/static/images/inify-logo.png" alt="Inify" style="height: 32px;">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()" id="mobileMenuBtn">☰</button>
+    
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileMenu()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <a href="/dashboard/" class="sidebar-logo" style="display: flex; align-items: center; gap: 12px;">
+            <img src="/static/images/newra-logo.png" alt="Newra" style="height: 28px; filter: brightness(0) invert(1);">
+            <img src="/static/images/inify-logo.png" alt="Inify" style="height: 28px;">
+        </a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">القائمة الرئيسية</div>
+            <a href="/dashboard/" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                لوحة التحكم
             </a>
-            <nav class="nav-links">
-                <a href="/dashboard/">لوحة التحكم</a>
-                <a href="/dashboard/properties/">العقارات</a>
-                <a href="/dashboard/conversations/">المحادثات</a>
-                <a href="/dashboard/leads/" class="active">العملاء</a>
-                <a href="/profile/">حسابي</a>
-            </nav>
+            <a href="/dashboard/properties/" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                العقارات
+            </a>
+            <a href="/dashboard/leads/" class="nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                </svg>
+                العملاء
+            </a>
+            <a href="/dashboard/conversations/" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                المحادثات
+            </a>
         </div>
-        <button id="langToggleBtn" onclick="toggleLanguageAndReload()" style="
-            padding: 8px 16px;
-            background: rgba(107, 184, 201, 0.1);
-            border: 1px solid rgba(107, 184, 201, 0.2);
-            border-radius: 8px;
-            color: var(--cyan);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-        ">🌐 EN</button>
-    </header>
+
+        <div class="nav-section">
+            <div class="nav-section-title">الإعدادات</div>
+            <a href="/dashboard/bot-settings/" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                إعدادات الوكيل
+            </a>
+            <a href="/profile/" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                الملف الشخصي
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <button id="themeToggleBtn" onclick="toggleTheme()" style="
+                width: 100%;
+                padding: 10px 16px;
+                margin-bottom: 12px;
+                background: rgba(107, 184, 201, 0.1);
+                border: 1px solid rgba(107, 184, 201, 0.2);
+                border-radius: 8px;
+                color: var(--cyan);
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                transition: all 0.3s ease;
+            " onmouseover="this.style.background='rgba(107, 184, 201, 0.2)'" onmouseout="this.style.background='rgba(107, 184, 201, 0.1)'">
+                ☀️ الوضع الفاتح
+            </button>
+            
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">👤</div>
+                <div class="user-details">
+                    <h4 id="userName">المستخدم</h4>
+                    <p><a href="/auth/logout/" style="color: var(--cyan); text-decoration: none;">تسجيل الخروج</a></p>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(107, 184, 201, 0.15); font-size: 12px; color: rgba(248, 248, 248, 0.5);">
+                © 2025 Inify Core LLC
+            </div>
+        </div>
+    </aside>
 
     <main class="main-content">
         <div class="page-header">

@@ -1570,7 +1570,7 @@
                         <label style="display: block; margin-bottom: 10px; color: var(--text-muted);">اختر الباقة الجديدة</label>
                         <select id="newPlanSelect" style="width: 100%; padding: 12px; border-radius: 8px; background: var(--dark-blue); color: var(--pearl); border: 1px solid var(--border);">
                             <option value="free" ${currentRole === 'free' ? 'selected' : ''}>🆓 مجاني</option>
-                            <option value="marketer" ${currentRole === 'marketer' ? 'selected' : ''}>💼 مسوق عقاري - 299 ريال/شهر</option>
+                            <option value="marketer" ${currentRole === 'marketer' ? 'selected' : ''}>💼 مسوق عقاري - 499 ريال/شهر</option>
                             <option value="agency" ${currentRole === 'agency' ? 'selected' : ''}>🏢 مؤسسة عقارية - 599 ريال/شهر</option>
                         </select>
                     </div>
@@ -1814,7 +1814,7 @@
         // Subscription Plans Configuration
         const SUBSCRIPTION_PLANS = {
             free: { name: 'مجاني', price: 0, duration: 0, color: '#9CA3AF' },
-            marketer: { name: 'مسوق عقاري', price: 299, duration: 30, color: '#4A90A4' },
+            marketer: { name: 'مسوق عقاري', price: 499, duration: 30, color: '#4A90A4' },
             agency: { name: 'مؤسسة عقارية', price: 599, duration: 30, color: '#22c55e' }
         };
 
@@ -1852,7 +1852,7 @@
                 }
                 
                 // Estimate revenue based on role
-                if (role === 'marketer') revenue += 299;
+                if (role === 'marketer') revenue += 499;
                 if (role === 'agency') revenue += 599;
             });
             
@@ -1994,7 +1994,7 @@
                 <div class="form-group">
                     <label>اختر الباقة الجديدة</label>
                     <select class="duration-select" id="newPlanSelect">
-                        <option value="marketer">💼 مسوق عقاري - 299 ريال/شهر</option>
+                        <option value="marketer">💼 مسوق عقاري - 499 ريال/شهر</option>
                         <option value="agency">🏢 مؤسسة عقارية - 599 ريال/شهر</option>
                     </select>
                 </div>

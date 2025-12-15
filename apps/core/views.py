@@ -206,7 +206,21 @@ def login_view(request):
         
         if user is not None:
             if user.is_active:
-                login(request, user)
+                # التحقق من تفعيل البريد الإلكتروني - معطل مؤقتاً
+                # from apps.agents.models import Agent
+                # try:
+                #     agent = Agent.objects.get(user=user)
+                #     if not agent.is_email_verified:
+                #         print(f"[LOGIN] Email not verified for: {user.username}")
+                #         return JsonResponse({
+                #             'success': False, 
+                #             'error': 'يرجى تفعيل حسابك عبر الرابط المرسل إلى بريدك الإلكتروني',
+                #             'email_not_verified': True
+                #         })
+                # except Agent.DoesNotExist:
+                #     pass  # المستخدم ليس وكيل (ربما أدمن)
+                
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 print(f"[LOGIN] Login successful for: {user.username}")
                 return JsonResponse({'success': True})
             else:
@@ -284,18 +298,22 @@ def register_view(request):
             email_result = email_service.send_verification_email(email, first_name or username)
             
             if email_result.get('success'):
-                # Don't login yet - require email verification
+                # Don't login - require email verification
                 return JsonResponse({
                     'success': True, 
-                    'message': 'تم إنشاء الحساب! تحقق من بريدك الإلكتروني لتفعيل الحساب.',
+                    'message': 'تم إنشاء الحساب بنجاح! تحقق من بريدك الإلكتروني لتفعيل الحساب.',
                     'require_verification': True
                 })
             else:
-                # Email service not available - auto-verify and login
-                agent.is_email_verified = True
-                agent.save()
-                login(request, user)
-                return JsonResponse({'success': True})
+                # Email failed but still require verification - don't auto-login
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send verification email: {email_result.get('error')}")
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'تم إنشاء الحساب! فشل إرسال بريد التفعيل. يمكنك طلب إعادة الإرسال من صفحة تسجيل الدخول.',
+                    'require_verification': True
+                })
         except Exception as e:
             import traceback
             print(f"Registration error: {e}")
@@ -399,7 +417,7 @@ def google_auth_callback(request):
                 agent.save()
         
         # تسجيل الدخول
-        login(request, user)
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         
         return JsonResponse({
             'success': True,
@@ -419,6 +437,43 @@ def google_auth_callback(request):
         import traceback
         traceback.print_exc()
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def resend_verification_email(request):
+    """إعادة إرسال رابط التفعيل"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    email = request.POST.get('email', '')
+    
+    if not email:
+        return JsonResponse({'success': False, 'error': 'البريد الإلكتروني مطلوب'})
+    
+    try:
+        user = User.objects.get(email=email)
+        from apps.agents.models import Agent
+        agent = Agent.objects.get(user=user)
+        
+        if agent.is_email_verified:
+            return JsonResponse({'success': False, 'error': 'البريد الإلكتروني مفعل بالفعل'})
+        
+        from services.email_service import email_service
+        
+        if not email_service.is_available:
+            return JsonResponse({'success': False, 'error': 'خدمة البريد الإلكتروني غير متاحة حالياً'})
+        
+        result = email_service.send_verification_email(email, user.first_name or user.username)
+        
+        if result.get('success'):
+            return JsonResponse({'success': True, 'message': 'تم إرسال رابط التفعيل إلى بريدك الإلكتروني'})
+        else:
+            return JsonResponse({'success': False, 'error': 'فشل إرسال الإيميل. حاول مرة أخرى.'})
+    
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'البريد الإلكتروني غير مسجل'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
 
 def verify_email_view(request):
@@ -441,7 +496,7 @@ def verify_email_view(request):
             agent.save()
             
             # Login the user
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return render(request, 'auth/verify-email.html', {'success': True})
         except (User.DoesNotExist, Agent.DoesNotExist):
             return render(request, 'auth/verify-email.html', {'error': 'المستخدم غير موجود'})
@@ -461,11 +516,22 @@ def forgot_password_view(request):
         try:
             user = User.objects.get(email=email)
             from services.email_service import email_service
+            
+            # Check if email service is available
+            if not email_service.is_available:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error("Email service not available - check RESEND_API_KEY or SMTP settings")
+                return JsonResponse({'success': False, 'error': 'خدمة البريد الإلكتروني غير متاحة حالياً. يرجى المحاولة لاحقاً.'})
+            
             result = email_service.send_password_reset_email(email, user.first_name or user.username)
             
             if result.get('success'):
                 return JsonResponse({'success': True, 'message': 'تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني'})
             else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send password reset email: {result.get('error')}")
                 return JsonResponse({'success': False, 'error': 'فشل إرسال الإيميل. حاول مرة أخرى.'})
         except User.DoesNotExist:
             # Don't reveal if email exists or not (security)

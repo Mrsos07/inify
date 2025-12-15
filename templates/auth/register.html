@@ -252,6 +252,37 @@
             color: var(--cyan-light);
         }
 
+        .success-message {
+            background: rgba(74, 222, 128, 0.15);
+            border: 1px solid rgba(74, 222, 128, 0.4);
+            color: #4ade80;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-message h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .success-message p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .success-message .redirect-text {
+            margin-top: 15px;
+            font-size: 13px;
+            opacity: 0.7;
+        }
+
         @media (max-width: 480px) {
             .form-row {
                 grid-template-columns: 1fr;
@@ -281,6 +312,12 @@
         </div>
 
         <div class="auth-card">
+            <div class="success-message" id="successMessage">
+                <h3>✅ تم إنشاء الحساب بنجاح!</h3>
+                <p id="successText">تحقق من بريدك الإلكتروني لتفعيل الحساب</p>
+                <div class="redirect-text">جاري التحويل لصفحة تسجيل الدخول...</div>
+            </div>
+            
             <form id="registerForm">
                 <div class="form-row">
                     <div class="form-group">
@@ -362,6 +399,8 @@
             const form = e.target;
             const password = form.querySelector('input[name="password"]').value;
             const password2 = form.querySelector('input[name="password2"]');
+            const successDiv = document.getElementById('successMessage');
+            const successText = document.getElementById('successText');
             
             if (password2 && password !== password2.value) {
                 alert('كلمات المرور غير متطابقة');
@@ -383,9 +422,15 @@
                 
                 if (data.success) {
                     if (data.require_verification) {
-                        // Show verification message
-                        alert(data.message || 'تم إنشاء الحساب! تحقق من بريدك الإلكتروني لتفعيل الحساب.');
-                        window.location.href = '/auth/login/';
+                        // Hide form and show success message
+                        form.style.display = 'none';
+                        successText.textContent = data.message || 'تحقق من بريدك الإلكتروني لتفعيل الحساب';
+                        successDiv.classList.add('show');
+                        
+                        // Redirect after 3 seconds
+                        setTimeout(() => {
+                            window.location.href = '/auth/login/';
+                        }, 3000);
                     } else {
                         window.location.href = '/dashboard/';
                     }
@@ -396,7 +441,6 @@
                 alert('حدث خطأ في الاتصال');
             }
         });
-
     </script>
     
     <!-- Theme Toggle Script -->

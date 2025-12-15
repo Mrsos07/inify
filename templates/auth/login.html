@@ -294,6 +294,44 @@
             display: block;
         }
 
+        .verification-notice {
+            background: rgba(255, 193, 7, 0.15);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            color: #ffc107;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            display: none;
+            text-align: center;
+        }
+
+        .verification-notice.show {
+            display: block;
+        }
+
+        .resend-btn {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            color: #ffc107;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            margin-top: 12px;
+            transition: all 0.3s;
+        }
+
+        .resend-btn:hover {
+            background: rgba(255, 193, 7, 0.3);
+        }
+
+        .resend-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 480px) {
             .auth-card {
                 padding: 30px 24px;
@@ -324,6 +362,13 @@
 
         <div class="auth-card">
             <div class="error-message" id="errorMessage"></div>
+            
+            <div class="verification-notice" id="verificationNotice">
+                <div>⚠️ يرجى تفعيل حسابك عبر الرابط المرسل إلى بريدك الإلكتروني</div>
+                <button type="button" class="resend-btn" id="resendBtn" onclick="resendVerification()">
+                    إعادة إرسال رابط التفعيل
+                </button>
+            </div>
             
             <form id="loginForm">
                 <div class="form-group">
@@ -386,6 +431,8 @@
     </div>
 
     <script>
+        let currentEmail = '';
+        
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -393,6 +440,13 @@
             const email = form.querySelector('input[name="email"]').value;
             const password = form.querySelector('input[name="password"]').value;
             const errorDiv = document.getElementById('errorMessage');
+            const verificationDiv = document.getElementById('verificationNotice');
+            
+            // Hide previous messages
+            errorDiv.classList.remove('show');
+            verificationDiv.classList.remove('show');
+            
+            currentEmail = email;
             
             try {
                 const formData = new FormData();
@@ -411,6 +465,9 @@
                 
                 if (data.success) {
                     window.location.href = '/dashboard/';
+                } else if (data.email_not_verified) {
+                    // Show verification notice
+                    verificationDiv.classList.add('show');
                 } else {
                     errorDiv.textContent = data.error || 'بيانات الدخول غير صحيحة';
                     errorDiv.classList.add('show');
@@ -421,6 +478,42 @@
             }
         });
 
+        async function resendVerification() {
+            const btn = document.getElementById('resendBtn');
+            const verificationDiv = document.getElementById('verificationNotice');
+            
+            if (!currentEmail) {
+                alert('يرجى إدخال البريد الإلكتروني أولاً');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'جاري الإرسال...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('email', currentEmail);
+                
+                const response = await fetch('/auth/resend-verification/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    verificationDiv.innerHTML = '<div style="color: #4ade80;">✅ ' + data.message + '</div>';
+                } else {
+                    alert(data.error || 'فشل إرسال الرابط');
+                    btn.disabled = false;
+                    btn.textContent = 'إعادة إرسال رابط التفعيل';
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال');
+                btn.disabled = false;
+                btn.textContent = 'إعادة إرسال رابط التفعيل';
+            }
+        }
     </script>
     
     <!-- Theme Toggle Script -->
