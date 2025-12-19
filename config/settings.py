@@ -285,18 +285,21 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Allauth Settings
+# Allauth Settings (Updated for v0.61+)
 ACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_LOGOUT_ON_GET = True
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_LOGIN_METHODS = {'email'}  # استخدام البريد للتسجيل
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # البريد مطلوب، اسم المستخدم غير مطلوب
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # تعطيل التحقق من البريد
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 
 # Google OAuth Settings
+SOCIALACCOUNT_LOGIN_ON_GET = True  # السماح بتسجيل الدخول عبر GET (لتجنب خطأ CSRF)
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'  # مهم للتطوير المحلي
+USE_X_FORWARDED_HOST = False  # مهم جداً للتطوير المحلي
+
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [
@@ -307,8 +310,13 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'online',
         },
         'OAUTH_PKCE_ENABLED': True,
+        'VERIFIED_EMAIL': True,
     }
 }
+
+# Adapters
+SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
+ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
 
 # Google OAuth Credentials (from .env)
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
