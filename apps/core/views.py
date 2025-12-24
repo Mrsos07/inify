@@ -552,8 +552,8 @@ def reset_password_view(request):
         if not token or not new_password:
             return JsonResponse({'success': False, 'error': 'بيانات غير صالحة'})
         
-        from services.email_service import email_service
-        email = email_service.verify_token(token, 'password_reset')
+        from apps.agents.models import PasswordResetToken
+        email = PasswordResetToken.verify_token(token)
         
         if email:
             try:

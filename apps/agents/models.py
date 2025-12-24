@@ -343,3 +343,50 @@ class GlobalSettings(models.Model):
         """الحصول على الإعدادات أو إنشاؤها"""
         settings, created = cls.objects.get_or_create(pk=1)
         return settings
+
+
+class PasswordResetToken(models.Model):
+    """توكنات إعادة تعيين كلمة المرور"""
+    
+    email = models.EmailField(verbose_name='البريد الإلكتروني')
+    token = models.CharField(max_length=100, unique=True, verbose_name='التوكن')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    expires_at = models.DateTimeField(verbose_name='تاريخ الانتهاء')
+    used = models.BooleanField(default=False, verbose_name='مستخدم')
+    
+    class Meta:
+        verbose_name = 'توكن إعادة تعيين'
+        verbose_name_plural = 'توكنات إعادة التعيين'
+    
+    def is_valid(self):
+        """التحقق من صلاحية التوكن"""
+        return not self.used and timezone.now() < self.expires_at
+    
+    @classmethod
+    def create_token(cls, email):
+        """إنشاء توكن جديد"""
+        import secrets
+        token = secrets.token_urlsafe(32)
+        expires_at = timezone.now() + timedelta(hours=1)
+        
+        # حذف التوكنات القديمة لنفس الإيميل
+        cls.objects.filter(email=email).delete()
+        
+        return cls.objects.create(
+            email=email,
+            token=token,
+            expires_at=expires_at
+        )
+    
+    @classmethod
+    def verify_token(cls, token):
+        """التحقق من التوكن وإرجاع الإيميل"""
+        try:
+            reset_token = cls.objects.get(token=token, used=False)
+            if reset_token.is_valid():
+                reset_token.used = True
+                reset_token.save()
+                return reset_token.email
+        except cls.DoesNotExist:
+            pass
+        return None

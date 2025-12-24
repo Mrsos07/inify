@@ -28,7 +28,7 @@ class EmailService:
     
     def __init__(self):
         self.api_key = os.getenv('RESEND_API_KEY', '')
-        self.from_email = os.getenv('FROM_EMAIL', '') or getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@inify.ai')
+        self.from_email = 'Inify <noreply@inify.ai>'
         self.site_url = os.getenv('SITE_URL', '') or 'https://inify.ai'
         
         # Check Resend availability
@@ -171,12 +171,10 @@ class EmailService:
         if not self.is_available:
             return {'success': False, 'error': 'Email service not available'}
         
-        # Generate reset token
-        token = secrets.token_urlsafe(32)
-        
-        # Store token in cache (expires in 1 hour)
-        cache_key = f"password_reset_{token}"
-        cache.set(cache_key, user_email, timeout=3600)  # 1 hour
+        # Generate reset token and save to database
+        from apps.agents.models import PasswordResetToken
+        reset_token = PasswordResetToken.create_token(user_email)
+        token = reset_token.token
         
         reset_url = f"{self.site_url}/auth/reset-password/?token={token}"
         
