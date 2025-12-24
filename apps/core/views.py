@@ -507,6 +507,9 @@ def verify_email_view(request):
 @csrf_exempt
 def forgot_password_view(request):
     """صفحة نسيت كلمة المرور"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     if request.method == 'POST':
         email = request.POST.get('email', '')
         
@@ -519,8 +522,6 @@ def forgot_password_view(request):
             
             # Check if email service is available
             if not email_service.is_available:
-                import logging
-                logger = logging.getLogger(__name__)
                 logger.error("Email service not available - check RESEND_API_KEY or SMTP settings")
                 return JsonResponse({'success': False, 'error': 'خدمة البريد الإلكتروني غير متاحة حالياً. يرجى المحاولة لاحقاً.'})
             
@@ -529,13 +530,14 @@ def forgot_password_view(request):
             if result.get('success'):
                 return JsonResponse({'success': True, 'message': 'تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني'})
             else:
-                import logging
-                logger = logging.getLogger(__name__)
                 logger.error(f"Failed to send password reset email: {result.get('error')}")
                 return JsonResponse({'success': False, 'error': 'فشل إرسال الإيميل. حاول مرة أخرى.'})
         except User.DoesNotExist:
             # Don't reveal if email exists or not (security)
             return JsonResponse({'success': True, 'message': 'إذا كان البريد مسجلاً، ستصلك رسالة استعادة كلمة المرور'})
+        except Exception as e:
+            logger.error(f"Forgot password error: {str(e)}", exc_info=True)
+            return JsonResponse({'success': False, 'error': 'حدث خطأ. حاول مرة أخرى.'})
     
     return render(request, 'auth/forgot-password.html')
 
