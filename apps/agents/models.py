@@ -390,3 +390,101 @@ class PasswordResetToken(models.Model):
         except cls.DoesNotExist:
             pass
         return None
+
+
+class WhatsAppInstance(models.Model):
+    """نموذج ربط واتساب عبر Evolution API"""
+    
+    CONNECTION_STATUS = [
+        ('disconnected', 'غير متصل'),
+        ('connecting', 'جاري الاتصال'),
+        ('connected', 'متصل'),
+        ('qr_ready', 'QR جاهز'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    agent = models.OneToOneField(
+        'Agent',
+        on_delete=models.CASCADE,
+        related_name='whatsapp_instance',
+        verbose_name='المسوق'
+    )
+    
+    instance_name = models.CharField(
+        max_length=100, 
+        unique=True, 
+        verbose_name='اسم الـ Instance'
+    )
+    
+    phone_number = models.CharField(
+        max_length=20, 
+        blank=True, 
+        verbose_name='رقم الواتساب المربوط'
+    )
+    
+    status = models.CharField(
+        max_length=20,
+        choices=CONNECTION_STATUS,
+        default='disconnected',
+        verbose_name='حالة الاتصال'
+    )
+    
+    qr_code = models.TextField(
+        blank=True, 
+        verbose_name='QR Code (Base64)'
+    )
+    
+    is_active = models.BooleanField(
+        default=True, 
+        verbose_name='نشط'
+    )
+    
+    auto_reply = models.BooleanField(
+        default=True, 
+        verbose_name='رد تلقائي'
+    )
+    
+    welcome_message = models.TextField(
+        blank=True,
+        verbose_name='رسالة الترحيب',
+        help_text='رسالة ترسل تلقائياً عند أول تواصل'
+    )
+    
+    away_message = models.TextField(
+        blank=True,
+        verbose_name='رسالة الغياب',
+        help_text='رسالة ترسل خارج أوقات العمل'
+    )
+    
+    # إحصائيات
+    messages_received = models.PositiveIntegerField(default=0, verbose_name='الرسائل المستلمة')
+    messages_sent = models.PositiveIntegerField(default=0, verbose_name='الرسائل المرسلة')
+    
+    # تواريخ
+    connected_at = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ الاتصال')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'ربط واتساب'
+        verbose_name_plural = 'ربط الواتساب'
+    
+    def __str__(self):
+        return f"WhatsApp - {self.agent.company_name or self.agent.user.email}"
+    
+    def get_webhook_url(self):
+        """الحصول على رابط الـ webhook"""
+        from django.conf import settings
+        site_url = os.getenv('SITE_URL', 'https://inify.ai')
+        return f"{site_url}/api/webhook/whatsapp/{self.instance_name}/"
+    
+    def increment_received(self):
+        """زيادة عداد الرسائل المستلمة"""
+        self.messages_received += 1
+        self.save(update_fields=['messages_received'])
+    
+    def increment_sent(self):
+        """زيادة عداد الرسائل المرسلة"""
+        self.messages_sent += 1
+        self.save(update_fields=['messages_sent'])

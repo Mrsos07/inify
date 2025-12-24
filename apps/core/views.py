@@ -535,6 +535,9 @@ def forgot_password_view(request):
             else:
                 logger.error(f"Failed to send password reset email: {result.get('error')}")
                 return JsonResponse({'success': False, 'error': 'فشل إرسال الإيميل. حاول مرة أخرى.'})
+        except User.DoesNotExist:
+            # Don't reveal if email exists or not (security)
+            return JsonResponse({'success': True, 'message': 'إذا كان البريد مسجلاً، ستصلك رسالة استعادة كلمة المرور'})
         except Exception as e:
             logger.error(f"Forgot password error: {str(e)}", exc_info=True)
             return JsonResponse({'success': False, 'error': 'حدث خطأ. حاول مرة أخرى.'})
