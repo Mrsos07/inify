@@ -305,8 +305,8 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 
 # Google OAuth Settings
 SOCIALACCOUNT_LOGIN_ON_GET = True  # السماح بتسجيل الدخول عبر GET (لتجنب خطأ CSRF)
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'  # مهم للتطوير المحلي
-USE_X_FORWARDED_HOST = False  # مهم جداً للتطوير المحلي
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http' if DEBUG else 'https'  # HTTP للتطوير، HTTPS للإنتاج
+USE_X_FORWARDED_HOST = not DEBUG  # True في الإنتاج
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
