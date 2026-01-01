@@ -67,20 +67,8 @@ class WhatsAppService:
         """
         data = {
             'instanceName': instance_name,
-            'qrcode': True,
-            'integration': 'WHATSAPP-BAILEYS'
+            'qrcode': True
         }
-        
-        if webhook_url:
-            data['webhook'] = {
-                'url': webhook_url,
-                'events': [
-                    'MESSAGES_UPSERT',
-                    'MESSAGES_UPDATE',
-                    'CONNECTION_UPDATE',
-                    'QRCODE_UPDATED'
-                ]
-            }
         
         result = self._make_request('POST', 'instance/create', data)
         
@@ -98,17 +86,18 @@ class WhatsAppService:
     def get_qr_code(self, instance_name: str) -> dict:
         """
         الحصول على QR Code للربط
-        
-        Returns:
-            dict مع base64 أو pairingCode
+        Evolution API يرجع QR Code في base64 مع prefix: data:image/png;base64,...
         """
         result = self._make_request('GET', f'instance/connect/{instance_name}')
         
         if result.get('success'):
             data = result.get('data', {})
+            # QR Code يأتي كاملاً مع data:image/png;base64, prefix
+            qr_base64 = data.get('base64', '')
+            logger.info(f"QR Code retrieved for {instance_name}, length: {len(qr_base64)}")
             return {
                 'success': True,
-                'qrcode': data.get('qrcode', {}).get('base64'),
+                'base64': qr_base64,  # مباشرة في المستوى الأول
                 'pairingCode': data.get('pairingCode'),
                 'code': data.get('code')
             }
@@ -126,6 +115,34 @@ class WhatsAppService:
     def restart_instance(self, instance_name: str) -> dict:
         """إعادة تشغيل الـ instance"""
         return self._make_request('POST', f'instance/restart/{instance_name}')
+    
+    def set_webhook(self, instance_name: str, webhook_url: str) -> dict:
+        """
+        تسجيل Webhook لاستقبال الرسائل والأحداث
+        
+        Args:
+            instance_name: اسم الـ instance
+            webhook_url: رابط الـ webhook
+        """
+        data = {
+            'url': webhook_url,
+            'webhook_by_events': False,
+            'webhook_base64': False,
+            'events': [
+                'MESSAGES_UPSERT',
+                'CONNECTION_UPDATE',
+                'QRCODE_UPDATED'
+            ]
+        }
+        
+        result = self._make_request('POST', f'webhook/set/{instance_name}', data)
+        
+        if result.get('success'):
+            logger.info(f"✅ Webhook set for {instance_name}: {webhook_url}")
+        else:
+            logger.error(f"❌ Failed to set webhook: {result.get('error')}")
+        
+        return result
     
     # ═══════════════════════════════════════════════════════════
     # إرسال الرسائل

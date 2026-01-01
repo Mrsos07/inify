@@ -1830,91 +1830,55 @@
                 <!-- WhatsApp Business Settings -->
                 <div class="tab-content" id="whatsappTab">
                     <div class="settings-section">
-                        <h3 class="section-title">📱 تفعيل واتساب بزنس</h3>
+                        <h3 class="section-title">📱 ربط الواتساب بالوكيل الذكي</h3>
                         
-                        <div class="form-group">
-                            <label class="toggle-label">
-                                <input type="checkbox" id="enableWhatsApp" class="toggle-input">
-                                <span class="toggle-switch"></span>
-                                <span>تفعيل الوكيل على واتساب بزنس</span>
-                            </label>
-                            <p class="form-hint">عند التفعيل، سيتمكن العملاء من التحدث مع الوكيل عبر واتساب</p>
+                        <!-- حالة الاتصال -->
+                        <div id="waStatusCard" class="platform-connect-item" style="margin-bottom: 20px;">
+                            <div class="platform-connect-logo" style="background: linear-gradient(135deg, #25D366, #128C7E);">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
+                            </div>
+                            <div class="platform-connect-info">
+                                <div class="platform-connect-name">واتساب</div>
+                                <div class="platform-connect-desc" id="waStatusText">جاري التحقق...</div>
+                            </div>
+                            <span class="platform-connect-status" id="waStatusBadge">غير متصل</span>
                         </div>
 
-                        <div id="whatsappSettings" style="display: none;">
-                            <div class="form-group">
-                                <label>رقم واتساب بزنس</label>
-                                <input type="tel" id="whatsappNumber" placeholder="966512345678" dir="ltr" style="text-align: left;">
-                                <p class="form-hint">أدخل الرقم بالصيغة الدولية بدون + (مثال: 966512345678)</p>
+                        <!-- قسم الربط -->
+                        <div id="waConnectSection" style="text-align: center; padding: 30px; background: rgba(10,22,40,0.4); border-radius: 16px; border: 1px solid var(--border);">
+                            <div id="waConnectBtn" style="display: block;">
+                                <p style="color: var(--text-muted); margin-bottom: 20px;">اربط رقم واتساب الخاص بك ليتمكن الوكيل الذكي من الرد على عملائك تلقائياً</p>
+                                <button onclick="startWAConnect()" class="btn btn-primary" style="padding: 14px 30px; font-size: 16px;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-left: 8px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
+                                    ربط الواتساب الآن
+                                </button>
                             </div>
-
-                            <div class="form-group">
-                                <label>معرف حساب واتساب بزنس (WABA ID)</label>
-                                <input type="text" id="wabaId" placeholder="أدخل WABA ID من Meta Business" dir="ltr" style="text-align: left;">
+                            <div id="waLoadingSection" style="display: none;">
+                                <div style="width: 50px; height: 50px; border: 3px solid rgba(107,184,201,0.2); border-top-color: var(--cyan); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                                <p>جاري تجهيز الباركود...</p>
                             </div>
-
-                            <div class="form-group">
-                                <label>رمز الوصول (Access Token)</label>
-                                <input type="password" id="whatsappToken" placeholder="أدخل Access Token من Meta" dir="ltr" style="text-align: left;">
-                                <p class="form-hint">يمكنك الحصول عليه من <a href="https://business.facebook.com/settings/whatsapp-business-accounts" target="_blank" style="color: var(--cyan);">Meta Business Manager</a></p>
-                            </div>
-
-                            <div class="form-group">
-                                <label>معرف رقم الهاتف (Phone Number ID)</label>
-                                <input type="text" id="phoneNumberId" placeholder="أدخل Phone Number ID" dir="ltr" style="text-align: left;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="settings-section" id="whatsappGuide" style="display: none;">
-                        <h3 class="section-title">📋 خطوات الربط مع Meta</h3>
-                        
-                        <div class="guide-steps">
-                            <div class="guide-step">
-                                <span class="step-number">1</span>
-                                <div class="step-content">
-                                    <strong>إنشاء تطبيق Meta</strong>
-                                    <p>اذهب إلى <a href="https://developers.facebook.com/apps/" target="_blank" style="color: var(--cyan);">Meta for Developers</a> وأنشئ تطبيقاً جديداً</p>
+                            <div id="waQRSection" style="display: none;">
+                                <div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 20px;">
+                                    <img id="waQRImg" src="" alt="QR Code" style="width: 220px; height: 220px;">
                                 </div>
+                                <p style="color: var(--cyan); font-weight: 600; margin-bottom: 10px;">امسح الباركود من واتساب</p>
+                                <p style="font-size: 13px; color: var(--text-muted);">الإعدادات ← الأجهزة المرتبطة ← ربط جهاز</p>
+                                <button onclick="startWAConnect()" class="btn btn-secondary" style="margin-top: 15px;">تحديث الباركود</button>
                             </div>
-                            <div class="guide-step">
-                                <span class="step-number">2</span>
-                                <div class="step-content">
-                                    <strong>إضافة WhatsApp</strong>
-                                    <p>أضف منتج WhatsApp إلى تطبيقك</p>
-                                </div>
-                            </div>
-                            <div class="guide-step">
-                                <span class="step-number">3</span>
-                                <div class="step-content">
-                                    <strong>ربط رقم الهاتف</strong>
-                                    <p>اربط رقم واتساب بزنس الخاص بك</p>
-                                </div>
-                            </div>
-                            <div class="guide-step">
-                                <span class="step-number">4</span>
-                                <div class="step-content">
-                                    <strong>نسخ البيانات</strong>
-                                    <p>انسخ WABA ID و Phone Number ID و Access Token</p>
-                                </div>
-                            </div>
-                            <div class="guide-step">
-                                <span class="step-number">5</span>
-                                <div class="step-content">
-                                    <strong>إعداد Webhook</strong>
-                                    <p>أضف رابط Webhook التالي في إعدادات التطبيق:</p>
-                                    <code class="webhook-url" id="webhookUrl">https://newra.ai/api/whatsapp/webhook</code>
+                            <div id="waConnectedSection" style="display: none;">
+                                <div style="font-size: 60px; margin-bottom: 15px;">✅</div>
+                                <h4 style="color: #22c55e; margin-bottom: 10px;">الواتساب متصل ويعمل!</h4>
+                                <p style="color: var(--text-muted); margin-bottom: 20px;">الوكيل الذكي جاهز للرد على عملائك</p>
+                                <div style="display: flex; gap: 12px; justify-content: center;">
+                                    <button onclick="startWAConnect()" class="btn btn-secondary" style="padding: 10px 20px;">
+                                        🔄 تغيير الرقم
+                                    </button>
+                                    <button onclick="disconnectWA()" class="btn btn-secondary" style="background: rgba(239,68,68,0.2); color: #f87171; padding: 10px 20px;">
+                                        🗑️ حذف الربط
+                                    </button>
                                 </div>
                             </div>
                         </div>
-
-                        <button class="btn btn-primary" onclick="testWhatsAppConnection()" style="margin-top: 20px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                <polyline points="22 4 12 14.01 9 11.01"/>
-                            </svg>
-                            اختبار الاتصال
-                        </button>
                     </div>
 
                     <div class="settings-section">
@@ -2661,6 +2625,176 @@
                 document.querySelector('.tab:nth-child(2)').click();
             }, 100);
         }
+        if (window.location.hash === '#whatsapp') {
+            setTimeout(() => {
+                document.querySelector('.tab:nth-child(5)').click();
+            }, 100);
+        }
+
+        // ============ WhatsApp Functions ============
+        let waPolling = null;
+
+        async function checkWAStatus() {
+            try {
+                const resp = await fetch('/api/whatsapp/status/', { credentials: 'include' });
+                const data = await resp.json();
+                
+                const statusText = document.getElementById('waStatusText');
+                const statusBadge = document.getElementById('waStatusBadge');
+                const statusCard = document.getElementById('waStatusCard');
+                
+                if (data.connected) {
+                    statusText.textContent = 'الوكيل يرد على الرسائل تلقائياً';
+                    statusBadge.textContent = '✓ متصل';
+                    statusBadge.classList.add('connected');
+                    statusCard.classList.add('connected');
+                    showWAConnected();
+                } else {
+                    statusText.textContent = 'غير متصل - اربط رقمك للبدء';
+                    statusBadge.textContent = 'غير متصل';
+                    statusBadge.classList.remove('connected');
+                    statusCard.classList.remove('connected');
+                    showWAConnect();
+                }
+            } catch (e) {
+                console.log('WA status check failed');
+            }
+        }
+
+        function showWAConnect() {
+            document.getElementById('waConnectBtn').style.display = 'block';
+            document.getElementById('waLoadingSection').style.display = 'none';
+            document.getElementById('waQRSection').style.display = 'none';
+            document.getElementById('waConnectedSection').style.display = 'none';
+        }
+
+        function showWAConnected() {
+            document.getElementById('waConnectBtn').style.display = 'none';
+            document.getElementById('waLoadingSection').style.display = 'none';
+            document.getElementById('waQRSection').style.display = 'none';
+            document.getElementById('waConnectedSection').style.display = 'block';
+            if (waPolling) { clearInterval(waPolling); waPolling = null; }
+        }
+
+        let qrPollingInt = null;
+        
+        async function startWAConnect() {
+            // إخفاء جميع الأقسام وإظهار التحميل
+            document.getElementById('waConnectBtn').style.display = 'none';
+            document.getElementById('waQRSection').style.display = 'none';
+            document.getElementById('waConnectedSection').style.display = 'none';
+            document.getElementById('waLoadingSection').style.display = 'block';
+            
+            try {
+                const resp = await fetch('/api/whatsapp/connect/', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }
+                });
+                const data = await resp.json();
+                console.log('WhatsApp connect:', data);
+                
+                // إخفاء التحميل
+                document.getElementById('waLoadingSection').style.display = 'none';
+                
+                if (data.success) {
+                    if (data.connected) {
+                        showWAConnected();
+                        showCopyToast('✓ الواتساب متصل!');
+                    } else if (data.qr_code) {
+                        // عرض QR Code
+                        console.log('QR received, length:', data.qr_code.length);
+                        document.getElementById('waQRImg').src = data.qr_code;
+                        document.getElementById('waQRSection').style.display = 'block';
+                        startWAPolling();
+                    } else if (data.status === 'waiting') {
+                        document.getElementById('waLoadingSection').style.display = 'block';
+                        startQRPoll();
+                    }
+                } else {
+                    alert('خطأ: ' + (data.error || 'فشل الاتصال'));
+                    showWAConnect();
+                }
+            } catch (e) {
+                console.error('Error:', e);
+                document.getElementById('waLoadingSection').style.display = 'none';
+                alert('حدث خطأ في الاتصال');
+                showWAConnect();
+            }
+        }
+        
+        function startQRPoll() {
+            if (qrPollingInt) clearInterval(qrPollingInt);
+            
+            qrPollingInt = setInterval(async () => {
+                try {
+                    const resp = await fetch('/api/whatsapp/qr/', { credentials: 'include' });
+                    const data = await resp.json();
+                    
+                    if (data.connected) {
+                        clearInterval(qrPollingInt);
+                        qrPollingInt = null;
+                        document.getElementById('waLoadingSection').style.display = 'none';
+                        showWAConnected();
+                        showCopyToast('✓ تم ربط الواتساب!');
+                    } else if (data.qr_code) {
+                        clearInterval(qrPollingInt);
+                        qrPollingInt = null;
+                        document.getElementById('waLoadingSection').style.display = 'none';
+                        document.getElementById('waQRImg').src = data.qr_code;
+                        document.getElementById('waQRSection').style.display = 'block';
+                        startWAPolling();
+                    }
+                } catch (e) {}
+            }, 2000);
+            
+            setTimeout(() => {
+                if (qrPollingInt) {
+                    clearInterval(qrPollingInt);
+                    qrPollingInt = null;
+                    document.getElementById('waLoadingSection').style.display = 'none';
+                    alert('انتهى الوقت، حاول مرة أخرى');
+                    showWAConnect();
+                }
+            }, 60000);
+        }
+
+        function startWAPolling() {
+            if (waPolling) clearInterval(waPolling);
+            waPolling = setInterval(async () => {
+                try {
+                    const resp = await fetch('/api/whatsapp/status/', { credentials: 'include' });
+                    const data = await resp.json();
+                    if (data.connected) {
+                        clearInterval(waPolling);
+                        showWAConnected();
+                        showCopyToast('✓ تم ربط الواتساب بنجاح!');
+                        checkWAStatus();
+                    }
+                } catch (e) {}
+            }, 3000);
+        }
+
+        async function disconnectWA() {
+            if (!confirm('هل تريد قطع اتصال الواتساب؟')) return;
+            try {
+                const resp = await fetch('/api/whatsapp/disconnect/', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    showCopyToast('✓ تم قطع الاتصال');
+                    checkWAStatus();
+                }
+            } catch (e) {
+                alert('حدث خطأ');
+            }
+        }
+
+        // Check WA status on load
+        setTimeout(checkWAStatus, 500);
 
         // Live preview updates
         document.querySelectorAll('input, select, textarea').forEach(el => {

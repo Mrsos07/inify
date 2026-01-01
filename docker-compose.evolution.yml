@@ -1,0 +1,44 @@
+services:
+  evolution-api:
+    image: atendai/evolution-api:v1.8.2
+    container_name: evolution-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Server Config
+      - SERVER_URL=http://localhost:8080
+      - SERVER_PORT=8080
+      
+      # Authentication
+      - AUTHENTICATION_TYPE=apikey
+      - AUTHENTICATION_API_KEY=B6D711FCDE4D4FD5936544120E713976
+      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+      
+      # Database - Using SQLite for simplicity
+      - DATABASE_ENABLED=false
+      
+      # Log
+      - LOG_LEVEL=WARN
+      - LOG_COLOR=true
+      
+      # Webhook Config
+      - WEBHOOK_GLOBAL_ENABLED=false
+      - WEBHOOK_EVENTS_QRCODE_UPDATED=true
+      - WEBHOOK_EVENTS_MESSAGES_UPSERT=true
+      - WEBHOOK_EVENTS_CONNECTION_UPDATE=true
+      
+      # WebSocket
+      - WEBSOCKET_ENABLED=true
+      
+      # Config
+      - CONFIG_SESSION_PHONE_CLIENT=Inify
+      - CONFIG_SESSION_PHONE_NAME=Chrome
+      - QRCODE_LIMIT=30
+      - QRCODE_COLOR=#000000
+      
+    volumes:
+      - evolution_data:/evolution/instances
+
+volumes:
+  evolution_data:

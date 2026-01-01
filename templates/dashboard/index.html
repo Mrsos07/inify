@@ -374,9 +374,11 @@
                         <a href="/dashboard/conversations/" class="quick-action">
                             <div class="quick-action-icon">💬</div><span>المحادثات</span>
                         </a>
-                        <a href="/dashboard/bot-settings/" class="quick-action">
-                            <div class="quick-action-icon">⚙️</div><span>الإعدادات</span>
-                        </a>
+                        <button onclick="openWhatsAppConnect()" class="quick-action" id="whatsappQuickAction" style="border: none; cursor: pointer; text-align: center; position: relative;">
+                            <div class="quick-action-icon">📱</div>
+                            <span>ربط واتساب</span>
+                            <span id="whatsappBadge" class="whatsapp-badge" style="display: none;"></span>
+                        </button>
                         <button onclick="openChatPopup()" class="quick-action" style="border: none; cursor: pointer; text-align: center;">
                             <div class="quick-action-icon">🤖</div><span>تجربة الشات</span>
                         </button>
@@ -400,6 +402,42 @@
                 <button class="chat-popup-close" onclick="closeChatPopup()">&times;</button>
             </div>
             <iframe id="chatPopupFrame" src="" frameborder="0"></iframe>
+        </div>
+    </div>
+
+    <!-- WhatsApp Connect Modal -->
+    <div id="whatsappModal" class="modal-overlay" style="display: none;" onclick="closeWhatsAppModal(event)">
+        <div class="modal-container" onclick="event.stopPropagation()" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3 style="display: flex; align-items: center; gap: 10px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
+                    ربط الواتساب
+                </h3>
+                <button class="modal-close" onclick="closeWhatsAppModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="whatsappModalBody" style="text-align: center; padding: 30px;">
+                <div id="waLoading">
+                    <div class="spinner" style="width: 50px; height: 50px; border: 3px solid rgba(107,184,201,0.2); border-top-color: var(--cyan); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                    <p>جاري تجهيز الباركود...</p>
+                </div>
+                <div id="waQRCode" style="display: none;">
+                    <div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 20px;">
+                        <img id="waQRImage" src="" alt="QR Code" style="width: 220px; height: 220px;">
+                    </div>
+                    <p style="color: var(--cyan); font-weight: 600; margin-bottom: 10px;">امسح الباركود من واتساب</p>
+                    <p style="font-size: 13px; color: var(--text-muted);">الإعدادات ← الأجهزة المرتبطة ← ربط جهاز</p>
+                </div>
+                <div id="waConnected" style="display: none;">
+                    <div style="font-size: 60px; margin-bottom: 15px;">✅</div>
+                    <h4 style="color: #22c55e; margin-bottom: 10px;">تم ربط الواتساب بنجاح!</h4>
+                    <p style="color: var(--text-muted);">الوكيل الذكي جاهز للرد على عملائك</p>
+                </div>
+                <div id="waError" style="display: none;">
+                    <div style="font-size: 60px; margin-bottom: 15px;">❌</div>
+                    <p id="waErrorMsg" style="color: #ef4444;"></p>
+                    <button onclick="retryWhatsAppConnect()" class="btn-primary" style="margin-top: 15px; padding: 10px 25px; border: none; border-radius: 8px; cursor: pointer;">إعادة المحاولة</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -714,7 +752,255 @@
             // تحديث العنوان
             document.title = 'Dashboard - Inify';
         }
+
+        // ============ WhatsApp Quick Action ============
+        async function checkWhatsAppQuickStatus() {
+            try {
+                const response = await fetch('/api/whatsapp/status/', { credentials: 'include' });
+                const data = await response.json();
+                
+                const btn = document.getElementById('whatsappQuickAction');
+                const badge = document.getElementById('whatsappBadge');
+                const icon = btn.querySelector('.quick-action-icon');
+                const label = btn.querySelector('span:not(.whatsapp-badge)');
+                
+                if (data.connected) {
+                    icon.textContent = '✅';
+                    label.textContent = 'واتساب متصل';
+                    badge.style.display = 'none';
+                    btn.style.background = 'rgba(34, 197, 94, 0.1)';
+                    btn.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+                } else if (data.service_available) {
+                    icon.textContent = '📱';
+                    label.textContent = 'ربط واتساب';
+                    badge.textContent = '!';
+                    badge.style.display = 'flex';
+                    btn.style.background = '';
+                }
+            } catch (e) {
+                console.log('WhatsApp status check failed');
+            }
+        }
+
+        let waPollingInterval = null;
+
+        function openWhatsAppConnect() {
+            document.getElementById('whatsappModal').style.display = 'flex';
+            document.getElementById('waLoading').style.display = 'block';
+            document.getElementById('waQRCode').style.display = 'none';
+            document.getElementById('waConnected').style.display = 'none';
+            document.getElementById('waError').style.display = 'none';
+            
+            connectWhatsApp();
+        }
+
+        function closeWhatsAppModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('whatsappModal').style.display = 'none';
+            if (waPollingInterval) {
+                clearInterval(waPollingInterval);
+                waPollingInterval = null;
+            }
+        }
+
+        async function connectWhatsApp() {
+            try {
+                const response = await fetch('/api/whatsapp/connect/', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                const data = await response.json();
+                console.log('WhatsApp connect response:', data);
+                
+                // إخفاء جميع الأقسام أولاً
+                document.getElementById('waLoading').style.display = 'none';
+                document.getElementById('waQRCode').style.display = 'none';
+                document.getElementById('waConnected').style.display = 'none';
+                document.getElementById('waError').style.display = 'none';
+                
+                if (data.success) {
+                    if (data.connected) {
+                        showWAConnected();
+                    } else if (data.qr_code) {
+                        // عرض QR Code
+                        console.log('QR Code received, length:', data.qr_code.length);
+                        const img = document.getElementById('waQRImage');
+                        // QR Code يأتي مع data:image/png;base64, prefix
+                        img.src = data.qr_code;
+                        img.onload = function() {
+                            console.log('QR Image loaded successfully');
+                            document.getElementById('waQRCode').style.display = 'block';
+                        };
+                        img.onerror = function() {
+                            console.error('QR Image failed to load');
+                            // محاولة بدون prefix
+                            if (!data.qr_code.startsWith('data:')) {
+                                img.src = 'data:image/png;base64,' + data.qr_code;
+                            }
+                        };
+                        document.getElementById('waQRCode').style.display = 'block';
+                        startWAPolling();
+                    } else if (data.status === 'waiting') {
+                        document.getElementById('waLoading').style.display = 'block';
+                        startQRPolling();
+                    }
+                } else {
+                    showWAError(data.error || 'فشل الاتصال');
+                }
+            } catch (e) {
+                console.error('WhatsApp connect error:', e);
+                document.getElementById('waLoading').style.display = 'none';
+                showWAError('حدث خطأ في الاتصال');
+            }
+        }
+
+        let qrPollingInterval = null;
+        
+        function startQRPolling() {
+            if (qrPollingInterval) clearInterval(qrPollingInterval);
+            
+            qrPollingInterval = setInterval(async () => {
+                try {
+                    const resp = await fetch('/api/whatsapp/qr/', { credentials: 'include' });
+                    const data = await resp.json();
+                    
+                    if (data.connected) {
+                        clearInterval(qrPollingInterval);
+                        qrPollingInterval = null;
+                        document.getElementById('waLoading').style.display = 'none';
+                        showWAConnected();
+                    } else if (data.qr_code) {
+                        clearInterval(qrPollingInterval);
+                        qrPollingInterval = null;
+                        document.getElementById('waLoading').style.display = 'none';
+                        document.getElementById('waQRImage').src = data.qr_code;
+                        document.getElementById('waQRCode').style.display = 'block';
+                        startWAPolling();
+                    }
+                } catch (e) {
+                    console.log('QR polling error');
+                }
+            }, 2000);
+            
+            setTimeout(() => {
+                if (qrPollingInterval) {
+                    clearInterval(qrPollingInterval);
+                    qrPollingInterval = null;
+                    document.getElementById('waLoading').style.display = 'none';
+                    showWAError('انتهى الوقت، حاول مرة أخرى');
+                }
+            }, 60000);
+        }
+
+        function showWAConnected() {
+            document.getElementById('waQRCode').style.display = 'none';
+            document.getElementById('waConnected').style.display = 'block';
+            checkWhatsAppQuickStatus();
+            setTimeout(() => closeWhatsAppModal(), 2000);
+        }
+
+        function showWAError(msg) {
+            document.getElementById('waErrorMsg').textContent = msg;
+            document.getElementById('waError').style.display = 'block';
+        }
+
+        function retryWhatsAppConnect() {
+            document.getElementById('waError').style.display = 'none';
+            document.getElementById('waLoading').style.display = 'block';
+            connectWhatsApp();
+        }
+
+        function startWAPolling() {
+            if (waPollingInterval) clearInterval(waPollingInterval);
+            waPollingInterval = setInterval(async () => {
+                try {
+                    const resp = await fetch('/api/whatsapp/status/', { credentials: 'include' });
+                    const data = await resp.json();
+                    if (data.connected) {
+                        clearInterval(waPollingInterval);
+                        showWAConnected();
+                    }
+                } catch (e) {}
+            }, 3000);
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Check WhatsApp status on load
+        setTimeout(checkWhatsAppQuickStatus, 1000);
     </script>
+    
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .modal-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 90%;
+            backdrop-filter: blur(20px);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .modal-close:hover { color: var(--pearl); }
+        
+        .whatsapp-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 18px;
+            height: 18px;
+            background: #f59e0b;
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
     
     <!-- Theme Toggle Script -->
     <script src="/static/js/theme.js"></script>

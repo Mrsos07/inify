@@ -566,3 +566,46 @@ class CalendarBlockedDate(models.Model):
     
     def __str__(self):
         return f"{self.calendar.property.title} - {self.date}"
+
+
+class WhatsAppMessage(models.Model):
+    """رسائل محادثات الواتساب لحفظ تاريخ المحادثة"""
+    
+    ROLE_CHOICES = [
+        ('user', 'المستخدم'),
+        ('assistant', 'الوكيل'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    lead = models.ForeignKey(
+        Lead,
+        on_delete=models.CASCADE,
+        related_name='whatsapp_messages',
+        verbose_name='العميل'
+    )
+    
+    instance = models.ForeignKey(
+        'agents.WhatsAppInstance',
+        on_delete=models.CASCADE,
+        related_name='messages',
+        verbose_name='حساب الواتساب'
+    )
+    
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        verbose_name='المرسل'
+    )
+    
+    content = models.TextField(verbose_name='المحتوى')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإرسال')
+    
+    class Meta:
+        verbose_name = 'رسالة واتساب'
+        verbose_name_plural = 'رسائل الواتساب'
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"{self.lead.name} - {self.role}: {self.content[:50]}..."

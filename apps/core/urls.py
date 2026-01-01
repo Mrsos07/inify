@@ -5,6 +5,7 @@ Core URLs
 
 from django.urls import path
 from . import views
+from . import whatsapp_views
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -67,4 +68,16 @@ urlpatterns = [
     # Agent Stats API
     path('api/agent/<uuid:agent_id>/stats/', views.get_agent_stats, name='get-agent-stats'),
     path('api/agent/<uuid:agent_id>/conversation/', views.increment_conversation, name='increment-conversation'),
+    
+    # WhatsApp Integration API
+    path('api/whatsapp/status/', whatsapp_views.whatsapp_status, name='whatsapp-status'),
+    path('api/whatsapp/connect/', whatsapp_views.whatsapp_connect, name='whatsapp-connect'),
+    path('api/whatsapp/qr/', whatsapp_views.whatsapp_get_qr, name='whatsapp-get-qr'),
+    path('api/whatsapp/disconnect/', whatsapp_views.whatsapp_disconnect, name='whatsapp-disconnect'),
+    path('api/whatsapp/settings/', whatsapp_views.whatsapp_settings, name='whatsapp-settings'),
+    path('api/whatsapp/send/', whatsapp_views.whatsapp_send_message, name='whatsapp-send'),
+    path('api/whatsapp/check/', whatsapp_views.whatsapp_check_connection, name='whatsapp-check'),
+    
+    # WhatsApp Webhook (استقبال الرسائل من Evolution API)
+    path('webhooks/whatsapp/<str:instance_name>/', whatsapp_views.whatsapp_webhook, name='whatsapp-webhook'),
 ]
