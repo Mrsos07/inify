@@ -1,44 +1,54 @@
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: evolution-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=evolution
+      - POSTGRES_PASSWORD=evolution123
+      - POSTGRES_DB=evolution
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   evolution-api:
-    image: atendai/evolution-api:v1.8.2
+    image: atendai/evolution-api:v2.2.3
     container_name: evolution-api
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
-      # Server Config
       - SERVER_URL=http://localhost:8080
       - SERVER_PORT=8080
-      
-      # Authentication
       - AUTHENTICATION_TYPE=apikey
       - AUTHENTICATION_API_KEY=B6D711FCDE4D4FD5936544120E713976
       - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
-      
-      # Database - Using SQLite for simplicity
-      - DATABASE_ENABLED=false
-      
-      # Log
-      - LOG_LEVEL=WARN
-      - LOG_COLOR=true
-      
-      # Webhook Config
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://evolution:evolution123@postgres:5432/evolution
+      - LOG_LEVEL=DEBUG
       - WEBHOOK_GLOBAL_ENABLED=false
       - WEBHOOK_EVENTS_QRCODE_UPDATED=true
       - WEBHOOK_EVENTS_MESSAGES_UPSERT=true
+      - WEBHOOK_EVENTS_MESSAGES_UPDATE=true
+      - WEBHOOK_EVENTS_SEND_MESSAGE=true
       - WEBHOOK_EVENTS_CONNECTION_UPDATE=true
-      
-      # WebSocket
-      - WEBSOCKET_ENABLED=true
-      
-      # Config
-      - CONFIG_SESSION_PHONE_CLIENT=Inify
+      - CONFIG_SESSION_PHONE_CLIENT=Evolution
       - CONFIG_SESSION_PHONE_NAME=Chrome
       - QRCODE_LIMIT=30
-      - QRCODE_COLOR=#000000
-      
+      # تعطيل استخدام LID
+      - WA_BUSINESS_TOKEN_WEBHOOK=
+      - PROVIDER_ENABLED=false
     volumes:
       - evolution_data:/evolution/instances
 
 volumes:
   evolution_data:
+  postgres_data:

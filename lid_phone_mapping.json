@@ -1,0 +1,8 @@
+{
+    "description": "Mapping between WhatsApp LID and phone numbers. Add entries manually when you know the relationship.",
+    "mappings": {
+        "110131568238793": "966541428731",
+        "194897160196207": ""
+    },
+    "instructions": "Add the phone number for each LID. Example: '194897160196207': '966501234567'"
+}

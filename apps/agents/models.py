@@ -476,8 +476,12 @@ class WhatsAppInstance(models.Model):
     def get_webhook_url(self):
         """الحصول على رابط الـ webhook"""
         from django.conf import settings
+        evolution_url = os.getenv('EVOLUTION_API_URL', '')
+        if 'localhost' in evolution_url or '127.0.0.1' in evolution_url:
+            # Evolution API في Docker - استخدم host.docker.internal
+            return f"http://host.docker.internal:8000/webhooks/whatsapp/{self.instance_name}/"
         site_url = os.getenv('SITE_URL', 'https://inify.ai')
-        return f"{site_url}/api/webhook/whatsapp/{self.instance_name}/"
+        return f"{site_url}/webhooks/whatsapp/{self.instance_name}/"
     
     def increment_received(self):
         """زيادة عداد الرسائل المستلمة"""

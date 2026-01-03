@@ -253,11 +253,11 @@
             box-shadow: 0 8px 25px rgba(107, 184, 201, 0.3);
         }
 
-        /* Main Content */
+        /* Main Content - متوافق مع السايد بار */
         .main-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 40px;
+            margin-right: 260px;
+            padding: 32px;
+            min-height: 100vh;
         }
 
         .page-header {
@@ -1366,13 +1366,45 @@
             }
         }
 
+        /* Responsive - Large Desktop */
+        @media (min-width: 1400px) {
+            .form-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .properties-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Responsive - Medium Desktop */
+        @media (max-width: 1200px) {
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .properties-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         /* Responsive - Tablet */
-        @media (max-width: 1024px) {
+        @media (max-width: 992px) {
+            .main-content {
+                margin-right: 0;
+                padding: 20px;
+            }
             .properties-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
             .form-row {
                 grid-template-columns: 1fr;
+            }
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+            .form-card {
+                padding: 24px;
+                border-radius: 18px;
             }
         }
 
@@ -1387,7 +1419,9 @@
             }
 
             .main-content {
+                margin-right: 0;
                 padding: 16px;
+                padding-bottom: 80px;
             }
 
             .page-header {
@@ -1402,15 +1436,36 @@
 
             .form-card {
                 padding: 20px;
+                border-radius: 16px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+            
+            .form-group.full-width {
+                grid-column: 1;
+            }
+            
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 12px 14px;
+                font-size: 16px; /* منع zoom على iOS */
             }
 
             .form-actions {
                 flex-direction: column;
+                gap: 12px;
+                margin-top: 24px;
+                padding-top: 20px;
             }
 
             .btn {
                 width: 100%;
                 justify-content: center;
+                padding: 14px 24px;
             }
 
             .properties-grid {
@@ -1421,13 +1476,18 @@
             .tabs {
                 width: 100%;
                 overflow-x: auto;
+                gap: 8px;
+                padding-bottom: 4px;
+                -webkit-overflow-scrolling: touch;
             }
 
             .tab {
                 flex: 1;
+                min-width: fit-content;
                 text-align: center;
                 padding: 12px 16px;
                 white-space: nowrap;
+                font-size: 14px;
             }
             
             .property-card {
@@ -1448,18 +1508,35 @@
             
             .property-features {
                 gap: 12px;
+                flex-wrap: wrap;
             }
             
             .feature-item {
                 font-size: 12px;
             }
             
+            .form-section {
+                margin-bottom: 24px;
+            }
+            
             .form-section-title {
                 font-size: 16px;
+                margin-bottom: 16px;
+                padding-bottom: 10px;
             }
             
             .amenities-grid {
                 grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .amenity-item {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .amenity-icon {
+                font-size: 18px;
             }
             
             .header-actions {
@@ -1472,6 +1549,29 @@
                 text-align: center;
                 justify-content: center;
             }
+            
+            .image-upload-area {
+                padding: 30px 20px;
+            }
+            
+            .upload-icon {
+                font-size: 40px;
+            }
+            
+            .upload-text {
+                font-size: 14px;
+            }
+            
+            .image-preview-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            
+            /* Excel Import responsive */
+            #importTab .form-card {
+                max-width: 100%;
+                padding: 16px;
+            }
         }
         
         /* Responsive - Small Mobile */
@@ -1480,16 +1580,59 @@
                 padding: 12px;
             }
             
+            .page-header {
+                margin-bottom: 16px;
+            }
+            
             .page-header h1 {
                 font-size: 18px;
             }
             
+            .page-header p {
+                font-size: 13px;
+            }
+            
             .form-card {
-                padding: 16px;
+                padding: 14px;
+                border-radius: 14px;
+            }
+            
+            .form-section-title {
+                font-size: 15px;
+                gap: 8px;
+            }
+            
+            .form-section-title span {
+                font-size: 18px;
+            }
+            
+            .form-group label {
+                font-size: 13px;
+            }
+            
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 11px 12px;
+                border-radius: 10px;
             }
             
             .amenities-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .amenity-item {
+                padding: 12px 14px;
+            }
+            
+            .tabs {
+                gap: 6px;
+            }
+            
+            .tab {
+                padding: 10px 12px;
+                font-size: 13px;
+                border-radius: 10px;
             }
             
             .property-actions {
@@ -1504,6 +1647,54 @@
             .modal-content {
                 margin: 10px;
                 max-height: 95vh;
+            }
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 15px;
+            }
+            
+            .image-upload-area {
+                padding: 24px 16px;
+                border-radius: 12px;
+            }
+            
+            .upload-icon {
+                font-size: 36px;
+                margin-bottom: 10px;
+            }
+            
+            .upload-text {
+                font-size: 13px;
+            }
+            
+            .upload-hint {
+                font-size: 12px;
+            }
+            
+            .image-preview-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            
+            /* Excel Import small mobile */
+            #excelDropZone {
+                padding: 24px 16px !important;
+            }
+            
+            #excelDropZone h4 {
+                font-size: 14px !important;
+            }
+        }
+        
+        /* Fix touch scrolling */
+        @media (hover: none) and (pointer: coarse) {
+            .tabs {
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+            .tabs::-webkit-scrollbar {
+                display: none;
             }
         }
         
@@ -1750,6 +1941,7 @@
         <div class="tabs">
             <button class="tab active" onclick="switchTab('add')">إضافة عقار</button>
             <button class="tab" onclick="switchTab('list')">عقاراتي</button>
+            <button class="tab" onclick="switchTab('import')">📥 استيراد Excel</button>
         </div>
 
         <!-- Add Property Tab -->
@@ -2114,6 +2306,84 @@
                 </button>
             </div>
         </div>
+
+        <!-- Import Excel Tab -->
+        <div class="tab-content" id="importTab">
+            <div class="form-card" style="max-width: 800px; margin: 0 auto;">
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <span>📥</span> استيراد العقارات من Excel
+                    </h3>
+                    <p style="color: var(--text-muted); margin-bottom: 24px;">
+                        قم برفع ملف Excel يحتوي على بيانات العقارات لإضافتها بشكل سريع
+                    </p>
+                    
+                    <!-- Download Template -->
+                    <div style="background: rgba(107, 184, 201, 0.1); border: 1px dashed var(--cyan); border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center;">
+                        <div style="font-size: 40px; margin-bottom: 12px;">📄</div>
+                        <h4 style="margin-bottom: 8px;">تحميل نموذج Excel</h4>
+                        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+                            قم بتحميل النموذج وتعبئته ببيانات العقارات ثم ارفعه هنا
+                        </p>
+                        <a href="/api/v1/properties/excel/template/" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            تحميل النموذج
+                        </a>
+                    </div>
+                    
+                    <!-- Upload Area -->
+                    <div id="excelDropZone" style="background: var(--card-bg); border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                        <div style="font-size: 50px; margin-bottom: 16px;">📊</div>
+                        <h4 style="margin-bottom: 8px;">اسحب ملف Excel هنا أو اضغط للاختيار</h4>
+                        <p style="color: var(--text-muted); font-size: 14px;">
+                            يدعم ملفات .xlsx و .xls
+                        </p>
+                        <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display: none;">
+                    </div>
+                    
+                    <!-- Selected File -->
+                    <div id="selectedFileInfo" style="display: none; margin-top: 16px; padding: 16px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 24px;">📄</span>
+                                <div>
+                                    <div id="selectedFileName" style="font-weight: 600;"></div>
+                                    <div id="selectedFileSize" style="font-size: 12px; color: var(--text-muted);"></div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="clearExcelFile()" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 20px;">✕</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Import Button -->
+                    <div style="margin-top: 24px; text-align: center;">
+                        <button type="button" id="importExcelBtn" class="btn btn-primary" onclick="importExcelFile()" disabled style="padding: 14px 32px; font-size: 16px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            استيراد العقارات
+                        </button>
+                    </div>
+                    
+                    <!-- Import Progress -->
+                    <div id="importProgress" style="display: none; margin-top: 24px;">
+                        <div style="background: var(--border); border-radius: 8px; height: 8px; overflow: hidden;">
+                            <div id="importProgressBar" style="background: linear-gradient(90deg, var(--blue-mid), var(--cyan)); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <p id="importStatus" style="text-align: center; margin-top: 8px; color: var(--text-muted);">جاري الاستيراد...</p>
+                    </div>
+                    
+                    <!-- Import Results -->
+                    <div id="importResults" style="display: none; margin-top: 24px;"></div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Publish Modal -->
@@ -2417,6 +2687,22 @@
     <script>
         // Django handles authentication
         
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
         // تحميل العقارات من قاعدة البيانات
         let properties = [];
         const permissions = { name: 'مستخدم', color: '#6bb8c9', badge: '👤' };
@@ -2446,11 +2732,208 @@
             if (tab === 'add') {
                 document.querySelectorAll('.tab')[0].classList.add('active');
                 document.getElementById('addTab').classList.add('active');
+            } else if (tab === 'import') {
+                document.querySelectorAll('.tab')[2].classList.add('active');
+                document.getElementById('importTab').classList.add('active');
             } else {
                 document.querySelectorAll('.tab')[1].classList.add('active');
                 document.getElementById('listTab').classList.add('active');
                 renderProperties();
             }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // Excel Import Functions
+        // ═══════════════════════════════════════════════════════════
+        
+        let selectedExcelFile = null;
+        
+        // Setup Excel drop zone
+        const excelDropZone = document.getElementById('excelDropZone');
+        const excelFileInput = document.getElementById('excelFileInput');
+        
+        if (excelDropZone) {
+            excelDropZone.addEventListener('click', () => excelFileInput.click());
+            
+            excelDropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                excelDropZone.style.borderColor = 'var(--cyan)';
+                excelDropZone.style.background = 'rgba(107, 184, 201, 0.1)';
+            });
+            
+            excelDropZone.addEventListener('dragleave', () => {
+                excelDropZone.style.borderColor = 'var(--border)';
+                excelDropZone.style.background = 'var(--card-bg)';
+            });
+            
+            excelDropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                excelDropZone.style.borderColor = 'var(--border)';
+                excelDropZone.style.background = 'var(--card-bg)';
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleExcelFile(files[0]);
+                }
+            });
+        }
+        
+        if (excelFileInput) {
+            excelFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleExcelFile(e.target.files[0]);
+                }
+            });
+        }
+        
+        function handleExcelFile(file) {
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                alert('يجب أن يكون الملف بصيغة Excel (.xlsx أو .xls)');
+                return;
+            }
+            
+            selectedExcelFile = file;
+            
+            document.getElementById('selectedFileName').textContent = file.name;
+            document.getElementById('selectedFileSize').textContent = formatFileSize(file.size);
+            document.getElementById('selectedFileInfo').style.display = 'block';
+            document.getElementById('excelDropZone').style.display = 'none';
+            document.getElementById('importExcelBtn').disabled = false;
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        function clearExcelFile() {
+            selectedExcelFile = null;
+            document.getElementById('selectedFileInfo').style.display = 'none';
+            document.getElementById('excelDropZone').style.display = 'block';
+            document.getElementById('importExcelBtn').disabled = true;
+            document.getElementById('excelFileInput').value = '';
+            document.getElementById('importResults').style.display = 'none';
+        }
+        
+        async function importExcelFile() {
+            if (!selectedExcelFile) return;
+            
+            const btn = document.getElementById('importExcelBtn');
+            const progress = document.getElementById('importProgress');
+            const progressBar = document.getElementById('importProgressBar');
+            const status = document.getElementById('importStatus');
+            const results = document.getElementById('importResults');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> جاري الاستيراد...';
+            progress.style.display = 'block';
+            results.style.display = 'none';
+            
+            // Simulate progress
+            let percent = 0;
+            const progressInterval = setInterval(() => {
+                percent += 10;
+                if (percent <= 90) {
+                    progressBar.style.width = percent + '%';
+                }
+            }, 200);
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedExcelFile);
+                
+                const response = await fetch('/api/v1/properties/excel/import/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData
+                });
+                
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    status.textContent = '✅ تم الاستيراد بنجاح!';
+                    status.style.color = '#22c55e';
+                    
+                    let resultHtml = `
+                        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
+                            <div style="font-size: 50px; margin-bottom: 12px;">🎉</div>
+                            <h4 style="color: #22c55e; margin-bottom: 8px;">${data.message}</h4>
+                            <p style="color: var(--text-muted);">تم إضافة ${data.imported} عقار إلى قائمتك</p>
+                    `;
+                    
+                    if (data.errors && data.errors.length > 0) {
+                        resultHtml += `
+                            <div style="margin-top: 16px; text-align: right; background: rgba(239, 68, 68, 0.1); border-radius: 8px; padding: 12px;">
+                                <h5 style="color: #ef4444; margin-bottom: 8px;">⚠️ بعض الأخطاء:</h5>
+                                <ul style="font-size: 13px; color: var(--text-muted); list-style: none; padding: 0;">
+                                    ${data.errors.slice(0, 5).map(e => `<li style="margin-bottom: 4px;">• ${e}</li>`).join('')}
+                                    ${data.errors.length > 5 ? `<li>... و ${data.errors.length - 5} أخطاء أخرى</li>` : ''}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    resultHtml += `
+                            <button class="btn btn-primary" onclick="switchTab('list'); loadProperties();" style="margin-top: 16px;">
+                                عرض العقارات
+                            </button>
+                        </div>
+                    `;
+                    
+                    results.innerHTML = resultHtml;
+                    results.style.display = 'block';
+                    
+                    // Reload properties
+                    loadProperties();
+                } else {
+                    status.textContent = '❌ فشل الاستيراد';
+                    status.style.color = '#ef4444';
+                    
+                    results.innerHTML = `
+                        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 20px;">
+                            <h4 style="color: #ef4444; margin-bottom: 12px;">❌ ${data.error || 'فشل الاستيراد'}</h4>
+                            ${data.errors ? `
+                                <ul style="font-size: 13px; color: var(--text-muted); list-style: none; padding: 0;">
+                                    ${data.errors.map(e => `<li style="margin-bottom: 4px;">• ${e}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+                        </div>
+                    `;
+                    results.style.display = 'block';
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                status.textContent = '❌ حدث خطأ';
+                status.style.color = '#ef4444';
+                results.innerHTML = `
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
+                        <h4 style="color: #ef4444;">حدث خطأ أثناء الاستيراد</h4>
+                        <p style="color: var(--text-muted);">${error.message}</p>
+                    </div>
+                `;
+                results.style.display = 'block';
+            }
+            
+            setTimeout(() => {
+                progress.style.display = 'none';
+                progressBar.style.width = '0%';
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    استيراد العقارات
+                `;
+                clearExcelFile();
+            }, 2000);
         }
 
         // Amenity toggle

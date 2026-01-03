@@ -943,3 +943,84 @@ def get_property_appointments(request, property_id):
         return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# ═══════════════════════════════════════════════════════════
+# استيراد العقارات من Excel
+# ═══════════════════════════════════════════════════════════
+
+@login_required
+def download_excel_template(request):
+    """
+    تحميل نموذج Excel للعقارات
+    GET /api/properties/excel/template/
+    """
+    from django.http import HttpResponse
+    from services.excel_import_service import generate_template
+    
+    try:
+        output = generate_template()
+        
+        response = HttpResponse(
+            output.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="property_template.xlsx"'
+        
+        return response
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@csrf_exempt
+def import_excel_properties(request):
+    """
+    استيراد العقارات من ملف Excel
+    POST /api/properties/excel/import/
+    """
+    from services.excel_import_service import parse_excel_file, import_properties
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    if 'file' not in request.FILES:
+        return JsonResponse({'success': False, 'error': 'الملف مطلوب'}, status=400)
+    
+    excel_file = request.FILES['file']
+    
+    # التحقق من نوع الملف
+    if not excel_file.name.endswith(('.xlsx', '.xls')):
+        return JsonResponse({
+            'success': False, 
+            'error': 'يجب أن يكون الملف بصيغة Excel (.xlsx أو .xls)'
+        }, status=400)
+    
+    try:
+        agent = request.user.agent_profile
+    except:
+        return JsonResponse({'success': False, 'error': 'لا يوجد حساب مسوق'}, status=404)
+    
+    # قراءة الملف
+    properties_data, parse_errors = parse_excel_file(excel_file)
+    
+    if parse_errors and not properties_data:
+        return JsonResponse({
+            'success': False,
+            'error': 'أخطاء في قراءة الملف',
+            'errors': parse_errors
+        }, status=400)
+    
+    # استيراد العقارات
+    imported_count, import_errors = import_properties(agent, properties_data)
+    
+    all_errors = parse_errors + import_errors
+    
+    return JsonResponse({
+        'success': True,
+        'imported': imported_count,
+        'total_in_file': len(properties_data) + len(parse_errors),
+        'errors': all_errors if all_errors else None,
+        'message': f'تم استيراد {imported_count} عقار بنجاح' + (f' مع {len(all_errors)} أخطاء' if all_errors else '')
+    })

@@ -41,8 +41,16 @@ def whatsapp_status(request):
         status_result = whatsapp_service.get_instance_status(instance.instance_name)
         
         if status_result.get('success'):
-            state = status_result.get('data', {}).get('state', 'disconnected')
+            data = status_result.get('data', {})
+            # Evolution API v2.x يرجع state مباشرة أو في instance
+            state = data.get('state') or data.get('instance', {}).get('state', 'disconnected')
             if state == 'open':
+                # إذا تم الاتصال للتو، تأكد من تسجيل webhook
+                if instance.status != 'connected':
+                    webhook_url = instance.get_webhook_url()
+                    whatsapp_service.set_webhook(instance.instance_name, webhook_url)
+                    logger.info(f"✅ Webhook registered on connection: {instance.instance_name}")
+                
                 instance.status = 'connected'
                 instance.connected_at = instance.connected_at or timezone.now()
             elif state == 'connecting':
@@ -51,7 +59,7 @@ def whatsapp_status(request):
                 instance.status = 'disconnected'
             instance.save()
         
-        return JsonResponse({
+        response_data = {
             'success': True,
             'connected': instance.status == 'connected',
             'status': instance.status,
@@ -61,7 +69,19 @@ def whatsapp_status(request):
             'messages_sent': instance.messages_sent,
             'auto_reply': instance.auto_reply,
             'service_available': True
-        })
+        }
+        
+        # إضافة QR Code إذا كانت الحالة connecting أو qr_ready
+        if instance.status in ['connecting', 'qr_ready']:
+            # محاولة جلب QR Code جديد
+            qr_result = whatsapp_service.get_qr_code(instance.instance_name)
+            if qr_result.get('success') and qr_result.get('base64'):
+                response_data['qr_code'] = qr_result.get('base64')
+                instance.qr_code = qr_result.get('base64')
+                instance.status = 'qr_ready'
+                instance.save(update_fields=['qr_code', 'status'])
+        
+        return JsonResponse(response_data)
     except WhatsAppInstance.DoesNotExist:
         return JsonResponse({
             'success': True,
@@ -123,10 +143,21 @@ def whatsapp_connect(request):
         whatsapp_service.delete_instance(existing_instance.instance_name)
         existing_instance.delete()
     
-    # الخطوة 1: إنشاء Instance جديد في Evolution API
-    logger.info(f"Creating WhatsApp instance: {instance_name} for user: {user_name}")
+    # الخطوة 1: إنشاء Instance جديد في Evolution API مع Webhook
+    # استخدام host.docker.internal إذا كان Evolution API يعمل في Docker محلياً
+    evolution_url = os.getenv('EVOLUTION_API_URL', '')
+    if 'localhost' in evolution_url or '127.0.0.1' in evolution_url:
+        # Evolution API في Docker - استخدم host.docker.internal للوصول للـ host
+        webhook_url = f"http://host.docker.internal:8000/webhooks/whatsapp/{instance_name}/"
+    else:
+        # Evolution API على سيرفر خارجي
+        site_url = os.getenv('SITE_URL', 'https://inify.ai')
+        webhook_url = f"{site_url}/webhooks/whatsapp/{instance_name}/"
     
-    create_result = whatsapp_service.create_instance(instance_name)
+    logger.info(f"Creating WhatsApp instance: {instance_name} for user: {user_name}")
+    logger.info(f"Webhook URL: {webhook_url}")
+    
+    create_result = whatsapp_service.create_instance(instance_name, webhook_url=webhook_url)
     
     if not create_result.get('success'):
         error_msg = create_result.get('error', 'فشل إنشاء الاتصال')
@@ -135,11 +166,9 @@ def whatsapp_connect(request):
     
     logger.info(f"Instance created in Evolution API: {instance_name}")
     
-    # الخطوة 2: تسجيل Webhook لاستقبال الرسائل
-    site_url = os.getenv('SITE_URL', 'http://localhost:8000')
-    webhook_url = f"{site_url}/webhooks/whatsapp/{instance_name}/"
+    # الخطوة 2: تسجيل Webhook بشكل منفصل
     webhook_result = whatsapp_service.set_webhook(instance_name, webhook_url)
-    logger.info(f"Webhook registration: {webhook_result.get('success')}")
+    logger.info(f"Webhook registration result: {webhook_result.get('success')}")
     
     # الخطوة 3: حفظ Instance في قاعدة البيانات
     instance = WhatsAppInstance.objects.create(
@@ -203,7 +232,9 @@ def whatsapp_get_qr(request):
     # التحقق من حالة الاتصال (ربما تم المسح)
     status_result = whatsapp_service.get_instance_status(instance.instance_name)
     if status_result.get('success'):
-        state = status_result.get('data', {}).get('instance', {}).get('state', '')
+        data = status_result.get('data', {})
+        # Evolution API v2.x يرجع state مباشرة أو في instance
+        state = data.get('state') or data.get('instance', {}).get('state', '')
         if state == 'open':
             instance.status = 'connected'
             instance.connected_at = timezone.now()
@@ -577,7 +608,7 @@ def _build_properties_context(properties):
         lines.append(f"""
 🏠 {p.title}
 • النوع: {p.get_property_type_display() if hasattr(p, 'get_property_type_display') else p.property_type}
-• الموقع: {p.city} - {p.district or ''}
+• الموقع: {p.city} - {p.neighborhood or ''}
 • السعر: {p.price:,.0f} ريال
 • الغرف: {p.bedrooms} | الحمامات: {p.bathrooms}
 • المساحة: {p.area or 'غير محدد'} م²

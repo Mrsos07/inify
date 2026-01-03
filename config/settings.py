@@ -16,7 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security settings
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', ')dlq-w668w=ob91id_hng)*cd1%z)@$u1dng^c+v2zj!=z&y_+xk7m9p2q')
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'inify.ai,www.inify.ai,.onrender.com,localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'inify.ai,www.inify.ai,.onrender.com,localhost,127.0.0.1,host.docker.internal').split(',')
 
 # 🔒 Security Headers (Production)
 if not DEBUG:

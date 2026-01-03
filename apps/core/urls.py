@@ -77,7 +77,4 @@ urlpatterns = [
     path('api/whatsapp/settings/', whatsapp_views.whatsapp_settings, name='whatsapp-settings'),
     path('api/whatsapp/send/', whatsapp_views.whatsapp_send_message, name='whatsapp-send'),
     path('api/whatsapp/check/', whatsapp_views.whatsapp_check_connection, name='whatsapp-check'),
-    
-    # WhatsApp Webhook (استقبال الرسائل من Evolution API)
-    path('webhooks/whatsapp/<str:instance_name>/', whatsapp_views.whatsapp_webhook, name='whatsapp-webhook'),
 ]

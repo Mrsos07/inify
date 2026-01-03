@@ -22,10 +22,27 @@ logger = logging.getLogger(__name__)
 class WhatsAppWebhookView(View):
     """Webhook لاستقبال رسائل واتساب من Evolution API"""
     
+    def get(self, request, instance_name):
+        """التحقق من أن الـ webhook يعمل"""
+        logger.info(f"🔔 WhatsApp Webhook GET check for {instance_name}")
+        return JsonResponse({'status': 'ok', 'instance': instance_name})
+    
     def post(self, request, instance_name):
         """معالجة رسائل واتساب الواردة"""
         try:
             from apps.agents.models import WhatsAppInstance, Agent
+            
+            # تسجيل كل webhook وارد للتشخيص
+            try:
+                raw_body = request.body.decode('utf-8')
+                # حفظ البيانات في ملف للتشخيص
+                import os
+                log_path = os.path.join(os.path.dirname(__file__), '../../webhook_debug.log')
+                with open(log_path, 'a', encoding='utf-8') as f:
+                    f.write(f"\n{'='*50}\n{raw_body}\n")
+                print(f"[WEBHOOK] {instance_name}: {raw_body[:500]}")
+            except Exception as log_err:
+                print(f"Error logging webhook: {log_err}")
             
             # التحقق من الـ instance
             try:
@@ -39,12 +56,18 @@ class WhatsAppWebhookView(View):
             
             # تحليل البيانات الواردة
             webhook_data = json.loads(request.body)
+            event_name = webhook_data.get('event')
+            logger.info(f"Webhook event: {event_name}")
+            logger.info(f"Webhook keys: {list(webhook_data.keys())}")
+            
             parsed = whatsapp_service.parse_webhook_message(webhook_data)
             
             if not parsed:
+                logger.warning(f"Webhook ignored - Event: {event_name}, Data: {str(webhook_data)[:500]}")
                 return JsonResponse({'status': 'ignored'})
             
             event_type = parsed.get('event')
+            logger.info(f"📋 Parsed event type: {event_type}")
             
             # ═══════════════════════════════════════════════════════════
             # معالجة أحداث الاتصال
@@ -71,6 +94,21 @@ class WhatsAppWebhookView(View):
                 wa_instance.save()
                 logger.info(f"WhatsApp QR code updated: {instance_name}")
                 return JsonResponse({'status': 'qr_updated'})
+            
+            # ═══════════════════════════════════════════════════════════
+            # معالجة أحداث الـ Contacts - لالتقاط أرقام الهاتف
+            # ═══════════════════════════════════════════════════════════
+            elif event_type == 'contacts':
+                # حفظ mapping بين LID ورقم الهاتف
+                contacts_data = parsed.get('contacts', [])
+                for contact in contacts_data:
+                    remote_jid = contact.get('remoteJid', '')
+                    # إذا كان رقم هاتف حقيقي، نحفظه في الـ cache
+                    if '@s.whatsapp.net' in remote_jid and '@lid' not in remote_jid:
+                        phone = remote_jid.replace('@s.whatsapp.net', '')
+                        push_name = contact.get('pushName', '')
+                        print(f"[CONTACTS] Captured phone: {phone}, name: {push_name}")
+                return JsonResponse({'status': 'contacts_processed'})
             
             # ═══════════════════════════════════════════════════════════
             # معالجة الرسائل الواردة
@@ -106,24 +144,31 @@ class WhatsAppWebhookView(View):
                 
                 # إرسال الرد
                 if response_text:
+                    print(f"[REPLY] Sending to phone: {phone}, instance: {instance_name}")
+                    print(f"[REPLY] Response: {response_text[:100]}...")
+                    
                     result = whatsapp_service.send_text_message(
                         instance_name=instance_name,
                         phone_number=phone,
                         message=response_text
                     )
                     
+                    print(f"[REPLY] Result: {result}")
+                    
                     if result.get('success'):
                         wa_instance.increment_sent()
-                        logger.info(f"✅ WhatsApp reply sent to {phone}")
+                        print(f"[REPLY] ✅ Success to {phone}")
                     else:
-                        logger.error(f"❌ Failed to send WhatsApp reply: {result.get('error')}")
+                        print(f"[REPLY] ❌ Failed: {result.get('error')}")
                 
                 return JsonResponse({'status': 'processed', 'replied': bool(response_text)})
             
             return JsonResponse({'status': 'unknown_event'})
             
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except json.JSONDecodeError as je:
+            logger.error(f"WhatsApp webhook JSON error: {je}")
+            logger.error(f"Raw body: {request.body[:500]}")
+            return JsonResponse({'error': 'Invalid JSON', 'details': str(je)}, status=400)
         except Exception as e:
             logger.error(f"WhatsApp webhook error: {e}", exc_info=True)
             return JsonResponse({'error': str(e)}, status=500)

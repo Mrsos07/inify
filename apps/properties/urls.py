@@ -11,7 +11,8 @@ from .views import (
     delete_property_image, delete_property_video,
     list_properties, save_property_json, get_agent_properties,
     get_property_viewing_calendar, book_property_viewing,
-    manage_viewing_slots, get_property_appointments
+    manage_viewing_slots, get_property_appointments,
+    download_excel_template, import_excel_properties
 )
 
 router = DefaultRouter()
@@ -37,6 +38,10 @@ urlpatterns = [
     path('<uuid:property_id>/book-viewing/', book_property_viewing, name='book-property-viewing'),
     path('<uuid:property_id>/viewing-slots/', manage_viewing_slots, name='manage-viewing-slots'),
     path('<uuid:property_id>/appointments/', get_property_appointments, name='property-appointments'),
+    
+    # Excel Import/Export
+    path('excel/template/', download_excel_template, name='excel-template'),
+    path('excel/import/', import_excel_properties, name='excel-import'),
     
     # REST API
     path('', include(router.urls)),

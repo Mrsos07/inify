@@ -195,10 +195,11 @@
             text-decoration: none;
         }
 
+        /* Main Content - متوافق مع السايد بار */
         .main-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px;
+            margin-right: 260px;
+            padding: 32px;
+            min-height: 100vh;
         }
 
         .page-header {
@@ -1131,6 +1132,17 @@
             background: #0b141a;
         }
         
+        /* Responsive - Tablet */
+        @media (max-width: 992px) {
+            .main-content {
+                margin-right: 0;
+                padding: 20px;
+            }
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* Responsive - Mobile */
         @media (max-width: 768px) {
             .header {
@@ -1142,7 +1154,9 @@
             }
             
             .main-content {
+                margin-right: 0;
                 padding: 16px;
+                padding-bottom: 80px;
             }
             
             .page-header {
@@ -1159,6 +1173,11 @@
                 grid-template-columns: 1fr;
             }
             
+            .settings-section {
+                padding: 20px;
+                border-radius: 16px;
+            }
+            
             .settings-card {
                 padding: 20px;
             }
@@ -1170,6 +1189,20 @@
             .btn {
                 width: 100%;
                 justify-content: center;
+            }
+            
+            .section-title {
+                font-size: 16px;
+            }
+            
+            .form-group label {
+                font-size: 13px;
+            }
+            
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                font-size: 16px;
             }
         }
         
@@ -1184,6 +1217,20 @@
             
             .main-content {
                 padding: 12px;
+                padding-bottom: 80px;
+            }
+            
+            .page-header h1 {
+                font-size: 18px;
+            }
+            
+            .settings-section {
+                padding: 16px;
+                border-radius: 14px;
+            }
+            
+            .section-title {
+                font-size: 15px;
             }
             
             .page-header h1 {
@@ -1448,7 +1495,7 @@
                     <button class="tab" onclick="switchTab('platforms')">ربط المنصات</button>
                     <button class="tab" onclick="switchTab('context')">السياق والمعلومات</button>
                     <button class="tab" onclick="switchTab('appearance')">المظهر</button>
-                    <button class="tab" onclick="switchTab('whatsapp')">واتساب بزنس</button>
+                    <button class="tab" onclick="switchTab('whatsapp')">ربط الواتساب</button>
                 </div>
 
                 <!-- General Settings -->
@@ -1868,8 +1915,22 @@
                             <div id="waConnectedSection" style="display: none;">
                                 <div style="font-size: 60px; margin-bottom: 15px;">✅</div>
                                 <h4 style="color: #22c55e; margin-bottom: 10px;">الواتساب متصل ويعمل!</h4>
-                                <p style="color: var(--text-muted); margin-bottom: 20px;">الوكيل الذكي جاهز للرد على عملائك</p>
-                                <div style="display: flex; gap: 12px; justify-content: center;">
+                                <p style="color: var(--text-muted); margin-bottom: 8px;">الوكيل الذكي جاهز للرد على عملائك</p>
+                                
+                                <!-- إحصائيات -->
+                                <div id="waStats" style="display: flex; gap: 20px; justify-content: center; margin: 20px 0; padding: 15px; background: rgba(34,197,94,0.1); border-radius: 12px; border: 1px solid rgba(34,197,94,0.2);">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 24px; font-weight: bold; color: #22c55e;" id="waMsgReceived">0</div>
+                                        <div style="font-size: 12px; color: var(--text-muted);">رسائل مستلمة</div>
+                                    </div>
+                                    <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 24px; font-weight: bold; color: var(--cyan);" id="waMsgSent">0</div>
+                                        <div style="font-size: 12px; color: var(--text-muted);">ردود مرسلة</div>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                                     <button onclick="startWAConnect()" class="btn btn-secondary" style="padding: 10px 20px;">
                                         🔄 تغيير الرقم
                                     </button>
@@ -1882,7 +1943,7 @@
                     </div>
 
                     <div class="settings-section">
-                        <h3 class="section-title">💡 مميزات واتساب بزنس</h3>
+                        <h3 class="section-title">💡 مميزات ربط الواتساب</h3>
                         <div class="features-grid">
                             <div class="feature-item-box">
                                 <span class="feature-icon">🤖</span>
@@ -2649,6 +2710,14 @@
                     statusBadge.classList.add('connected');
                     statusCard.classList.add('connected');
                     showWAConnected();
+                    
+                    // تحديث الإحصائيات
+                    if (data.messages_received !== undefined) {
+                        document.getElementById('waMsgReceived').textContent = data.messages_received || 0;
+                    }
+                    if (data.messages_sent !== undefined) {
+                        document.getElementById('waMsgSent').textContent = data.messages_sent || 0;
+                    }
                 } else {
                     statusText.textContent = 'غير متصل - اربط رقمك للبدء';
                     statusBadge.textContent = 'غير متصل';
