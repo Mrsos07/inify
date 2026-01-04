@@ -54,10 +54,41 @@ class WhatsAppService:
     # إدارة الـ Instance
     # ═══════════════════════════════════════════════════════════
     
-    def create_instance(self, instance_name: str, webhook_url: str = None) -> dict:
+    def create_instance(self, instance_name: str, webhook_url: str = None, force_recreate: bool = False) -> dict:
         """
-        إنشاء instance جديد للواتساب - Evolution API v2.2.x
+        إنشاء instance جديد للواتساب - Evolution API v2.3.7
+        
+        Args:
+            instance_name: اسم الـ instance
+            webhook_url: رابط الـ webhook (اختياري)
+            force_recreate: إذا كان True، يحذف الـ instance الموجود ويعيد إنشاءه
         """
+        # التحقق من وجود الـ instance
+        status_result = self.get_instance_status(instance_name)
+        instance_exists = status_result.get('success', False)
+        
+        if instance_exists:
+            if force_recreate:
+                logger.info(f"Instance {instance_name} exists, deleting and recreating...")
+                delete_result = self.delete_instance(instance_name)
+                if not delete_result.get('success'):
+                    logger.warning(f"Failed to delete existing instance: {delete_result.get('error')}")
+                # انتظر قليلاً بعد الحذف
+                import time
+                time.sleep(2)
+            else:
+                logger.info(f"Instance {instance_name} already exists, using existing instance")
+                # تحديث الـ webhook إذا تم توفيره
+                if webhook_url:
+                    self.set_webhook(instance_name, webhook_url)
+                return {
+                    'success': True,
+                    'message': 'Instance already exists',
+                    'existing': True,
+                    'data': status_result.get('data', {})
+                }
+        
+        # إنشاء instance جديد
         data = {
             'instanceName': instance_name,
             'integration': 'WHATSAPP-BAILEYS',
@@ -68,11 +99,22 @@ class WhatsAppService:
         result = self._make_request('POST', 'instance/create', data)
         
         if result.get('success'):
-            logger.info(f"WhatsApp instance created: {instance_name}")
+            logger.info(f"✅ WhatsApp instance created: {instance_name}")
             if webhook_url:
                 self.set_webhook(instance_name, webhook_url)
         else:
-            logger.error(f"Failed to create WhatsApp instance: {result.get('error')}")
+            error_msg = result.get('error', '')
+            # التعامل مع خطأ "already in use"
+            if 'already in use' in str(error_msg).lower():
+                logger.warning(f"Instance name already in use, attempting to use existing instance")
+                if webhook_url:
+                    self.set_webhook(instance_name, webhook_url)
+                return {
+                    'success': True,
+                    'message': 'Using existing instance',
+                    'existing': True
+                }
+            logger.error(f"❌ Failed to create WhatsApp instance: {error_msg}")
         
         return result
     
@@ -115,7 +157,7 @@ class WhatsAppService:
     
     def set_webhook(self, instance_name: str, webhook_url: str) -> dict:
         """
-        تسجيل Webhook لاستقبال الرسائل - Evolution API v2.2.x
+        تسجيل Webhook لاستقبال الرسائل - Evolution API v2.3.7
         تفعيل جميع الأحداث المهمة للرد على المرسل الصحيح
         """
         data = {

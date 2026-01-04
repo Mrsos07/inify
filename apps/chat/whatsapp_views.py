@@ -12,6 +12,7 @@ from django.utils.decorators import method_decorator
 from django.utils import timezone
 
 from services.whatsapp_service import whatsapp_service
+from services.whatsapp_session_manager import whatsapp_session_manager
 from services.ai_service import NewraAIService
 from .models import Conversation, Message
 
@@ -74,16 +75,28 @@ class WhatsAppWebhookView(View):
             # ═══════════════════════════════════════════════════════════
             if event_type == 'connection':
                 state = parsed.get('state')
+                status_reason = parsed.get('raw', {}).get('statusReason')
+                
+                logger.info(f"Connection update: {instance_name} -> state={state}, statusReason={status_reason}")
+                
                 if state == 'open':
                     wa_instance.status = 'connected'
                     wa_instance.connected_at = timezone.now()
+                    logger.info(f"✅ WhatsApp connected successfully: {instance_name}")
                 elif state == 'close':
-                    wa_instance.status = 'disconnected'
+                    # التحقق من سبب الإغلاق
+                    if status_reason == 401:
+                        logger.warning(f"⚠️ Connection closed with 401 - Auth issue: {instance_name}")
+                        wa_instance.status = 'qr_ready'  # يحتاج QR جديد
+                    else:
+                        wa_instance.status = 'disconnected'
+                        logger.info(f"❌ WhatsApp disconnected: {instance_name}, reason: {status_reason}")
                 elif state == 'connecting':
                     wa_instance.status = 'connecting'
+                    logger.info(f"🔄 WhatsApp connecting: {instance_name}")
+                
                 wa_instance.save()
-                logger.info(f"WhatsApp connection update: {instance_name} -> {state}")
-                return JsonResponse({'status': 'connection_updated'})
+                return JsonResponse({'status': 'connection_updated', 'state': state})
             
             # ═══════════════════════════════════════════════════════════
             # معالجة QR Code
@@ -111,7 +124,7 @@ class WhatsAppWebhookView(View):
                 return JsonResponse({'status': 'contacts_processed'})
             
             # ═══════════════════════════════════════════════════════════
-            # معالجة الرسائل الواردة
+            # معالجة الرسائل الواردة - مع Session Management
             # ═══════════════════════════════════════════════════════════
             elif event_type == 'message':
                 # تجاهل رسائل المجموعات
@@ -134,34 +147,63 @@ class WhatsAppWebhookView(View):
                 if not wa_instance.auto_reply:
                     return JsonResponse({'status': 'auto_reply_disabled'})
                 
-                # معالجة الرسالة والرد
-                response_text = self._process_message(
-                    wa_instance=wa_instance,
-                    phone=phone,
-                    sender_name=sender_name,
-                    message_text=message_text
-                )
+                # ═══════════════════════════════════════════════════════════
+                # إدارة الجلسة - منع التداخل بين المحادثات
+                # ═══════════════════════════════════════════════════════════
                 
-                # إرسال الرد
-                if response_text:
-                    print(f"[REPLY] Sending to phone: {phone}, instance: {instance_name}")
-                    print(f"[REPLY] Response: {response_text[:100]}...")
-                    
-                    result = whatsapp_service.send_text_message(
+                # محاولة الحصول على قفل المعالجة
+                if not whatsapp_session_manager.acquire_lock(instance_name, phone):
+                    logger.warning(f"⏳ Message from {phone} is already being processed, skipping...")
+                    return JsonResponse({'status': 'processing_locked'})
+                
+                try:
+                    # إنشاء أو تحديث الجلسة
+                    session = whatsapp_session_manager.create_or_get_session(
                         instance_name=instance_name,
-                        phone_number=phone,
-                        message=response_text
+                        phone=phone,
+                        sender_name=sender_name
                     )
                     
-                    print(f"[REPLY] Result: {result}")
+                    logger.info(f"🔄 Session info: msg #{session['message_count']}, conv_id: {session.get('conversation_id')}")
                     
-                    if result.get('success'):
-                        wa_instance.increment_sent()
-                        print(f"[REPLY] ✅ Success to {phone}")
-                    else:
-                        print(f"[REPLY] ❌ Failed: {result.get('error')}")
-                
-                return JsonResponse({'status': 'processed', 'replied': bool(response_text)})
+                    # معالجة الرسالة والرد
+                    response_text = self._process_message(
+                        wa_instance=wa_instance,
+                        phone=phone,
+                        sender_name=sender_name,
+                        message_text=message_text,
+                        session=session
+                    )
+                    
+                    # إرسال الرد
+                    if response_text:
+                        print(f"[REPLY] Sending to phone: {phone}, instance: {instance_name}")
+                        print(f"[REPLY] Response: {response_text[:100]}...")
+                        
+                        result = whatsapp_service.send_text_message(
+                            instance_name=instance_name,
+                            phone_number=phone,
+                            message=response_text
+                        )
+                        
+                        print(f"[REPLY] Result: {result}")
+                        
+                        if result.get('success'):
+                            wa_instance.increment_sent()
+                            print(f"[REPLY] ✅ Success to {phone}")
+                        else:
+                            print(f"[REPLY] ❌ Failed: {result.get('error')}")
+                    
+                    return JsonResponse({
+                        'status': 'processed',
+                        'replied': bool(response_text),
+                        'session_id': session.get('conversation_id'),
+                        'message_number': session['message_count']
+                    })
+                    
+                finally:
+                    # تحرير القفل دائماً
+                    whatsapp_session_manager.release_lock(instance_name, phone)
             
             return JsonResponse({'status': 'unknown_event'})
             
@@ -173,25 +215,62 @@ class WhatsAppWebhookView(View):
             logger.error(f"WhatsApp webhook error: {e}", exc_info=True)
             return JsonResponse({'error': str(e)}, status=500)
     
-    def _process_message(self, wa_instance, phone: str, sender_name: str, message_text: str) -> str:
+    def _process_message(self, wa_instance, phone: str, sender_name: str, 
+                        message_text: str, session: dict) -> str:
         """
-        معالجة الرسالة الواردة وتوليد الرد
+        معالجة الرسالة الواردة وتوليد الرد - مع إدارة الجلسة
         
-        يستخدم نفس منطق الشات بوت المضمن
+        Args:
+            wa_instance: WhatsApp instance
+            phone: رقم الهاتف
+            sender_name: اسم المرسل
+            message_text: نص الرسالة
+            session: معلومات الجلسة من Session Manager
+        
+        Returns:
+            str: نص الرد
         """
         from apps.agents.models import Agent, GlobalSettings
         from apps.properties.models import Property
         
         agent = wa_instance.agent
         
-        # البحث عن محادثة موجودة أو إنشاء جديدة
-        conversation = Conversation.objects.filter(
-            agent=agent,
-            client_phone=phone,
-            source='whatsapp',
-            status='active'
-        ).first()
+        # ═══════════════════════════════════════════════════════════
+        # البحث عن المحادثة باستخدام معلومات الجلسة
+        # ═══════════════════════════════════════════════════════════
+        conversation = None
         
+        # أولاً: محاولة الحصول على المحادثة من الجلسة
+        if session.get('conversation_id'):
+            try:
+                conversation = Conversation.objects.get(
+                    id=session['conversation_id'],
+                    agent=agent,
+                    status='active'
+                )
+                logger.info(f"✅ Found conversation from session: {conversation.id}")
+            except Conversation.DoesNotExist:
+                logger.warning(f"⚠️ Conversation {session['conversation_id']} not found, creating new one")
+        
+        # ثانياً: البحث عن محادثة نشطة بالرقم
+        if not conversation:
+            conversation = Conversation.objects.filter(
+                agent=agent,
+                client_phone=phone,
+                source='whatsapp',
+                status='active'
+            ).first()
+            
+            if conversation:
+                logger.info(f"✅ Found active conversation by phone: {conversation.id}")
+                # ربط الجلسة بالمحادثة
+                whatsapp_session_manager.link_conversation(
+                    instance_name=wa_instance.instance_name,
+                    phone=phone,
+                    conversation_id=str(conversation.id)
+                )
+        
+        # ثالثاً: إنشاء محادثة جديدة
         if not conversation:
             conversation = Conversation.objects.create(
                 agent=agent,
@@ -200,9 +279,23 @@ class WhatsAppWebhookView(View):
                 client_phone=phone,
                 source='whatsapp'
             )
+            logger.info(f"✨ Created new conversation: {conversation.id}")
+            
+            # ربط الجلسة بالمحادثة الجديدة
+            whatsapp_session_manager.link_conversation(
+                instance_name=wa_instance.instance_name,
+                phone=phone,
+                conversation_id=str(conversation.id)
+            )
             
             # إرسال رسالة ترحيب إذا كانت موجودة
             if wa_instance.welcome_message:
+                # حفظ رسالة الترحيب
+                Message.objects.create(
+                    conversation=conversation,
+                    role='assistant',
+                    content=wa_instance.welcome_message
+                )
                 return wa_instance.welcome_message
         
         # حفظ رسالة المستخدم

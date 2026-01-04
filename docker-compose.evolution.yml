@@ -16,7 +16,7 @@ services:
       retries: 5
 
   evolution-api:
-    image: atendai/evolution-api:v2.2.3
+    image: evoapicloud/evolution-api:v2.3.7
     container_name: evolution-api
     restart: unless-stopped
     depends_on:
@@ -33,19 +33,38 @@ services:
       - DATABASE_ENABLED=true
       - DATABASE_PROVIDER=postgresql
       - DATABASE_CONNECTION_URI=postgresql://evolution:evolution123@postgres:5432/evolution
-      - LOG_LEVEL=DEBUG
+      - LOG_LEVEL=ERROR
       - WEBHOOK_GLOBAL_ENABLED=false
       - WEBHOOK_EVENTS_QRCODE_UPDATED=true
       - WEBHOOK_EVENTS_MESSAGES_UPSERT=true
       - WEBHOOK_EVENTS_MESSAGES_UPDATE=true
       - WEBHOOK_EVENTS_SEND_MESSAGE=true
       - WEBHOOK_EVENTS_CONNECTION_UPDATE=true
+      # إعدادات WhatsApp محدثة - حاسمة للاتصال
       - CONFIG_SESSION_PHONE_CLIENT=Evolution
       - CONFIG_SESSION_PHONE_NAME=Chrome
-      - QRCODE_LIMIT=30
+      - CONFIG_SESSION_PHONE_VERSION=2.3000.1031615477
+      # إعدادات الاتصال - حل مشكلة Pre-key timeout
+      - CONNECTION_TIMEOUT=120000
+      - QRCODE_LIMIT=60
+      - QRCODE_COLOR=#198754
+      # تعطيل Pairing Code
+      - MOBILE_PAIRING_ENABLED=false
+      # تحسين الأداء والاستقرار
+      - STORE_MESSAGES=false
+      - STORE_MESSAGE_UP=false
+      - STORE_CONTACTS=false
+      - STORE_CHATS=false
+      # إعدادات Baileys لحل مشاكل التشفير
+      - CACHE_REDIS_ENABLED=false
+      - CACHE_REDIS_URI=
+      - CACHE_LOCAL_ENABLED=true
       # تعطيل استخدام LID
       - WA_BUSINESS_TOKEN_WEBHOOK=
       - PROVIDER_ENABLED=false
+      # إعدادات إضافية للاستقرار
+      - DEL_INSTANCE=false
+      - DEL_TEMP_INSTANCES=false
     volumes:
       - evolution_data:/evolution/instances
 

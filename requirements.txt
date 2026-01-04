@@ -51,6 +51,12 @@ resend>=0.7.0
 python-dateutil>=2.8.2
 pytz>=2024.1
 
+# WebSocket & Real-time Communication
+channels>=4.0.0
+daphne>=4.0.0
+channels-redis>=4.1.0
+django-redis>=5.4.0
+
 # Production Server
 gunicorn>=21.2.0
 uvicorn>=0.27.0

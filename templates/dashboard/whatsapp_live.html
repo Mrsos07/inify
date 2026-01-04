@@ -1,0 +1,466 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}محادثات الواتساب المباشرة{% endblock %}
+
+{% block extra_css %}
+<style>
+    .conversation-list {
+        height: calc(100vh - 200px);
+        overflow-y: auto;
+        border-right: 1px solid #e5e7eb;
+    }
+    
+    .conversation-item {
+        padding: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .conversation-item:hover {
+        background: #f9fafb;
+    }
+    
+    .conversation-item.active {
+        background: #e0f2fe;
+        border-left: 3px solid #0ea5e9;
+    }
+    
+    .chat-container {
+        height: calc(100vh - 200px);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .messages-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        background: #f9fafb;
+    }
+    
+    .message {
+        margin-bottom: 1rem;
+        display: flex;
+    }
+    
+    .message.user {
+        justify-content: flex-start;
+    }
+    
+    .message.assistant {
+        justify-content: flex-end;
+    }
+    
+    .message-bubble {
+        max-width: 70%;
+        padding: 0.75rem 1rem;
+        border-radius: 1rem;
+        word-wrap: break-word;
+    }
+    
+    .message.user .message-bubble {
+        background: white;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .message.assistant .message-bubble {
+        background: #0ea5e9;
+        color: white;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        opacity: 0.7;
+        margin-top: 0.25rem;
+    }
+    
+    .reply-area {
+        padding: 1rem;
+        border-top: 1px solid #e5e7eb;
+        background: white;
+    }
+    
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-left: 0.5rem;
+    }
+    
+    .status-indicator.online {
+        background: #10b981;
+    }
+    
+    .status-indicator.offline {
+        background: #ef4444;
+    }
+    
+    .typing-indicator {
+        display: none;
+        padding: 0.5rem;
+        color: #6b7280;
+        font-style: italic;
+    }
+    
+    .typing-indicator.active {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">💬 محادثات الواتساب المباشرة</h2>
+            <p class="text-muted mb-0">
+                <span class="status-indicator" id="wsStatus"></span>
+                <span id="wsStatusText">جاري الاتصال...</span>
+            </p>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary" onclick="refreshSessions()">
+                <i class="bi bi-arrow-clockwise"></i> تحديث
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- قائمة المحادثات -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">المحادثات النشطة (<span id="activeCount">0</span>)</h6>
+                </div>
+                <div class="conversation-list" id="conversationList">
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-chat-dots fs-1"></i>
+                        <p class="mt-2">لا توجد محادثات نشطة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- منطقة المحادثة -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-white" id="chatHeader">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div id="selectedConversationInfo">
+                            <h6 class="mb-0 text-muted">اختر محادثة للعرض</h6>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="closeConversation()" style="display: none;" id="closeBtn">
+                                <i class="bi bi-x-circle"></i> إنهاء المحادثة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-container">
+                    <!-- منطقة الرسائل -->
+                    <div class="messages-area" id="messagesArea">
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-chat-left-text fs-1"></i>
+                            <p class="mt-2">اختر محادثة لعرض الرسائل</p>
+                        </div>
+                    </div>
+                    
+                    <!-- مؤشر الكتابة -->
+                    <div class="typing-indicator" id="typingIndicator">
+                        <i class="bi bi-three-dots"></i> يكتب...
+                    </div>
+                    
+                    <!-- منطقة الرد -->
+                    <div class="reply-area" id="replyArea" style="display: none;">
+                        <form onsubmit="sendMessage(event)">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="messageInput" 
+                                       placeholder="اكتب رسالتك هنا..." required>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i> إرسال
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let ws = null;
+let currentConversationId = null;
+let agentId = '{{ agent.id }}';
+
+// الاتصال بـ WebSocket
+function connectWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/whatsapp/${agentId}/`;
+    
+    ws = new WebSocket(wsUrl);
+    
+    ws.onopen = function() {
+        console.log('✅ WebSocket connected');
+        updateStatus('online', 'متصل');
+        requestActiveSessions();
+    };
+    
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        handleWebSocketMessage(data);
+    };
+    
+    ws.onerror = function(error) {
+        console.error('❌ WebSocket error:', error);
+        updateStatus('offline', 'خطأ في الاتصال');
+    };
+    
+    ws.onclose = function() {
+        console.log('❌ WebSocket closed');
+        updateStatus('offline', 'غير متصل');
+        
+        // إعادة الاتصال بعد 5 ثواني
+        setTimeout(connectWebSocket, 5000);
+    };
+}
+
+// معالجة رسائل WebSocket
+function handleWebSocketMessage(data) {
+    console.log('📨 Received:', data);
+    
+    switch(data.type) {
+        case 'connection_established':
+            console.log('✅ Connection established');
+            break;
+            
+        case 'active_sessions':
+            displaySessions(data.sessions);
+            break;
+            
+        case 'conversation_details':
+            displayConversation(data.conversation);
+            break;
+            
+        case 'new_message':
+            handleNewMessage(data);
+            break;
+            
+        case 'message_sent':
+            if (data.result.success) {
+                console.log('✅ Message sent successfully');
+            }
+            break;
+            
+        case 'error':
+            console.error('Error:', data.message);
+            alert('حدث خطأ: ' + data.message);
+            break;
+    }
+}
+
+// طلب الجلسات النشطة
+function requestActiveSessions() {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+            action: 'get_active_sessions'
+        }));
+    }
+}
+
+// عرض قائمة المحادثات
+function displaySessions(sessions) {
+    const list = document.getElementById('conversationList');
+    document.getElementById('activeCount').textContent = sessions.length;
+    
+    if (sessions.length === 0) {
+        list.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-chat-dots fs-1"></i>
+                <p class="mt-2">لا توجد محادثات نشطة</p>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = sessions.map(session => `
+        <div class="conversation-item ${session.id === currentConversationId ? 'active' : ''}" 
+             onclick="selectConversation('${session.id}')">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="mb-1">${session.name || session.phone}</h6>
+                    <small class="text-muted">${session.phone}</small>
+                </div>
+                <small class="text-muted">${formatTime(session.last_message)}</small>
+            </div>
+            <div class="mt-2">
+                <span class="badge bg-primary">${session.message_count} رسالة</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// اختيار محادثة
+function selectConversation(conversationId) {
+    currentConversationId = conversationId;
+    
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+            action: 'get_conversation',
+            conversation_id: conversationId
+        }));
+    }
+    
+    // تحديث العرض
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    event.target.closest('.conversation-item').classList.add('active');
+}
+
+// عرض المحادثة
+function displayConversation(conversation) {
+    if (!conversation) return;
+    
+    // تحديث الهيدر
+    document.getElementById('selectedConversationInfo').innerHTML = `
+        <h6 class="mb-0">${conversation.name || conversation.phone}</h6>
+        <small class="text-muted">${conversation.phone}</small>
+    `;
+    
+    document.getElementById('closeBtn').style.display = 'block';
+    document.getElementById('replyArea').style.display = 'block';
+    
+    // عرض الرسائل
+    const messagesArea = document.getElementById('messagesArea');
+    messagesArea.innerHTML = conversation.messages.map(msg => `
+        <div class="message ${msg.role}">
+            <div class="message-bubble">
+                <div>${msg.content}</div>
+                <div class="message-time">${formatTime(msg.timestamp)}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    // التمرير للأسفل
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+// معالجة رسالة جديدة
+function handleNewMessage(data) {
+    // تحديث قائمة المحادثات
+    requestActiveSessions();
+    
+    // إذا كانت المحادثة الحالية، أضف الرسالة
+    if (data.conversation_id === currentConversationId) {
+        const messagesArea = document.getElementById('messagesArea');
+        const messageHtml = `
+            <div class="message ${data.role}">
+                <div class="message-bubble">
+                    <div>${data.message}</div>
+                    <div class="message-time">${formatTime(data.timestamp)}</div>
+                </div>
+            </div>
+        `;
+        messagesArea.insertAdjacentHTML('beforeend', messageHtml);
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+        
+        // إشعار صوتي
+        playNotificationSound();
+    } else {
+        // إشعار للمحادثات الأخرى
+        showNotification(data.sender_name || data.phone, data.message);
+    }
+}
+
+// إرسال رسالة
+function sendMessage(event) {
+    event.preventDefault();
+    
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    
+    if (!message || !currentConversationId) return;
+    
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+            action: 'send_message',
+            conversation_id: currentConversationId,
+            message: message
+        }));
+        
+        input.value = '';
+    }
+}
+
+// تحديث حالة الاتصال
+function updateStatus(status, text) {
+    const indicator = document.getElementById('wsStatus');
+    const statusText = document.getElementById('wsStatusText');
+    
+    indicator.className = `status-indicator ${status}`;
+    statusText.textContent = text;
+}
+
+// تنسيق الوقت
+function formatTime(timestamp) {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+}
+
+// تحديث الجلسات
+function refreshSessions() {
+    requestActiveSessions();
+}
+
+// إغلاق المحادثة
+function closeConversation() {
+    if (confirm('هل تريد إنهاء هذه المحادثة؟')) {
+        // يمكن إضافة منطق إنهاء المحادثة هنا
+        currentConversationId = null;
+        document.getElementById('messagesArea').innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-chat-left-text fs-1"></i>
+                <p class="mt-2">اختر محادثة لعرض الرسائل</p>
+            </div>
+        `;
+        document.getElementById('replyArea').style.display = 'none';
+        document.getElementById('closeBtn').style.display = 'none';
+    }
+}
+
+// إشعار صوتي
+function playNotificationSound() {
+    const audio = new Audio('/static/notification.mp3');
+    audio.play().catch(e => console.log('Could not play sound'));
+}
+
+// إشعار متصفح
+function showNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, { body: body, icon: '/static/images/logo.png' });
+    }
+}
+
+// طلب إذن الإشعارات
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
+// الاتصال عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    connectWebSocket();
+    
+    // تحديث تلقائي كل 30 ثانية
+    setInterval(refreshSessions, 30000);
+});
+</script>
+{% endblock %}

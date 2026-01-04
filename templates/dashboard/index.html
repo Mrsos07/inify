@@ -827,28 +827,41 @@
                         showWAConnected();
                     } else if (data.qr_code) {
                         // عرض QR Code
-                        console.log('QR Code received, length:', data.qr_code.length);
+                        console.log('✅ QR Code received');
+                        console.log('QR Code length:', data.qr_code.length);
+                        console.log('QR Code starts with:', data.qr_code.substring(0, 50));
+                        
                         const img = document.getElementById('waQRImage');
-                        // QR Code يأتي مع data:image/png;base64, prefix
-                        img.src = data.qr_code;
+                        
+                        // التأكد من أن QR Code يحتوي على data URI prefix
+                        let qrSrc = data.qr_code;
+                        if (!qrSrc.startsWith('data:image')) {
+                            console.log('Adding data URI prefix...');
+                            qrSrc = 'data:image/png;base64,' + qrSrc;
+                        }
+                        
                         img.onload = function() {
-                            console.log('QR Image loaded successfully');
+                            console.log('✅ QR Image loaded successfully');
                             document.getElementById('waQRCode').style.display = 'block';
                         };
-                        img.onerror = function() {
-                            console.error('QR Image failed to load');
-                            // محاولة بدون prefix
-                            if (!data.qr_code.startsWith('data:')) {
-                                img.src = 'data:image/png;base64,' + data.qr_code;
-                            }
+                        
+                        img.onerror = function(e) {
+                            console.error('❌ QR Image failed to load:', e);
+                            showWAError('فشل تحميل الباركود، حاول مرة أخرى');
                         };
-                        document.getElementById('waQRCode').style.display = 'block';
+                        
+                        img.src = qrSrc;
                         startWAPolling();
                     } else if (data.status === 'waiting') {
+                        console.log('⏳ Waiting for QR Code...');
                         document.getElementById('waLoading').style.display = 'block';
                         startQRPolling();
+                    } else {
+                        console.warn('⚠️ Unexpected response:', data);
+                        showWAError('استجابة غير متوقعة من الخادم');
                     }
                 } else {
+                    console.error('❌ Connection failed:', data.error);
                     showWAError(data.error || 'فشل الاتصال');
                 }
             } catch (e) {
@@ -863,31 +876,44 @@
         function startQRPolling() {
             if (qrPollingInterval) clearInterval(qrPollingInterval);
             
+            console.log('🔄 Starting QR polling...');
+            
             qrPollingInterval = setInterval(async () => {
                 try {
                     const resp = await fetch('/api/whatsapp/qr/', { credentials: 'include' });
                     const data = await resp.json();
                     
+                    console.log('QR Poll response:', data);
+                    
                     if (data.connected) {
+                        console.log('✅ Connected!');
                         clearInterval(qrPollingInterval);
                         qrPollingInterval = null;
                         document.getElementById('waLoading').style.display = 'none';
                         showWAConnected();
                     } else if (data.qr_code) {
+                        console.log('✅ QR Code received in polling');
                         clearInterval(qrPollingInterval);
                         qrPollingInterval = null;
                         document.getElementById('waLoading').style.display = 'none';
-                        document.getElementById('waQRImage').src = data.qr_code;
+                        
+                        const img = document.getElementById('waQRImage');
+                        let qrSrc = data.qr_code;
+                        if (!qrSrc.startsWith('data:image')) {
+                            qrSrc = 'data:image/png;base64,' + qrSrc;
+                        }
+                        img.src = qrSrc;
                         document.getElementById('waQRCode').style.display = 'block';
                         startWAPolling();
                     }
                 } catch (e) {
-                    console.log('QR polling error');
+                    console.error('QR polling error:', e);
                 }
             }, 2000);
             
             setTimeout(() => {
                 if (qrPollingInterval) {
+                    console.log('⏱️ QR polling timeout');
                     clearInterval(qrPollingInterval);
                     qrPollingInterval = null;
                     document.getElementById('waLoading').style.display = 'none';
@@ -916,16 +942,40 @@
 
         function startWAPolling() {
             if (waPollingInterval) clearInterval(waPollingInterval);
+            
+            console.log('🔄 Starting connection polling...');
+            let pollCount = 0;
+            
             waPollingInterval = setInterval(async () => {
                 try {
+                    pollCount++;
+                    console.log(`Polling attempt ${pollCount}...`);
+                    
                     const resp = await fetch('/api/whatsapp/status/', { credentials: 'include' });
                     const data = await resp.json();
+                    
+                    console.log('Status response:', data);
+                    
                     if (data.connected) {
+                        console.log('✅ Connected detected!');
                         clearInterval(waPollingInterval);
+                        waPollingInterval = null;
                         showWAConnected();
+                        checkWhatsAppQuickStatus();
                     }
-                } catch (e) {}
-            }, 3000);
+                } catch (e) {
+                    console.error('Polling error:', e);
+                }
+            }, 2000);
+            
+            // إيقاف polling بعد دقيقتين
+            setTimeout(() => {
+                if (waPollingInterval) {
+                    console.log('⏱️ Polling timeout');
+                    clearInterval(waPollingInterval);
+                    waPollingInterval = null;
+                }
+            }, 120000);
         }
 
         function getCookie(name) {

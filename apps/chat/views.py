@@ -1691,3 +1691,23 @@ class EmbedChatAPI(View):
 ✅ إذا سُئلت "من أنت؟" أو "ما النموذج؟":
 قل فقط: "أنا {bot_name}، مستشارك العقاري الذكي 🏠"
 """
+
+
+class WhatsAppLiveDashboardView(View):
+    """Dashboard للمحادثات المباشرة عبر الواتساب"""
+    
+    def get(self, request):
+        """عرض صفحة Dashboard"""
+        if not request.user.is_authenticated:
+            from django.shortcuts import redirect
+            return redirect('login')
+        
+        # التحقق من وجود agent profile
+        if not hasattr(request.user, 'agent_profile'):
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden('يجب أن يكون لديك حساب مسوق للوصول لهذه الصفحة')
+        
+        from django.shortcuts import render
+        return render(request, 'dashboard/whatsapp_live.html', {
+            'agent': request.user.agent_profile
+        })

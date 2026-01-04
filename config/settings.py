@@ -58,6 +58,7 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne',  # يجب أن يكون أول INSTALLED_APPS لدعم WebSocket
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -67,6 +68,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     
     # Third party apps
+    'channels',  # WebSocket support
     'rest_framework',
     'corsheaders',
     'encrypted_model_fields',
@@ -117,6 +119,24 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+# Channels Configuration (WebSocket support)
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
+
+# في الإنتاج، استخدم Redis لأداء أفضل:
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             "hosts": [os.getenv('REDIS_URL', 'redis://localhost:6379')],
+#         },
+#     },
+# }
 
 # Database configuration
 # Supports: DATABASE_URL (Render), individual vars, or SQLite
@@ -194,13 +214,31 @@ if not DEBUG and os.getenv('CLOUDINARY_CLOUD_NAME'):
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Cache Configuration (for password reset tokens)
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'django_cache_table',
+# Cache Configuration (for password reset tokens & WhatsApp sessions)
+# استخدم Redis في الإنتاج لأداء أفضل مع WhatsApp Session Manager
+REDIS_URL = os.getenv('REDIS_URL', '')
+
+if REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            }
+        }
     }
-}
+else:
+    # استخدام LocMemCache للتطوير المحلي
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000
+            }
+        }
+    }
 
 # REST Framework settings
 REST_FRAMEWORK = {

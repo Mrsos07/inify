@@ -47,7 +47,14 @@ def whatsapp_status(request):
             if state == 'open':
                 # إذا تم الاتصال للتو، تأكد من تسجيل webhook
                 if instance.status != 'connected':
-                    webhook_url = instance.get_webhook_url()
+                    import os
+                    evolution_url = os.getenv('EVOLUTION_API_URL', '')
+                    if 'localhost' in evolution_url or '127.0.0.1' in evolution_url:
+                        webhook_url = f"http://host.docker.internal:8000/webhooks/whatsapp/{instance.instance_name}/"
+                    else:
+                        site_url = os.getenv('SITE_URL', 'https://inify.ai')
+                        webhook_url = f"{site_url}/webhooks/whatsapp/{instance.instance_name}/"
+                    
                     whatsapp_service.set_webhook(instance.instance_name, webhook_url)
                     logger.info(f"✅ Webhook registered on connection: {instance.instance_name}")
                 
