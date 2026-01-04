@@ -14,7 +14,9 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security settings
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', ')dlq-w668w=ob91id_hng)*cd1%z)@$u1dng^c+v2zj!=z&y_+xk7m9p2q')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY must be set in environment variables. Generate one using: python -c \"from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())\"")
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'inify.ai,www.inify.ai,.onrender.com,localhost,127.0.0.1,host.docker.internal').split(',')
 
@@ -38,8 +40,10 @@ SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 
-# Admin Key (should be in .env)
-ADMIN_SECRET_KEY = os.getenv('ADMIN_SECRET_KEY', 'change-this-in-production')
+# Admin Key (must be in .env)
+ADMIN_SECRET_KEY = os.getenv('ADMIN_SECRET_KEY')
+if not ADMIN_SECRET_KEY:
+    raise ValueError("ADMIN_SECRET_KEY must be set in environment variables")
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', '')
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test WhatsApp Status</title>
+</head>
+<body>
+    <h1>Testing WhatsApp Status API</h1>
+    <button onclick="testStatus()">Test Status</button>
+    <pre id="result"></pre>
+    
+    <script>
+        async function testStatus() {
+            try {
+                const response = await fetch('http://localhost:8000/api/whatsapp/status/', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                console.log('WhatsApp Status:', data);
+            } catch (e) {
+                document.getElementById('result').textContent = 'Error: ' + e.message;
+                console.error('Error:', e);
+            }
+        }
+        
+        // Auto test on load
+        setTimeout(testStatus, 500);
+    </script>
+</body>
+</html>

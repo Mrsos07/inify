@@ -42,6 +42,13 @@ services:
         sync: false  # يجب إضافته يدوياً
       - key: PYTHON_VERSION
         value: "3.11.0"
+      - key: EVOLUTION_API_URL
+        fromService:
+          type: pserv
+          name: evolution-api
+          property: host
+      - key: EVOLUTION_API_KEY
+        sync: false
 
   # ─────────────────────────────────────────────────────────
   # PostgreSQL Database

@@ -11,7 +11,9 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.clickjacking import xframe_options_exempt
 import json
+import logging
 
+logger = logging.getLogger(__name__)
 
 def home(request):
     """الصفحة الرئيسية - Landing Page"""
@@ -628,8 +630,9 @@ def dashboard_view(request):
             'price_display': f"{prop.price:,.0f} ريال"
         })
     
-    # Get total conversations from agent model
-    total_conversations = agent.total_conversations + conversations.count()
+    # Get total conversations from actual database count
+    # حساب المحادثات من Conversation model فقط
+    total_conversations = conversations.count()
     
     context = {
         'user_name': user.get_full_name() or user.username,
@@ -802,7 +805,6 @@ def conversations_view(request):
 
 
 @login_required(login_url='/auth/login/')
-@csrf_exempt
 def bot_settings_view(request):
     """صفحة إعدادات الوكيل الذكي"""
     from apps.agents.models import Agent
@@ -823,83 +825,121 @@ def bot_settings_view(request):
         )
     
     if request.method == 'POST':
-        # Update bot settings
-        agent.bot_name = request.POST.get('bot_name', agent.bot_name)
-        agent.bot_title = request.POST.get('bot_title', agent.bot_title)
-        agent.bot_personality = request.POST.get('bot_personality', agent.bot_personality)
-        agent.bot_welcome_message = request.POST.get('bot_welcome_message', agent.bot_welcome_message)
-        agent.bot_color = request.POST.get('bot_color', agent.bot_color)
-        agent.bot_language = request.POST.get('bot_language', agent.bot_language)
-        
-        # New AI settings
-        agent.bot_system_prompt = request.POST.get('bot_system_prompt', agent.bot_system_prompt or '')
-        agent.bot_collect_leads = request.POST.get('bot_collect_leads') == 'on'
-        
-        # Company name - اسم الشركة
-        if request.POST.get('company_name'):
-            agent.company_name = request.POST.get('company_name')
-        
-        # Viewing time settings - أوقات المعاينة
-        from apps.agents.models import AgentSettings
-        agent_settings, created = AgentSettings.objects.get_or_create(agent=agent)
-        
-        if request.POST.get('viewing_start_hour'):
-            agent_settings.viewing_start_hour = int(request.POST.get('viewing_start_hour'))
-        if request.POST.get('viewing_end_hour'):
-            agent_settings.viewing_end_hour = int(request.POST.get('viewing_end_hour'))
-        if request.POST.get('viewing_slot_duration'):
-            agent_settings.viewing_slot_duration = int(request.POST.get('viewing_slot_duration'))
-        agent_settings.save()
-        
-        # Context settings - إعدادات السياق الإضافية
-        if request.POST.get('bot_pricing_policy'):
-            agent.bot_pricing_policy = request.POST.get('bot_pricing_policy')
-        if request.POST.get('bot_viewing_policy'):
-            agent.bot_viewing_policy = request.POST.get('bot_viewing_policy')
-        if request.POST.get('bot_work_areas'):
-            agent.bot_work_areas = request.POST.get('bot_work_areas')
-        if request.POST.get('bot_services'):
-            agent.bot_services = request.POST.get('bot_services')
-        if request.POST.get('bot_contact_info'):
-            agent.bot_contact_info = request.POST.get('bot_contact_info')
-        
-        # Handle avatar image upload (base64)
-        avatar_data = request.POST.get('bot_avatar')
-        if avatar_data and avatar_data.startswith('data:image'):
-            try:
-                # Parse base64 image
-                format, imgstr = avatar_data.split(';base64,')
-                ext = format.split('/')[-1]
-                if ext in ['jpeg', 'jpg', 'png', 'gif', 'webp']:
-                    image_data = base64.b64decode(imgstr)
-                    file_name = f'agent_{agent.id}.{ext}'
-                    agent.profile_image.save(file_name, ContentFile(image_data), save=False)
-            except Exception as e:
-                print(f"Error saving avatar: {e}")
-        
-        # Handle avatar removal
-        if request.POST.get('remove_avatar') == 'true':
-            if agent.profile_image:
-                agent.profile_image.delete(save=False)
-        
-        # Handle file upload directly
-        if 'avatar_file' in request.FILES:
-            agent.profile_image = request.FILES['avatar_file']
-        
-        agent.save()
-        
-        return JsonResponse({'status': 'success', 'avatar_url': agent.profile_image.url if agent.profile_image else None})
+        try:
+            # Update bot settings
+            agent.bot_name = request.POST.get('bot_name', agent.bot_name)
+            agent.bot_title = request.POST.get('bot_title', agent.bot_title)
+            agent.bot_personality = request.POST.get('bot_personality', agent.bot_personality)
+            agent.bot_welcome_message = request.POST.get('bot_welcome_message', agent.bot_welcome_message)
+            agent.bot_color = request.POST.get('bot_color', agent.bot_color)
+            agent.bot_language = request.POST.get('bot_language', agent.bot_language)
+            
+            # New AI settings
+            agent.bot_system_prompt = request.POST.get('bot_system_prompt', agent.bot_system_prompt or '')
+            agent.bot_collect_leads = request.POST.get('bot_collect_leads') == 'on'
+            
+            # Company name - اسم الشركة
+            if request.POST.get('company_name'):
+                agent.company_name = request.POST.get('company_name')
+            
+            # Viewing time settings - أوقات المعاينة
+            from apps.agents.models import AgentSettings
+            agent_settings, created = AgentSettings.objects.get_or_create(agent=agent)
+            
+            if request.POST.get('viewing_start_hour'):
+                agent_settings.viewing_start_hour = int(request.POST.get('viewing_start_hour'))
+            if request.POST.get('viewing_end_hour'):
+                agent_settings.viewing_end_hour = int(request.POST.get('viewing_end_hour'))
+            if request.POST.get('viewing_slot_duration'):
+                agent_settings.viewing_slot_duration = int(request.POST.get('viewing_slot_duration'))
+            agent_settings.save()
+            
+            # Context settings - إعدادات السياق الإضافية
+            if request.POST.get('bot_pricing_policy'):
+                agent.bot_pricing_policy = request.POST.get('bot_pricing_policy')
+            if request.POST.get('bot_viewing_policy'):
+                agent.bot_viewing_policy = request.POST.get('bot_viewing_policy')
+            if request.POST.get('bot_work_areas'):
+                agent.bot_work_areas = request.POST.get('bot_work_areas')
+            if request.POST.get('bot_services'):
+                agent.bot_services = request.POST.get('bot_services')
+            if request.POST.get('bot_contact_info'):
+                agent.bot_contact_info = request.POST.get('bot_contact_info')
+            
+            # Handle avatar image upload (base64)
+            avatar_data = request.POST.get('bot_avatar')
+            if avatar_data and avatar_data.startswith('data:image'):
+                try:
+                    # Parse base64 image
+                    format, imgstr = avatar_data.split(';base64,')
+                    ext = format.split('/')[-1]
+                    if ext in ['jpeg', 'jpg', 'png', 'gif', 'webp']:
+                        image_data = base64.b64decode(imgstr)
+                        file_name = f'agent_{agent.id}.{ext}'
+                        agent.profile_image.save(file_name, ContentFile(image_data), save=False)
+                except Exception as e:
+                    print(f"Error saving avatar: {e}")
+            
+            # Handle avatar removal
+            if request.POST.get('remove_avatar') == 'true':
+                if agent.profile_image:
+                    agent.profile_image.delete(save=False)
+            
+            # Handle file upload directly
+            if 'avatar_file' in request.FILES:
+                agent.profile_image = request.FILES['avatar_file']
+            
+            agent.save()
+            
+            logger.info(f"✅ Agent settings saved: {agent.bot_name}, Company: {agent.company_name}")
+            
+            return JsonResponse({
+                'status': 'success', 
+                'message': 'تم حفظ الإعدادات بنجاح',
+                'avatar_url': agent.profile_image.url if agent.profile_image else None,
+                'company_name': agent.company_name,
+                'bot_name': agent.bot_name
+            })
+        except Exception as e:
+            logger.error(f"❌ Error saving agent settings: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return JsonResponse({
+                'status': 'error',
+                'error': str(e),
+                'message': 'حدث خطأ في حفظ الإعدادات'
+            }, status=500)
     
     # Get agent settings for viewing times
     from apps.agents.models import AgentSettings
     agent_settings, created = AgentSettings.objects.get_or_create(agent=agent)
+    
+    # Get WhatsApp connection status
+    whatsapp_connected = False
+    whatsapp_phone = None
+    whatsapp_messages_received = 0
+    whatsapp_messages_sent = 0
+    
+    try:
+        from apps.agents.models import WhatsAppInstance
+        wa_instance = agent.whatsapp_instance
+        whatsapp_connected = wa_instance.status == 'connected'
+        whatsapp_phone = wa_instance.phone_number
+        whatsapp_messages_received = wa_instance.messages_received
+        whatsapp_messages_sent = wa_instance.messages_sent
+    except:
+        pass
     
     context = {
         'agent': agent,
         'agent_id': str(agent.id),
         'chat_url': f'/embed/?agent={agent.id}',
         'active_page': 'bot_settings',
-        'agent_settings': agent_settings
+        'agent_settings': agent_settings,
+        'whatsapp_connected': whatsapp_connected,
+        'whatsapp_phone': whatsapp_phone,
+        'whatsapp_messages_received': whatsapp_messages_received,
+        'whatsapp_messages_sent': whatsapp_messages_sent,
     }
     
     return render(request, 'dashboard/bot_settings.html', context)

@@ -536,21 +536,8 @@
                     }
                 }
                 
-                // تحميل المحادثات من إحصائيات الوكيل
-                try {
-                    const agentId = '{{ agent_id|default:"" }}';
-                    if (agentId) {
-                        const statsResponse = await fetch(`/api/agent/${agentId}/stats/`);
-                        if (statsResponse.ok) {
-                            const statsData = await statsResponse.json();
-                            if (statsData.success) {
-                                document.getElementById('conversationsCount').textContent = statsData.stats.total_conversations || 0;
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.log('Could not load conversation stats');
-                }
+                // المحادثات يتم تحميلها من Django context مباشرة
+                // لا حاجة لتحديثها من API لأن Django يحسبها بشكل صحيح
                 
             } catch (error) {
                 console.error('Error loading stats:', error);

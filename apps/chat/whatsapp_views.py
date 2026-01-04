@@ -305,6 +305,25 @@ class WhatsAppWebhookView(View):
             content=message_text
         )
         
+        # ═══════════════════════════════════════════════════════════
+        # استخراج بيانات العميل المهتم تلقائياً
+        # ═══════════════════════════════════════════════════════════
+        from services.lead_extraction_service import LeadExtractionService
+        lead_extractor = LeadExtractionService()
+        
+        # اكتشاف الاهتمام وإنشاء Lead تلقائياً
+        if lead_extractor.detect_interest(message_text):
+            logger.info(f"🎯 Interest detected in message from {phone}")
+            # إنشاء Lead إذا لم يكن موجوداً
+            lead = lead_extractor.create_lead_from_whatsapp(
+                agent=agent,
+                conversation=conversation,
+                phone=phone,
+                sender_name=sender_name
+            )
+            if lead:
+                logger.info(f"✅ Lead created/updated: {lead.id} - {lead.name} ({lead.phone})")
+        
         # جلب العقارات
         properties = Property.objects.filter(agent=agent, is_active=True)
         

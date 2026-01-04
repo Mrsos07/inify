@@ -1880,20 +1880,20 @@
                         <h3 class="section-title">📱 ربط الواتساب بالوكيل الذكي</h3>
                         
                         <!-- حالة الاتصال -->
-                        <div id="waStatusCard" class="platform-connect-item" style="margin-bottom: 20px;">
+                        <div id="waStatusCard" class="platform-connect-item {% if whatsapp_connected %}connected{% endif %}" style="margin-bottom: 20px;">
                             <div class="platform-connect-logo" style="background: linear-gradient(135deg, #25D366, #128C7E);">
                                 <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
                             </div>
                             <div class="platform-connect-info">
                                 <div class="platform-connect-name">واتساب</div>
-                                <div class="platform-connect-desc" id="waStatusText">جاري التحقق...</div>
+                                <div class="platform-connect-desc" id="waStatusText">{% if whatsapp_connected %}الوكيل يرد على الرسائل تلقائياً{% else %}غير متصل - اربط رقمك للبدء{% endif %}</div>
                             </div>
-                            <span class="platform-connect-status" id="waStatusBadge">غير متصل</span>
+                            <span class="platform-connect-status {% if whatsapp_connected %}connected{% endif %}" id="waStatusBadge">{% if whatsapp_connected %}✓ متصل{% else %}غير متصل{% endif %}</span>
                         </div>
 
                         <!-- قسم الربط -->
                         <div id="waConnectSection" style="text-align: center; padding: 30px; background: rgba(10,22,40,0.4); border-radius: 16px; border: 1px solid var(--border);">
-                            <div id="waConnectBtn" style="display: block;">
+                            <div id="waConnectBtn">
                                 <p style="color: var(--text-muted); margin-bottom: 20px;">اربط رقم واتساب الخاص بك ليتمكن الوكيل الذكي من الرد على عملائك تلقائياً</p>
                                 <button onclick="startWAConnect()" class="btn btn-primary" style="padding: 14px 30px; font-size: 16px;">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-left: 8px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
@@ -1912,7 +1912,7 @@
                                 <p style="font-size: 13px; color: var(--text-muted);">الإعدادات ← الأجهزة المرتبطة ← ربط جهاز</p>
                                 <button onclick="startWAConnect()" class="btn btn-secondary" style="margin-top: 15px;">تحديث الباركود</button>
                             </div>
-                            <div id="waConnectedSection" style="display: none;">
+                            <div id="waConnectedSection">
                                 <div style="font-size: 60px; margin-bottom: 15px;">✅</div>
                                 <h4 style="color: #22c55e; margin-bottom: 10px;">الواتساب متصل ويعمل!</h4>
                                 <p style="color: var(--text-muted); margin-bottom: 8px;">الوكيل الذكي جاهز للرد على عملائك</p>
@@ -1920,12 +1920,12 @@
                                 <!-- إحصائيات -->
                                 <div id="waStats" style="display: flex; gap: 20px; justify-content: center; margin: 20px 0; padding: 15px; background: rgba(34,197,94,0.1); border-radius: 12px; border: 1px solid rgba(34,197,94,0.2);">
                                     <div style="text-align: center;">
-                                        <div style="font-size: 24px; font-weight: bold; color: #22c55e;" id="waMsgReceived">0</div>
+                                        <div style="font-size: 24px; font-weight: bold; color: #22c55e;" id="waMsgReceived">{{ whatsapp_messages_received|default:0 }}</div>
                                         <div style="font-size: 12px; color: var(--text-muted);">رسائل مستلمة</div>
                                     </div>
                                     <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
                                     <div style="text-align: center;">
-                                        <div style="font-size: 24px; font-weight: bold; color: var(--cyan);" id="waMsgSent">0</div>
+                                        <div style="font-size: 24px; font-weight: bold; color: var(--cyan);" id="waMsgSent">{{ whatsapp_messages_sent|default:0 }}</div>
                                         <div style="font-size: 12px; color: var(--text-muted);">ردود مرسلة</div>
                                     </div>
                                 </div>
@@ -2182,11 +2182,21 @@
             loadAvatarPreview();
             
             // WhatsApp settings
-            document.getElementById('enableWhatsApp').checked = settings.enableWhatsApp || false;
-            document.getElementById('whatsappNumber').value = settings.whatsappNumber || '';
-            document.getElementById('wabaId').value = settings.wabaId || '';
-            document.getElementById('whatsappToken').value = settings.whatsappToken || '';
-            document.getElementById('phoneNumberId').value = settings.phoneNumberId || '';
+            const enableWhatsAppEl = document.getElementById('enableWhatsApp');
+            if (enableWhatsAppEl) enableWhatsAppEl.checked = settings.enableWhatsApp || false;
+            
+            const whatsappNumberEl = document.getElementById('whatsappNumber');
+            if (whatsappNumberEl) whatsappNumberEl.value = settings.whatsappNumber || '';
+            
+            const wabaIdEl = document.getElementById('wabaId');
+            if (wabaIdEl) wabaIdEl.value = settings.wabaId || '';
+            
+            const whatsappTokenEl = document.getElementById('whatsappToken');
+            if (whatsappTokenEl) whatsappTokenEl.value = settings.whatsappToken || '';
+            
+            const phoneNumberIdEl = document.getElementById('phoneNumberId');
+            if (phoneNumberIdEl) phoneNumberIdEl.value = settings.phoneNumberId || '';
+            
             toggleWhatsAppSettings();
             
             updatePreview();
@@ -2328,18 +2338,32 @@
 
         // Toggle WhatsApp settings visibility
         function toggleWhatsAppSettings() {
-            const enabled = document.getElementById('enableWhatsApp').checked;
-            document.getElementById('whatsappSettings').style.display = enabled ? 'block' : 'none';
-            document.getElementById('whatsappGuide').style.display = enabled ? 'block' : 'none';
+            const enableEl = document.getElementById('enableWhatsApp');
+            if (!enableEl) return;
+            
+            const enabled = enableEl.checked;
+            const settingsEl = document.getElementById('whatsappSettings');
+            const guideEl = document.getElementById('whatsappGuide');
+            
+            if (settingsEl) settingsEl.style.display = enabled ? 'block' : 'none';
+            if (guideEl) guideEl.style.display = enabled ? 'block' : 'none';
         }
 
-        // Add event listener for WhatsApp toggle
-        document.getElementById('enableWhatsApp').addEventListener('change', toggleWhatsAppSettings);
+        // Helper functions to safely get element values
+        const getValue = (id, defaultValue = '') => {
+            const element = document.getElementById(id);
+            return element ? element.value : defaultValue;
+        };
+        
+        const getChecked = (id, defaultValue = false) => {
+            const element = document.getElementById(id);
+            return element ? element.checked : defaultValue;
+        };
 
         // Test WhatsApp connection
         function testWhatsAppConnection() {
-            const token = document.getElementById('whatsappToken').value;
-            const phoneId = document.getElementById('phoneNumberId').value;
+            const token = getValue('whatsappToken');
+            const phoneId = getValue('phoneNumberId');
             
             if (!token || !phoneId) {
                 alert('يرجى إدخال Access Token و Phone Number ID أولاً');
@@ -2352,47 +2376,50 @@
 
         // Save settings
         async function saveSettings() {
+            console.log('💾 Saving settings...');
             settings = {
-                agentName: document.getElementById('agentName').value || defaultSettings.agentName,
-                agentDescription: document.getElementById('agentDescription').value,
-                welcomeMessage: document.getElementById('welcomeMessage').value || defaultSettings.welcomeMessage,
+                agentName: getValue('agentName', defaultSettings.agentName),
+                agentDescription: getValue('agentDescription'),
+                welcomeMessage: getValue('welcomeMessage', defaultSettings.welcomeMessage),
                 // Company settings
-                companyName: document.getElementById('companyName').value,
+                companyName: getValue('companyName'),
                 // Viewing time settings
-                viewingStartHour: document.getElementById('viewingStartHour').value,
-                viewingEndHour: document.getElementById('viewingEndHour').value,
-                viewingSlotDuration: document.getElementById('viewingSlotDuration').value,
+                viewingStartHour: getValue('viewingStartHour', '8'),
+                viewingEndHour: getValue('viewingEndHour', '21'),
+                viewingSlotDuration: getValue('viewingSlotDuration', '30'),
                 // AI Provider settings (Invy - internal)
                 aiProvider: 'invy',
                 model: 'invy-realestate-v1',
                 // Context settings
-                pricingPolicy: document.getElementById('pricingPolicy').value,
-                viewingPolicy: document.getElementById('viewingPolicy').value,
-                companyInfo: document.getElementById('companyInfo').value,
-                workAreas: document.getElementById('workAreas').value,
-                services: document.getElementById('services').value,
-                propertyTypes: document.getElementById('propertyTypes').value,
-                contactInfo: document.getElementById('contactInfo').value,
+                pricingPolicy: getValue('pricingPolicy'),
+                viewingPolicy: getValue('viewingPolicy'),
+                companyInfo: getValue('companyInfo'),
+                workAreas: getValue('workAreas'),
+                services: getValue('services'),
+                propertyTypes: getValue('propertyTypes'),
+                contactInfo: getValue('contactInfo'),
                 // RAG settings
-                enableRAG: document.getElementById('enableRAG').checked,
-                ragResults: document.getElementById('ragResults').value,
+                enableRAG: getChecked('enableRAG'),
+                ragResults: getValue('ragResults'),
                 // Appearance
-                primaryColor: document.getElementById('primaryColor').value,
-                secondaryColor: document.getElementById('secondaryColor').value,
-                bgColor: document.getElementById('bgColor').value,
-                textColor: document.getElementById('textColor').value,
-                agentIcon: document.getElementById('agentIcon').value,
+                primaryColor: getValue('primaryColor', '#6BB8C9'),
+                secondaryColor: getValue('secondaryColor'),
+                bgColor: getValue('bgColor'),
+                textColor: getValue('textColor'),
+                agentIcon: getValue('agentIcon'),
                 agentAvatar: settings.agentAvatar || null,
                 useAvatarImage: settings.useAvatarImage || false,
-                widgetPosition: document.getElementById('widgetPosition').value,
-                widgetSize: document.getElementById('widgetSize').value,
+                widgetPosition: getValue('widgetPosition', 'bottom-right'),
+                widgetSize: getValue('widgetSize', 'medium'),
                 // WhatsApp Business
-                enableWhatsApp: document.getElementById('enableWhatsApp').checked,
-                whatsappNumber: document.getElementById('whatsappNumber').value,
-                wabaId: document.getElementById('wabaId').value,
-                whatsappToken: document.getElementById('whatsappToken').value,
-                phoneNumberId: document.getElementById('phoneNumberId').value
+                enableWhatsApp: getChecked('enableWhatsApp'),
+                whatsappNumber: getValue('whatsappNumber'),
+                wabaId: getValue('wabaId'),
+                whatsappToken: getValue('whatsappToken'),
+                phoneNumberId: getValue('phoneNumberId')
             };
+            
+            console.log('📦 Settings to save:', settings);
             
             // حفظ الإعدادات في قاعدة البيانات
             try {
@@ -2437,6 +2464,8 @@
                 if (response.ok) {
                     const data = await response.json();
                     
+                    console.log('✅ Settings saved successfully:', data);
+                    
                     // تحديث رابط الصورة من السيرفر إذا تم رفعها
                     if (data.avatar_url) {
                         settings.serverAvatarUrl = data.avatar_url;
@@ -2445,12 +2474,32 @@
                     // حفظ نسخة محلية للتحميل السريع
                     localStorage.setItem('newra_agent_settings_' + agentId, JSON.stringify(settings));
                     
-                    // Show success toast
+                    // Show success toast with details
                     const toast = document.getElementById('successToast');
+                    toast.textContent = '✓ تم حفظ الإعدادات بنجاح';
+                    if (data.company_name) {
+                        toast.textContent += ` - ${data.company_name}`;
+                    }
                     toast.classList.add('show');
-                    setTimeout(() => toast.classList.remove('show'), 3000);
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                        toast.textContent = '✓ تم الحفظ بنجاح';
+                    }, 3000);
                 } else {
-                    alert('حدث خطأ في حفظ الإعدادات');
+                    const errorText = await response.text();
+                    console.error('❌ Save failed. Status:', response.status);
+                    console.error('Response text:', errorText);
+                    
+                    let errorData = {};
+                    try {
+                        errorData = JSON.parse(errorText);
+                    } catch (e) {
+                        console.error('Failed to parse error response:', e);
+                    }
+                    
+                    alert('حدث خطأ في حفظ الإعدادات:\n' + 
+                          'Status: ' + response.status + '\n' +
+                          'Error: ' + (errorData.error || errorData.message || errorText.substring(0, 200)));
                 }
             } catch (error) {
                 console.error('Error saving settings:', error);
@@ -2694,17 +2743,49 @@
 
         // ============ WhatsApp Functions ============
         let waPolling = null;
+        
+        // Set initial display state from Django context
+        (function() {
+            const waStatusCard = document.getElementById('waStatusCard');
+            const waInitiallyConnected = waStatusCard && waStatusCard.classList.contains('connected');
+            
+            if (waInitiallyConnected) {
+                document.getElementById('waConnectBtn').style.display = 'none';
+                document.getElementById('waConnectedSection').style.display = 'block';
+            } else {
+                document.getElementById('waConnectBtn').style.display = 'block';
+                document.getElementById('waConnectedSection').style.display = 'none';
+            }
+        })();
 
         async function checkWAStatus() {
             try {
+                console.log('🔍 Checking WhatsApp status...');
                 const resp = await fetch('/api/whatsapp/status/', { credentials: 'include' });
+                
+                console.log('Response status:', resp.status);
+                console.log('Response ok:', resp.ok);
+                
+                if (!resp.ok) {
+                    console.error('❌ Response not OK:', resp.status, resp.statusText);
+                    throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+                }
+                
                 const data = await resp.json();
+                console.log('📦 WhatsApp Status Data:', data);
                 
                 const statusText = document.getElementById('waStatusText');
                 const statusBadge = document.getElementById('waStatusBadge');
                 const statusCard = document.getElementById('waStatusCard');
                 
-                if (data.connected) {
+                if (!statusText || !statusBadge || !statusCard) {
+                    console.error('❌ DOM elements not found');
+                    return;
+                }
+                
+                // التحقق من الاتصال
+                if (data.success && data.connected) {
+                    console.log('✅ WhatsApp Connected!');
                     statusText.textContent = 'الوكيل يرد على الرسائل تلقائياً';
                     statusBadge.textContent = '✓ متصل';
                     statusBadge.classList.add('connected');
@@ -2719,6 +2800,11 @@
                         document.getElementById('waMsgSent').textContent = data.messages_sent || 0;
                     }
                 } else {
+                    console.log('❌ WhatsApp Not Connected. Data:', {
+                        success: data.success,
+                        connected: data.connected,
+                        status: data.status
+                    });
                     statusText.textContent = 'غير متصل - اربط رقمك للبدء';
                     statusBadge.textContent = 'غير متصل';
                     statusBadge.classList.remove('connected');
@@ -2726,7 +2812,12 @@
                     showWAConnect();
                 }
             } catch (e) {
-                console.log('WA status check failed');
+                console.error('❌ WA status check failed:', e);
+                const statusText = document.getElementById('waStatusText');
+                if (statusText) {
+                    statusText.textContent = 'خطأ في التحقق - حاول تحديث الصفحة';
+                }
+                showWAConnect();
             }
         }
 
@@ -2912,25 +3003,64 @@
         }
 
         async function disconnectWA() {
-            if (!confirm('هل تريد قطع اتصال الواتساب؟')) return;
+            if (!confirm('هل تريد حذف ربط الواتساب بالكامل؟\n\nسيتم حذف الانستانس وقطع الاتصال نهائياً.')) return;
+            
             try {
-                const resp = await fetch('/api/whatsapp/disconnect/', {
-                    method: 'POST',
+                // إظهار تحميل
+                document.getElementById('waConnectedSection').innerHTML = '<div style="padding: 40px;"><div style="width: 50px; height: 50px; border: 3px solid rgba(107,184,201,0.2); border-top-color: var(--cyan); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div><p>جاري حذف الربط...</p></div>';
+                
+                const resp = await fetch('/api/whatsapp/disconnect/', { 
+                    method: 'POST', 
                     credentials: 'include',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
                 });
+                
                 const data = await resp.json();
+                
                 if (data.success) {
-                    showCopyToast('✓ تم قطع الاتصال');
+                    showCopyToast('✓ تم حذف الربط بنجاح');
+                    // إعادة تحميل الصفحة لتحديث الحالة
+                    setTimeout(() => {
+                        checkWAStatus();
+                    }, 500);
+                } else {
+                    alert('حدث خطأ: ' + (data.error || 'فشل الحذف'));
                     checkWAStatus();
                 }
             } catch (e) {
-                alert('حدث خطأ');
+                console.error('Disconnect error:', e);
+                alert('حدث خطأ في الاتصال');
+                checkWAStatus();
             }
         }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
 
-        // Check WA status on load
+        // Check WA status on load and when tab becomes visible
         setTimeout(checkWAStatus, 500);
+        
+        // Re-check when page becomes visible
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                checkWAStatus();
+            }
+        });
 
         // Live preview updates
         document.querySelectorAll('input, select, textarea').forEach(el => {
