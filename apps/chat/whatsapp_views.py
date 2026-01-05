@@ -23,12 +23,12 @@ logger = logging.getLogger(__name__)
 class WhatsAppWebhookView(View):
     """Webhook لاستقبال رسائل واتساب من Evolution API"""
     
-    def get(self, request, instance_name):
+    def get(self, request, instance_name=None):
         """التحقق من أن الـ webhook يعمل"""
         logger.info(f"🔔 WhatsApp Webhook GET check for {instance_name}")
-        return JsonResponse({'status': 'ok', 'instance': instance_name})
+        return JsonResponse({'status': 'ok', 'instance': instance_name or 'global'})
     
-    def post(self, request, instance_name):
+    def post(self, request, instance_name=None):
         """معالجة رسائل واتساب الواردة"""
         try:
             from apps.agents.models import WhatsAppInstance, Agent
@@ -41,9 +41,21 @@ class WhatsAppWebhookView(View):
                 log_path = os.path.join(os.path.dirname(__file__), '../../webhook_debug.log')
                 with open(log_path, 'a', encoding='utf-8') as f:
                     f.write(f"\n{'='*50}\n{raw_body}\n")
+                
+                # إذا لم يتم تمرير instance_name في URL، استخرجه من البيانات
+                if not instance_name:
+                    webhook_data = json.loads(raw_body)
+                    instance_name = webhook_data.get('instance')
+                    logger.info(f"[WEBHOOK] Extracted instance_name from data: {instance_name}")
+                
                 print(f"[WEBHOOK] {instance_name}: {raw_body[:500]}")
             except Exception as log_err:
                 print(f"Error logging webhook: {log_err}")
+            
+            # التحقق من وجود instance_name
+            if not instance_name:
+                logger.error("No instance_name provided in URL or webhook data")
+                return JsonResponse({'error': 'Instance name required'}, status=400)
             
             # التحقق من الـ instance
             try:

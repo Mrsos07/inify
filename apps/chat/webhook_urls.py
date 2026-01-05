@@ -12,6 +12,7 @@ urlpatterns = [
     
     # WhatsApp Evolution API
     path('whatsapp/<str:instance_name>/', WhatsAppWebhookView.as_view(), name='webhook-whatsapp'),
+    path('whatsapp/', WhatsAppWebhookView.as_view(), {'instance_name': None}, name='webhook-whatsapp-global'),
     path('whatsapp/connect/<uuid:agent_id>/', WhatsAppConnectView.as_view(), name='whatsapp-connect'),
     path('whatsapp/status/<uuid:agent_id>/', WhatsAppStatusView.as_view(), name='whatsapp-status'),
 ]
