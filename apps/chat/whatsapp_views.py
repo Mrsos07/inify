@@ -208,6 +208,10 @@ class WhatsAppWebhookView(View):
                         print(f"[REPLY] Sending to phone: {phone}, instance: {instance_name}")
                         print(f"[REPLY] Response: {response_text[:100]}...")
                         
+                        # تأخير 1 ثانية لجعل الرد أكثر طبيعية
+                        import time
+                        time.sleep(1)
+                        
                         result = whatsapp_service.send_text_message(
                             instance_name=instance_name,
                             phone_number=phone,
