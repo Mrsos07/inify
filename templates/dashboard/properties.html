@@ -256,46 +256,49 @@
         /* Main Content - متوافق مع السايد بار */
         .main-content {
             margin-right: 260px;
-            padding: 32px;
+            padding: 24px;
             min-height: 100vh;
+            max-width: 1400px;
+            margin-left: auto;
         }
 
         .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 40px;
+            margin-bottom: 32px;
         }
 
         .page-header h1 {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
         }
 
         .page-header p {
             color: var(--text-muted);
             margin-top: 8px;
+            font-size: 14px;
         }
 
         /* Tabs */
         .tabs {
             display: flex;
             gap: 8px;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             background: var(--card-bg);
-            padding: 8px;
-            border-radius: 14px;
+            padding: 6px;
+            border-radius: 12px;
             width: fit-content;
         }
 
         .tab {
-            padding: 12px 28px;
+            padding: 10px 24px;
             background: transparent;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             color: var(--text-muted);
             font-family: inherit;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s;
@@ -323,20 +326,20 @@
         .form-card {
             background: var(--card-bg);
             backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 40px;
+            border-radius: 20px;
+            padding: 32px;
             border: 1px solid var(--border);
         }
 
         .form-section {
-            margin-bottom: 35px;
+            margin-bottom: 28px;
         }
 
         .form-section-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
@@ -345,8 +348,8 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
         }
 
         .form-group {
@@ -368,13 +371,13 @@
         .form-group input,
         .form-group select,
         .form-group textarea {
-            padding: 14px 16px;
+            padding: 12px 14px;
             background: rgba(10, 22, 40, 0.6);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 10px;
             color: var(--pearl);
             font-family: inherit;
-            font-size: 15px;
+            font-size: 14px;
             transition: all 0.3s;
         }
 
@@ -831,8 +834,8 @@
         /* Properties List */
         .properties-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
         }
 
         .property-card {
@@ -841,6 +844,8 @@
             overflow: hidden;
             border: 1px solid var(--border);
             transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
         }
 
         .property-card:hover {
@@ -850,7 +855,9 @@
         }
 
         .property-image {
-            height: 240px;
+            width: 100%;
+            min-height: 240px;
+            aspect-ratio: 4 / 3;
             background: linear-gradient(135deg, rgba(10, 22, 40, 0.8), rgba(30, 58, 95, 0.6));
             display: flex;
             align-items: center;
@@ -866,6 +873,7 @@
             object-fit: cover;
             object-position: center;
             transition: transform 0.5s ease;
+            display: block;
         }
 
         .property-card:hover .property-image img {
@@ -978,13 +986,13 @@
         }
 
         .property-content {
-            padding: 24px;
+            padding: 20px;
         }
 
         .property-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .property-location {
@@ -1020,7 +1028,7 @@
         }
 
         .property-price {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--cyan);
         }
@@ -1368,21 +1376,35 @@
         }
 
         /* Responsive - Large Desktop */
-        @media (min-width: 1400px) {
-            .form-grid {
-                grid-template-columns: repeat(3, 1fr);
+        @media (min-width: 1600px) {
+            .properties-grid {
+                grid-template-columns: repeat(4, 1fr);
             }
+        }
+
+        @media (min-width: 1200px) and (max-width: 1599px) {
             .properties-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
 
-        /* Responsive - Medium Desktop */
-        @media (max-width: 1200px) {
-            .form-grid {
-                grid-template-columns: repeat(2, 1fr);
+        /* Responsive - Medium Desktop & Tablet */
+        @media (min-width: 768px) and (max-width: 1199px) {
+            .main-content {
+                margin-right: 0;
+                padding: 24px;
             }
+            
             .properties-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+            
+            .property-image {
+                min-height: 200px;
+            }
+            
+            .form-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
@@ -1395,6 +1417,10 @@
             }
             .properties-grid {
                 grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+            .property-image {
+                min-height: 180px;
             }
             .form-row {
                 grid-template-columns: 1fr;
@@ -1453,7 +1479,7 @@
             .form-group select,
             .form-group textarea {
                 padding: 12px 14px;
-                font-size: 16px; /* منع zoom على iOS */
+                font-size: 16px;
             }
 
             .form-actions {
@@ -1471,7 +1497,7 @@
 
             .properties-grid {
                 grid-template-columns: 1fr;
-                gap: 16px;
+                gap: 14px;
             }
 
             .tabs {
@@ -1495,25 +1521,41 @@
                 border-radius: 16px;
             }
             
+            .property-image {
+                min-height: 200px;
+                aspect-ratio: 16 / 10;
+            }
+            
             .property-content {
                 padding: 16px;
             }
             
             .property-title {
-                font-size: 16px;
+                font-size: 17px;
             }
             
             .property-price {
-                font-size: 18px;
+                font-size: 19px;
             }
             
             .property-features {
                 gap: 12px;
                 flex-wrap: wrap;
+                padding: 12px 0;
             }
             
             .feature-item {
-                font-size: 12px;
+                font-size: 13px;
+            }
+            
+            .property-action-btn {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .property-action-btn svg {
+                width: 16px;
+                height: 16px;
             }
             
             .form-section {
@@ -1566,6 +1608,33 @@
             .image-preview-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 12px;
+            }
+        }
+        
+        /* Responsive - Small Mobile */
+        @media (max-width: 480px) {
+            .properties-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .property-image {
+                min-height: 180px;
+            }
+            
+            .property-title {
+                font-size: 16px;
+            }
+            
+            .property-price {
+                font-size: 18px;
+            }
+            
+            .property-features {
+                gap: 10px;
+            }
+            
+            .feature-item {
+                font-size: 12px;
             }
             
             /* Excel Import responsive */

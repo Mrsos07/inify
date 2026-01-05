@@ -11,6 +11,11 @@
     --text-muted: rgba(248, 248, 248, 0.7);
 }
 
+/* Global Zoom for All Pages */
+html {
+    zoom: 0.85;
+}
+
 /* ═══════════════════════════════════════════════════════════ */
 /* Light Mode Styles - Professional & Corporate Theme */
 /* ═══════════════════════════════════════════════════════════ */
