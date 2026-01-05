@@ -146,9 +146,25 @@ class WhatsAppWebhookView(View):
                 phone = parsed.get('phone')
                 sender_name = parsed.get('sender_name', '')
                 message_text = parsed.get('text', '')
+                message_id = parsed.get('message_id', '')
                 
                 if not message_text:
                     return JsonResponse({'status': 'empty_message'})
+                
+                # ═══════════════════════════════════════════════════════════
+                # Message Deduplication - منع معالجة نفس الرسالة مرتين
+                # ═══════════════════════════════════════════════════════════
+                if message_id:
+                    from django.core.cache import cache
+                    dedup_key = f"whatsapp_msg_processed:{instance_name}:{message_id}"
+                    
+                    # التحقق إذا تمت معالجة الرسالة من قبل
+                    if cache.get(dedup_key):
+                        logger.warning(f"⚠️ Duplicate message detected: {message_id}, skipping...")
+                        return JsonResponse({'status': 'duplicate_message'})
+                    
+                    # تسجيل الرسالة كمعالجة (صالحة لـ 5 دقائق)
+                    cache.set(dedup_key, True, 300)
                 
                 logger.info(f"📱 WhatsApp message from {phone}: {message_text[:50]}...")
                 
