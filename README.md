@@ -1,4 +1,4 @@
-# 🏠 Newra Estate AI
+# 🏠 Inify Estate AI
 
 <p align="center">
   <img src="static/images/logo.png" alt="Newra Logo" width="200">
