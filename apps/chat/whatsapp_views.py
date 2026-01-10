@@ -440,10 +440,13 @@ class WhatsAppWebhookView(View):
             return {'text': "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.", 'properties_to_show': []}
     
     def _build_properties_context(self, properties):
-        """بناء سياق العقارات"""
+        """بناء سياق العقارات مع روابط الصور"""
+        from apps.properties.models import PropertyImage
+        
         if not properties.exists():
             return "لا توجد عقارات متاحة حالياً"
         
+        site_url = os.getenv('SITE_URL', 'https://inify.ai').rstrip('/')
         context = f"العقارات المتاحة ({properties.count()} عقار):\n"
         
         for i, prop in enumerate(properties[:10], 1):  # أول 10 عقارات فقط
@@ -458,6 +461,22 @@ class WhatsAppWebhookView(View):
             if prop.size:
                 context += f" | 📐 {prop.size} م²"
             context += "\n"
+            
+            # إضافة روابط الصور
+            images = PropertyImage.objects.filter(property=prop).order_by('-is_primary', 'order')[:5]
+            if images.exists():
+                context += f"   📷 الصور ({images.count()}):\n"
+                for img in images:
+                    if img.image:
+                        img_url = img.image.url
+                        if img_url.startswith('/'):
+                            full_url = f"{site_url}{img_url}"
+                        elif img_url.startswith('http'):
+                            full_url = img_url
+                        else:
+                            full_url = f"{site_url}/media/{img_url}"
+                        primary_mark = " [رئيسية]" if img.is_primary else ""
+                        context += f"      - {full_url}{primary_mark}\n"
         
         return context
     

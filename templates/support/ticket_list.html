@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الدعم الفني - Inify</title>
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/auto-translate.js"></script>
+    
+    <style>
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+            --card-bg: rgba(30, 58, 95, 0.4);
+            --border: rgba(107, 184, 201, 0.15);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            min-height: 100vh;
+        }
+
+        .premium-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0A1628 0%, #0d1f35 25%, #122a45 50%, #0d1f35 75%, #0A1628 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        .main-content {
+            margin-right: 280px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--pearl);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--cyan) 0%, var(--blue-mid) 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(107, 184, 201, 0.3);
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--pearl);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            min-width: 150px;
+        }
+
+        .tickets-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .ticket-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 25px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .ticket-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--cyan);
+            box-shadow: 0 8px 30px rgba(107, 184, 201, 0.15);
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .ticket-number {
+            font-size: 13px;
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        .ticket-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--pearl);
+            margin-bottom: 8px;
+        }
+
+        .ticket-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .ticket-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-open { background: rgba(234, 179, 8, 0.2); color: #fbbf24; }
+        .status-progress { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .status-resolved { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .status-closed { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .pagination a, .pagination span {
+            padding: 8px 14px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--pearl);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .pagination a:hover {
+            border-color: var(--cyan);
+        }
+
+        .pagination .current {
+            background: var(--cyan);
+            border-color: var(--cyan);
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                margin-right: 0;
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="premium-bg"></div>
+    
+    {% include 'dashboard/sidebar.html' %}
+    
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">🎧 الدعم الفني</h1>
+            <a href="{% url 'support:ticket_create' %}" class="btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                تذكرة جديدة
+            </a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px; color: #4ade80;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="filter-bar">
+            <select class="filter-select" onchange="window.location.href='?status=' + this.value">
+                <option value="">جميع الحالات</option>
+                {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="tickets-grid">
+            {% for ticket in tickets %}
+                <a href="{% url 'support:ticket_detail' ticket.id %}" class="ticket-card">
+                    <div class="ticket-header">
+                        <div>
+                            <span class="ticket-number">#{{ ticket.ticket_number }}</span>
+                            <h3 class="ticket-title">{{ ticket.title }}</h3>
+                        </div>
+                        <span class="ticket-status {{ ticket.get_status_display_class }}">{{ ticket.get_status_display }}</span>
+                    </div>
+                    <div class="ticket-meta">
+                        <span>📁 {{ ticket.get_category_display }}</span>
+                        <span>📅 {{ ticket.created_at|date:"Y/m/d" }}</span>
+                        {% if ticket.admin_response %}
+                            <span style="color: var(--success);">✅ تم الرد</span>
+                        {% endif %}
+                    </div>
+                </a>
+            {% empty %}
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <h3>لا توجد تذاكر</h3>
+                    <p>لم تقم بإنشاء أي تذاكر دعم فني بعد</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if tickets.has_other_pages %}
+            <div class="pagination">
+                {% if tickets.has_previous %}
+                    <a href="?page={{ tickets.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">السابق</a>
+                {% endif %}
+                
+                <span class="current">{{ tickets.number }} من {{ tickets.paginator.num_pages }}</span>
+                
+                {% if tickets.has_next %}
+                    <a href="?page={{ tickets.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">التالي</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </main>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

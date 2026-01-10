@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تذكرة جديدة - الدعم الفني - Inify</title>
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/auto-translate.js"></script>
+    
+    <style>
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+            --card-bg: rgba(30, 58, 95, 0.4);
+            --border: rgba(107, 184, 201, 0.15);
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            min-height: 100vh;
+        }
+
+        .premium-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0A1628 0%, #0d1f35 25%, #122a45 50%, #0d1f35 75%, #0A1628 100%);
+        }
+
+        .main-content {
+            margin-right: 280px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--pearl);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            border-color: var(--cyan);
+        }
+
+        .page-title {
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .form-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 35px;
+            max-width: 700px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--pearl);
+            margin-bottom: 10px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            background: rgba(10, 22, 40, 0.5);
+            border: 1px solid var(--border);
+            color: var(--pearl);
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 3px rgba(107, 184, 201, 0.15);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--cyan) 0%, var(--blue-mid) 100%);
+            color: white;
+            padding: 14px 35px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(107, 184, 201, 0.3);
+        }
+
+        .form-hint {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                margin-right: 0;
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .form-card {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="premium-bg"></div>
+    
+    {% include 'dashboard/sidebar.html' %}
+    
+    <main class="main-content">
+        <div class="page-header">
+            <a href="{% url 'support:ticket_list' %}" class="back-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18l6-12"/>
+                    <path d="M15 18l-6-12"/>
+                </svg>
+            </a>
+            <h1 class="page-title">📝 تذكرة دعم جديدة</h1>
+        </div>
+
+        <div class="form-card">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label class="form-label">عنوان المشكلة / الطلب *</label>
+                    {{ form.title }}
+                    <p class="form-hint">اكتب عنواناً واضحاً ومختصراً يصف مشكلتك</p>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">التصنيف</label>
+                        {{ form.category }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الأولوية</label>
+                        {{ form.priority }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">وصف المشكلة بالتفصيل *</label>
+                    {{ form.description }}
+                    <p class="form-hint">اشرح المشكلة بالتفصيل مع ذكر الخطوات التي أدت إليها إن وجدت</p>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    إرسال التذكرة
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

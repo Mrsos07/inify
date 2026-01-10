@@ -55,6 +55,9 @@ urlpatterns = [
     path('api/v1/leads/', include('apps.leads.urls')),
     path('api/v1/agents/', include('apps.agents.urls')),
     
+    # Support
+    path('support/', include('apps.support.urls')),
+    
     # Webhook endpoints for n8n
     path('webhooks/', include('apps.chat.webhook_urls')),
 ]

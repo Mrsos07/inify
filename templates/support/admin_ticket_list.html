@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الدعم الفني - Inify</title>
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/auto-translate.js"></script>
+    
+    <style>
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+            --card-bg: rgba(30, 58, 95, 0.4);
+            --border: rgba(107, 184, 201, 0.15);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            min-height: 100vh;
+        }
+
+        .premium-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0A1628 0%, #0d1f35 25%, #122a45 50%, #0d1f35 75%, #0A1628 100%);
+        }
+
+        .main-content {
+            margin-right: 280px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .stat-card.open .stat-value { color: #fbbf24; }
+        .stat-card.progress .stat-value { color: #60a5fa; }
+        .stat-card.resolved .stat-value { color: #4ade80; }
+
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-select, .search-input {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--pearl);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .search-input {
+            min-width: 250px;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .tickets-table {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .tickets-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tickets-table th, .tickets-table td {
+            padding: 15px 20px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tickets-table th {
+            background: rgba(10, 22, 40, 0.5);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .tickets-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .tickets-table tr:hover td {
+            background: rgba(107, 184, 201, 0.05);
+        }
+
+        .ticket-link {
+            color: var(--pearl);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .ticket-link:hover {
+            color: var(--cyan);
+        }
+
+        .ticket-number {
+            font-size: 12px;
+            color: var(--cyan);
+            display: block;
+        }
+
+        .ticket-status {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-open { background: rgba(234, 179, 8, 0.2); color: #fbbf24; }
+        .status-progress { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .status-resolved { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .status-closed { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+
+        .priority-urgent { color: #ef4444; }
+        .priority-high { color: #f59e0b; }
+        .priority-medium { color: #60a5fa; }
+        .priority-low { color: #9ca3af; }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .pagination a, .pagination span {
+            padding: 8px 14px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--pearl);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .pagination .current {
+            background: var(--cyan);
+            border-color: var(--cyan);
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                margin-right: 0;
+                padding: 20px;
+            }
+            .tickets-table {
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .filter-bar {
+                flex-direction: column;
+            }
+            .search-input, .filter-select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="premium-bg"></div>
+    
+    {% include 'dashboard/sidebar.html' %}
+    
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">🛠️ إدارة الدعم الفني</h1>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px; color: #4ade80;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">إجمالي التذاكر</div>
+            </div>
+            <div class="stat-card open">
+                <div class="stat-value">{{ stats.open }}</div>
+                <div class="stat-label">مفتوحة</div>
+            </div>
+            <div class="stat-card progress">
+                <div class="stat-value">{{ stats.in_progress }}</div>
+                <div class="stat-label">قيد المراجعة</div>
+            </div>
+            <div class="stat-card resolved">
+                <div class="stat-value">{{ stats.resolved }}</div>
+                <div class="stat-label">تم الحل</div>
+            </div>
+        </div>
+
+        <form method="get" class="filter-bar">
+            <input type="text" name="search" class="search-input" placeholder="بحث برقم التذكرة أو العنوان..." value="{{ search }}">
+            <select name="status" class="filter-select">
+                <option value="">جميع الحالات</option>
+                {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="priority" class="filter-select">
+                <option value="">جميع الأولويات</option>
+                {% for value, label in priority_choices %}
+                    <option value="{{ value }}" {% if priority_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" style="background: var(--cyan); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">بحث</button>
+        </form>
+
+        <div class="tickets-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>التذكرة</th>
+                        <th>المستخدم</th>
+                        <th>التصنيف</th>
+                        <th>الأولوية</th>
+                        <th>الحالة</th>
+                        <th>التاريخ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in tickets %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'support:admin_ticket_detail' ticket.id %}" class="ticket-link">
+                                    <span class="ticket-number">#{{ ticket.ticket_number }}</span>
+                                    {{ ticket.title|truncatechars:40 }}
+                                </a>
+                            </td>
+                            <td>{{ ticket.user.username }}</td>
+                            <td>{{ ticket.get_category_display }}</td>
+                            <td class="{{ ticket.get_priority_display_class }}">{{ ticket.get_priority_display }}</td>
+                            <td><span class="ticket-status {{ ticket.get_status_display_class }}">{{ ticket.get_status_display }}</span></td>
+                            <td>{{ ticket.created_at|date:"Y/m/d" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                لا توجد تذاكر
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if tickets.has_other_pages %}
+            <div class="pagination">
+                {% if tickets.has_previous %}
+                    <a href="?page={{ tickets.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}">السابق</a>
+                {% endif %}
+                <span class="current">{{ tickets.number }} من {{ tickets.paginator.num_pages }}</span>
+                {% if tickets.has_next %}
+                    <a href="?page={{ tickets.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}">التالي</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </main>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

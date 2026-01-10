@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مراجعة تذكرة #{{ ticket.ticket_number }} - Inify</title>
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/auto-translate.js"></script>
+    
+    <style>
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.6);
+            --card-bg: rgba(30, 58, 95, 0.4);
+            --border: rgba(107, 184, 201, 0.15);
+            --success: #22c55e;
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            min-height: 100vh;
+        }
+
+        .premium-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0A1628 0%, #0d1f35 25%, #122a45 50%, #0d1f35 75%, #0A1628 100%);
+        }
+
+        .main-content {
+            margin-right: 280px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--pearl);
+            text-decoration: none;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+
+        .ticket-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+        }
+
+        .ticket-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .ticket-description {
+            color: var(--text-muted);
+            line-height: 1.8;
+            white-space: pre-wrap;
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .info-item {
+            background: rgba(10, 22, 40, 0.3);
+            padding: 12px 15px;
+            border-radius: 10px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .sidebar-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-select, .form-textarea {
+            width: 100%;
+            background: rgba(10, 22, 40, 0.5);
+            border: 1px solid var(--border);
+            color: var(--pearl);
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--cyan);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, var(--cyan) 0%, var(--blue-mid) 100%);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(107, 184, 201, 0.3);
+        }
+
+        .status-open { color: #fbbf24; }
+        .status-progress { color: #60a5fa; }
+        .status-resolved { color: #4ade80; }
+        .status-closed { color: #9ca3af; }
+
+        .priority-urgent { color: #ef4444; }
+        .priority-high { color: #f59e0b; }
+        .priority-medium { color: #60a5fa; }
+        .priority-low { color: #9ca3af; }
+
+        .previous-response {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .previous-response-title {
+            font-size: 12px;
+            color: var(--success);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .previous-response-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                margin-right: 0;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="premium-bg"></div>
+    
+    {% include 'dashboard/sidebar.html' %}
+    
+    <main class="main-content">
+        <div class="page-header">
+            <a href="{% url 'support:admin_ticket_list' %}" class="back-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18l6-12"/>
+                    <path d="M15 18l-6-12"/>
+                </svg>
+            </a>
+            <h1 class="page-title">مراجعة تذكرة #{{ ticket.ticket_number }}</h1>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px; color: #4ade80;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="content-grid">
+            <div class="ticket-card">
+                <h2 class="ticket-title">{{ ticket.title }}</h2>
+                <p class="ticket-description">{{ ticket.description }}</p>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">المستخدم</div>
+                        <div class="info-value">{{ ticket.user.username }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">البريد</div>
+                        <div class="info-value">{{ ticket.user.email|default:"-" }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">التصنيف</div>
+                        <div class="info-value">{{ ticket.get_category_display }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">الأولوية</div>
+                        <div class="info-value {{ ticket.get_priority_display_class }}">{{ ticket.get_priority_display }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">الحالة الحالية</div>
+                        <div class="info-value {{ ticket.get_status_display_class }}">{{ ticket.get_status_display }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">تاريخ الإنشاء</div>
+                        <div class="info-value">{{ ticket.created_at|date:"Y/m/d H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                    </svg>
+                    الرد على التذكرة
+                </h3>
+
+                {% if ticket.admin_response %}
+                    <div class="previous-response">
+                        <div class="previous-response-title">الرد السابق:</div>
+                        <div class="previous-response-text">{{ ticket.admin_response|truncatechars:150 }}</div>
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label class="form-label">تحديث الحالة</label>
+                        {{ form.status }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">الرد</label>
+                        {{ form.admin_response }}
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        حفظ وإرسال الرد
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

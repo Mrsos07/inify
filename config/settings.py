@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     'apps.chat',
     'apps.leads',
     'apps.agents',
+    'apps.support',
 ]
 
 MIDDLEWARE = [
