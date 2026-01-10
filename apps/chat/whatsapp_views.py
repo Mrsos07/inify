@@ -214,6 +214,9 @@ class WhatsAppWebhookView(View):
                         response_text = response_data
                         properties_to_show = []
                     
+                    # استخراج روابط الصور من النص وإزالتها
+                    response_text, image_urls = self._extract_and_remove_image_urls(response_text)
+                    
                     # إرسال الرد
                     if response_text:
                         print(f"[REPLY] Sending to phone: {phone}, instance: {instance_name}")
@@ -236,6 +239,17 @@ class WhatsAppWebhookView(View):
                             print(f"[REPLY] ✅ Success to {phone}")
                         else:
                             print(f"[REPLY] ❌ Failed: {result.get('error')}")
+                        
+                        # ═══════════════════════════════════════════════════════════
+                        # إرسال الصور المستخرجة من رد الوكيل كميديا
+                        # ═══════════════════════════════════════════════════════════
+                        if image_urls:
+                            self._send_extracted_images(
+                                instance_name=instance_name,
+                                phone=phone,
+                                image_urls=image_urls,
+                                wa_instance=wa_instance
+                            )
                         
                         # ═══════════════════════════════════════════════════════════
                         # إرسال صور العقارات بعد الرد النصي
@@ -440,17 +454,22 @@ class WhatsAppWebhookView(View):
             return {'text': "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.", 'properties_to_show': []}
     
     def _build_properties_context(self, properties):
-        """بناء سياق العقارات مع روابط الصور"""
+        """بناء سياق العقارات (بدون روابط الصور - يتم إرسالها كميديا)"""
         from apps.properties.models import PropertyImage
         
         if not properties.exists():
             return "لا توجد عقارات متاحة حالياً"
         
-        site_url = os.getenv('SITE_URL', 'https://inify.ai').rstrip('/')
         context = f"العقارات المتاحة ({properties.count()} عقار):\n"
+        context += "\n⚠️ تعليمات مهمة: عند ذكر عقار للعميل، اذكر الرقم المرجعي فقط وسيتم إرسال صوره تلقائياً. لا تضع روابط الصور في الرد.\n"
         
         for i, prop in enumerate(properties[:10], 1):  # أول 10 عقارات فقط
             listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
+            
+            # عدد الصور المتاحة
+            images_count = PropertyImage.objects.filter(property=prop).count()
+            images_info = f"📷 {images_count} صور متاحة" if images_count > 0 else "📷 لا توجد صور"
+            
             context += f"\n{i}. [{prop.reference_number}] {prop.title} - {listing_type}\n"
             context += f"   📍 {prop.city}"
             if prop.neighborhood:
@@ -460,23 +479,7 @@ class WhatsAppWebhookView(View):
                 context += f"   🛏️ {prop.bedrooms} غرف"
             if prop.size:
                 context += f" | 📐 {prop.size} م²"
-            context += "\n"
-            
-            # إضافة روابط الصور
-            images = PropertyImage.objects.filter(property=prop).order_by('-is_primary', 'order')[:5]
-            if images.exists():
-                context += f"   📷 الصور ({images.count()}):\n"
-                for img in images:
-                    if img.image:
-                        img_url = img.image.url
-                        if img_url.startswith('/'):
-                            full_url = f"{site_url}{img_url}"
-                        elif img_url.startswith('http'):
-                            full_url = img_url
-                        else:
-                            full_url = f"{site_url}/media/{img_url}"
-                        primary_mark = " [رئيسية]" if img.is_primary else ""
-                        context += f"      - {full_url}{primary_mark}\n"
+            context += f"\n   {images_info}\n"
         
         return context
     
@@ -579,6 +582,84 @@ class WhatsAppWebhookView(View):
             except Exception as e:
                 logger.error(f"Error sending property image: {e}")
                 print(f"[IMAGE] Error: {e}")
+                continue
+    
+    def _extract_and_remove_image_urls(self, text: str):
+        """
+        استخراج روابط الصور من النص وإزالتها
+        يُرجع النص المُنظف وقائمة الروابط
+        """
+        import re
+        
+        # أنماط روابط الصور
+        image_patterns = [
+            r'https?://[^\s\[\]<>"\']+\.(?:jpg|jpeg|png|gif|webp|bmp)(?:\?[^\s\[\]<>"\']*)?',
+            r'https?://res\.cloudinary\.com/[^\s\[\]<>"\']+',
+            r'https?://[^\s\[\]<>"\']*cloudinary[^\s\[\]<>"\']+',
+            r'https?://inify\.ai/media/[^\s\[\]<>"\']+',
+        ]
+        
+        image_urls = []
+        cleaned_text = text
+        
+        for pattern in image_patterns:
+            matches = re.findall(pattern, cleaned_text, re.IGNORECASE)
+            for match in matches:
+                if match not in image_urls:
+                    image_urls.append(match)
+                # إزالة الرابط من النص
+                cleaned_text = cleaned_text.replace(match, '')
+        
+        # تنظيف النص من السطور الفارغة المتتالية والمسافات الزائدة
+        cleaned_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', cleaned_text)
+        cleaned_text = re.sub(r'  +', ' ', cleaned_text)
+        cleaned_text = cleaned_text.strip()
+        
+        # إزالة عبارات مثل "الصور:" أو "📷:" إذا لم يتبعها شيء
+        cleaned_text = re.sub(r'📷\s*:?\s*\n', '\n', cleaned_text)
+        cleaned_text = re.sub(r'الصور\s*:?\s*\n', '\n', cleaned_text)
+        cleaned_text = re.sub(r'-\s*\[رئيسية\]\s*', '', cleaned_text)
+        cleaned_text = re.sub(r'-\s*\n', '\n', cleaned_text)
+        
+        if image_urls:
+            logger.info(f"Extracted {len(image_urls)} image URLs from response")
+            print(f"[EXTRACT] Found {len(image_urls)} image URLs")
+        
+        return cleaned_text, image_urls
+    
+    def _send_extracted_images(self, instance_name: str, phone: str, 
+                                image_urls: list, wa_instance):
+        """
+        إرسال الصور المستخرجة من رد الوكيل كميديا
+        """
+        import time
+        
+        for i, image_url in enumerate(image_urls[:5]):  # حد أقصى 5 صور
+            try:
+                time.sleep(0.5)
+                
+                logger.info(f"📷 Sending extracted image {i+1}: {image_url[:50]}...")
+                print(f"[MEDIA] Sending image {i+1}/{len(image_urls)}: {image_url[:50]}...")
+                
+                result = whatsapp_service.send_media_message(
+                    instance_name=instance_name,
+                    phone_number=phone,
+                    media_url=image_url,
+                    media_type='image',
+                    caption=f"صورة {i+1}" if len(image_urls) > 1 else ""
+                )
+                
+                if result.get('success'):
+                    wa_instance.increment_sent()
+                    logger.info(f"✅ Extracted image {i+1} sent successfully")
+                    print(f"[MEDIA] ✅ Success: image {i+1}")
+                else:
+                    logger.error(f"❌ Failed to send extracted image: {result.get('error')}")
+                    print(f"[MEDIA] ❌ Failed: {result.get('error')}")
+                    
+            except Exception as e:
+                logger.error(f"Error sending extracted image: {e}")
+                print(f"[MEDIA] Error: {e}")
                 continue
 
 

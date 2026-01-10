@@ -612,16 +612,20 @@ def _save_whatsapp_message(lead, instance, role, content):
 
 
 def _build_properties_context(properties):
-    """بناء سياق العقارات مع روابط الصور"""
+    """بناء سياق العقارات (بدون روابط الصور - يتم إرسالها كميديا)"""
     from apps.properties.models import PropertyImage
     
     if not properties.exists():
         return ""
     
-    site_url = os.getenv('SITE_URL', 'https://inify.ai').rstrip('/')
     lines = ["═══ العقارات المتاحة ═══"]
+    lines.append("\n⚠️ تعليمات: عند ذكر عقار، اذكر الرقم المرجعي فقط وسيتم إرسال صوره تلقائياً. لا تضع روابط الصور في الرد.\n")
     
     for p in properties[:10]:
+        # عدد الصور المتاحة
+        images_count = PropertyImage.objects.filter(property=p).count()
+        images_info = f"📷 {images_count} صور متاحة" if images_count > 0 else "📷 لا توجد صور"
+        
         prop_info = f"""
 🏠 {p.title}
 🔖 الرقم المرجعي: {p.reference_number}
@@ -631,23 +635,8 @@ def _build_properties_context(properties):
 • الغرف: {p.bedrooms} | الحمامات: {p.bathrooms}
 • المساحة: {getattr(p, 'size', p.area) or 'غير محدد'} م²
 • 🔹 مصعد: {'✅ نعم' if getattr(p, 'has_elevator', False) else '❌ لا'}
-• 🔹 موقف: {'✅ نعم' if getattr(p, 'parking_spaces', 0) > 0 else '❌ لا'}"""
-        
-        # إضافة روابط الصور
-        images = PropertyImage.objects.filter(property=p).order_by('-is_primary', 'order')[:5]
-        if images.exists():
-            prop_info += f"\n📷 الصور ({images.count()}):"
-            for img in images:
-                if img.image:
-                    img_url = img.image.url
-                    if img_url.startswith('/'):
-                        full_url = f"{site_url}{img_url}"
-                    elif img_url.startswith('http'):
-                        full_url = img_url
-                    else:
-                        full_url = f"{site_url}/media/{img_url}"
-                    primary_mark = " [رئيسية]" if img.is_primary else ""
-                    prop_info += f"\n   - {full_url}{primary_mark}"
+• 🔹 موقف: {'✅ نعم' if getattr(p, 'parking_spaces', 0) > 0 else '❌ لا'}
+• {images_info}"""
         
         lines.append(prop_info)
     

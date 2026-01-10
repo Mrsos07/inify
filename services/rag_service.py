@@ -85,31 +85,14 @@ class RAGService:
             return "حدث خطأ في استرجاع العقارات."
     
     def _format_properties_for_context(self, properties) -> str:
-        """تنسيق العقارات كسياق نصي شامل مع روابط الصور"""
+        """تنسيق العقارات كسياق نصي شامل (بدون روابط الصور - يتم إرسالها كميديا)"""
         from datetime import datetime
-        import os
         
-        site_url = os.getenv('SITE_URL', 'https://inify.ai').rstrip('/')
         context_parts = []
         
         for prop in properties[:10]:  # حد أقصى 10 عقارات للسرعة
-            images = prop.images.all().order_by('-is_primary', 'order')[:5]
-            
-            # بناء روابط الصور الكاملة
-            image_urls = []
-            for img in images:
-                if img.image:
-                    img_url = img.image.url
-                    if img_url.startswith('/'):
-                        full_url = f"{site_url}{img_url}"
-                    elif img_url.startswith('http'):
-                        full_url = img_url
-                    else:
-                        full_url = f"{site_url}/media/{img_url}"
-                    primary_mark = " [رئيسية]" if img.is_primary else ""
-                    image_urls.append(f"   - {full_url}{primary_mark}")
-            
-            image_info = f"({len(image_urls)} صور متاحة)" if image_urls else "(لا توجد صور)"
+            images_count = prop.images.count()
+            image_info = f"({images_count} صور متاحة)" if images_count > 0 else "(لا توجد صور)"
             
             # حساب عمر العقار
             property_age = "غير محدد"
@@ -201,11 +184,10 @@ class RAGService:
 {important_amenities}
 
 📸 الوسائط:
-- الصور: {image_info}
+- الصور: {image_info} (سيتم إرسالها تلقائياً عند ذكر العقار)
 - الفيديو: {'متوفر' if prop.videos.exists() else 'غير متوفر'}
 
-📷 روابط الصور:
-{chr(10).join(image_urls) if image_urls else '   لا توجد صور متاحة'}
+⚠️ ملاحظة: لا تضع روابط الصور في الرد. اذكر الرقم المرجعي فقط وسيتم إرسال الصور تلقائياً.
 """
             context_parts.append(prop_text)
         
