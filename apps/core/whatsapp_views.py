@@ -5,6 +5,7 @@ WhatsApp Integration Views - واجهات ربط الواتساب عبر Evoluti
 
 import json
 import logging
+import os
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -562,6 +563,11 @@ def _process_whatsapp_message(instance, message_data):
                 # حفظ رد الوكيل
                 _save_whatsapp_message(lead, instance, 'assistant', response_text)
                 logger.info(f"✅ WhatsApp reply sent to {phone}")
+                
+                # إرسال صور العقارات المذكورة في الرد
+                properties_to_show = _extract_mentioned_properties(response_text, properties)
+                if properties_to_show:
+                    _send_property_images(instance, phone, properties_to_show)
             else:
                 logger.error(f"❌ Failed to send WhatsApp reply: {send_result.get('error')}")
                 
@@ -763,3 +769,93 @@ def whatsapp_check_connection(request):
             'connected': False,
             'state': 'not_configured'
         })
+
+
+def _extract_mentioned_properties(response_text: str, properties):
+    """استخراج العقارات المذكورة في رد الذكاء الاصطناعي"""
+    mentioned_properties = []
+    
+    try:
+        for prop in properties[:10]:
+            if prop.reference_number and prop.reference_number in response_text:
+                if prop not in mentioned_properties:
+                    mentioned_properties.append(prop)
+                    continue
+            
+            if prop.title and prop.title in response_text:
+                if prop not in mentioned_properties:
+                    mentioned_properties.append(prop)
+                    continue
+        
+        return mentioned_properties[:3]
+        
+    except Exception as e:
+        logger.error(f"Error extracting mentioned properties: {e}")
+        return []
+
+
+def _send_property_images(instance, phone: str, properties: list):
+    """إرسال صور العقارات المذكورة عبر الواتساب"""
+    import time
+    from apps.properties.models import PropertyImage
+    
+    site_url = os.getenv('SITE_URL', 'https://inify.ai').rstrip('/')
+    
+    for prop in properties:
+        try:
+            primary_image = PropertyImage.objects.filter(
+                property=prop,
+                is_primary=True
+            ).first()
+            
+            if not primary_image:
+                primary_image = PropertyImage.objects.filter(
+                    property=prop
+                ).first()
+            
+            if not primary_image or not primary_image.image:
+                logger.info(f"No image found for property: {prop.reference_number}")
+                continue
+            
+            image_url = primary_image.image.url
+            if image_url.startswith('/'):
+                full_image_url = f"{site_url}{image_url}"
+            elif image_url.startswith('http'):
+                full_image_url = image_url
+            else:
+                full_image_url = f"{site_url}/media/{image_url}"
+            
+            listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
+            caption = f"🏠 {prop.title}\n"
+            caption += f"📍 {prop.city}"
+            if prop.neighborhood:
+                caption += f" - {prop.neighborhood}"
+            caption += f"\n💰 {prop.price:,.0f} ريال ({listing_type})"
+            if prop.bedrooms:
+                caption += f"\n🛏️ {prop.bedrooms} غرف نوم"
+            if prop.size:
+                caption += f" | 📐 {prop.size} م²"
+            if prop.reference_number:
+                caption += f"\n🔖 الرقم المرجعي: {prop.reference_number}"
+            
+            time.sleep(0.5)
+            
+            logger.info(f"📷 Sending property image: {prop.reference_number} to {phone}")
+            
+            result = whatsapp_service.send_media_message(
+                instance_name=instance.instance_name,
+                phone_number=phone,
+                media_url=full_image_url,
+                media_type='image',
+                caption=caption
+            )
+            
+            if result.get('success'):
+                instance.increment_sent()
+                logger.info(f"✅ Image sent successfully for {prop.reference_number}")
+            else:
+                logger.error(f"❌ Failed to send image: {result.get('error')}")
+                
+        except Exception as e:
+            logger.error(f"Error sending property image: {e}")
+            continue

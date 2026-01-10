@@ -11,9 +11,11 @@
     --text-muted: rgba(248, 248, 248, 0.7);
 }
 
-/* Global Zoom for All Pages */
+/* Global Reset - Professional Scaling */
 html {
-    zoom: 0.85;
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
 }
 
 /* ═══════════════════════════════════════════════════════════ */

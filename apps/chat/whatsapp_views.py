@@ -5,11 +5,14 @@ WhatsApp Views - واجهات واتساب عبر Evolution API
 
 import json
 import logging
+import os
+import re
 from django.http import JsonResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
+from django.conf import settings
 
 from services.whatsapp_service import whatsapp_service
 from services.whatsapp_session_manager import whatsapp_session_manager
@@ -195,13 +198,21 @@ class WhatsAppWebhookView(View):
                     logger.info(f"🔄 Session info: msg #{session['message_count']}, conv_id: {session.get('conversation_id')}")
                     
                     # معالجة الرسالة والرد
-                    response_text = self._process_message(
+                    response_data = self._process_message(
                         wa_instance=wa_instance,
                         phone=phone,
                         sender_name=sender_name,
                         message_text=message_text,
                         session=session
                     )
+                    
+                    # استخراج النص والعقارات من الرد
+                    if isinstance(response_data, dict):
+                        response_text = response_data.get('text', '')
+                        properties_to_show = response_data.get('properties_to_show', [])
+                    else:
+                        response_text = response_data
+                        properties_to_show = []
                     
                     # إرسال الرد
                     if response_text:
@@ -225,6 +236,17 @@ class WhatsAppWebhookView(View):
                             print(f"[REPLY] ✅ Success to {phone}")
                         else:
                             print(f"[REPLY] ❌ Failed: {result.get('error')}")
+                        
+                        # ═══════════════════════════════════════════════════════════
+                        # إرسال صور العقارات بعد الرد النصي
+                        # ═══════════════════════════════════════════════════════════
+                        if properties_to_show:
+                            self._send_property_images(
+                                instance_name=instance_name,
+                                phone=phone,
+                                properties=properties_to_show,
+                                wa_instance=wa_instance
+                            )
                     
                     return JsonResponse({
                         'status': 'processed',
@@ -402,11 +424,20 @@ class WhatsAppWebhookView(View):
             conversation.messages_count = conversation.messages.count()
             conversation.save()
             
-            return response_text
+            # استخراج العقارات المذكورة في الرد لإرسال صورها
+            properties_to_show = self._extract_mentioned_properties(
+                response_text=response_text,
+                properties=properties
+            )
+            
+            return {
+                'text': response_text,
+                'properties_to_show': properties_to_show
+            }
             
         except Exception as e:
             logger.error(f"AI error for WhatsApp: {e}")
-            return "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى."
+            return {'text': "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.", 'properties_to_show': []}
     
     def _build_properties_context(self, properties):
         """بناء سياق العقارات"""
@@ -417,7 +448,7 @@ class WhatsAppWebhookView(View):
         
         for i, prop in enumerate(properties[:10], 1):  # أول 10 عقارات فقط
             listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
-            context += f"\n{i}. {prop.title} - {listing_type}\n"
+            context += f"\n{i}. [{prop.reference_number}] {prop.title} - {listing_type}\n"
             context += f"   📍 {prop.city}"
             if prop.neighborhood:
                 context += f" - {prop.neighborhood}"
@@ -429,6 +460,107 @@ class WhatsAppWebhookView(View):
             context += "\n"
         
         return context
+    
+    def _extract_mentioned_properties(self, response_text: str, properties):
+        """
+        استخراج العقارات المذكورة في رد الذكاء الاصطناعي
+        """
+        mentioned_properties = []
+        
+        try:
+            for prop in properties[:10]:
+                # البحث عن الرقم المرجعي في النص
+                if prop.reference_number and prop.reference_number in response_text:
+                    if prop not in mentioned_properties:
+                        mentioned_properties.append(prop)
+                        continue
+                
+                # البحث عن عنوان العقار في النص
+                if prop.title and prop.title in response_text:
+                    if prop not in mentioned_properties:
+                        mentioned_properties.append(prop)
+                        continue
+            
+            return mentioned_properties[:3]
+            
+        except Exception as e:
+            logger.error(f"Error extracting mentioned properties: {e}")
+            return []
+    
+    def _send_property_images(self, instance_name: str, phone: str, 
+                              properties: list, wa_instance):
+        """
+        إرسال صور العقارات المذكورة عبر الواتساب
+        """
+        import time
+        from apps.properties.models import PropertyImage
+        
+        site_url = os.getenv('SITE_URL', 'https://inify.ai').rstrip('/')
+        
+        for prop in properties:
+            try:
+                # جلب الصورة الرئيسية للعقار
+                primary_image = PropertyImage.objects.filter(
+                    property=prop,
+                    is_primary=True
+                ).first()
+                
+                if not primary_image:
+                    primary_image = PropertyImage.objects.filter(
+                        property=prop
+                    ).first()
+                
+                if not primary_image or not primary_image.image:
+                    logger.info(f"No image found for property: {prop.reference_number}")
+                    continue
+                
+                # بناء URL كامل للصورة
+                image_url = primary_image.image.url
+                if image_url.startswith('/'):
+                    full_image_url = f"{site_url}{image_url}"
+                elif image_url.startswith('http'):
+                    full_image_url = image_url
+                else:
+                    full_image_url = f"{site_url}/media/{image_url}"
+                
+                # إعداد caption للصورة
+                listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
+                caption = f"🏠 {prop.title}\n"
+                caption += f"📍 {prop.city}"
+                if prop.neighborhood:
+                    caption += f" - {prop.neighborhood}"
+                caption += f"\n💰 {prop.price:,.0f} ريال ({listing_type})"
+                if prop.bedrooms:
+                    caption += f"\n🛏️ {prop.bedrooms} غرف نوم"
+                if prop.size:
+                    caption += f" | 📐 {prop.size} م²"
+                caption += f"\n🔖 الرقم المرجعي: {prop.reference_number}"
+                
+                time.sleep(0.5)
+                
+                logger.info(f"📷 Sending property image: {prop.reference_number} to {phone}")
+                print(f"[IMAGE] Sending image for {prop.reference_number}: {full_image_url}")
+                
+                result = whatsapp_service.send_media_message(
+                    instance_name=instance_name,
+                    phone_number=phone,
+                    media_url=full_image_url,
+                    media_type='image',
+                    caption=caption
+                )
+                
+                if result.get('success'):
+                    wa_instance.increment_sent()
+                    logger.info(f"✅ Image sent successfully for {prop.reference_number}")
+                    print(f"[IMAGE] ✅ Success: {prop.reference_number}")
+                else:
+                    logger.error(f"❌ Failed to send image: {result.get('error')}")
+                    print(f"[IMAGE] ❌ Failed: {result.get('error')}")
+                    
+            except Exception as e:
+                logger.error(f"Error sending property image: {e}")
+                print(f"[IMAGE] Error: {e}")
+                continue
 
 
 @method_decorator(csrf_exempt, name='dispatch')
