@@ -1303,6 +1303,130 @@
             box-shadow: 0 5px 20px rgba(107, 184, 201, 0.3);
         }
 
+        /* Pagination Controls */
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .items-per-page {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .items-per-page label {
+            font-size: 14px;
+            color: var(--pearl);
+            font-weight: 500;
+        }
+
+        .items-per-page select {
+            padding: 10px 16px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--pearl);
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .items-per-page select:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 3px rgba(107, 184, 201, 0.15);
+        }
+
+        .items-per-page select option {
+            background: var(--midnight);
+            color: var(--pearl);
+        }
+
+        .pagination-info {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pagination-btn {
+            padding: 10px 16px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--pearl);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+            color: var(--cyan);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .pagination-btn.active {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            border-color: transparent;
+        }
+
+        .pagination-page-numbers {
+            display: flex;
+            gap: 6px;
+        }
+
+        .pagination-page-btn {
+            min-width: 40px;
+            padding: 10px 12px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--pearl);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination-page-btn:hover {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+            color: var(--cyan);
+        }
+
+        .pagination-page-btn.active {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            border-color: transparent;
+        }
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -1835,9 +1959,43 @@
 
         <!-- Properties List Tab -->
         <div class="tab-content" id="listTab">
+            <!-- Pagination Controls -->
+            <div class="pagination-controls" id="paginationControlsTop" style="display: none;">
+                <div class="items-per-page">
+                    <label>عرض:</label>
+                    <select id="itemsPerPage" onchange="changeItemsPerPage()">
+                        <option value="5">5 عقارات</option>
+                        <option value="10" selected>10 عقارات</option>
+                        <option value="20">20 عقار</option>
+                        <option value="50">50 عقار</option>
+                    </select>
+                </div>
+                <div class="pagination-info" id="paginationInfo">
+                    عرض 1-10 من 20 عقار
+                </div>
+                <div class="pagination-buttons">
+                    <button class="pagination-btn" id="prevPageBtn" onclick="goToPreviousPage()" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                        السابق
+                    </button>
+                    <div class="pagination-page-numbers" id="pageNumbers">
+                        <!-- Page numbers will be inserted here -->
+                    </div>
+                    <button class="pagination-btn" id="nextPageBtn" onclick="goToNextPage()">
+                        التالي
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
             <div class="properties-grid" id="propertiesGrid">
                 <!-- Properties will be loaded here -->
             </div>
+            
             <div class="empty-state" id="emptyState">
                 <div class="empty-state-icon">🏠</div>
                 <h3>لا توجد عقارات بعد</h3>
@@ -1848,6 +2006,30 @@
                     </svg>
                     إضافة عقار
                 </button>
+            </div>
+
+            <!-- Bottom Pagination Controls -->
+            <div class="pagination-controls" id="paginationControlsBottom" style="display: none; margin-top: 24px;">
+                <div class="pagination-info" id="paginationInfoBottom">
+                    عرض 1-10 من 20 عقار
+                </div>
+                <div class="pagination-buttons">
+                    <button class="pagination-btn" onclick="goToPreviousPage()" id="prevPageBtnBottom" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                        السابق
+                    </button>
+                    <div class="pagination-page-numbers" id="pageNumbersBottom">
+                        <!-- Page numbers will be inserted here -->
+                    </div>
+                    <button class="pagination-btn" onclick="goToNextPage()" id="nextPageBtnBottom">
+                        التالي
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     </main>
@@ -1990,6 +2172,10 @@
         // تحميل العقارات الخاصة بالمستخدم
         let properties = InifyAuth.getProperties();
         const permissions = InifyAuth.getCurrentPermissions();
+
+        // Pagination variables
+        let currentPage = 1;
+        let itemsPerPage = 10;
 
         // Tab switching
         function switchTab(tab) {
@@ -2333,6 +2519,94 @@
             return statusMap[status] || statusMap['available'];
         }
 
+        // Pagination functions
+        function changeItemsPerPage() {
+            itemsPerPage = parseInt(document.getElementById('itemsPerPage').value);
+            currentPage = 1;
+            renderProperties();
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderProperties();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goToPreviousPage() {
+            if (currentPage > 1) {
+                goToPage(currentPage - 1);
+            }
+        }
+
+        function goToNextPage() {
+            const totalPages = Math.ceil(properties.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                goToPage(currentPage + 1);
+            }
+        }
+
+        function renderPaginationControls() {
+            const totalItems = properties.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const startItem = (currentPage - 1) * itemsPerPage + 1;
+            const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+            // Show/hide pagination controls
+            const showPagination = totalItems > 0;
+            document.getElementById('paginationControlsTop').style.display = showPagination ? 'flex' : 'none';
+            document.getElementById('paginationControlsBottom').style.display = showPagination ? 'flex' : 'none';
+
+            if (!showPagination) return;
+
+            // Update pagination info
+            const infoText = `عرض ${startItem}-${endItem} من ${totalItems} عقار`;
+            document.getElementById('paginationInfo').textContent = infoText;
+            document.getElementById('paginationInfoBottom').textContent = infoText;
+
+            // Update prev/next buttons
+            const prevBtns = [document.getElementById('prevPageBtn'), document.getElementById('prevPageBtnBottom')];
+            const nextBtns = [document.getElementById('nextPageBtn'), document.getElementById('nextPageBtnBottom')];
+            
+            prevBtns.forEach(btn => btn.disabled = currentPage === 1);
+            nextBtns.forEach(btn => btn.disabled = currentPage === totalPages);
+
+            // Render page numbers
+            const pageNumbersHTML = renderPageNumbers(totalPages);
+            document.getElementById('pageNumbers').innerHTML = pageNumbersHTML;
+            document.getElementById('pageNumbersBottom').innerHTML = pageNumbersHTML;
+        }
+
+        function renderPageNumbers(totalPages) {
+            if (totalPages <= 1) return '';
+
+            let pages = [];
+            const maxVisiblePages = 5;
+
+            if (totalPages <= maxVisiblePages) {
+                // Show all pages
+                for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                }
+            } else {
+                // Show first page, current page range, and last page
+                if (currentPage <= 3) {
+                    pages = [1, 2, 3, 4, '...', totalPages];
+                } else if (currentPage >= totalPages - 2) {
+                    pages = [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+                } else {
+                    pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+                }
+            }
+
+            return pages.map(page => {
+                if (page === '...') {
+                    return '<span style="padding: 10px; color: var(--text-muted);">...</span>';
+                }
+                const isActive = page === currentPage;
+                return `<button class="pagination-page-btn ${isActive ? 'active' : ''}" onclick="goToPage(${page})">${page}</button>`;
+            }).join('');
+        }
+
         // Render properties
         function renderProperties() {
             const grid = document.getElementById('propertiesGrid');
@@ -2341,11 +2615,24 @@
             if (properties.length === 0) {
                 grid.innerHTML = '';
                 emptyState.style.display = 'block';
+                document.getElementById('paginationControlsTop').style.display = 'none';
+                document.getElementById('paginationControlsBottom').style.display = 'none';
                 return;
             }
             
             emptyState.style.display = 'none';
-            grid.innerHTML = properties.map((property, index) => {
+            
+            // Calculate pagination
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedProperties = properties.slice(startIndex, endIndex);
+            
+            // Render pagination controls
+            renderPaginationControls();
+            
+            // Render properties
+            grid.innerHTML = paginatedProperties.map((property, index) => {
+                const actualIndex = startIndex + index;
                 const imageCount = (property.images?.length || 0) + (property.mainImage ? 1 : 0);
                 const status = property.status || 'available';
                 const statusInfo = getStatusInfo(status);
@@ -2359,7 +2646,7 @@
                         <span class="property-badge">${property.listing_type === 'sale' ? 'للبيع' : 'للإيجار'}</span>
                         <span class="property-status-badge ${statusInfo.class}">${statusInfo.label}</span>
                         ${imageCount > 1 ? `<span class="property-image-count">📷 ${imageCount}</span>` : ''}
-                        ${imageCount > 0 ? `<button class="view-gallery-btn" onclick="openGallery(${index})">عرض الصور</button>` : ''}
+                        ${imageCount > 0 ? `<button class="view-gallery-btn" onclick="openGallery(${actualIndex})">عرض الصور</button>` : ''}
                     </div>
                     <div class="property-content">
                         <h3 class="property-title">${property.title}</h3>
