@@ -103,11 +103,18 @@ class PropertyService:
             # تحويل النتائج
             properties = []
             for prop in queryset:
-                properties.append(self._format_property(prop))
+                try:
+                    formatted = self._format_property(prop)
+                    if formatted and 'error' not in formatted:
+                        properties.append(formatted)
+                except Exception as e:
+                    logger.error(f"Error formatting property {prop.id} in search: {str(e)}")
+                    continue
             
             return {
                 'success': True,
                 'count': len(properties),
+                'total_found': queryset.count(),
                 'properties': properties
             }
             
@@ -174,87 +181,118 @@ class PropertyService:
         Returns:
             بيانات العقار منسقة
         """
-        # البيانات الأساسية
-        data = {
-            'id': str(prop.id),
-            'title': prop.title,
-            'type': prop.get_property_type_display(),
-            'type_code': prop.property_type,
-            'status': prop.get_status_display(),
-            'status_code': prop.status,
-            'price': float(prop.price),
-            'price_display': prop.get_price_display(),
-            'rent_period': prop.rent_period if prop.status == 'for_rent' else None,
-            'rent_period_display': prop.get_rent_period_display() if prop.status == 'for_rent' else None,
-            'is_negotiable': prop.is_negotiable,
-            'city': prop.city,
-            'area': prop.area,
-            'neighborhood': prop.neighborhood,
-            'size': float(prop.size),
-            'size_display': f"{prop.size} م²",
-            'bedrooms': prop.bedrooms,
-            'bathrooms': prop.bathrooms,
-            'is_featured': prop.is_featured,
-        }
-        
-        # الصورة الرئيسية
-        primary_image = prop.images.filter(is_primary=True).first()
-        if not primary_image:
-            primary_image = prop.images.first()
-        
-        data['primary_image'] = primary_image.image.url if primary_image else None
-        
-        # المميزات الرئيسية (أول 3)
-        amenities = list(prop.amenities.values_list('amenity', flat=True)[:3])
-        data['main_amenities'] = amenities
-        
-        if detailed:
-            # بيانات تفصيلية إضافية
-            data.update({
-                'description': prop.description,
-                'address': prop.address,
-                'street': prop.street,
+        try:
+            # البيانات الأساسية
+            data = {
+                'id': str(prop.id),
+                'reference_number': prop.reference_number,
+                'title': prop.title,
+                'type': prop.get_property_type_display(),
+                'type_code': prop.property_type,
+                'status': prop.get_status_display(),
+                'status_code': prop.status,
+                'price': float(prop.price),
+                'price_display': prop.get_price_display(),
+                'rent_period': prop.rent_period if prop.status == 'for_rent' else None,
+                'rent_period_display': prop.get_rent_period_display() if prop.status == 'for_rent' else None,
+                'is_negotiable': prop.is_negotiable,
+                'city': prop.city,
+                'area': prop.area or '',
+                'neighborhood': prop.neighborhood or '',
+                'size': float(prop.size),
+                'size_display': f"{prop.size} م²",
+                'bedrooms': prop.bedrooms,
+                'bathrooms': prop.bathrooms,
                 'living_rooms': prop.living_rooms,
-                'floors': prop.floors,
-                'floor_number': prop.floor_number,
                 'parking_spaces': prop.parking_spaces,
-                'furnishing': prop.get_furnishing_display(),
-                'year_built': prop.year_built,
-                'age_years': prop.age_years,
-                'price_per_sqm': float(prop.price_per_sqm) if prop.price_per_sqm else None,
-                'owner_notes': prop.owner_notes,
-                'created_at': prop.created_at.isoformat(),
-                'views_count': prop.views_count,
-            })
+                'is_featured': prop.is_featured,
+            }
             
-            # جميع المميزات
-            all_amenities = []
-            for amenity in prop.amenities.all():
-                all_amenities.append({
-                    'code': amenity.amenity,
-                    'name': amenity.get_amenity_display()
+            # الصورة الرئيسية
+            primary_image = prop.images.filter(is_primary=True).first()
+            if not primary_image:
+                primary_image = prop.images.first()
+            
+            data['primary_image'] = primary_image.image.url if primary_image and primary_image.image else None
+            data['images_count'] = prop.images.count()
+            
+            # المميزات الرئيسية (أول 3)
+            amenities = list(prop.amenities.values_list('amenity', flat=True)[:3])
+            data['main_amenities'] = amenities
+            data['amenities_count'] = prop.amenities.count()
+            
+            if detailed:
+                # بيانات تفصيلية إضافية
+                data.update({
+                    'description': prop.description or '',
+                    'address': prop.address or '',
+                    'street': prop.street or '',
+                    'floors': prop.floors,
+                    'floor_number': prop.floor_number,
+                    'furnishing': prop.get_furnishing_display(),
+                    'furnishing_code': prop.furnishing,
+                    'year_built': prop.year_built,
+                    'age_years': prop.age_years,
+                    'price_per_sqm': float(prop.price_per_sqm) if prop.price_per_sqm else None,
+                    'owner_notes': prop.owner_notes or '',
+                    'agent_notes': prop.agent_notes or '',
+                    'created_at': prop.created_at.isoformat() if prop.created_at else None,
+                    'updated_at': prop.updated_at.isoformat() if prop.updated_at else None,
+                    'views_count': prop.views_count,
+                    'interested_count': prop.interested_count,
                 })
-            data['amenities'] = all_amenities
+                
+                # جميع المميزات
+                all_amenities = []
+                for amenity in prop.amenities.all():
+                    all_amenities.append({
+                        'code': amenity.amenity,
+                        'name': amenity.get_amenity_display()
+                    })
+                data['amenities'] = all_amenities
+                
+                # جميع الصور
+                images = []
+                for img in prop.images.all():
+                    if img.image:
+                        images.append({
+                            'id': str(img.id),
+                            'url': img.image.url,
+                            'is_primary': img.is_primary,
+                            'alt': img.alt_text or '',
+                            'order': img.order
+                        })
+                data['images'] = images
+                
+                # الفيديوهات
+                videos = []
+                for vid in prop.videos.all():
+                    if vid.video:
+                        videos.append({
+                            'id': str(vid.id),
+                            'url': vid.video.url,
+                            'title': vid.title or '',
+                            'thumbnail': vid.thumbnail.url if vid.thumbnail else None
+                        })
+                data['videos'] = videos
+                
+                # الموقع الجغرافي
+                if prop.latitude and prop.longitude:
+                    data['location'] = {
+                        'lat': float(prop.latitude),
+                        'lng': float(prop.longitude)
+                    }
             
-            # جميع الصور
-            images = []
-            for img in prop.images.all():
-                images.append({
-                    'id': str(img.id),
-                    'url': img.image.url,
-                    'is_primary': img.is_primary,
-                    'alt': img.alt_text
-                })
-            data['images'] = images
+            return data
             
-            # الموقع الجغرافي
-            if prop.latitude and prop.longitude:
-                data['location'] = {
-                    'lat': float(prop.latitude),
-                    'lng': float(prop.longitude)
-                }
-        
-        return data
+        except Exception as e:
+            logger.error(f"Error formatting property {prop.id}: {str(e)}")
+            # إرجاع بيانات أساسية في حالة الخطأ
+            return {
+                'id': str(prop.id),
+                'title': prop.title,
+                'error': 'حدث خطأ في تنسيق البيانات'
+            }
     
     def get_similar_properties(
         self,

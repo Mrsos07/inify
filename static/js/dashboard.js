@@ -1,14 +1,22 @@
 // Newra Dashboard JavaScript
 
-// Modal Functions
+// Modal Functions (optimized to prevent layout thrashing)
 function openModal(modalId) {
-    document.getElementById(modalId).classList.add('show');
-    document.body.style.overflow = 'hidden';
+    // Batch DOM mutations using requestAnimationFrame
+    requestAnimationFrame(() => {
+        const modal = document.getElementById(modalId);
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    });
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('show');
-    document.body.style.overflow = '';
+    // Batch DOM mutations using requestAnimationFrame
+    requestAnimationFrame(() => {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    });
 }
 
 // Close modal on overlay click
@@ -108,13 +116,19 @@ if (uploadArea) {
 
     ['dragenter', 'dragover'].forEach(eventName => {
         uploadArea.addEventListener(eventName, () => {
-            uploadArea.style.borderColor = '#fff';
+            // Batch style changes to prevent layout thrashing
+            requestAnimationFrame(() => {
+                uploadArea.style.borderColor = '#fff';
+            });
         });
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
         uploadArea.addEventListener(eventName, () => {
-            uploadArea.style.borderColor = '';
+            // Batch style changes to prevent layout thrashing
+            requestAnimationFrame(() => {
+                uploadArea.style.borderColor = '';
+            });
         });
     });
 

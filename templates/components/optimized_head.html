@@ -1,0 +1,38 @@
+<!-- Optimized Head Component - Critical Resource Loading -->
+<!-- استخدم هذا المكون في <head> لتحسين تحميل الموارد الحرجة -->
+
+<!-- DNS Prefetch للموارد الخارجية -->
+<link rel="dns-prefetch" href="//fonts.googleapis.com">
+<link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+
+<!-- Preconnect للموارد المهمة -->
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+<!-- Preload Critical Resources -->
+<!-- 1. Critical CSS -->
+<link rel="preload" href="/static/css/theme.css" as="style">
+
+<!-- 2. Critical Fonts -->
+<link rel="preload" href="/static/Chillax-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/BalooBhaijaan2-Regular.ttf" as="font" type="font/ttf" crossorigin>
+
+<!-- 3. Critical Images (Above the fold) -->
+<link rel="preload" href="/static/images/inify-icon.png" as="image">
+
+<!-- Load Critical CSS -->
+<link rel="stylesheet" href="/static/css/fonts.css">
+<link rel="stylesheet" href="/static/css/theme.css">
+
+<!-- Defer Non-Critical CSS -->
+<link rel="preload" href="/static/css/dashboard.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/static/css/dashboard.css"></noscript>
+
+<!-- Defer Non-Critical JavaScript -->
+<script src="/static/js/auto-translate.js" defer></script>
+<script src="/static/js/theme.js" defer></script>
+<script src="/static/js/performance-utils.js" defer></script>
+
+<!-- Prefetch Next Page Resources (optional) -->
+<!-- <link rel="prefetch" href="/dashboard" as="document"> -->
+<!-- <link rel="prefetch" href="/static/css/dashboard.css" as="style"> -->

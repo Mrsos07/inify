@@ -957,12 +957,15 @@ def download_excel_template(request):
     """
     from django.http import HttpResponse
     from services.excel_import_service import generate_template
+    import logging
+    
+    logger = logging.getLogger(__name__)
     
     try:
         output = generate_template()
         
         response = HttpResponse(
-            output.read(),
+            output.getvalue(),
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
         response['Content-Disposition'] = 'attachment; filename="property_template.xlsx"'
@@ -970,6 +973,7 @@ def download_excel_template(request):
         return response
         
     except Exception as e:
+        logger.error(f"Error generating Excel template: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -981,6 +985,9 @@ def import_excel_properties(request):
     POST /api/properties/excel/import/
     """
     from services.excel_import_service import parse_excel_file, import_properties
+    import logging
+    
+    logger = logging.getLogger(__name__)
     
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
@@ -999,28 +1006,37 @@ def import_excel_properties(request):
     
     try:
         agent = request.user.agent_profile
-    except:
+    except Exception as e:
+        logger.error(f"Error getting agent profile: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'error': 'لا يوجد حساب مسوق'}, status=404)
     
-    # قراءة الملف
-    properties_data, parse_errors = parse_excel_file(excel_file)
+    try:
+        # قراءة الملف
+        properties_data, parse_errors = parse_excel_file(excel_file)
+        
+        if parse_errors and not properties_data:
+            return JsonResponse({
+                'success': False,
+                'error': 'أخطاء في قراءة الملف',
+                'errors': parse_errors
+            }, status=400)
+        
+        # استيراد العقارات
+        imported_count, import_errors = import_properties(agent, properties_data)
+        
+        all_errors = parse_errors + import_errors
+        
+        return JsonResponse({
+            'success': True,
+            'imported': imported_count,
+            'total_in_file': len(properties_data) + len(parse_errors),
+            'errors': all_errors if all_errors else None,
+            'message': f'تم استيراد {imported_count} عقار بنجاح' + (f' مع {len(all_errors)} أخطاء' if all_errors else '')
+        }, status=200)
     
-    if parse_errors and not properties_data:
+    except Exception as e:
+        logger.error(f"Error importing Excel properties: {str(e)}", exc_info=True)
         return JsonResponse({
             'success': False,
-            'error': 'أخطاء في قراءة الملف',
-            'errors': parse_errors
-        }, status=400)
-    
-    # استيراد العقارات
-    imported_count, import_errors = import_properties(agent, properties_data)
-    
-    all_errors = parse_errors + import_errors
-    
-    return JsonResponse({
-        'success': True,
-        'imported': imported_count,
-        'total_in_file': len(properties_data) + len(parse_errors),
-        'errors': all_errors if all_errors else None,
-        'message': f'تم استيراد {imported_count} عقار بنجاح' + (f' مع {len(all_errors)} أخطاء' if all_errors else '')
-    })
+            'error': f'حدث خطأ أثناء استيراد العقارات: {str(e)}'
+        }, status=500)

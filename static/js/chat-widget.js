@@ -422,9 +422,18 @@
             if (show) this.scrollToBottom();
         }
 
-        // Scroll to bottom
+        // Scroll to bottom (optimized to prevent layout thrashing)
         scrollToBottom() {
-            this.elements.messages.scrollTop = this.elements.messages.scrollHeight;
+            // Use requestAnimationFrame to batch DOM operations
+            requestAnimationFrame(() => {
+                const container = this.elements.messages;
+                // Read operation
+                const scrollHeight = container.scrollHeight;
+                // Write operation in next frame
+                requestAnimationFrame(() => {
+                    container.scrollTop = scrollHeight;
+                });
+            });
         }
 
         // Get or create client ID

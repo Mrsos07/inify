@@ -207,8 +207,13 @@ def parse_excel_file(file) -> Tuple[List[Dict], List[str]]:
     errors = []
     
     try:
-        wb = load_workbook(file, data_only=True)
+        # قراءة الملف
+        wb = load_workbook(file, data_only=True, read_only=False)
         ws = wb.active
+        
+        if ws is None:
+            errors.append("لا يمكن قراءة ورقة العمل")
+            return properties, errors
         
         # قراءة الهيدر
         headers = []
@@ -232,8 +237,8 @@ def parse_excel_file(file) -> Tuple[List[Dict], List[str]]:
         
         # قراءة الصفوف
         for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-            # تخطي الصفوف الفارغة
-            if not any(row):
+            # تخطي الصفوف الفارغة تماماً
+            if not row or not any(cell for cell in row if cell is not None and str(cell).strip()):
                 continue
             
             property_data = {}
@@ -335,7 +340,7 @@ def parse_excel_file(file) -> Tuple[List[Dict], List[str]]:
             # إضافة العقار أو الأخطاء
             if row_errors:
                 errors.append(f"صف {row_num}: " + "، ".join(row_errors))
-            else:
+            elif property_data:  # التأكد من أن البيانات ليست فارغة
                 properties.append(property_data)
         
         if not properties and not errors:
@@ -360,33 +365,52 @@ def import_properties(agent, properties_data: List[Dict]) -> Tuple[int, List[str
         Tuple[int, List[str]]: عدد العقارات المضافة وقائمة الأخطاء
     """
     from apps.properties.models import Property, PropertyAmenity
+    from django.db import transaction
     
     imported = 0
     errors = []
     
     for idx, data in enumerate(properties_data, 1):
         try:
-            # استخراج المميزات
-            amenities = data.pop('amenities', [])
-            
-            # إنشاء العقار
-            property_obj = Property.objects.create(
-                agent=agent,
-                **data
-            )
-            
-            # إضافة المميزات
-            for amenity in amenities:
-                PropertyAmenity.objects.create(
-                    property=property_obj,
-                    amenity=amenity
+            with transaction.atomic():
+                # استخراج المميزات
+                amenities = data.pop('amenities', [])
+                
+                # إزالة reference_number إذا كان موجوداً (سيتم توليده تلقائياً)
+                data.pop('reference_number', None)
+                
+                # التأكد من أن جميع الحقول المطلوبة موجودة
+                required_fields = ['title', 'property_type', 'status', 'city', 'price', 'size']
+                missing_fields = [field for field in required_fields if field not in data or not data[field]]
+                
+                if missing_fields:
+                    raise ValueError(f"حقول مطلوبة مفقودة: {', '.join(missing_fields)}")
+                
+                # إنشاء العقار
+                property_obj = Property.objects.create(
+                    agent=agent,
+                    **data
                 )
-            
-            imported += 1
-            logger.info(f"Imported property: {property_obj.title}")
+                
+                # إضافة المميزات
+                for amenity in amenities:
+                    PropertyAmenity.objects.create(
+                        property=property_obj,
+                        amenity=amenity
+                    )
+                
+                imported += 1
+                logger.info(f"Imported property: {property_obj.title} [{property_obj.reference_number}]")
             
         except Exception as e:
-            errors.append(f"عقار {idx}: {str(e)}")
+            error_msg = str(e)
+            # تحسين رسائل الأخطاء
+            if 'UNIQUE constraint' in error_msg or 'unique' in error_msg.lower():
+                error_msg = "رقم مرجعي مكرر أو عقار موجود مسبقاً"
+            elif 'NOT NULL' in error_msg:
+                error_msg = "حقول مطلوبة مفقودة"
+            
+            errors.append(f"عقار {idx} ({data.get('title', 'غير معروف')}): {error_msg}")
             logger.error(f"Error importing property {idx}: {e}", exc_info=True)
     
     return imported, errors

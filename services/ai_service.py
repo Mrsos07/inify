@@ -238,31 +238,47 @@ class NewraAIService:
         from services.lead_service import LeadService
         
         try:
+            logger.info(f"Executing tool: {tool_name} with args: {args}")
+            
             if tool_name == 'search_properties':
                 service = PropertyService(self.agent)
-                return service.search_properties(**args)
+                result = service.search_properties(**args)
+                logger.info(f"Search properties result: {result.get('count', 0)} properties found")
+                return result
             
             elif tool_name == 'get_property_details':
                 service = PropertyService(self.agent)
-                return service.get_property_details(args['property_id'])
+                property_id = args.get('property_id')
+                if not property_id:
+                    return {'success': False, 'error': 'معرف العقار مطلوب'}
+                result = service.get_property_details(property_id)
+                logger.info(f"Get property details result: {result.get('success', False)}")
+                return result
             
             elif tool_name == 'create_lead':
                 service = LeadService(self.agent)
-                return service.create_lead(**args)
+                result = service.create_lead(**args)
+                logger.info(f"Create lead result: {result.get('success', False)}")
+                return result
             
             elif tool_name == 'schedule_viewing':
                 service = LeadService(self.agent)
-                return service.schedule_viewing(**args)
+                result = service.schedule_viewing(**args)
+                logger.info(f"Schedule viewing result: {result.get('success', False)}")
+                return result
             
             elif tool_name == 'send_notification':
-                return self._send_notification(**args)
+                result = self._send_notification(**args)
+                logger.info(f"Send notification result: {result.get('success', False)}")
+                return result
             
             else:
-                return {'error': f'أداة غير معروفة: {tool_name}'}
+                logger.warning(f"Unknown tool requested: {tool_name}")
+                return {'success': False, 'error': f'أداة غير معروفة: {tool_name}'}
                 
         except Exception as e:
-            logger.error(f"Tool execution error ({tool_name}): {str(e)}")
-            return {'error': str(e)}
+            logger.error(f"Tool execution error ({tool_name}): {str(e)}", exc_info=True)
+            return {'success': False, 'error': f'حدث خطأ في تنفيذ الأداة: {str(e)}'}
     
     def _send_notification(
         self,
