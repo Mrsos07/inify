@@ -236,13 +236,19 @@ def parse_excel_file(file) -> Tuple[List[Dict], List[str]]:
                 col_map[header_to_field[header]] = idx
         
         # قراءة الصفوف
+        total_rows_read = 0
         for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            total_rows_read += 1
+            
             # تخطي الصفوف الفارغة تماماً
             if not row or not any(cell for cell in row if cell is not None and str(cell).strip()):
+                logger.debug(f"Skipping empty row {row_num}")
                 continue
             
             property_data = {}
             row_errors = []
+            
+            logger.debug(f"Processing row {row_num}: {row[:3]}...")
             
             # قراءة كل عمود
             for field, col_idx in col_map.items():
@@ -340,8 +346,12 @@ def parse_excel_file(file) -> Tuple[List[Dict], List[str]]:
             # إضافة العقار أو الأخطاء
             if row_errors:
                 errors.append(f"صف {row_num}: " + "، ".join(row_errors))
+                logger.warning(f"Row {row_num} has errors: {row_errors}")
             elif property_data:  # التأكد من أن البيانات ليست فارغة
                 properties.append(property_data)
+                logger.info(f"Successfully parsed row {row_num}: {property_data.get('title', 'N/A')}")
+        
+        logger.info(f"Excel parsing complete: {total_rows_read} rows read, {len(properties)} properties parsed, {len(errors)} errors")
         
         if not properties and not errors:
             errors.append("الملف فارغ أو لا يحتوي على بيانات صحيحة")
@@ -369,6 +379,8 @@ def import_properties(agent, properties_data: List[Dict]) -> Tuple[int, List[str
     
     imported = 0
     errors = []
+    
+    logger.info(f"Starting import of {len(properties_data)} properties for agent {agent.user.username}")
     
     for idx, data in enumerate(properties_data, 1):
         try:
@@ -413,4 +425,5 @@ def import_properties(agent, properties_data: List[Dict]) -> Tuple[int, List[str
             errors.append(f"عقار {idx} ({data.get('title', 'غير معروف')}): {error_msg}")
             logger.error(f"Error importing property {idx}: {e}", exc_info=True)
     
+    logger.info(f"Import complete: {imported} properties imported, {len(errors)} errors")
     return imported, errors
