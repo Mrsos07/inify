@@ -42,18 +42,22 @@ PROPERTY_TYPES = {
     'فيلا': 'villa',
     'مكتب': 'office',
     'أرض': 'land',
+    'ارض': 'land',  # بدون همزة
     'تجاري': 'commercial',
     'دوبلكس': 'duplex',
     'استوديو': 'studio',
     'مستودع': 'warehouse',
     'عمارة': 'building',
+    'عماره': 'building',  # بدون همزة
 }
 
 STATUS_TYPES = {
     'للبيع': 'for_sale',
     'للإيجار': 'for_rent',
+    'للايجار': 'for_rent',  # بدون همزة
     'محجوز': 'reserved',
     'مؤجر': 'rented',
+    'مؤجّر': 'rented',  # مع شدة
     'مباع': 'sold',
 }
 
