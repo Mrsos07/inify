@@ -10,9 +10,12 @@ Disallow: /auth/
 Disallow: /static/admin/
 
 # Allow search engines to crawl important pages
+Allow: /estate/
 Allow: /pricing/
 Allow: /register/
 Allow: /embed/
+Allow: /privacy/
+Allow: /terms/
 
 # Sitemap location
 Sitemap: https://inify.ai/sitemap.xml

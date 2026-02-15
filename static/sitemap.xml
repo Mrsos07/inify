@@ -4,26 +4,34 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     
-    <!-- Homepage -->
+    <!-- Homepage (Company) -->
     <url>
         <loc>https://inify.ai/</loc>
-        <lastmod>2025-01-01</lastmod>
+        <lastmod>2025-02-15</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
+    </url>
+    
+    <!-- Estate Product Page -->
+    <url>
+        <loc>https://inify.ai/estate/</loc>
+        <lastmod>2025-02-15</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.95</priority>
     </url>
     
     <!-- Pricing Page -->
     <url>
         <loc>https://inify.ai/pricing/</loc>
-        <lastmod>2025-01-01</lastmod>
+        <lastmod>2025-02-15</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
     </url>
     
     <!-- Registration Page -->
     <url>
-        <loc>https://inify.ai/register/</loc>
-        <lastmod>2025-01-01</lastmod>
+        <loc>https://inify.ai/auth/register/</loc>
+        <lastmod>2025-02-15</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -31,9 +39,25 @@
     <!-- Login Page -->
     <url>
         <loc>https://inify.ai/auth/login/</loc>
-        <lastmod>2025-01-01</lastmod>
+        <lastmod>2025-02-15</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
+    </url>
+    
+    <!-- Privacy Policy -->
+    <url>
+        <loc>https://inify.ai/privacy/</loc>
+        <lastmod>2025-02-15</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.4</priority>
+    </url>
+    
+    <!-- Terms & Conditions -->
+    <url>
+        <loc>https://inify.ai/terms/</loc>
+        <lastmod>2025-02-15</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.4</priority>
     </url>
     
 </urlset>
