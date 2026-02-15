@@ -65,6 +65,7 @@ urlpatterns = [
     path('api/admin/users/', views.get_all_users, name='get-all-users'),
     path('api/admin/users/update-plan/', views.update_user_plan, name='update-user-plan'),
     path('api/admin/users/<uuid:user_id>/delete/', views.delete_user, name='delete-user'),
+    path('api/admin/expire-subscriptions/', views.admin_expire_subscriptions, name='admin-expire-subscriptions'),
     
     # Agent Stats API
     path('api/agent/<uuid:agent_id>/stats/', views.get_agent_stats, name='get-agent-stats'),

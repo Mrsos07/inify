@@ -1232,6 +1232,8 @@ def get_all_users(request):
         # Get all agents with their users
         agents = Agent.objects.select_related('user').all()
         
+        from apps.agents.models import Subscription
+        
         for agent in agents:
             user = agent.user
             
@@ -1248,6 +1250,37 @@ def get_all_users(request):
             }
             role = plan_to_role.get(agent.subscription_plan, 'free')
             
+            # Get real subscription data
+            sub = agent.active_subscription
+            sub_status = 'none'
+            sub_is_trial = False
+            sub_days_remaining = 0
+            sub_is_active = False
+            sub_start = None
+            sub_end = None
+            
+            if sub:
+                sub_status = sub.status
+                sub_is_trial = sub.status == 'trial'
+                sub_days_remaining = sub.days_remaining
+                sub_is_active = sub.is_active
+                if sub.status == 'trial':
+                    sub_start = sub.trial_start.isoformat() if sub.trial_start else None
+                    sub_end = sub.trial_end.isoformat() if sub.trial_end else None
+                else:
+                    sub_start = sub.start_date.isoformat() if sub.start_date else None
+                    sub_end = sub.end_date.isoformat() if sub.end_date else None
+            else:
+                # Check for any subscription (including expired)
+                any_sub = Subscription.objects.filter(agent=agent).order_by('-created_at').first()
+                if any_sub:
+                    sub_status = any_sub.status
+                    sub_is_trial = any_sub.status == 'trial'
+                    if any_sub.status == 'trial':
+                        sub_end = any_sub.trial_end.isoformat() if any_sub.trial_end else None
+                    else:
+                        sub_end = any_sub.end_date.isoformat() if any_sub.end_date else None
+            
             users_data.append({
                 'id': str(agent.id),
                 'name': user.get_full_name() or user.username,
@@ -1258,6 +1291,12 @@ def get_all_users(request):
                 'role': role,
                 'subscriptionPlan': agent.subscription_plan,
                 'subscriptionExpires': agent.subscription_expires.isoformat() if agent.subscription_expires else None,
+                'subscriptionStatus': sub_status,
+                'subscriptionIsTrial': sub_is_trial,
+                'subscriptionDaysRemaining': sub_days_remaining,
+                'subscriptionIsActive': sub_is_active,
+                'subscriptionStart': sub_start,
+                'subscriptionEnd': sub_end,
                 'propertiesCount': properties_count,
                 'isActive': agent.is_active,
                 'createdAt': user.date_joined.isoformat(),
@@ -1279,8 +1318,9 @@ def get_all_users(request):
 
 @csrf_exempt
 def update_user_plan(request):
-    """تحديث باقة المستخدم (للأدمن)"""
-    from apps.agents.models import Agent
+    """تحديث باقة المستخدم (للأدمن) - مع إنشاء/تحديث Subscription"""
+    from apps.agents.models import Agent, Subscription
+    from datetime import timedelta
     
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
@@ -1292,35 +1332,57 @@ def update_user_plan(request):
         data = json.loads(request.body)
         user_id = data.get('userId')
         new_plan = data.get('plan')
+        duration = int(data.get('duration', 30))
         
         if not user_id or not new_plan:
             return JsonResponse({'success': False, 'error': 'بيانات ناقصة'}, status=400)
         
-        # Get agent
         agent = Agent.objects.get(id=user_id)
+        now = tz_util.now()
         
         # Map role to subscription plan
         role_to_plan = {
             'free': 'free',
-            'marketer': 'basic',
+            'marketer': 'pro',
             'agency': 'enterprise'
         }
         subscription_plan = role_to_plan.get(new_plan, 'free')
         
-        # Update subscription
-        agent.subscription_plan = subscription_plan
-        
-        # Set subscription dates for paid plans
-        if subscription_plan != 'free':
-            from django.utils import timezone
-            from datetime import timedelta
-            agent.subscription_start = timezone.now()
-            agent.subscription_expires = timezone.now() + timedelta(days=30)
-        else:
+        if subscription_plan == 'free' or new_plan == 'free':
+            # إلغاء الاشتراك - تحويل لمجاني
+            active_subs = Subscription.objects.filter(
+                agent=agent
+            ).exclude(status__in=['expired', 'cancelled'])
+            for sub in active_subs:
+                sub.status = 'cancelled'
+                sub.save(update_fields=['status', 'updated_at'])
+            
+            agent.subscription_plan = 'free'
             agent.subscription_start = None
             agent.subscription_expires = None
-        
-        agent.save()
+            agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
+        else:
+            # تفعيل/تجديد اشتراك مدفوع
+            # إلغاء أي اشتراكات سابقة
+            Subscription.objects.filter(
+                agent=agent
+            ).exclude(status__in=['expired', 'cancelled']).update(status='cancelled')
+            
+            # إنشاء اشتراك جديد
+            end_date = now + timedelta(days=duration)
+            Subscription.objects.create(
+                agent=agent,
+                plan_key='monthly' if duration <= 30 else ('quarterly' if duration <= 90 else ('semi' if duration <= 180 else 'annual')),
+                status='active',
+                amount=0,
+                start_date=now,
+                end_date=end_date,
+            )
+            
+            agent.subscription_plan = subscription_plan
+            agent.subscription_start = now
+            agent.subscription_expires = end_date
+            agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
         
         plan_names = {
             'free': 'مجاني',
@@ -1330,7 +1392,8 @@ def update_user_plan(request):
         
         return JsonResponse({
             'success': True,
-            'message': f'تم تغيير الباقة إلى {plan_names.get(new_plan, new_plan)}'
+            'message': f'تم تغيير الباقة إلى {plan_names.get(new_plan, new_plan)}',
+            'subscriptionExpires': agent.subscription_expires.isoformat() if agent.subscription_expires else None
         })
         
     except Agent.DoesNotExist:
@@ -1339,6 +1402,51 @@ def update_user_plan(request):
         import traceback
         print(f"Update plan error: {e}")
         print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def admin_expire_subscriptions(request):
+    """API - فحص وتحديث الاشتراكات المنتهية (للأدمن)"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        from apps.agents.models import Subscription
+        now = tz_util.now()
+        expired_count = 0
+        
+        # انتهاء الفترات التجريبية
+        expired_trials = Subscription.objects.filter(status='trial', trial_end__lt=now)
+        for sub in expired_trials:
+            sub.status = 'expired'
+            sub.save(update_fields=['status', 'updated_at'])
+            agent = sub.agent
+            agent.subscription_plan = 'free'
+            agent.subscription_expires = None
+            agent.save(update_fields=['subscription_plan', 'subscription_expires'])
+            expired_count += 1
+        
+        # انتهاء الاشتراكات المدفوعة
+        expired_active = Subscription.objects.filter(status='active', end_date__lt=now)
+        for sub in expired_active:
+            sub.status = 'expired'
+            sub.save(update_fields=['status', 'updated_at'])
+            agent = sub.agent
+            agent.subscription_plan = 'free'
+            agent.subscription_expires = None
+            agent.save(update_fields=['subscription_plan', 'subscription_expires'])
+            expired_count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'expired_count': expired_count,
+            'message': f'تم إلغاء {expired_count} اشتراك منتهي' if expired_count > 0 else 'جميع الاشتراكات سارية'
+        })
+    except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 

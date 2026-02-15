@@ -1041,10 +1041,10 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">💰</div>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">🧪</div>
                         <div class="stat-info">
                             <h3 id="totalRevenue">0</h3>
-                            <p>إجمالي الإيرادات (ريال)</p>
+                            <p>فترات تجريبية نشطة</p>
                         </div>
                     </div>
                 </div>
@@ -1068,9 +1068,10 @@
                             <select id="subFilterStatus" onchange="filterSubscriptions()">
                                 <option value="all">جميع الحالات</option>
                                 <option value="active">نشط</option>
+                                <option value="trial">تجريبي</option>
                                 <option value="expiring">ينتهي قريباً</option>
                                 <option value="expired">منتهي</option>
-                                <option value="free">مجاني</option>
+                                <option value="free">بدون اشتراك</option>
                             </select>
                         </div>
                     </div>
@@ -1827,78 +1828,79 @@
 
         // Update subscription statistics
         function updateSubscriptionStats(users) {
-            const now = new Date();
-            const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            
-            let active = 0, expiring = 0, expired = 0, revenue = 0;
+            let active = 0, expiring = 0, expired = 0, trial = 0;
             
             users.forEach(user => {
-                const role = user.role || 'free';
-                if (role === 'free') return;
+                const subStatus = user.subscriptionStatus || 'none';
+                const isActive = user.subscriptionIsActive;
+                const daysRemaining = user.subscriptionDaysRemaining || 0;
                 
-                // Use subscriptionExpires from API
-                const expiry = user.subscriptionExpires ? new Date(user.subscriptionExpires) : null;
-                
-                if (!expiry) {
-                    // Has paid role but no expiry - count as active
-                    active++;
-                } else if (expiry < now) {
+                if (subStatus === 'expired' || subStatus === 'cancelled') {
                     expired++;
-                } else if (expiry <= sevenDaysLater) {
-                    expiring++;
+                } else if (isActive) {
                     active++;
+                    if (daysRemaining <= 2 && daysRemaining > 0) {
+                        expiring++;
+                    }
+                    if (user.subscriptionIsTrial) {
+                        trial++;
+                    }
+                } else if (subStatus === 'none' || user.role === 'free') {
+                    // مجاني بدون اشتراك
                 } else {
-                    active++;
+                    expired++;
                 }
-                
-                // Estimate revenue based on role
-                if (role === 'marketer') revenue += 499;
-                if (role === 'agency') revenue += 599;
             });
             
             document.getElementById('activeSubsCount').textContent = active;
             document.getElementById('expiringSubsCount').textContent = expiring;
             document.getElementById('expiredSubsCount').textContent = expired;
-            document.getElementById('totalRevenue').textContent = revenue.toLocaleString('ar-SA');
+            document.getElementById('totalRevenue').textContent = trial;
         }
 
         // Render subscriptions table
         function renderSubscriptions(users) {
             const tbody = document.getElementById('subscriptionsTableBody');
-            const now = new Date();
             
             tbody.innerHTML = users.map(user => {
                 const role = user.role || 'free';
                 const plan = SUBSCRIPTION_PLANS[role] || SUBSCRIPTION_PLANS.free;
+                const subStatus = user.subscriptionStatus || 'none';
+                const isActive = user.subscriptionIsActive;
+                const isTrial = user.subscriptionIsTrial;
+                const daysRemaining = user.subscriptionDaysRemaining || 0;
                 
-                // Use subscriptionExpires from API
+                // Use real subscription dates from API
                 const startDate = user.subscriptionStart ? new Date(user.subscriptionStart).toLocaleDateString('ar-SA') : '-';
-                const expiryDate = user.subscriptionExpires ? new Date(user.subscriptionExpires) : null;
-                const expiryStr = expiryDate ? expiryDate.toLocaleDateString('ar-SA') : (role === 'free' ? 'غير محدود' : '-');
+                const endDateRaw = user.subscriptionEnd || user.subscriptionExpires;
+                const expiryStr = endDateRaw ? new Date(endDateRaw).toLocaleDateString('ar-SA') : (role === 'free' ? '-' : '-');
                 
-                // Determine status
+                // Determine status from real API data
                 let status, statusClass, statusIcon;
-                if (role === 'free') {
-                    status = 'مجاني';
+                if (subStatus === 'none' || (role === 'free' && !isActive)) {
+                    status = 'بدون اشتراك';
                     statusClass = 'status-free';
                     statusIcon = '🆓';
-                } else if (!expiryDate) {
-                    status = 'نشط';
-                    statusClass = 'status-active';
-                    statusIcon = '✅';
-                } else if (expiryDate < now) {
+                } else if (subStatus === 'expired' || subStatus === 'cancelled') {
                     status = 'منتهي';
                     statusClass = 'status-expired';
                     statusIcon = '❌';
-                } else if (expiryDate <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)) {
-                    const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
-                    status = `ينتهي خلال ${daysLeft} أيام`;
+                } else if (isActive && daysRemaining <= 2) {
+                    status = `ينتهي خلال ${daysRemaining} يوم`;
                     statusClass = 'status-expiring';
                     statusIcon = '⏰';
-                } else {
-                    status = 'نشط';
+                } else if (isActive && isTrial) {
+                    status = `تجربة (${daysRemaining} يوم)`;
+                    statusClass = 'status-expiring';
+                    statusIcon = '🧪';
+                } else if (isActive) {
+                    status = `نشط (${daysRemaining} يوم)`;
                     statusClass = 'status-active';
                     statusIcon = '✅';
+                } else {
+                    status = 'منتهي';
+                    statusClass = 'status-expired';
+                    statusIcon = '❌';
                 }
                 
                 return `
@@ -1934,7 +1936,6 @@
         function filterSubscriptions() {
             const search = document.getElementById('subSearchInput').value.toLowerCase();
             const statusFilter = document.getElementById('subFilterStatus').value;
-            const now = new Date();
             
             let filtered = allUsers.filter(user => {
                 // Search filter
@@ -1947,18 +1948,21 @@
                 // Status filter
                 if (statusFilter === 'all') return true;
                 
-                const role = user.role || 'free';
-                const expiry = user.subscriptionExpiry ? new Date(user.subscriptionExpiry) : null;
+                const subStatus = user.subscriptionStatus || 'none';
+                const isActive = user.subscriptionIsActive;
+                const daysRemaining = user.subscriptionDaysRemaining || 0;
                 
                 switch (statusFilter) {
                     case 'free':
-                        return role === 'free';
+                        return subStatus === 'none' || (!isActive && subStatus !== 'expired' && subStatus !== 'cancelled');
                     case 'active':
-                        return role !== 'free' && (!expiry || expiry > now);
+                        return isActive && !user.subscriptionIsTrial;
+                    case 'trial':
+                        return isActive && user.subscriptionIsTrial;
                     case 'expiring':
-                        return role !== 'free' && expiry && expiry > now && expiry <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                        return isActive && daysRemaining <= 2;
                     case 'expired':
-                        return role !== 'free' && expiry && expiry < now;
+                        return subStatus === 'expired' || subStatus === 'cancelled' || (!isActive && subStatus !== 'none');
                     default:
                         return true;
                 }
@@ -2116,29 +2120,34 @@
                 const role = allUsers[userIndex].role;
                 const plan = SUBSCRIPTION_PLANS[role];
                 
-                // Extend from current expiry or from now if expired
-                let baseDate = allUsers[userIndex].subscriptionExpiry ? new Date(allUsers[userIndex].subscriptionExpiry) : now;
-                if (baseDate < now) baseDate = now;
-                
-                const newExpiry = new Date(baseDate.getTime() + duration * 24 * 60 * 60 * 1000);
-                allUsers[userIndex].subscriptionExpiry = newExpiry.toISOString();
-                
-                // Add to history
-                if (!allUsers[userIndex].subscriptionHistory) {
-                    allUsers[userIndex].subscriptionHistory = [];
+                // تجديد عبر الـ API
+                try {
+                    const response = await fetch('/api/admin/users/update-plan/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            userId: selectedSubUserId,
+                            plan: role,
+                            duration: duration
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const newExpiry = data.subscriptionExpires ? new Date(data.subscriptionExpires).toLocaleDateString('ar-SA') : '';
+                        alert(`✅ تم تجديد الاشتراك بنجاح!\n\nينتهي في: ${newExpiry}`);
+                        await loadUsers();
+                    } else {
+                        alert('❌ خطأ: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Error renewing subscription:', error);
+                    alert('❌ خطأ في الاتصال بالخادم');
                 }
-                allUsers[userIndex].subscriptionHistory.push({
-                    action: 'renew',
-                    plan: role,
-                    duration: duration,
-                    amount: plan.price * (duration / 30),
-                    date: now.toISOString()
-                });
-                
-                alert(`✅ تم تجديد الاشتراك بنجاح!\n\nينتهي في: ${newExpiry.toLocaleDateString('ar-SA')}`);
             }
             
-            localStorage.setItem('newra_users', JSON.stringify(allUsers));
             loadSubscriptions();
             closeSubModal();
         }
@@ -2181,39 +2190,31 @@
             }
         }
 
-        // Check and handle expired subscriptions
-        function checkExpiredSubscriptions() {
-            const now = new Date();
-            let expiredCount = 0;
-            
-            allUsers.forEach((user, index) => {
-                const role = user.role || 'free';
-                if (role === 'free') return;
+        // Check and handle expired subscriptions via backend API
+        async function checkExpiredSubscriptions() {
+            try {
+                const response = await fetch('/api/admin/expire-subscriptions/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
                 
-                const expiry = user.subscriptionExpiry ? new Date(user.subscriptionExpiry) : null;
-                if (expiry && expiry < now) {
-                    // Subscription expired - downgrade to free
-                    if (!allUsers[index].subscriptionHistory) {
-                        allUsers[index].subscriptionHistory = [];
+                if (data.success) {
+                    if (data.expired_count > 0) {
+                        alert(`✅ تم فحص الاشتراكات\n\n❌ تم إلغاء ${data.expired_count} اشتراك منتهي`);
+                        await loadUsers();
+                        loadSubscriptions();
+                    } else {
+                        alert('✅ جميع الاشتراكات سارية المفعول');
                     }
-                    allUsers[index].subscriptionHistory.push({
-                        action: 'expired',
-                        previousPlan: role,
-                        date: now.toISOString()
-                    });
-                    
-                    allUsers[index].role = 'free';
-                    expiredCount++;
+                } else {
+                    alert('❌ خطأ: ' + data.error);
                 }
-            });
-            
-            if (expiredCount > 0) {
-                localStorage.setItem('newra_users', JSON.stringify(allUsers));
-                loadSubscriptions();
-                loadUsers();
-                alert(`✅ تم فحص الاشتراكات\n\n❌ تم إلغاء ${expiredCount} اشتراك منتهي`);
-            } else {
-                alert('✅ جميع الاشتراكات سارية المفعول');
+            } catch (error) {
+                console.error('Error checking subscriptions:', error);
+                alert('❌ خطأ في الاتصال بالخادم');
             }
         }
 
@@ -2238,33 +2239,17 @@
             URL.revokeObjectURL(url);
         }
 
-        // Auto-check expired subscriptions on page load
-        function autoCheckExpiredSubscriptions() {
-            const now = new Date();
-            let hasExpired = false;
-            
-            allUsers.forEach((user, index) => {
-                const role = user.role || 'free';
-                if (role === 'free') return;
-                
-                const expiry = user.subscriptionExpiry ? new Date(user.subscriptionExpiry) : null;
-                if (expiry && expiry < now) {
-                    if (!allUsers[index].subscriptionHistory) {
-                        allUsers[index].subscriptionHistory = [];
-                    }
-                    allUsers[index].subscriptionHistory.push({
-                        action: 'auto_expired',
-                        previousPlan: role,
-                        date: now.toISOString()
-                    });
-                    
-                    allUsers[index].role = 'free';
-                    hasExpired = true;
-                }
-            });
-            
-            if (hasExpired) {
-                localStorage.setItem('newra_users', JSON.stringify(allUsers));
+        // Auto-check expired subscriptions on page load via backend
+        async function autoCheckExpiredSubscriptions() {
+            try {
+                await fetch('/api/admin/expire-subscriptions/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({})
+                });
+            } catch (error) {
+                console.log('Auto-check expired subscriptions failed:', error);
             }
         }
 
