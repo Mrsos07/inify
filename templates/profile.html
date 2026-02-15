@@ -199,8 +199,22 @@
         /* Main Content */
         .main-content {
             max-width: 1000px;
-            margin: 0 auto;
+            margin-right: 240px;
             padding: 40px 24px;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                margin-right: 0;
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 12px;
+                padding-bottom: 80px;
+            }
         }
 
         .page-header {
@@ -745,6 +759,22 @@
         // Django handles authentication
         function logout() {
             window.location.href = '/auth/logout/';
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+            document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+        }
+
+        function closeMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+            document.body.style.overflow = '';
         }
     </script>
 

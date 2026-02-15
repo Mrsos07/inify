@@ -1374,16 +1374,23 @@
             }
             .benefit-item p { font-size: 14px; }
             
-            .pricing-section { padding: 40px 15px; }
+            .pricing-section { padding: 30px 12px; }
             .pricing-grid { 
-                grid-template-columns: 1fr; 
-                gap: 20px;
-                max-width: 350px;
+                grid-template-columns: 1fr !important; 
+                gap: 16px;
+                max-width: 400px !important;
                 margin: 0 auto;
             }
-            .pricing-card { padding: 25px 20px; }
-            .pricing-card h3 { font-size: 18px; }
-            .pricing-card .price { font-size: 28px; }
+            .pricing-card { padding: 20px 16px; border-radius: 16px; }
+            .pricing-card h3 { font-size: 17px; }
+            .pricing-card .price { font-size: 24px; margin-bottom: 12px; }
+            .pricing-card .price span { font-size: 12px; }
+            .pricing-subtitle { font-size: 12px; margin-bottom: 8px; }
+            .pricing-features { gap: 5px; margin-bottom: 14px; }
+            .pricing-features li { font-size: 12px; }
+            .pricing-btn { padding: 10px 20px; font-size: 13px; }
+            .estate-period-tab { padding: 5px 10px; font-size: 11px; }
+            .pricing-card.enterprise::before { font-size: 10px; padding: 4px 12px; }
             
             .security-banner { padding: 25px 15px; }
             .security-banner p { font-size: 15px; }
@@ -1450,7 +1457,9 @@
             .hero-subtitle { font-size: 13px; }
             .hero-icon { width: 50px; height: 50px; }
             .feature-icon { width: 40px; height: 40px; font-size: 18px; }
-            .pricing-grid { max-width: 100%; }
+            .pricing-grid { max-width: 100% !important; }
+            .pricing-card .price { font-size: 22px; }
+            .pricing-card { padding: 18px 14px; }
         }
 
         /* Contact Section */

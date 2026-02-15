@@ -1265,113 +1265,29 @@
 
     <div class="success-toast" id="successToast">✓ تم حفظ الإعدادات بنجاح!</div>
 
-    <!-- Mobile Menu Button -->
-    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-    
-    <!-- Mobile Menu Overlay -->
-    <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu()">
-        <div class="mobile-menu" onclick="event.stopPropagation()">
-            <div class="mobile-menu-header">
-                <img src="/static/images/inify-logo.png" alt="Inify" style="height: 28px;">
-                <button onclick="closeMobileMenu()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">×</button>
-            </div>
-            <nav class="mobile-nav">
-                <a href="/dashboard/">🏠 لوحة التحكم</a>
-                <a href="/dashboard/properties/">🏢 العقارات</a>
-                <a href="/dashboard/conversations/">💬 المحادثات</a>
-                <a href="/dashboard/bot-settings/" class="active">⚙️ الإعدادات</a>
-                <a href="/profile/">👤 حسابي</a>
-            </nav>
-            <button id="themeToggleBtn" onclick="toggleTheme()" style="
-                width: 100%;
-                padding: 12px 16px;
-                margin-top: 16px;
-                background: rgba(107, 184, 201, 0.1);
-                border: 1px solid rgba(107, 184, 201, 0.2);
-                border-radius: 8px;
-                color: var(--cyan);
-                font-size: 14px;
-                font-weight: 600;
-                cursor: pointer;
-            ">☀️ الوضع الفاتح</button>
-        </div>
-    </div>
-    
-    <style>
-        .mobile-menu-btn {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
-            border: none;
-            color: var(--midnight);
-            font-size: 24px;
-            cursor: pointer;
-            z-index: 998;
-            box-shadow: 0 4px 20px rgba(107, 184, 201, 0.4);
-        }
-        .mobile-menu-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 999;
-        }
-        .mobile-menu-overlay.show { display: flex; justify-content: flex-end; }
-        .mobile-menu {
-            width: 280px;
-            height: 100%;
-            background: var(--card-bg);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-        .mobile-menu-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .mobile-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .mobile-nav a {
-            padding: 14px 16px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            border-radius: 10px;
-            transition: all 0.3s;
-        }
-        .mobile-nav a:hover, .mobile-nav a.active {
-            background: rgba(107, 184, 201, 0.1);
-            color: var(--cyan);
-        }
-        @media (max-width: 768px) {
-            .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
-        }
-    </style>
-    
     <script>
         function toggleMobileMenu() {
-            document.getElementById('mobileMenuOverlay').classList.add('show');
-            document.body.style.overflow = 'hidden';
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+            document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
         }
+
         function closeMobileMenu() {
-            document.getElementById('mobileMenuOverlay').classList.remove('show');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
             document.body.style.overflow = '';
         }
     </script>
+
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()" id="mobileMenuBtn">☰</button>
+    
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileMenu()"></div>
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
