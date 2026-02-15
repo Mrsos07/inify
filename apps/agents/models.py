@@ -157,6 +157,32 @@ class Agent(models.Model):
         """عدد العقارات النشطة"""
         return self.properties.filter(is_active=True).count()
 
+    @property
+    def has_active_subscription(self):
+        """هل لدى المسوق اشتراك نشط (تجريبي أو مدفوع)"""
+        sub = self.subscriptions.exclude(status__in=['expired', 'cancelled']).order_by('-created_at').first()
+        if sub:
+            return sub.is_active
+        return False
+
+    @property
+    def active_subscription(self):
+        """الحصول على الاشتراك النشط"""
+        return self.subscriptions.exclude(status__in=['expired', 'cancelled']).order_by('-created_at').first()
+
+    @property
+    def subscription_days_remaining(self):
+        """عدد الأيام المتبقية في الاشتراك"""
+        sub = self.active_subscription
+        if sub:
+            return sub.days_remaining
+        return 0
+
+    @property
+    def is_subscription_expiring_soon(self):
+        """هل الاشتراك سينتهي خلال يومين"""
+        return 0 < self.subscription_days_remaining <= 2
+
 
 class AgentSettings(models.Model):
     """إعدادات متقدمة للمسوق"""

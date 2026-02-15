@@ -625,6 +625,13 @@ class WebhookView(View):
                     'error': 'مفتاح غير صالح'
                 }, status=403)
             
+            # التحقق من صلاحية الاشتراك
+            if not agent.has_active_subscription:
+                return JsonResponse({
+                    'error': 'اشتراك الوكيل منتهي',
+                    'subscription_expired': True
+                }, status=403)
+            
             # معالجة حسب نوع الحدث
             event_type = data.get('event', 'message')
             
@@ -776,6 +783,14 @@ class PublicChatView(View):
             except Agent.DoesNotExist:
                 return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
             
+            # التحقق من صلاحية الاشتراك
+            if not agent.has_active_subscription:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'عذراً، هذه الخدمة غير متاحة حالياً. يرجى التواصل مع المسوق مباشرة.',
+                    'subscription_expired': True
+                }, status=403)
+            
             # الحصول على أو إنشاء محادثة
             if conversation_id:
                 try:
@@ -832,6 +847,14 @@ class EmbedChatAPI(View):
                 agent = Agent.objects.get(id=agent_id)
             except Agent.DoesNotExist:
                 return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
+            
+            # التحقق من صلاحية الاشتراك
+            if not agent.has_active_subscription:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'عذراً، هذه الخدمة غير متاحة حالياً. يرجى التواصل مع المسوق مباشرة.',
+                    'subscription_expired': True
+                }, status=403)
             
             # قراءة البيانات
             data = json.loads(request.body)

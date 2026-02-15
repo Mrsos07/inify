@@ -1534,6 +1534,31 @@ def subscription_page(request):
 
 
 @login_required
+def subscription_expired_view(request):
+    """صفحة انتهاء الاشتراك - تعرض عند انتهاء التجربة أو الاشتراك"""
+    try:
+        agent = request.user.agent_profile
+        from apps.agents.models import Subscription
+        sub = Subscription.objects.filter(agent=agent).order_by('-created_at').first()
+        
+        context = {
+            'user_name': request.user.get_full_name() or request.user.username,
+            'was_trial': sub.status == 'trial' if sub else True,
+            'plan_key': sub.plan_key if sub else 'monthly',
+            'expired_date': sub.trial_end if sub and sub.status == 'trial' else (sub.end_date if sub else None),
+        }
+    except Exception:
+        context = {
+            'user_name': request.user.get_full_name() or request.user.username,
+            'was_trial': True,
+            'plan_key': 'monthly',
+            'expired_date': None,
+        }
+    
+    return render(request, 'subscription_expired.html', context)
+
+
+@login_required
 def subscription_status_api(request):
     """API - حالة الاشتراك الحالية"""
     try:

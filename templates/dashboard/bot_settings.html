@@ -1397,6 +1397,15 @@
     </div>
 
     <main class="main-content">
+        {% if subscription_expiring_soon %}
+        <div class="subscription-warning">
+            <div class="subscription-warning-text">
+                <span class="warn-icon">⚠️</span>
+                <span>اشتراكك سينتهي خلال {{ subscription_days_remaining }} يوم. جدد الآن لتجنب توقف الخدمة.</span>
+            </div>
+            <a href="/subscription/" class="btn-renew">تجديد الاشتراك</a>
+        </div>
+        {% endif %}
         {% csrf_token %}
         <div class="page-header">
             <h1>⚙️ الإعدادات</h1>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>انتهاء الاشتراك - Inify</title>
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0A1628 0%, #0d1f35 50%, #0A1628 100%);
+        }
+
+        .expired-container {
+            max-width: 520px;
+            width: 90%;
+            text-align: center;
+            padding: 48px 32px;
+            background: rgba(26, 45, 71, 0.6);
+            border: 1px solid rgba(107, 184, 201, 0.15);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+        }
+
+        .expired-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+
+        .expired-container h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #F8F8F8;
+            margin-bottom: 12px;
+        }
+
+        .expired-container p {
+            color: rgba(248, 248, 248, 0.6);
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+
+        .expired-container .highlight {
+            color: #6BB8C9;
+            font-weight: 600;
+        }
+
+        .pricing-box {
+            margin: 28px 0;
+            padding: 20px;
+            background: rgba(107, 184, 201, 0.08);
+            border: 1px solid rgba(107, 184, 201, 0.2);
+            border-radius: 16px;
+        }
+
+        .pricing-box .price {
+            font-size: 32px;
+            font-weight: 700;
+            color: #6BB8C9;
+        }
+
+        .pricing-box .price span {
+            font-size: 14px;
+            color: rgba(248, 248, 248, 0.5);
+            font-weight: 400;
+        }
+
+        .pricing-box .features {
+            list-style: none;
+            padding: 0;
+            margin: 16px 0 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            text-align: right;
+        }
+
+        .pricing-box .features li {
+            font-size: 13px;
+            color: rgba(248, 248, 248, 0.7);
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-subscribe {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #4A90A4, #6BB8C9);
+            color: #0A1628;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .btn-subscribe:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(107, 184, 201, 0.4);
+        }
+
+        .btn-whatsapp {
+            padding: 12px 28px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .btn-whatsapp:hover {
+            opacity: 0.9;
+        }
+
+        .btn-logout {
+            padding: 10px;
+            background: transparent;
+            color: rgba(248, 248, 248, 0.5);
+            border: 1px solid rgba(248, 248, 248, 0.15);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            border-color: rgba(248, 248, 248, 0.3);
+            color: rgba(248, 248, 248, 0.8);
+        }
+
+        @media (max-width: 480px) {
+            .expired-container {
+                padding: 32px 20px;
+            }
+            .expired-container h1 {
+                font-size: 20px;
+            }
+            .pricing-box .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="expired-container">
+        <div class="expired-icon">⏰</div>
+        
+        {% if was_trial %}
+            <h1>انتهت الفترة التجريبية</h1>
+            <p>مرحباً <span class="highlight">{{ user_name }}</span></p>
+            <p>انتهت فترة التجربة المجانية (5 أيام). للاستمرار في استخدام الوكيل الذكي وجميع الخصائص، يرجى تجديد الاشتراك.</p>
+        {% else %}
+            <h1>انتهى اشتراكك</h1>
+            <p>مرحباً <span class="highlight">{{ user_name }}</span></p>
+            <p>انتهى اشتراكك الحالي. للاستمرار في استخدام الوكيل الذكي وجميع الخصائص، يرجى تجديد الاشتراك.</p>
+        {% endif %}
+
+        <div class="pricing-box">
+            <div class="price">199 ريال <span>/ شهر</span></div>
+            <ul class="features">
+                <li>✅ عقارات غير محدودة</li>
+                <li>✅ محادثات غير محدودة</li>
+                <li>✅ لوحة تحكم متقدمة</li>
+                <li>✅ تخصيص الشات بوت</li>
+                <li>✅ تقارير وتحليلات</li>
+                <li>✅ دعم فني أولوية</li>
+            </ul>
+        </div>
+
+        <div class="actions">
+            <a href="/subscription/" class="btn-subscribe">تجديد الاشتراك الآن</a>
+            <a href="https://wa.me/966535156358?text=أريد تجديد اشتراكي في Inify" target="_blank" class="btn-whatsapp">تواصل عبر واتساب</a>
+            <a href="/auth/logout/" class="btn-logout">تسجيل الخروج</a>
+        </div>
+    </div>
+</body>
+</html>

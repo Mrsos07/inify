@@ -76,6 +76,7 @@ urlpatterns = [
     
     # Payment & Subscription
     path('subscription/', views.subscription_page, name='subscription'),
+    path('subscription/expired/', views.subscription_expired_view, name='subscription-expired'),
     path('api/subscription/status/', views.subscription_status_api, name='subscription-status'),
     path('api/subscription/start-trial/', views.start_trial_api, name='start-trial'),
     path('api/subscription/subscribe/', views.subscribe_api, name='subscribe'),
