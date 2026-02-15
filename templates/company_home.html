@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary Meta Tags -->
+    <title>Inify - حلول ذكاء اصطناعي متقدمة للأعمال</title>
+    <meta name="title" content="Inify - حلول ذكاء اصطناعي متقدمة للأعمال">
+    <meta name="description" content="Inify شركة تقنية سعودية متخصصة في تطوير حلول الذكاء الاصطناعي للقطاع العقاري وقطاع الأعمال.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    <link rel="stylesheet" href="/static/css/theme.css">
+    
+    <!-- Auto Translation -->
+    <script src="/static/js/auto-translate.js"></script>
+    <script src="/static/js/theme.js"></script>
+    
+    <style>
+        @font-face {
+            font-family: 'Chillax';
+            src: url('/static/Chillax-Regular.woff2') format('woff2');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'Chillax';
+            src: url('/static/Chillax-Semibold.woff2') format('woff2');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'BalooBhaijaan2';
+            src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --midnight: #0A1628;
+            --dark-blue: #1E3A5F;
+            --blue-mid: #4A90A4;
+            --cyan: #6BB8C9;
+            --cyan-light: #8DD4E3;
+            --pearl: #F8F8F8;
+            --text-muted: rgba(248, 248, 248, 0.7);
+        }
+
+        body {
+            font-family: 'BalooBhaijaan2', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        .en { font-family: 'Chillax', sans-serif; }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(10, 22, 40, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(107, 184, 201, 0.1);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-logo {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+
+        .header-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .logo-text {
+            font-family: 'Chillax', sans-serif;
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--pearl);
+            text-decoration: none;
+            line-height: 1;
+        }
+
+        .header-brand-tagline {
+            font-family: 'Chillax', sans-serif;
+            font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        .header-center {
+            display: flex;
+            gap: 25px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .header-center a {
+            color: var(--pearl);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .header-center a:hover {
+            color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-link-btn {
+            color: var(--pearl);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 18px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .nav-link-btn:hover {
+            color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+        }
+
+        .header-btn {
+            padding: 10px 22px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
+            color: var(--midnight);
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .header-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(107, 184, 201, 0.3);
+        }
+
+        /* Menu Icon for Mobile */
+        .menu-icon {
+            display: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--pearl);
+            z-index: 1002;
+            position: relative;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-overlay {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 22, 40, 0.95);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            pointer-events: none;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(180deg, var(--midnight) 0%, var(--dark-blue) 100%);
+            z-index: 1002;
+            padding: 80px 30px 30px;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .mobile-menu.active { right: 0; }
+
+        .mobile-menu-close {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 28px;
+            color: var(--pearl);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 10px;
+        }
+
+        .mobile-menu-links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .mobile-menu-links a {
+            color: var(--pearl);
+            text-decoration: none;
+            font-size: 18px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mobile-menu-links a:hover { background: rgba(107, 184, 201, 0.2); }
+
+        .mobile-menu-links .btn-primary-mobile {
+            background: linear-gradient(135deg, var(--cyan) 0%, var(--blue-mid) 100%);
+            color: var(--midnight);
+            font-weight: 600;
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-overlay,
+            .mobile-menu { display: none !important; }
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 120px 20px 80px;
+            background-image: url('/static/images/IMG_8209.jpeg');
+            background-size: cover;
+            background-position: center bottom;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10,22,40,0.75) 0%, rgba(10,22,40,0.5) 40%, rgba(10,22,40,0.8) 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+        }
+
+        .hero-icon {
+            width: 110px;
+            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+        }
+
+        .hero-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            background: rgba(107, 184, 201, 0.15);
+            border: 1px solid rgba(107, 184, 201, 0.3);
+            border-radius: 50px;
+            font-size: 14px;
+            color: var(--cyan);
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--cyan), var(--cyan-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 17px;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.9;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
+            color: var(--midnight);
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(107, 184, 201, 0.3);
+        }
+
+        .btn-secondary {
+            padding: 14px 32px;
+            background: transparent;
+            color: var(--pearl);
+            border: 1px solid rgba(107, 184, 201, 0.4);
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+        }
+
+        /* Section Common */
+        .section {
+            padding: 80px 20px;
+            background: var(--midnight);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .section-badge {
+            display: inline-block;
+            padding: 6px 20px;
+            background: rgba(107, 184, 201, 0.12);
+            border: 1px solid rgba(107, 184, 201, 0.25);
+            border-radius: 50px;
+            font-size: 13px;
+            color: var(--cyan);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .section-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: var(--pearl);
+        }
+
+        .section-desc {
+            font-size: 16px;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        /* About Section */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            max-width: 1100px;
+            margin: 0 auto;
+            align-items: center;
+        }
+
+        .about-content {
+            text-align: right;
+        }
+
+        .about-content h2 {
+            font-size: 30px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--pearl);
+            line-height: 1.4;
+        }
+
+        .about-content h2 span {
+            color: var(--cyan);
+        }
+
+        .about-content p {
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.9;
+            margin-bottom: 16px;
+        }
+
+        .about-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px 15px;
+            background: rgba(30, 58, 95, 0.4);
+            border: 1px solid rgba(107, 184, 201, 0.15);
+            border-radius: 16px;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--cyan);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .about-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .about-image-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(107, 184, 201, 0.2);
+        }
+
+        .about-image-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(107, 184, 201, 0.1), transparent);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .about-pattern {
+            width: 100%;
+            height: 350px;
+            background: linear-gradient(145deg, rgba(30, 58, 95, 0.6), rgba(10, 22, 40, 0.8));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-pattern::before {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(107, 184, 201, 0.15) 0%, transparent 70%);
+            animation: pulse-glow 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        .about-pattern-icon {
+            font-size: 80px;
+            position: relative;
+            z-index: 1;
+            opacity: 0.9;
+        }
+
+        /* Services Section */
+        .services-section {
+            background: linear-gradient(180deg, var(--midnight) 0%, rgba(30, 58, 95, 0.2) 50%, var(--midnight) 100%);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .service-card {
+            background: rgba(30, 58, 95, 0.4);
+            border: 1px solid rgba(107, 184, 201, 0.15);
+            border-radius: 20px;
+            padding: 35px 25px;
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyan), var(--blue-mid));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(107, 184, 201, 0.3);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .service-card:hover::before { opacity: 1; }
+
+        .service-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            font-size: 28px;
+        }
+
+        .service-card h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: var(--pearl);
+            font-weight: 700;
+        }
+
+        .service-card p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        /* Projects Section */
+        .projects-section {
+            background: var(--midnight);
+        }
+
+        .project-card {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: linear-gradient(145deg, rgba(30, 58, 95, 0.5), rgba(10, 22, 40, 0.8));
+            border: 1px solid rgba(107, 184, 201, 0.2);
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+            transition: all 0.4s;
+        }
+
+        .project-card:hover {
+            border-color: rgba(107, 184, 201, 0.35);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .project-image {
+            width: 45%;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        .project-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .project-image-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent 60%, rgba(10, 22, 40, 0.6) 100%);
+        }
+
+        .project-live-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 18px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
+            color: var(--midnight);
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 2;
+        }
+
+        .project-live-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: blink-dot 2s infinite;
+        }
+
+        @keyframes blink-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .project-content {
+            flex: 1;
+            padding: 45px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: right;
+        }
+
+        .project-tag {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(107, 184, 201, 0.12);
+            border: 1px solid rgba(107, 184, 201, 0.25);
+            border-radius: 50px;
+            font-size: 12px;
+            color: var(--cyan);
+            margin-bottom: 16px;
+            font-weight: 500;
+            width: fit-content;
+        }
+
+        .project-content h3 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: var(--pearl);
+        }
+
+        .project-content p {
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.9;
+            margin-bottom: 24px;
+        }
+
+        .project-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .project-feature {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(107, 184, 201, 0.08);
+            border: 1px solid rgba(107, 184, 201, 0.15);
+            border-radius: 10px;
+            font-size: 13px;
+            color: var(--pearl);
+        }
+
+        .project-feature svg {
+            color: var(--cyan);
+            flex-shrink: 0;
+        }
+
+        .project-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
+            color: var(--midnight);
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            width: fit-content;
+            font-family: inherit;
+        }
+
+        .project-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(107, 184, 201, 0.3);
+        }
+
+        /* Business Solutions Section */
+        .solutions-section {
+            background: linear-gradient(180deg, var(--midnight) 0%, rgba(30, 58, 95, 0.15) 50%, var(--midnight) 100%);
+        }
+
+        .solutions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .solution-card {
+            background: rgba(30, 58, 95, 0.4);
+            border: 1px solid rgba(107, 184, 201, 0.15);
+            border-radius: 20px;
+            padding: 30px 25px;
+            text-align: right;
+            transition: all 0.3s;
+            display: flex;
+            gap: 18px;
+            flex-direction: row-reverse;
+        }
+
+        .solution-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(107, 184, 201, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .solution-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 24px;
+        }
+
+        .solution-text {
+            flex: 1;
+        }
+
+        .solution-text h3 {
+            font-size: 17px;
+            margin-bottom: 8px;
+            color: var(--pearl);
+            font-weight: 700;
+        }
+
+        .solution-text p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        /* Contact Section */
+        .contact-section {
+            background: var(--midnight);
+            border-top: 1px solid rgba(107, 184, 201, 0.1);
+        }
+
+        .contact-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .contact-icon-large {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 36px;
+        }
+
+        .contact-wrapper h2 {
+            font-size: 30px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: var(--pearl);
+        }
+
+        .contact-wrapper > p {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+
+        .contact-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .contact-card {
+            background: rgba(30, 58, 95, 0.4);
+            border: 1px solid rgba(107, 184, 201, 0.15);
+            border-radius: 16px;
+            padding: 28px 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .contact-card:hover {
+            border-color: rgba(107, 184, 201, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .contact-card-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .contact-card h4 {
+            font-size: 15px;
+            color: var(--pearl);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .contact-card p, .contact-card a {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            direction: ltr;
+        }
+
+        .contact-card a:hover { color: var(--cyan); }
+
+        .contact-cta {
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(107, 184, 201, 0.1), rgba(30, 58, 95, 0.3));
+            border: 1px solid rgba(107, 184, 201, 0.2);
+            border-radius: 20px;
+        }
+
+        .contact-cta p {
+            font-size: 16px;
+            color: var(--pearl);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .contact-cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .whatsapp-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            background: #25D366;
+            color: white;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .whatsapp-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.3);
+        }
+
+        .call-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            background: transparent;
+            color: var(--pearl);
+            border: 1px solid rgba(107, 184, 201, 0.4);
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .call-btn:hover {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 50px 40px 30px;
+            background: #0d1a2d;
+        }
+
+        .footer-top {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand { text-align: right; }
+
+        .footer-brand .logo-text {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--pearl);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .footer-brand .tagline {
+            font-size: 13px;
+            color: var(--cyan);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 80px;
+        }
+
+        .footer-col { text-align: right; }
+
+        .footer-col h4 {
+            font-size: 15px;
+            margin-bottom: 18px;
+            color: var(--pearl);
+            font-weight: 600;
+        }
+
+        .footer-col a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: color 0.3s;
+        }
+
+        .footer-col a:hover { color: var(--cyan); }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 25px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .footer-bottom .company {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .footer-bottom .copyright {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .footer-bottom .copyright span { color: var(--cyan); }
+
+        /* ═══════════════════════ Responsive ═══════════════════════ */
+        @media (max-width: 1024px) {
+            .header { padding: 20px 30px; }
+            .header-center { display: none; }
+            .about-grid { grid-template-columns: 1fr; gap: 40px; }
+            .services-grid { grid-template-columns: 1fr 1fr; }
+            .footer-links { gap: 40px; }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            .header-center, .header-left { display: none; }
+            .menu-icon { display: block; }
+            .header-logo { width: 28px; height: 28px; }
+            .logo-text { font-size: 22px; }
+
+            .hero { padding: 100px 20px 60px; min-height: auto; }
+            .hero h1 { font-size: 28px; }
+            .hero-subtitle { font-size: 14px; }
+            .hero-icon { width: 70px; height: 70px; }
+            .hero-buttons { flex-direction: column; align-items: center; }
+
+            .section { padding: 50px 15px; }
+            .section-title { font-size: 24px; }
+
+            .about-grid { grid-template-columns: 1fr; gap: 30px; }
+            .about-content { text-align: center; }
+            .about-stats { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+            .about-content h2 { font-size: 24px; }
+
+            .services-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+
+            .project-card { flex-direction: column; }
+            .project-image { width: 100%; min-height: 250px; }
+            .project-content { padding: 30px 20px; text-align: center; }
+            .project-features { justify-content: center; }
+            .project-btn { margin: 0 auto; }
+            .project-tag { margin: 0 auto 16px; }
+            .project-image-overlay { background: linear-gradient(180deg, transparent 60%, rgba(10, 22, 40, 0.6) 100%); }
+
+            .solutions-grid { grid-template-columns: 1fr; max-width: 450px; margin: 0 auto; }
+
+            .contact-cards { grid-template-columns: 1fr; max-width: 350px; margin: 0 auto 40px; }
+            .contact-cta-buttons { flex-direction: column; align-items: center; }
+
+            .footer { padding: 40px 20px 25px; }
+            .footer-top { flex-direction: column; text-align: center; gap: 30px; }
+            .footer-brand { text-align: center; }
+            .footer-links { flex-direction: column; gap: 25px; width: 100%; }
+            .footer-col { text-align: center; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 24px; }
+            .hero-subtitle { font-size: 13px; }
+            .about-stats { grid-template-columns: 1fr; }
+            .stat-item { padding: 15px; }
+        }
+
+        /* ═══════════════════════ Light Mode ═══════════════════════ */
+        body.light-mode {
+            --midnight: #F8F9FA;
+            --dark-blue: #E9ECEF;
+            --pearl: #1A1A2E;
+            --text-muted: rgba(26, 26, 46, 0.7);
+            background: #F8F9FA;
+            color: #1A1A2E;
+        }
+
+        body.light-mode .header {
+            background: rgba(248, 249, 250, 0.95);
+            border-bottom-color: rgba(74, 144, 164, 0.15);
+        }
+
+        body.light-mode .header-logo img { filter: none; }
+        body.light-mode .logo-text { color: #1A1A2E; }
+        body.light-mode .header-center a { color: #1A1A2E; }
+        body.light-mode .nav-link-btn { color: #1A1A2E; }
+        body.light-mode .menu-icon { color: #1A1A2E; }
+
+        body.light-mode .hero::before {
+            background: linear-gradient(180deg, rgba(248,249,250,0.8) 0%, rgba(248,249,250,0.5) 40%, rgba(248,249,250,0.85) 100%);
+        }
+
+        body.light-mode .hero-icon img { filter: none; }
+        body.light-mode .hero h1 { color: #1A1A2E; }
+
+        body.light-mode .service-card,
+        body.light-mode .solution-card,
+        body.light-mode .contact-card,
+        body.light-mode .stat-item {
+            background: #FFFFFF;
+            border-color: rgba(74, 144, 164, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode .project-card {
+            background: #FFFFFF;
+            border-color: rgba(74, 144, 164, 0.2);
+        }
+
+        body.light-mode .footer { background: #E9ECEF; }
+        body.light-mode .footer-brand .logo-text { color: #1A1A2E; }
+        body.light-mode .footer-col h4 { color: #1A1A2E; }
+
+        /* Theme Toggle */
+        .theme-toggle-btn {
+            padding: 8px 12px;
+            background: rgba(107, 184, 201, 0.15);
+            border: 1px solid rgba(107, 184, 201, 0.3);
+            border-radius: 8px;
+            color: var(--cyan);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle-btn:hover {
+            background: rgba(107, 184, 201, 0.25);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-right">
+            <a href="/" class="header-logo">
+                <img src="/static/2x/s@2x.png" alt="Inify">
+            </a>
+            <div class="header-brand">
+                <a href="/" class="logo-text en">inify</a>
+                <span class="header-brand-tagline en">AI Solutions for Business</span>
+            </div>
+        </div>
+        
+        <nav class="header-center">
+            <a href="#about">من نحن</a>
+            <a href="#services">حلول الأعمال</a>
+            <a href="#projects">مشاريعنا</a>
+            <a href="#solutions">القطاعات</a>
+            <a href="#contact">تواصل معنا</a>
+        </nav>
+        
+        <div class="header-left">
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="تبديل الوضع">🌙</button>
+            <button id="langToggleBtn" onclick="toggleLanguageAndReload()" style="padding: 8px 16px; background: rgba(107, 184, 201, 0.15); border: 1px solid rgba(107, 184, 201, 0.3); border-radius: 8px; color: var(--cyan); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-family: inherit;">🌐 EN</button>
+            <a href="/estate/" class="nav-link-btn">المنتج العقاري</a>
+            <a href="/auth/register/" class="header-btn">ابدأ الآن</a>
+        </div>
+        
+        <div class="menu-icon" onclick="openMobileMenu()">☰</div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="mobile-menu-close" onclick="closeMobileMenu()">✕</button>
+        <div class="mobile-menu-links">
+            <a href="#about">🏢 من نحن</a>
+            <a href="#services">⚡ حلول الأعمال</a>
+            <a href="#projects">🚀 مشاريعنا</a>
+            <a href="#solutions">💡 القطاعات</a>
+            <a href="#contact">📞 تواصل معنا</a>
+            <a href="/estate/">🏠 المنتج العقاري</a>
+            <a href="/auth/register/" class="btn-primary-mobile">🚀 ابدأ الآن</a>
+            <a href="#" onclick="toggleLanguageAndReload(); return false;" style="background: rgba(107, 184, 201, 0.2); color: var(--pearl);">🌐 English</a>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-icon">
+                <img src="/static/2x/logo1@2x.png" alt="Inify">
+            </div>
+            <div class="hero-badge en">Inify Core LLC</div>
+            <h1>نبني <span>حلول ذكاء اصطناعي</span> تُحوّل طريقة عملك</h1>
+            <p class="hero-subtitle">
+                شركة تقنية سعودية متخصصة في تطوير منتجات وحلول الذكاء الاصطناعي 
+                التي تساعد الشركات والأفراد على أتمتة أعمالهم وزيادة إنتاجيتهم
+            </p>
+            <div class="hero-buttons">
+                <a href="#contact" class="btn-primary">تواصل معنا</a>
+                <a href="#projects" class="btn-secondary">تعرّف على مشاريعنا</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section" id="about">
+        <div class="about-grid">
+            <div class="about-content">
+                <div class="section-badge">من نحن</div>
+                <h2>شركة <span>Inify</span> للحلول التقنية الذكية</h2>
+                <p>
+                    نحن فريق سعودي شغوف بالتقنية والابتكار، نؤمن أن الذكاء الاصطناعي قادر على تغيير طريقة إدارة الأعمال في المنطقة. نعمل على تطوير منتجات ذكية تلبي احتياجات السوق السعودي والخليجي.
+                </p>
+                <p>
+                    رؤيتنا أن نكون الشريك التقني الأول للشركات السعودية في رحلة التحول الرقمي، من خلال حلول مبتكرة مبنية على أحدث تقنيات الذكاء الاصطناعي.
+                </p>
+                <div class="about-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">AI</span>
+                        <span class="stat-label">ذكاء اصطناعي متقدم</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">24/7</span>
+                        <span class="stat-label">دعم متواصل</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">🇸🇦</span>
+                        <span class="stat-label">صنع في السعودية</span>
+                    </div>
+                </div>
+            </div>
+            <div class="about-visual">
+                <div class="about-image-wrapper">
+                    <div class="about-pattern">
+                        <span class="about-pattern-icon">🧠</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="section services-section" id="services">
+        <div class="section-header">
+            <div class="section-badge">حلول الأعمال</div>
+            <h2 class="section-title">حلول متكاملة لتطوير أعمالك</h2>
+            <p class="section-desc">نقدم مجموعة متكاملة من الخدمات التقنية والاستشارية المبنية على الذكاء الاصطناعي</p>
+        </div>
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">🤖</div>
+                <h3>وكلاء ذكاء اصطناعي</h3>
+                <p>تطوير وكلاء محادثة ذكية مخصصة لقطاعك، تتعامل مع العملاء بلغتهم وتفهم احتياجاتهم بدقة.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">⚙️</div>
+                <h3>أتمتة العمليات</h3>
+                <p>تحويل العمليات اليدوية المتكررة إلى عمليات آلية ذكية توفر الوقت وتقلل الأخطاء البشرية.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">📊</div>
+                <h3>تحليل البيانات</h3>
+                <p>استخراج رؤى قيّمة من بياناتك باستخدام خوارزميات متقدمة تساعدك على اتخاذ قرارات أفضل.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">🔗</div>
+                <h3>تكامل الأنظمة</h3>
+                <p>ربط أنظمتك الحالية مع حلول الذكاء الاصطناعي بسلاسة دون الحاجة لتغيير بنيتك التحتية.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">🛡️</div>
+                <h3>حلول مخصصة</h3>
+                <p>تصميم وتطوير حلول تقنية مخصصة بالكامل تناسب طبيعة عملك واحتياجاتك الفريدة.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon"></div>
+                <h3>الخدمات الاستشارية</h3>
+                <p>استشارات متخصصة في التحول الرقمي والذكاء الاصطناعي، مع خارطة طريق واضحة لتبني التقنية في مؤسستك.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section class="section projects-section" id="projects">
+        <div class="section-header">
+            <div class="section-badge">مشاريعنا</div>
+            <h2 class="section-title">منتجاتنا الحالية</h2>
+            <p class="section-desc">مشاريع حقيقية تعمل الآن وتخدم عملاء حقيقيين</p>
+        </div>
+        <div class="project-card">
+            <div class="project-image">
+                <img src="/static/images/IMG_8209.jpeg" alt="Inify Estate - وكيل عقاري ذكي">
+                <div class="project-image-overlay"></div>
+                <div class="project-live-badge">يعمل الآن</div>
+            </div>
+            <div class="project-content">
+                <div class="project-tag">منتج عقاري</div>
+                <h3>Inify Estate - الوكيل العقاري الذكي</h3>
+                <p>
+                    أول وكيل عقاري ذكي في السعودية يدير مبيعات المسوقين العقاريين نيابةً عنهم. 
+                    يستقبل رسائل العملاء، يفرز الجادين، يقترح العقارات المناسبة، 
+                    ويحوّل المحادثات اليومية إلى صفقات منجزة بشكل تلقائي وعلى مدار الساعة.
+                </p>
+                <div class="project-features">
+                    <div class="project-feature">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        محادثات ذكية
+                    </div>
+                    <div class="project-feature">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        إدارة العقارات
+                    </div>
+                    <div class="project-feature">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        تحليلات متقدمة
+                    </div>
+                    <div class="project-feature">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        تكامل واتساب
+                    </div>
+                </div>
+                <a href="/estate/" class="project-btn">
+                    اكتشف المنتج
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Business Solutions Section -->
+    <section class="section solutions-section" id="solutions">
+        <div class="section-header">
+            <div class="section-badge">حلول الأعمال</div>
+            <h2 class="section-title">حلول ذكية لكل قطاع</h2>
+            <p class="section-desc">نقدم حلول مخصصة لمختلف القطاعات باستخدام أحدث تقنيات الذكاء الاصطناعي</p>
+        </div>
+        <div class="solutions-grid">
+            <div class="solution-card">
+                <div class="solution-icon">🏠</div>
+                <div class="solution-text">
+                    <h3>القطاع العقاري</h3>
+                    <p>وكلاء ذكاء اصطناعي يديرون محادثات العملاء ويعرضون العقارات المناسبة ويحجزون المعاينات تلقائياً.</p>
+                </div>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">🏥</div>
+                <div class="solution-text">
+                    <h3>القطاع الصحي</h3>
+                    <p>حجز مواعيد ذكي، متابعة المرضى، وإدارة الاستفسارات الطبية الأولية بكفاءة عالية.</p>
+                </div>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">🛒</div>
+                <div class="solution-text">
+                    <h3>التجارة الإلكترونية</h3>
+                    <p>مساعد تسوّق ذكي يساعد العملاء في اختيار المنتجات والإجابة عن استفساراتهم على مدار الساعة.</p>
+                </div>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">🎓</div>
+                <div class="solution-text">
+                    <h3>قطاع التعليم</h3>
+                    <p>مساعد تعليمي ذكي يجيب على أسئلة الطلاب ويقدم محتوى تعليمي مخصص حسب مستوى المتعلم.</p>
+                </div>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">⚖️</div>
+                <div class="solution-text">
+                    <h3>القطاع القانوني</h3>
+                    <p>تحليل العقود والمستندات القانونية وتقديم استشارات أولية ذكية لتوفير وقت المحامين.</p>
+                </div>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">🏦</div>
+                <div class="solution-text">
+                    <h3>القطاع المالي</h3>
+                    <p>تحليل البيانات المالية، الكشف عن الاحتيال، وتقديم توصيات مالية ذكية ومخصصة.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section contact-section" id="contact">
+        <div class="contact-wrapper">
+            <div class="contact-icon-large">📞</div>
+            <h2>تواصل معنا</h2>
+            <p>نسعد بتواصلك معنا لمناقشة كيف يمكننا مساعدتك في تحويل أعمالك بالذكاء الاصطناعي</p>
+            
+            <div class="contact-cards">
+                <div class="contact-card">
+                    <div class="contact-card-icon">📱</div>
+                    <h4>الجوال</h4>
+                    <a href="tel:+966535156358" dir="ltr">+966 53 515 6358</a>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-card-icon">✉️</div>
+                    <h4>البريد الإلكتروني</h4>
+                    <a href="mailto:support@inify.ai">support@inify.ai</a>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-card-icon">📍</div>
+                    <h4>الموقع</h4>
+                    <p>المملكة العربية السعودية</p>
+                </div>
+            </div>
+
+            <div class="contact-cta">
+                <p>جاهز تبدأ رحلتك مع الذكاء الاصطناعي؟</p>
+                <div class="contact-cta-buttons">
+                    <a href="https://wa.me/966535156358" target="_blank" class="whatsapp-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        تواصل عبر واتساب
+                    </a>
+                    <a href="tel:+966535156358" class="call-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        اتصل بنا مباشرة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <span class="logo-text en">inify</span>
+                <span class="tagline en">AI Solutions for Business</span>
+            </div>
+            <div class="footer-links">
+                <div class="footer-col">
+                    <h4>الشركة</h4>
+                    <a href="#about">من نحن</a>
+                    <a href="#services">حلول الأعمال</a>
+                    <a href="#projects">مشاريعنا</a>
+                    <a href="#contact">تواصل معنا</a>
+                </div>
+                <div class="footer-col">
+                    <h4>المنتجات</h4>
+                    <a href="/estate/">الوكيل العقاري الذكي</a>
+                    <a href="/pricing/">أسعار الباقات</a>
+                    <a href="/auth/register/">إنشاء حساب</a>
+                </div>
+                <div class="footer-col">
+                    <h4>قانوني</h4>
+                    <a href="/privacy/">سياسة الخصوصية</a>
+                    <a href="/terms/">الشروط والأحكام</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p class="company en">Inify Core LLC</p>
+            <p class="copyright">جميع الحقوق محفوظة © <span class="en">Inify</span> 2025</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile Menu Functions
+        function openMobileMenu() {
+            document.getElementById('mobileMenu').classList.add('active');
+            document.querySelector('.mobile-menu-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            document.getElementById('mobileMenu').classList.remove('active');
+            document.querySelector('.mobile-menu-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.querySelectorAll('.mobile-menu-links a').forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 50) {
+                header.style.background = 'rgba(10, 22, 40, 0.95)';
+                header.style.backdropFilter = 'blur(20px)';
+            } else {
+                header.style.background = 'rgba(10, 22, 40, 0.85)';
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        // Theme Toggle (Dark/Light Mode)
+        // ═══════════════════════════════════════════════════════════
+        function getTheme() {
+            return localStorage.getItem('inify_theme') || 'dark';
+        }
+
+        function setTheme(theme) {
+            localStorage.setItem('inify_theme', theme);
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+            } else {
+                document.body.classList.remove('light-mode');
+            }
+            updateThemeButton();
+        }
+
+        function toggleTheme() {
+            const currentTheme = getTheme();
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        }
+
+        function updateThemeButton() {
+            const theme = getTheme();
+            const btn = document.getElementById('themeToggleBtn');
+            if (btn) {
+                btn.innerHTML = theme === 'dark' ? '☀️' : '🌙';
+                btn.title = theme === 'dark' ? 'التبديل للوضع الفاتح' : 'التبديل للوضع الداكن';
+            }
+        }
+
+        // Initialize theme
+        (function initTheme() {
+            setTheme(getTheme());
+        })();
+
+        // ═══════════════════════════════════════════════════════════
+        // Language Toggle
+        // ═══════════════════════════════════════════════════════════
+        function getCurrentLanguage() {
+            return localStorage.getItem('inify_language') || 'ar';
+        }
+
+        function toggleLanguageAndReload() {
+            const currentLang = getCurrentLanguage();
+            const newLang = currentLang === 'ar' ? 'en' : 'ar';
+            localStorage.setItem('inify_language', newLang);
+            location.reload();
+        }
+
+        function translateToEnglish() {
+            const t = {
+                // Header
+                'من نحن': 'About Us',
+                'حلول الأعمال': 'Business Solutions',
+                'مشاريعنا': 'Our Projects',
+                'القطاعات': 'Industries',
+                'تواصل معنا': 'Contact Us',
+                'المنتج العقاري': 'Real Estate Product',
+                'ابدأ الآن': 'Get Started',
+
+                // Hero
+                'نبني': 'We Build',
+                'حلول ذكاء اصطناعي': 'AI Solutions',
+                'تُحوّل طريقة عملك': 'That Transform Your Business',
+                'شركة تقنية سعودية متخصصة في تطوير منتجات وحلول الذكاء الاصطناعي': 'A Saudi tech company specializing in developing AI products and solutions',
+                'التي تساعد الشركات والأفراد على أتمتة أعمالهم وزيادة إنتاجيتهم': 'that help businesses and individuals automate their work and boost productivity',
+                'تعرّف على مشاريعنا': 'Explore Our Projects',
+
+                // About
+                'شركة': 'Company',
+                'للحلول التقنية الذكية': 'for Smart Tech Solutions',
+                'نحن فريق سعودي شغوف بالتقنية والابتكار، نؤمن أن الذكاء الاصطناعي قادر على تغيير طريقة إدارة الأعمال في المنطقة. نعمل على تطوير منتجات ذكية تلبي احتياجات السوق السعودي والخليجي.': 'We are a passionate Saudi team driven by technology and innovation. We believe AI can transform business management in the region. We develop smart products tailored to the Saudi and Gulf markets.',
+                'رؤيتنا أن نكون الشريك التقني الأول للشركات السعودية في رحلة التحول الرقمي، من خلال حلول مبتكرة مبنية على أحدث تقنيات الذكاء الاصطناعي.': 'Our vision is to be the leading tech partner for Saudi companies in their digital transformation journey, through innovative solutions built on the latest AI technologies.',
+                'ذكاء اصطناعي متقدم': 'Advanced AI',
+                'دعم متواصل': 'Continuous Support',
+                'صنع في السعودية': 'Made in Saudi Arabia',
+
+                // Services
+                'حلول متكاملة لتطوير أعمالك': 'Comprehensive Solutions for Your Business',
+                'نقدم مجموعة متكاملة من الخدمات التقنية والاستشارية المبنية على الذكاء الاصطناعي': 'We offer a comprehensive suite of technical and consulting services powered by AI',
+                'وكلاء ذكاء اصطناعي': 'AI Agents',
+                'تطوير وكلاء محادثة ذكية مخصصة لقطاعك، تتعامل مع العملاء بلغتهم وتفهم احتياجاتهم بدقة.': 'Developing custom intelligent chat agents for your industry that interact with clients in their language and understand their needs precisely.',
+                'أتمتة العمليات': 'Process Automation',
+                'تحويل العمليات اليدوية المتكررة إلى عمليات آلية ذكية توفر الوقت وتقلل الأخطاء البشرية.': 'Converting repetitive manual processes into smart automated operations that save time and reduce human errors.',
+                'تحليل البيانات': 'Data Analytics',
+                'استخراج رؤى قيّمة من بياناتك باستخدام خوارزميات متقدمة تساعدك على اتخاذ قرارات أفضل.': 'Extracting valuable insights from your data using advanced algorithms to help you make better decisions.',
+                'تكامل الأنظمة': 'System Integration',
+                'ربط أنظمتك الحالية مع حلول الذكاء الاصطناعي بسلاسة دون الحاجة لتغيير بنيتك التحتية.': 'Seamlessly connecting your existing systems with AI solutions without changing your infrastructure.',
+                'حلول مخصصة': 'Custom Solutions',
+                'تصميم وتطوير حلول تقنية مخصصة بالكامل تناسب طبيعة عملك واحتياجاتك الفريدة.': 'Designing and developing fully customized tech solutions that fit your business nature and unique needs.',
+                'الخدمات الاستشارية': 'Consulting Services',
+                'استشارات متخصصة في التحول الرقمي والذكاء الاصطناعي، مع خارطة طريق واضحة لتبني التقنية في مؤسستك.': 'Specialized consulting in digital transformation and AI, with a clear roadmap for adopting technology in your organization.',
+
+                // Projects
+                'منتجاتنا الحالية': 'Our Current Products',
+                'مشاريع حقيقية تعمل الآن وتخدم عملاء حقيقيين': 'Real projects running now and serving real clients',
+                'يعمل الآن': 'Live Now',
+                'منتج عقاري': 'Real Estate Product',
+                'الوكيل العقاري الذكي': 'Smart Real Estate Agent',
+                'أول وكيل عقاري ذكي في السعودية يدير مبيعات المسوقين العقاريين نيابةً عنهم.': 'The first smart real estate agent in Saudi Arabia that manages property marketers\' sales on their behalf.',
+                'يستقبل رسائل العملاء، يفرز الجادين، يقترح العقارات المناسبة،': 'It receives client messages, filters serious buyers, suggests suitable properties,',
+                'ويحوّل المحادثات اليومية إلى صفقات منجزة بشكل تلقائي وعلى مدار الساعة.': 'and converts daily conversations into closed deals automatically, 24/7.',
+                'محادثات ذكية': 'Smart Conversations',
+                'إدارة العقارات': 'Property Management',
+                'تحليلات متقدمة': 'Advanced Analytics',
+                'تكامل واتساب': 'WhatsApp Integration',
+                'اكتشف المنتج': 'Explore Product',
+
+                // Solutions
+                'حلول ذكية لكل قطاع': 'Smart Solutions for Every Industry',
+                'نقدم حلول مخصصة لمختلف القطاعات باستخدام أحدث تقنيات الذكاء الاصطناعي': 'We offer customized solutions for various industries using the latest AI technologies',
+                'القطاع العقاري': 'Real Estate',
+                'وكلاء ذكاء اصطناعي يديرون محادثات العملاء ويعرضون العقارات المناسبة ويحجزون المعاينات تلقائياً.': 'AI agents that manage client conversations, showcase suitable properties, and book viewings automatically.',
+                'القطاع الصحي': 'Healthcare',
+                'حجز مواعيد ذكي، متابعة المرضى، وإدارة الاستفسارات الطبية الأولية بكفاءة عالية.': 'Smart appointment booking, patient follow-ups, and efficient management of initial medical inquiries.',
+                'التجارة الإلكترونية': 'E-Commerce',
+                'مساعد تسوّق ذكي يساعد العملاء في اختيار المنتجات والإجابة عن استفساراتهم على مدار الساعة.': 'A smart shopping assistant that helps customers choose products and answers their inquiries 24/7.',
+                'قطاع التعليم': 'Education',
+                'مساعد تعليمي ذكي يجيب على أسئلة الطلاب ويقدم محتوى تعليمي مخصص حسب مستوى المتعلم.': 'A smart educational assistant that answers student questions and provides personalized content based on learner level.',
+                'القطاع القانوني': 'Legal',
+                'تحليل العقود والمستندات القانونية وتقديم استشارات أولية ذكية لتوفير وقت المحامين.': 'Analyzing contracts and legal documents and providing smart initial consultations to save lawyers\' time.',
+                'القطاع المالي': 'Finance',
+                'تحليل البيانات المالية، الكشف عن الاحتيال، وتقديم توصيات مالية ذكية ومخصصة.': 'Financial data analysis, fraud detection, and providing smart personalized financial recommendations.',
+
+                // Contact
+                'نسعد بتواصلك معنا لمناقشة كيف يمكننا مساعدتك في تحويل أعمالك بالذكاء الاصطناعي': 'We\'d love to hear from you to discuss how we can help transform your business with AI',
+                'الجوال': 'Phone',
+                'البريد الإلكتروني': 'Email',
+                'الموقع': 'Location',
+                'المملكة العربية السعودية': 'Saudi Arabia',
+                'جاهز تبدأ رحلتك مع الذكاء الاصطناعي؟': 'Ready to start your AI journey?',
+                'تواصل عبر واتساب': 'Chat on WhatsApp',
+                'اتصل بنا مباشرة': 'Call Us Directly',
+
+                // Footer
+                'الشركة': 'Company',
+                'المنتجات': 'Products',
+                'الوكيل العقاري الذكي': 'Smart Real Estate Agent',
+                'أسعار الباقات': 'Pricing Plans',
+                'إنشاء حساب': 'Create Account',
+                'قانوني': 'Legal',
+                'سياسة الخصوصية': 'Privacy Policy',
+                'الشروط والأحكام': 'Terms & Conditions',
+                'جميع الحقوق محفوظة ©': 'All Rights Reserved ©',
+            };
+
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+
+            nodes.forEach(node => {
+                let text = node.textContent;
+                Object.keys(t).forEach(ar => {
+                    if (text.includes(ar)) text = text.replace(new RegExp(ar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), t[ar]);
+                });
+                node.textContent = text;
+            });
+
+            document.title = 'Inify - Advanced AI Solutions for Business';
+        }
+
+        (function initLanguage() {
+            const lang = getCurrentLanguage();
+            const btn = document.getElementById('langToggleBtn');
+
+            if (lang === 'en') {
+                document.documentElement.dir = 'ltr';
+                document.documentElement.lang = 'en';
+                if (btn) btn.innerHTML = '🌐 عربي';
+                translateToEnglish();
+            } else {
+                if (btn) btn.innerHTML = '🌐 EN';
+            }
+        })();
+    </script>
+</body>
+</html>

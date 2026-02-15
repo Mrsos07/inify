@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الاشتراك - Inify</title>
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <style>
+        @font-face { font-family: 'BalooBhaijaan2'; src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype'); font-weight: 400; }
+        @font-face { font-family: 'BalooBhaijaan2'; src: url('/static/BalooBhaijaan2-SemiBold.ttf') format('truetype'); font-weight: 600; }
+        @font-face { font-family: 'BalooBhaijaan2'; src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype'); font-weight: 700; }
+        @font-face { font-family: 'Chillax'; src: url('/static/Chillax-Regular.woff2') format('woff2'); font-weight: 400; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --midnight: #0A1628; --dark-blue: #1E3A5F; --blue-mid: #4A90A4;
+            --cyan: #6BB8C9; --cyan-light: #8DD4E3; --pearl: #F8F8F8;
+            --text-muted: rgba(248,248,248,0.6); --card-bg: rgba(30,58,95,0.4);
+            --border: rgba(107,184,201,0.15);
+        }
+        body {
+            font-family: 'BalooBhaijaan2', 'Chillax', sans-serif;
+            background: var(--midnight); color: var(--pearl); min-height: 100vh;
+        }
+        .en { font-family: 'Chillax', sans-serif; }
+
+        .header {
+            padding: 20px 40px; background: rgba(10,22,40,0.95); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;
+            align-items: center; position: sticky; top: 0; z-index: 100;
+        }
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .header-right img { height: 32px; }
+        .logo-text {
+            font-family: 'Chillax', sans-serif; font-size: 22px; font-weight: 700;
+            background: linear-gradient(135deg, var(--cyan), var(--cyan-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+        .back-btn {
+            padding: 10px 24px; background: rgba(107,184,201,0.1); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--pearl); text-decoration: none; font-size: 14px;
+            transition: all 0.3s;
+        }
+        .back-btn:hover { border-color: var(--cyan); background: rgba(107,184,201,0.2); }
+
+        .main { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+
+        .page-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .page-desc { color: var(--text-muted); font-size: 16px; margin-bottom: 40px; }
+
+        /* Status Card */
+        .status-card {
+            background: var(--card-bg); backdrop-filter: blur(20px); border: 1px solid var(--border);
+            border-radius: 20px; padding: 35px; margin-bottom: 30px;
+        }
+        .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .status-badge {
+            padding: 8px 20px; border-radius: 50px; font-size: 14px; font-weight: 600;
+        }
+        .badge-trial { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+        .badge-active { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+        .badge-expired { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+        .badge-none { background: rgba(107,184,201,0.15); color: var(--cyan); border: 1px solid rgba(107,184,201,0.3); }
+
+        .status-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+        .info-item { padding: 16px; background: rgba(10,22,40,0.4); border-radius: 12px; border: 1px solid var(--border); }
+        .info-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+        .info-value { font-size: 18px; font-weight: 700; }
+
+        /* Plans Grid */
+        .plans-title { font-size: 24px; font-weight: 700; margin-bottom: 20px; }
+        .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px; }
+        .plan-card {
+            background: var(--card-bg); border: 2px solid var(--border); border-radius: 16px;
+            padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s;
+        }
+        .plan-card:hover { border-color: var(--cyan); transform: translateY(-4px); }
+        .plan-card.selected { border-color: var(--cyan); background: rgba(107,184,201,0.1); }
+        .plan-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+        .plan-price { font-size: 28px; font-weight: 700; color: var(--cyan); }
+        .plan-price span { font-size: 14px; color: var(--text-muted); font-weight: 400; }
+        .plan-discount {
+            display: inline-block; margin-top: 8px; padding: 4px 12px;
+            background: rgba(74,222,128,0.12); border-radius: 20px;
+            font-size: 12px; color: #4ade80;
+        }
+        .plan-permonth { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        .subscribe-btn {
+            width: 100%; padding: 16px; border-radius: 14px; font-family: inherit;
+            font-size: 18px; font-weight: 700; cursor: pointer; border: none;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight); transition: all 0.3s;
+        }
+        .subscribe-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(107,184,201,0.3); }
+        .subscribe-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .trial-btn {
+            width: 100%; padding: 16px; border-radius: 14px; font-family: inherit;
+            font-size: 18px; font-weight: 700; cursor: pointer;
+            background: transparent; border: 2px solid var(--cyan); color: var(--cyan);
+            transition: all 0.3s; margin-bottom: 16px;
+        }
+        .trial-btn:hover { background: rgba(107,184,201,0.1); }
+
+        .loading { text-align: center; padding: 60px; color: var(--text-muted); font-size: 18px; }
+
+        #subscriptionContent { display: none; }
+
+        @media (max-width: 600px) {
+            .header { padding: 16px 20px; }
+            .main { padding: 20px 16px; }
+            .page-title { font-size: 24px; }
+            .plans-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-right">
+            <img src="/static/images/inify-icon.png" alt="Inify">
+            <a href="/" class="logo-text en">inify</a>
+        </div>
+        <a href="/dashboard/" class="back-btn">← لوحة التحكم</a>
+    </header>
+
+    <main class="main">
+        <h1 class="page-title">إدارة الاشتراك</h1>
+        <p class="page-desc">اختر الخطة المناسبة واستمتع بجميع مميزات المنصة</p>
+
+        <div id="loadingState" class="loading">جاري التحميل...</div>
+
+        <div id="subscriptionContent">
+            <!-- Current Status -->
+            <div class="status-card" id="statusCard">
+                <div class="status-header">
+                    <h2>حالة الاشتراك</h2>
+                    <span class="status-badge" id="statusBadge"></span>
+                </div>
+                <div class="status-info" id="statusInfo"></div>
+            </div>
+
+            <!-- Plans -->
+            <div id="plansSection">
+                <h2 class="plans-title">اختر خطتك</h2>
+
+                <div id="trialSection" style="display:none;">
+                    <button class="trial-btn" onclick="startTrial()">🎁 ابدأ التجربة المجانية (5 أيام)</button>
+                </div>
+
+                <div class="plans-grid" id="plansGrid">
+                    <div class="plan-card selected" data-plan="monthly" onclick="selectPlan('monthly')">
+                        <div class="plan-name">شهري</div>
+                        <div class="plan-price">199 <span>ريال</span></div>
+                    </div>
+                    <div class="plan-card" data-plan="quarterly" onclick="selectPlan('quarterly')">
+                        <div class="plan-name">3 أشهر</div>
+                        <div class="plan-price">537 <span>ريال</span></div>
+                        <div class="plan-discount">خصم 10%</div>
+                        <div class="plan-permonth">179 ريال/شهر</div>
+                    </div>
+                    <div class="plan-card" data-plan="semi" onclick="selectPlan('semi')">
+                        <div class="plan-name">6 أشهر</div>
+                        <div class="plan-price">1,015 <span>ريال</span></div>
+                        <div class="plan-discount">خصم 15%</div>
+                        <div class="plan-permonth">169 ريال/شهر</div>
+                    </div>
+                    <div class="plan-card" data-plan="annual" onclick="selectPlan('annual')">
+                        <div class="plan-name">سنوي</div>
+                        <div class="plan-price">1,791 <span>ريال</span></div>
+                        <div class="plan-discount">خصم 25%</div>
+                        <div class="plan-permonth">149 ريال/شهر</div>
+                    </div>
+                </div>
+
+                <button class="subscribe-btn" id="subscribeBtn" onclick="subscribe()">اشترك الآن</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let selectedPlan = 'monthly';
+
+        function selectPlan(plan) {
+            selectedPlan = plan;
+            document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-plan="${plan}"]`).classList.add('selected');
+        }
+
+        async function loadSubscription() {
+            try {
+                const res = await fetch('/api/subscription/status/');
+                const data = await res.json();
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('subscriptionContent').style.display = 'block';
+
+                const badge = document.getElementById('statusBadge');
+                const info = document.getElementById('statusInfo');
+                const trialSection = document.getElementById('trialSection');
+                const plansSection = document.getElementById('plansSection');
+                const btn = document.getElementById('subscribeBtn');
+
+                if (!data.has_subscription) {
+                    badge.textContent = 'لا يوجد اشتراك';
+                    badge.className = 'status-badge badge-none';
+                    info.innerHTML = '<div class="info-item"><div class="info-label">الحالة</div><div class="info-value">لم تشترك بعد</div></div>';
+                    trialSection.style.display = 'block';
+                    btn.textContent = 'اشترك الآن';
+                    return;
+                }
+
+                if (data.is_trial && data.is_trial_active) {
+                    badge.textContent = '🎁 فترة تجريبية';
+                    badge.className = 'status-badge badge-trial';
+                    info.innerHTML = `
+                        <div class="info-item"><div class="info-label">الحالة</div><div class="info-value">فترة تجريبية مجانية</div></div>
+                        <div class="info-item"><div class="info-label">تنتهي في</div><div class="info-value">${new Date(data.trial_end).toLocaleDateString('ar-SA')}</div></div>
+                        <div class="info-item"><div class="info-label">الأيام المتبقية</div><div class="info-value" style="color: #fbbf24;">${data.days_remaining} يوم</div></div>
+                    `;
+                    trialSection.style.display = 'none';
+                    btn.textContent = 'اشترك الآن - لا يتم السحب إلا بعد انتهاء التجربة';
+                } else if (data.status === 'active') {
+                    badge.textContent = '✅ نشط';
+                    badge.className = 'status-badge badge-active';
+                    info.innerHTML = `
+                        <div class="info-item"><div class="info-label">الخطة</div><div class="info-value">${data.plan_label}</div></div>
+                        <div class="info-item"><div class="info-label">ينتهي في</div><div class="info-value">${new Date(data.end_date).toLocaleDateString('ar-SA')}</div></div>
+                        <div class="info-item"><div class="info-label">الأيام المتبقية</div><div class="info-value" style="color: #4ade80;">${data.days_remaining} يوم</div></div>
+                        <div class="info-item"><div class="info-label">المبلغ</div><div class="info-value">${data.amount} ريال</div></div>
+                    `;
+                    plansSection.style.display = 'none';
+                } else {
+                    badge.textContent = 'منتهي';
+                    badge.className = 'status-badge badge-expired';
+                    info.innerHTML = '<div class="info-item"><div class="info-label">الحالة</div><div class="info-value">اشتراكك منتهي</div></div>';
+                    trialSection.style.display = 'none';
+                    btn.textContent = 'جدد اشتراكك';
+                }
+            } catch (e) {
+                document.getElementById('loadingState').textContent = 'حدث خطأ في التحميل';
+            }
+        }
+
+        async function startTrial() {
+            try {
+                const res = await fetch('/api/subscription/start-trial/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    loadSubscription();
+                } else {
+                    alert(data.error);
+                }
+            } catch (e) {
+                alert('حدث خطأ');
+            }
+        }
+
+        async function subscribe() {
+            const btn = document.getElementById('subscribeBtn');
+            btn.disabled = true;
+            btn.textContent = 'جاري التحويل لبوابة الدفع...';
+
+            try {
+                const res = await fetch('/api/subscription/subscribe/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ plan_key: selectedPlan }),
+                });
+                const data = await res.json();
+                if (data.success && data.payment_url) {
+                    window.location.href = data.payment_url;
+                } else {
+                    alert(data.error || 'حدث خطأ');
+                    btn.disabled = false;
+                    btn.textContent = 'اشترك الآن';
+                }
+            } catch (e) {
+                alert('حدث خطأ في الاتصال');
+                btn.disabled = false;
+                btn.textContent = 'اشترك الآن';
+            }
+        }
+
+        loadSubscription();
+    </script>
+    <script src="/static/js/theme.js"></script>
+</body>
+</html>

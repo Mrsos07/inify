@@ -514,16 +514,76 @@
         /* Plans Grid */
         .plans-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
             margin-top: 20px;
         }
 
-        @media (max-width: 700px) {
+        @media (max-width: 900px) {
+            .plans-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
             .plans-grid {
                 grid-template-columns: 1fr;
             }
         }
+
+        .plan-card.selected {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+        }
+
+        .plan-discount {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 3px 10px;
+            background: rgba(74, 222, 128, 0.12);
+            border-radius: 20px;
+            font-size: 11px;
+            color: #4ade80;
+        }
+
+        .plan-permonth {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .subscribe-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            transition: all 0.3s;
+            margin-top: 16px;
+        }
+        .subscribe-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(107,184,201,0.3); }
+        .subscribe-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .trial-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            background: transparent;
+            border: 2px solid var(--cyan);
+            color: var(--cyan);
+            transition: all 0.3s;
+            margin-bottom: 12px;
+        }
+        .trial-btn:hover { background: rgba(107,184,201,0.1); }
 
         .plan-card {
             background: rgba(10, 22, 40, 0.4);
@@ -852,22 +912,43 @@
 
                     <div class="subscription-card" id="subscriptionCard">
                         <div class="subscription-header">
-                            <div class="subscription-plan" id="currentPlan">الباقة المجانية</div>
-                            <div class="subscription-price" id="currentPrice">0 <span>ريال/شهر</span></div>
+                            <div class="subscription-plan" id="currentPlan">جاري التحميل...</div>
+                            <div class="subscription-price" id="currentPrice"></div>
                         </div>
-                        <div class="subscription-features" id="currentFeatures">
-                            <!-- Features will be loaded -->
-                        </div>
-                        <div class="subscription-expiry" id="subscriptionExpiry">
-                            <span>📅</span>
-                            <span>اشتراك دائم</span>
-                        </div>
+                        <div class="subscription-features" id="currentFeatures"></div>
+                        <div class="subscription-expiry" id="subscriptionExpiry"></div>
                     </div>
 
-                    <h4 style="margin-bottom: 12px; font-size: 15px;">ترقية الباقة</h4>
-                    <div class="plans-grid" id="plansGrid">
-                        <!-- Plans will be loaded -->
+                    <div id="trialSection" style="display:none;">
+                        <button class="trial-btn" onclick="startTrial()">🎁 ابدأ التجربة المجانية (5 أيام)</button>
                     </div>
+
+                    <h4 style="margin-bottom: 12px; font-size: 15px;" id="plansTitle">اختر خطتك</h4>
+                    <div class="plans-grid" id="plansGrid">
+                        <div class="plan-card selected" data-plan="monthly" onclick="selectPlan('monthly')">
+                            <div class="plan-name">شهري</div>
+                            <div class="plan-price">199 <span>ريال</span></div>
+                        </div>
+                        <div class="plan-card" data-plan="quarterly" onclick="selectPlan('quarterly')">
+                            <div class="plan-name">3 أشهر</div>
+                            <div class="plan-price">537 <span>ريال</span></div>
+                            <div class="plan-discount">خصم 10%</div>
+                            <div class="plan-permonth">179 ريال/شهر</div>
+                        </div>
+                        <div class="plan-card" data-plan="semi" onclick="selectPlan('semi')">
+                            <div class="plan-name">6 أشهر</div>
+                            <div class="plan-price">1,015 <span>ريال</span></div>
+                            <div class="plan-discount">خصم 15%</div>
+                            <div class="plan-permonth">169 ريال/شهر</div>
+                        </div>
+                        <div class="plan-card" data-plan="annual" onclick="selectPlan('annual')">
+                            <div class="plan-name">سنوي</div>
+                            <div class="plan-price">1,791 <span>ريال</span></div>
+                            <div class="plan-discount">خصم 25%</div>
+                            <div class="plan-permonth">149 ريال/شهر</div>
+                        </div>
+                    </div>
+                    <button class="subscribe-btn" id="subscribeBtn" onclick="subscribePlan()">اشترك الآن</button>
                 </div>
 
                 <!-- Personal Info Section -->
@@ -966,290 +1047,260 @@
     </div>
 
     <script>
-        // Django handles authentication
-
-        // Plans data
-        const plans = {
-            free: {
-                name: 'المجانية',
-                price: 0,
-                features: ['5 عقارات', '50 محادثة/شهر', 'شات بوت أساسي'],
-                color: '#a0a0a0'
-            },
-            marketer: {
-                name: 'المسوق',
-                price: 499,
-                features: ['عقارات غير محدودة', 'محادثات غير محدودة', 'تخصيص الشات بوت', 'تقارير متقدمة', 'دعم فني'],
-                color: '#6BB8C9'
-            },
-            agency: {
-                name: 'مخصص',
-                price: 'تواصل معنا',
-                features: ['عقارات غير محدودة', 'محادثات غير محدودة', 'تخصيص كامل', 'API متقدم', 'دعم فني مميز', 'مدير حساب خاص'],
-                color: '#c084fc'
-            }
-        };
-
-        // Get current user from Django context
+        // ═══════════════════════════════════════════════════
+        // User data from Django context
+        // ═══════════════════════════════════════════════════
         const currentUser = {
             id: '{{ user_id|default:"" }}',
             name: '{{ user_name|default:"المستخدم" }}',
             email: '{{ user_email|default:"" }}',
             phone: '{{ user_phone|default:"" }}',
             company: '{{ company_name|default:"" }}',
-            role: '{{ subscription_plan|default:"free" }}'
         };
 
-        // Load user data
-        function loadUserData() {
-            if (!currentUser.id) {
-                window.location.href = '/auth/login/';
-                return;
-            }
+        let selectedPlan = 'monthly';
 
-            // Update profile card
-            document.getElementById('profileName').textContent = currentUser.name || currentUser.company || 'المستخدم';
+        // ═══════════════════════════════════════════════════
+        // Initialize page
+        // ═══════════════════════════════════════════════════
+        function initPage() {
+            if (!currentUser.id) { window.location.href = '/auth/login/'; return; }
+
+            // Profile card
+            document.getElementById('profileName').textContent = currentUser.name || 'المستخدم';
             document.getElementById('profileEmail').textContent = currentUser.email;
-            document.getElementById('profileAvatar').textContent = getInitials(currentUser.name || currentUser.company);
-            
-            // Update role badge
-            const roleEl = document.getElementById('profileRole');
-            const role = currentUser.role || 'free';
-            const roleLabels = {
-                free: 'مجاني',
-                marketer: 'مسوق',
-                agency: 'وكالة',
-                admin: 'مدير'
-            };
-            roleEl.textContent = roleLabels[role] || role;
-            roleEl.className = `profile-role role-${role}`;
+            document.getElementById('profileAvatar').textContent = getInitials(currentUser.name);
 
-            // Update stats
-            const properties = JSON.parse(localStorage.getItem('newra_properties') || '[]');
-            const clients = JSON.parse(localStorage.getItem('newra_clients') || '[]');
-            
-            document.getElementById('propertiesCount').textContent = properties.length;
-            document.getElementById('clientsCount').textContent = clients.length;
-
-            // Update form
+            // Form
+            const nameParts = (currentUser.name || '').split(' ');
             document.getElementById('fullName').value = currentUser.name || '';
             document.getElementById('companyName').value = currentUser.company || '';
             document.getElementById('email').value = currentUser.email || '';
             document.getElementById('phone').value = currentUser.phone || '';
 
-            // Update subscription
-            updateSubscriptionCard(role);
-            renderPlans(role);
+            // Load subscription status
+            loadSubscription();
+
+            // Load stats
+            loadStats();
         }
 
-        // Get initials
         function getInitials(name) {
             if (!name) return '👤';
             return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         }
 
-        // Update subscription card
-        function updateSubscriptionCard(role) {
-            const plan = plans[role] || plans.free;
-            
-            document.getElementById('currentPlan').textContent = `باقة ${plan.name}`;
-            document.getElementById('currentPrice').innerHTML = `${plan.price} <span>ريال/شهر</span>`;
-            
-            const featuresEl = document.getElementById('currentFeatures');
-            featuresEl.innerHTML = plan.features.map(f => `<span class="feature-tag">✓ ${f}</span>`).join('');
+        // ═══════════════════════════════════════════════════
+        // Load stats from server
+        // ═══════════════════════════════════════════════════
+        async function loadStats() {
+            try {
+                const res = await fetch(`/api/agent/${currentUser.id}/stats/`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        document.getElementById('propertiesCount').textContent = data.stats.total_properties || 0;
+                        document.getElementById('clientsCount').textContent = data.stats.total_leads || 0;
+                    }
+                }
+            } catch(e) { /* silent */ }
+        }
 
-            // Update expiry
-            const expiryEl = document.getElementById('subscriptionExpiry');
-            if (currentUser.subscriptionExpiry) {
-                const expiry = new Date(currentUser.subscriptionExpiry);
-                const now = new Date();
-                const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
-                
-                if (daysLeft <= 0) {
-                    expiryEl.className = 'subscription-expiry danger';
-                    expiryEl.innerHTML = '<span>⚠️</span><span>انتهى الاشتراك</span>';
-                } else if (daysLeft <= 7) {
+        // ═══════════════════════════════════════════════════
+        // Subscription
+        // ═══════════════════════════════════════════════════
+        async function loadSubscription() {
+            try {
+                const res = await fetch('/api/subscription/status/');
+                const data = await res.json();
+
+                const planEl = document.getElementById('currentPlan');
+                const priceEl = document.getElementById('currentPrice');
+                const featuresEl = document.getElementById('currentFeatures');
+                const expiryEl = document.getElementById('subscriptionExpiry');
+                const roleEl = document.getElementById('profileRole');
+                const trialSec = document.getElementById('trialSection');
+                const plansGrid = document.getElementById('plansGrid');
+                const subBtn = document.getElementById('subscribeBtn');
+                const plansTitle = document.getElementById('plansTitle');
+
+                const features = ['عقارات غير محدودة', 'محادثات غير محدودة', 'وكيل ذكي مخصص', 'تقارير متقدمة', 'دعم فني'];
+
+                if (!data.has_subscription) {
+                    // No subscription
+                    planEl.textContent = 'لا يوجد اشتراك';
+                    priceEl.innerHTML = '';
+                    featuresEl.innerHTML = '';
+                    expiryEl.innerHTML = '<span>⚠️</span><span>لم تشترك بعد — ابدأ التجربة المجانية!</span>';
                     expiryEl.className = 'subscription-expiry warning';
-                    expiryEl.innerHTML = `<span>⏰</span><span>متبقي ${daysLeft} أيام</span>`;
-                } else {
-                    expiryEl.className = 'subscription-expiry';
-                    expiryEl.innerHTML = `<span>📅</span><span>ينتهي في ${expiry.toLocaleDateString('ar-SA')}</span>`;
-                }
-            } else if (role === 'free') {
-                expiryEl.innerHTML = '<span>♾️</span><span>اشتراك دائم</span>';
-            }
-        }
-
-        // Render plans
-        function renderPlans(currentRole) {
-            const grid = document.getElementById('plansGrid');
-            grid.innerHTML = Object.entries(plans).map(([key, plan]) => `
-                <div class="plan-card ${key === currentRole ? 'current' : ''}" onclick="${key !== currentRole ? `selectPlan('${key}')` : ''}">
-                    <div class="plan-name">${plan.name}</div>
-                    <div class="plan-price">${plan.price} <span>ريال</span></div>
-                    <div class="plan-features">${plan.features.slice(0, 2).join(' • ')}</div>
-                </div>
-            `).join('');
-        }
-
-        // Select plan for upgrade
-        function selectPlan(planKey) {
-            const plan = plans[planKey];
-            const currentRole = currentUser.role || 'free';
-            
-            if (planKey === 'free' && currentRole !== 'free') {
-                // Downgrade
-                document.getElementById('upgradeContent').innerHTML = `
-                    <p style="margin-bottom: 20px;">هل تريد تخفيض اشتراكك إلى الباقة المجانية؟</p>
-                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
-                        ⚠️ سيتم تقليل الميزات المتاحة لك
-                    </p>
-                    <div class="modal-actions">
-                        <button class="btn btn-secondary" onclick="closeUpgradeModal()">إلغاء</button>
-                        <button class="btn btn-danger" onclick="confirmUpgrade('${planKey}')">تأكيد التخفيض</button>
-                    </div>
-                `;
-            } else {
-                // Upgrade
-                document.getElementById('upgradeContent').innerHTML = `
-                    <div style="text-align: center; margin-bottom: 24px;">
-                        <div style="font-size: 48px; margin-bottom: 12px;">💎</div>
-                        <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">باقة ${plan.name}</div>
-                        <div style="font-size: 32px; font-weight: 700; color: var(--cyan);">${plan.price} ريال<span style="font-size: 16px; color: var(--text-muted);">/شهر</span></div>
-                    </div>
-                    <div style="margin-bottom: 24px;">
-                        ${plan.features.map(f => `<div style="padding: 8px 0; border-bottom: 1px solid var(--border);">✓ ${f}</div>`).join('')}
-                    </div>
-                    <div class="modal-actions">
-                        <button class="btn btn-secondary" onclick="closeUpgradeModal()">إلغاء</button>
-                        <button class="btn btn-primary" onclick="confirmUpgrade('${planKey}')">ترقية الآن</button>
-                    </div>
-                `;
-            }
-            
-            document.getElementById('upgradeModal').classList.add('show');
-        }
-
-        // Confirm upgrade
-        function confirmUpgrade(planKey) {
-            const users = JSON.parse(localStorage.getItem('newra_users') || '[]');
-            const userIndex = users.findIndex(u => String(u.id) === String(currentUser.id));
-            
-            if (userIndex >= 0) {
-                users[userIndex].role = planKey;
-                
-                // Set expiry for paid plans
-                if (planKey !== 'free') {
-                    const expiry = new Date();
-                    expiry.setMonth(expiry.getMonth() + 1);
-                    users[userIndex].subscriptionExpiry = expiry.toISOString();
-                } else {
-                    delete users[userIndex].subscriptionExpiry;
-                }
-                
-                localStorage.setItem('newra_users', JSON.stringify(users));
-                
-                // Update session
-                const session = JSON.parse(localStorage.getItem('newra_session') || '{}');
-                session.role = planKey;
-                localStorage.setItem('newra_session', JSON.stringify(session));
-                
-                closeUpgradeModal();
-                showToast('تم تحديث الاشتراك بنجاح!', 'success');
-                loadUserData();
-            }
-        }
-
-        // Close upgrade modal
-        function closeUpgradeModal() {
-            document.getElementById('upgradeModal').classList.remove('show');
-        }
-
-        // Profile form submit
-        document.getElementById('profileForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const name = document.getElementById('fullName').value.trim();
-            const company = document.getElementById('companyName').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            
-            const users = JSON.parse(localStorage.getItem('newra_users') || '[]');
-            const userIndex = users.findIndex(u => String(u.id) === String(currentUser.id));
-            
-            if (userIndex >= 0) {
-                users[userIndex].name = name;
-                users[userIndex].company = company;
-                users[userIndex].phone = phone;
-                
-                localStorage.setItem('newra_users', JSON.stringify(users));
-                
-                // Update session
-                const session = JSON.parse(localStorage.getItem('newra_session') || '{}');
-                session.name = name;
-                session.company = company;
-                localStorage.setItem('newra_session', JSON.stringify(session));
-                
-                showToast('تم حفظ التغييرات بنجاح!', 'success');
-                loadUserData();
-            }
-        });
-
-        // Password form submit
-        document.getElementById('passwordForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                showToast('يرجى ملء جميع الحقول', 'error');
-                return;
-            }
-            
-            if (newPassword.length < 8) {
-                showToast('كلمة المرور يجب أن تكون 8 أحرف على الأقل', 'error');
-                return;
-            }
-            
-            if (newPassword !== confirmPassword) {
-                showToast('كلمات المرور غير متطابقة', 'error');
-                return;
-            }
-            
-            const users = JSON.parse(localStorage.getItem('newra_users') || '[]');
-            const userIndex = users.findIndex(u => String(u.id) === String(currentUser.id));
-            
-            if (userIndex >= 0) {
-                // Check current password
-                if (users[userIndex].password !== currentPassword) {
-                    showToast('كلمة المرور الحالية غير صحيحة', 'error');
+                    roleEl.textContent = 'غير مشترك';
+                    roleEl.className = 'profile-role role-free';
+                    trialSec.style.display = 'block';
+                    subBtn.textContent = 'اشترك الآن';
                     return;
                 }
-                
-                users[userIndex].password = newPassword;
-                localStorage.setItem('newra_users', JSON.stringify(users));
-                
-                // Clear form
-                document.getElementById('passwordForm').reset();
-                
-                showToast('تم تغيير كلمة المرور بنجاح!', 'success');
+
+                featuresEl.innerHTML = features.map(f => `<span class="feature-tag">✓ ${f}</span>`).join('');
+
+                if (data.is_trial && data.is_trial_active) {
+                    planEl.textContent = '🎁 فترة تجريبية مجانية';
+                    priceEl.innerHTML = '0 <span>ريال</span>';
+                    expiryEl.className = 'subscription-expiry warning';
+                    expiryEl.innerHTML = `<span>⏰</span><span>متبقي ${data.days_remaining} يوم — تنتهي ${new Date(data.trial_end).toLocaleDateString('ar-SA')}</span>`;
+                    roleEl.textContent = 'تجربة مجانية';
+                    roleEl.className = 'profile-role role-marketer';
+                    trialSec.style.display = 'none';
+                    subBtn.textContent = 'اشترك الآن — لا يتم السحب إلا بعد انتهاء التجربة';
+                } else if (data.status === 'active') {
+                    planEl.textContent = 'باقة المسوق العقاري — ' + data.plan_label;
+                    priceEl.innerHTML = data.amount + ' <span>ريال</span>';
+                    expiryEl.className = data.days_remaining <= 7 ? 'subscription-expiry warning' : 'subscription-expiry';
+                    expiryEl.innerHTML = `<span>📅</span><span>ينتهي ${new Date(data.end_date).toLocaleDateString('ar-SA')} — متبقي ${data.days_remaining} يوم</span>`;
+                    roleEl.textContent = 'مسوق عقاري';
+                    roleEl.className = 'profile-role role-marketer';
+                    trialSec.style.display = 'none';
+                    plansTitle.textContent = 'تجديد أو ترقية الاشتراك';
+                    subBtn.textContent = 'تجديد الاشتراك';
+                } else {
+                    // Expired or cancelled
+                    planEl.textContent = 'اشتراك منتهي';
+                    priceEl.innerHTML = '';
+                    featuresEl.innerHTML = '';
+                    expiryEl.className = 'subscription-expiry danger';
+                    expiryEl.innerHTML = '<span>⚠️</span><span>انتهى اشتراكك — جدد الآن!</span>';
+                    roleEl.textContent = 'منتهي';
+                    roleEl.className = 'profile-role role-free';
+                    trialSec.style.display = 'none';
+                    subBtn.textContent = 'جدد اشتراكك';
+                }
+            } catch(e) {
+                document.getElementById('currentPlan').textContent = 'خطأ في التحميل';
             }
+        }
+
+        function selectPlan(plan) {
+            selectedPlan = plan;
+            document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-plan="${plan}"]`).classList.add('selected');
+        }
+
+        async function startTrial() {
+            try {
+                const res = await fetch('/api/subscription/start-trial/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    loadSubscription();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch(e) { showToast('حدث خطأ', 'error'); }
+        }
+
+        async function subscribePlan() {
+            const btn = document.getElementById('subscribeBtn');
+            btn.disabled = true;
+            btn.textContent = 'جاري التحويل لبوابة الدفع...';
+
+            try {
+                const res = await fetch('/api/subscription/subscribe/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ plan_key: selectedPlan }),
+                });
+                const data = await res.json();
+                if (data.success && data.payment_url) {
+                    window.location.href = data.payment_url;
+                } else {
+                    showToast(data.error || 'حدث خطأ', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'اشترك الآن';
+                }
+            } catch(e) {
+                showToast('حدث خطأ في الاتصال', 'error');
+                btn.disabled = false;
+                btn.textContent = 'اشترك الآن';
+            }
+        }
+
+        // ═══════════════════════════════════════════════════
+        // Profile form (server-side)
+        // ═══════════════════════════════════════════════════
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const fullName = document.getElementById('fullName').value.trim();
+            const nameParts = fullName.split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            try {
+                const res = await fetch('/api/profile/update/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({
+                        first_name: firstName,
+                        last_name: lastName,
+                        company_name: document.getElementById('companyName').value.trim(),
+                        phone: document.getElementById('phone').value.trim(),
+                    }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    document.getElementById('profileName').textContent = fullName || 'المستخدم';
+                    document.getElementById('profileAvatar').textContent = getInitials(fullName);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch(e) { showToast('حدث خطأ في الاتصال', 'error'); }
         });
 
-        // Show toast
+        // ═══════════════════════════════════════════════════
+        // Password form (server-side)
+        // ═══════════════════════════════════════════════════
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const currentPwd = document.getElementById('currentPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            const confirmPwd = document.getElementById('confirmPassword').value;
+
+            if (!currentPwd || !newPwd || !confirmPwd) { showToast('يرجى ملء جميع الحقول', 'error'); return; }
+            if (newPwd.length < 8) { showToast('كلمة المرور يجب أن تكون 8 أحرف على الأقل', 'error'); return; }
+            if (newPwd !== confirmPwd) { showToast('كلمات المرور غير متطابقة', 'error'); return; }
+
+            try {
+                const res = await fetch('/api/profile/change-password/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ current_password: currentPwd, new_password: newPwd }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch(e) { showToast('حدث خطأ في الاتصال', 'error'); }
+        });
+
+        // ═══════════════════════════════════════════════════
+        // Toast
+        // ═══════════════════════════════════════════════════
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = `toast ${type} show`;
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
 
         // Initialize
-        loadUserData();
+        initPage();
     </script>
     
     <!-- Theme Toggle Script -->

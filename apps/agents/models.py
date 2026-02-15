@@ -25,6 +25,7 @@ class Agent(models.Model):
     # المعلومات الأساسية (مشفرة)
     company_name = models.CharField(max_length=200, blank=True, verbose_name='اسم الشركة')
     license_number = EncryptedCharField(max_length=50, blank=True, verbose_name='رقم الترخيص')
+    fal_license = models.CharField(max_length=50, blank=True, verbose_name='رخصة فال')
     phone = EncryptedCharField(max_length=100, verbose_name='رقم الجوال')
     whatsapp = EncryptedCharField(max_length=100, blank=True, verbose_name='واتساب')
     email = EncryptedEmailField(verbose_name='البريد الإلكتروني')
@@ -492,3 +493,86 @@ class WhatsAppInstance(models.Model):
         """زيادة عداد الرسائل المرسلة"""
         self.messages_sent += 1
         self.save(update_fields=['messages_sent'])
+
+
+class Subscription(models.Model):
+    """نموذج الاشتراكات والمدفوعات"""
+    
+    PLAN_CHOICES = [
+        ('monthly', 'شهري - 199 ريال'),
+        ('quarterly', '3 أشهر - 537 ريال'),
+        ('semi', '6 أشهر - 1,015 ريال'),
+        ('annual', 'سنوي - 1,791 ريال'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('trial', 'فترة تجريبية'),
+        ('active', 'نشط'),
+        ('expired', 'منتهي'),
+        ('cancelled', 'ملغي'),
+        ('pending', 'بانتظار الدفع'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    agent = models.ForeignKey(
+        Agent,
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+        verbose_name='المسوق'
+    )
+    
+    plan_key = models.CharField(max_length=20, choices=PLAN_CHOICES, default='monthly', verbose_name='الخطة')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='trial', verbose_name='الحالة')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='المبلغ')
+    
+    # Trial
+    trial_start = models.DateTimeField(null=True, blank=True, verbose_name='بداية التجربة')
+    trial_end = models.DateTimeField(null=True, blank=True, verbose_name='نهاية التجربة')
+    
+    # Subscription period
+    start_date = models.DateTimeField(null=True, blank=True, verbose_name='بداية الاشتراك')
+    end_date = models.DateTimeField(null=True, blank=True, verbose_name='نهاية الاشتراك')
+    
+    # StreamPay
+    payment_link_id = models.CharField(max_length=200, blank=True, verbose_name='معرف رابط الدفع')
+    payment_id = models.CharField(max_length=200, blank=True, verbose_name='معرف الدفعة')
+    invoice_id = models.CharField(max_length=200, blank=True, verbose_name='معرف الفاتورة')
+    subscription_id = models.CharField(max_length=200, blank=True, verbose_name='معرف الاشتراك في StreamPay')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+    
+    class Meta:
+        verbose_name = 'اشتراك'
+        verbose_name_plural = 'الاشتراكات'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.agent} - {self.get_plan_key_display()} ({self.get_status_display()})"
+    
+    @property
+    def is_trial_active(self):
+        """هل الفترة التجريبية لا تزال سارية"""
+        if self.status != 'trial' or not self.trial_end:
+            return False
+        return timezone.now() < self.trial_end
+    
+    @property
+    def is_active(self):
+        """هل الاشتراك نشط (تجريبي أو مدفوع)"""
+        if self.status == 'trial' and self.is_trial_active:
+            return True
+        if self.status == 'active' and self.end_date:
+            return timezone.now() < self.end_date
+        return False
+    
+    @property
+    def days_remaining(self):
+        """عدد الأيام المتبقية"""
+        if self.status == 'trial' and self.trial_end:
+            delta = self.trial_end - timezone.now()
+            return max(0, delta.days)
+        if self.status == 'active' and self.end_date:
+            delta = self.end_date - timezone.now()
+            return max(0, delta.days)
+        return 0

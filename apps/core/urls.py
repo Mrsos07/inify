@@ -9,6 +9,7 @@ from . import whatsapp_views
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('estate/', views.estate_home, name='estate-home'),
     path('chat/demo/', views.chat_demo, name='chat-demo'),
     path('health/', views.health_check, name='health-check'),
     
@@ -68,6 +69,19 @@ urlpatterns = [
     # Agent Stats API
     path('api/agent/<uuid:agent_id>/stats/', views.get_agent_stats, name='get-agent-stats'),
     path('api/agent/<uuid:agent_id>/conversation/', views.increment_conversation, name='increment-conversation'),
+    
+    # Profile API
+    path('api/profile/update/', views.profile_update_api, name='profile-update'),
+    path('api/profile/change-password/', views.change_password_api, name='change-password'),
+    
+    # Payment & Subscription
+    path('subscription/', views.subscription_page, name='subscription'),
+    path('api/subscription/status/', views.subscription_status_api, name='subscription-status'),
+    path('api/subscription/start-trial/', views.start_trial_api, name='start-trial'),
+    path('api/subscription/subscribe/', views.subscribe_api, name='subscribe'),
+    path('payment/success/', views.payment_success_view, name='payment-success'),
+    path('payment/failure/', views.payment_failure_view, name='payment-failure'),
+    path('webhooks/streampay/', views.streampay_webhook, name='streampay-webhook'),
     
     # WhatsApp Integration API
     path('api/whatsapp/status/', whatsapp_views.whatsapp_status, name='whatsapp-status'),

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if success %}تم الدفع بنجاح{% else %}فشل الدفع{% endif %} - Inify</title>
+    <link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <style>
+        @font-face { font-family: 'BalooBhaijaan2'; src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype'); font-weight: 400; }
+        @font-face { font-family: 'BalooBhaijaan2'; src: url('/static/BalooBhaijaan2-SemiBold.ttf') format('truetype'); font-weight: 600; }
+        @font-face { font-family: 'BalooBhaijaan2'; src: url('/static/BalooBhaijaan2-Bold.ttf') format('truetype'); font-weight: 700; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --midnight: #0A1628; --dark-blue: #1E3A5F; --blue-mid: #4A90A4;
+            --cyan: #6BB8C9; --pearl: #F8F8F8; --text-muted: rgba(248,248,248,0.6);
+            --card-bg: rgba(30,58,95,0.4); --border: rgba(107,184,201,0.15);
+        }
+        body {
+            font-family: 'BalooBhaijaan2', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .result-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 60px 50px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        .result-icon { font-size: 80px; margin-bottom: 20px; }
+        .result-title { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+        .result-desc { color: var(--text-muted); font-size: 16px; line-height: 1.7; margin-bottom: 30px; }
+        .result-btn {
+            display: inline-block;
+            padding: 14px 36px;
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .result-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(107,184,201,0.3); }
+        .result-btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--pearl);
+            margin-right: 12px;
+        }
+        .success-card { border-color: rgba(74,222,128,0.3); }
+        .failure-card { border-color: rgba(248,113,113,0.3); }
+    </style>
+</head>
+<body>
+    {% if success %}
+    <div class="result-card success-card">
+        <div class="result-icon">✅</div>
+        <h1 class="result-title">تم الدفع بنجاح!</h1>
+        <p class="result-desc">
+            تم تفعيل اشتراكك بنجاح. يمكنك الآن الاستمتاع بجميع مميزات المنصة.
+        </p>
+        <a href="/dashboard/" class="result-btn">الذهاب للوحة التحكم</a>
+    </div>
+    {% else %}
+    <div class="result-card failure-card">
+        <div class="result-icon">❌</div>
+        <h1 class="result-title">فشل الدفع</h1>
+        <p class="result-desc">
+            {% if message %}{{ message }}{% else %}حدث خطأ أثناء معالجة الدفع. يرجى المحاولة مرة أخرى.{% endif %}
+        </p>
+        <div>
+            <a href="/subscription/" class="result-btn secondary">المحاولة مرة أخرى</a>
+            <a href="/dashboard/" class="result-btn">لوحة التحكم</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <script src="/static/js/theme.js"></script>
+</body>
+</html>

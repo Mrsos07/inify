@@ -540,6 +540,36 @@
             color: var(--text-muted);
         }
 
+        /* Period Tabs */
+        .period-tab {
+            padding: 8px 16px;
+            background: rgba(10, 22, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .period-tab:hover {
+            border-color: var(--cyan);
+            color: var(--pearl);
+        }
+
+        .period-tab.active {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            color: var(--midnight);
+            border-color: transparent;
+            font-weight: 700;
+        }
+
+        .period-tab.active small {
+            color: var(--midnight) !important;
+        }
+
         /* FAQ Section */
         .faq-section {
             background: var(--card-bg);
@@ -644,63 +674,41 @@
     <main class="main-content">
         <div class="page-header">
             <h1>اختر خطتك المناسبة</h1>
-            <p>باقات مرنة تناسب جميع احتياجاتك، ابدأ مجاناً وقم بالترقية في أي وقت</p>
+            <p>باقات مرنة تناسب جميع احتياجاتك مع تجربة مجانية لمدة 5 أيام</p>
         </div>
 
         <!-- Pricing Cards -->
         <div class="pricing-grid">
-            <!-- Free Plan -->
-            <div class="pricing-card">
-                <div class="pricing-header">
-                    <div class="plan-icon">🚀</div>
-                    <h3 class="plan-name">مجاني</h3>
-                    <p class="plan-desc">للبدء واستكشاف المنصة</p>
-                    <div class="plan-price">
-                        <span class="price-amount">0</span>
-                        <span class="price-currency">ريال</span>
-                        <span class="price-period">/ شهر</span>
-                    </div>
-                </div>
-                <div class="pricing-features">
-                    <div class="feature-item">
-                        <span class="feature-icon check">✓</span>
-                        <span class="feature-text">إضافة حتى 5 عقارات</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon check">✓</span>
-                        <span class="feature-text">لوحة تحكم أساسية</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon check">✓</span>
-                        <span class="feature-text">محادثات محدودة (50/شهر)</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon cross">✗</span>
-                        <span class="feature-text disabled">تحليلات متقدمة</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon cross">✗</span>
-                        <span class="feature-text disabled">دعم فني أولوية</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon cross">✗</span>
-                        <span class="feature-text disabled">ربط مع المنصات</span>
-                    </div>
-                </div>
-                <a href="/auth/register/" class="pricing-btn secondary">ابدأ مجاناً</a>
-            </div>
-
-            <!-- Pro Plan (المسوق) -->
+            <!-- Marketer Plan (المسوق العقاري) -->
             <div class="pricing-card popular">
                 <span class="popular-badge">الأكثر شعبية</span>
                 <div class="pricing-header">
                     <div class="plan-icon">⭐</div>
-                    <h3 class="plan-name">المسوق</h3>
+                    <h3 class="plan-name">المسوق العقاري</h3>
                     <p class="plan-desc">للمسوقين العقاريين المحترفين</p>
-                    <div class="plan-price">
-                        <span class="price-amount">499</span>
-                        <span class="price-currency">ريال</span>
-                        <span class="price-period">/ شهر</span>
+                    
+                    <!-- Period Tabs -->
+                    <div class="period-tabs" style="display: flex; gap: 6px; margin-top: 20px; flex-wrap: wrap; justify-content: center;">
+                        <button class="period-tab active" onclick="selectPeriod('monthly', this)" data-period="monthly">شهري</button>
+                        <button class="period-tab" onclick="selectPeriod('quarterly', this)" data-period="quarterly">3 أشهر <small style="color: #4ade80;">-10%</small></button>
+                        <button class="period-tab" onclick="selectPeriod('semi', this)" data-period="semi">6 أشهر <small style="color: #4ade80;">-15%</small></button>
+                        <button class="period-tab" onclick="selectPeriod('annual', this)" data-period="annual">سنوي <small style="color: #4ade80;">-25%</small></button>
+                    </div>
+
+                    <div class="plan-price" style="margin-top: 20px;">
+                        <div id="priceDisplay">
+                            <span class="price-amount" id="priceAmount">199</span>
+                            <span class="price-currency">ريال</span>
+                            <span class="price-period" id="pricePeriod">/ شهر</span>
+                        </div>
+                        <div id="savingBadge" style="display: none; margin-top: 10px; padding: 6px 16px; background: rgba(74, 222, 128, 0.12); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: 50px; font-size: 13px; color: #4ade80; display: inline-block;">
+                            توفير <span id="savingAmount">0</span> ريال
+                        </div>
+                        <div style="margin-top: 8px; font-size: 13px; color: var(--text-muted);" id="priceBreakdown"></div>
+                    </div>
+                    
+                    <div style="margin-top: 14px; padding: 8px 18px; background: rgba(107, 184, 201, 0.1); border: 1px solid rgba(107, 184, 201, 0.2); border-radius: 10px; display: inline-block;">
+                        <span style="font-size: 13px; color: var(--cyan);">🎁 تجربة مجانية 5 أيام</span>
                     </div>
                 </div>
                 <div class="pricing-features">
@@ -728,17 +736,21 @@
                         <span class="feature-icon check">✓</span>
                         <span class="feature-text">دعم فني أولوية</span>
                     </div>
+                    <div class="feature-item">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text">استيراد العقارات من Excel</span>
+                    </div>
                 </div>
-                <a href="/auth/register/" class="pricing-btn primary">اشترك الآن</a>
+                <a href="/auth/register/" class="pricing-btn primary">ابدأ التجربة المجانية</a>
             </div>
 
-            <!-- Enterprise Plan (مخصص) -->
+            <!-- Enterprise Plan (المؤسسات والشركات) -->
             <div class="pricing-card enterprise">
-                <span class="enterprise-badge">🏆 للشركات</span>
+                <span class="enterprise-badge">🏆 للمؤسسات</span>
                 <div class="pricing-header">
                     <div class="plan-icon">👑</div>
-                    <h3 class="plan-name">مخصص</h3>
-                    <p class="plan-desc">للشركات والمكاتب العقارية الكبرى</p>
+                    <h3 class="plan-name">المؤسسات والشركات العقارية</h3>
+                    <p class="plan-desc">حلول مخصصة للشركات والمكاتب العقارية الكبرى</p>
                     <div class="plan-price custom">
                         <span class="price-amount">تواصل معنا</span>
                         <span class="price-period">حسب متطلباتك</span>
@@ -747,15 +759,7 @@
                 <div class="pricing-features">
                     <div class="feature-item">
                         <span class="feature-icon check">✓</span>
-                        <span class="feature-text">عقارات غير محدودة</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon check">✓</span>
-                        <span class="feature-text">محادثات غير محدودة</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon check">✓</span>
-                        <span class="feature-text">تحليلات وتقارير شاملة</span>
+                        <span class="feature-text">جميع مميزات خطة المسوق</span>
                     </div>
                     <div class="feature-item">
                         <span class="feature-icon check">✓</span>
@@ -779,11 +783,25 @@
                     </div>
                     <div class="feature-item highlight">
                         <span class="feature-icon check">✓</span>
-                        <span class="feature-text"><strong>📢 نشر تلقائي على المنصات</strong></span>
+                        <span class="feature-text"><strong>� نشر تلقائي على المنصات</strong></span>
+                    </div>
+                    <div class="feature-item highlight">
+                        <span class="feature-icon check">✓</span>
+                        <span class="feature-text"><strong>👥 حسابات متعددة للفريق</strong></span>
                     </div>
                 </div>
-                <a href="/auth/register/" class="pricing-btn enterprise-btn">تواصل معنا</a>
-                <a href="/docs/api/" class="api-docs-link">📚 توثيق API</a>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <a href="https://wa.me/966535156358" target="_blank" class="pricing-btn enterprise-btn" style="background: #25D366; color: white;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        تواصل عبر واتساب
+                    </a>
+                    <a href="mailto:info@inify.ai" class="pricing-btn secondary">
+                        ✉️ info@inify.ai
+                    </a>
+                    <a href="tel:+966535156358" class="pricing-btn secondary" style="font-size: 14px;">
+                        📞 <span dir="ltr">+966 53 515 6358</span>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -793,15 +811,15 @@
             <div class="faq-grid">
                 <div class="faq-item">
                     <h4 class="faq-question">
-                        <span>❓</span> هل يمكنني تغيير الباقة لاحقاً؟
+                        <span>🎁</span> ما هي التجربة المجانية؟
                     </h4>
-                    <p class="faq-answer">نعم، يمكنك الترقية أو تغيير باقتك في أي وقت من خلال إعدادات حسابك. سيتم احتساب الفرق في السعر بشكل تناسبي.</p>
+                    <p class="faq-answer">نقدم تجربة مجانية لمدة 5 أيام تتيح لك استخدام جميع مميزات خطة المسوق العقاري بدون أي رسوم. يمكنك الإلغاء قبل انتهاء الفترة التجريبية بدون أي التزام.</p>
                 </div>
                 <div class="faq-item">
                     <h4 class="faq-question">
-                        <span>💳</span> ما هي طرق الدفع المتاحة؟
+                        <span>�</span> كيف تعمل الخصومات؟
                     </h4>
-                    <p class="faq-answer">نقبل الدفع عبر البطاقات الائتمانية (فيزا، ماستركارد)، مدى، Apple Pay، وكذلك التحويل البنكي للباقات السنوية.</p>
+                    <p class="faq-answer">كلما زادت فترة اشتراكك حصلت على خصم أكبر: 10% لـ 3 أشهر، 15% لـ 6 أشهر، و 25% للاشتراك السنوي. يتم الدفع مقدماً للفترة المختارة.</p>
                 </div>
                 <div class="faq-item">
                     <h4 class="faq-question">
@@ -811,13 +829,45 @@
                 </div>
                 <div class="faq-item">
                     <h4 class="faq-question">
-                        <span>🎁</span> هل هناك خصم للاشتراك السنوي؟
+                        <span>💳</span> ما هي طرق الدفع المتاحة؟
                     </h4>
-                    <p class="faq-answer">نعم! عند الاشتراك السنوي تحصل على خصم 20%، أي ما يعادل شهرين مجاناً.</p>
+                    <p class="faq-answer">نقبل الدفع عبر البطاقات الائتمانية (فيزا، ماستركارد)، مدى، Apple Pay، وكذلك التحويل البنكي.</p>
                 </div>
             </div>
         </div>
     </main>
+
+    <script>
+        const prices = {
+            monthly:   { total: 199,  perMonth: 199,  period: '/ شهر',    months: 1,  discount: 0 },
+            quarterly: { total: 537,  perMonth: 179,  period: '/ 3 أشهر', months: 3,  discount: 10 },
+            semi:      { total: 1015, perMonth: 169,  period: '/ 6 أشهر', months: 6,  discount: 15 },
+            annual:    { total: 1791, perMonth: 149,  period: '/ سنة',    months: 12, discount: 25 }
+        };
+
+        function selectPeriod(period, btn) {
+            // Update active tab
+            document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            const p = prices[period];
+            document.getElementById('priceAmount').textContent = p.total;
+            document.getElementById('pricePeriod').textContent = p.period;
+
+            const saving = (199 * p.months) - p.total;
+            const savingBadge = document.getElementById('savingBadge');
+            const breakdown = document.getElementById('priceBreakdown');
+
+            if (saving > 0) {
+                savingBadge.style.display = 'inline-block';
+                document.getElementById('savingAmount').textContent = saving;
+                breakdown.textContent = `(${p.perMonth} ريال/شهر بدلاً من 199 ريال)`;
+            } else {
+                savingBadge.style.display = 'none';
+                breakdown.textContent = '';
+            }
+        }
+    </script>
     
     <!-- Theme Toggle Script -->
     <script src="/static/js/theme.js"></script>

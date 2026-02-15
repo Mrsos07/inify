@@ -1294,6 +1294,45 @@
             .footer-col a { margin-bottom: 10px; }
         }
 
+        /* Estate Period Tabs */
+        .estate-period-tab {
+            padding: 6px 12px;
+            background: rgba(10, 22, 40, 0.5);
+            border: 1px solid rgba(107, 184, 201, 0.2);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .estate-period-tab:hover {
+            border-color: var(--cyan);
+            color: var(--pearl);
+        }
+
+        .estate-period-tab.active {
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
+            color: var(--midnight);
+            border-color: transparent;
+            font-weight: 700;
+        }
+
+        .estate-period-tab.active small {
+            color: var(--midnight) !important;
+        }
+
+        body.light-mode .estate-period-tab {
+            background: rgba(74, 144, 164, 0.08);
+            border-color: rgba(74, 144, 164, 0.2);
+        }
+
+        body.light-mode .estate-period-tab.active {
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid));
+        }
+
         /* Responsive - Small Mobile */
         @media (max-width: 480px) {
             .hero h1 { font-size: 22px; }
@@ -1813,28 +1852,24 @@
 
     <!-- Pricing Section - الأسعار -->
     <section class="pricing-section" id="pricing">
-        <div class="pricing-grid">
-            <!-- الخطة المجانية - على اليمين -->
-            <div class="pricing-card free">
-                <h3>الخطة المجانية</h3>
-                <p class="pricing-subtitle">للبدء واستكشاف المنصة</p>
-                <div class="price">0 ريال</div>
-                <ul class="pricing-features">
-                    <li><span class="check">✓</span> إضافة حتى 5 عقارات</li>
-                    <li><span class="check">✓</span> لوحة تحكم أساسية</li>
-                    <li><span class="check">✓</span> محادثات محدودة (50/شهر)</li>
-                    <li><span class="cross">✗</span> تحليلات متقدمة</li>
-                    <li><span class="cross">✗</span> دعم فني أولوية</li>
-                    <li><span class="cross">✗</span> ربط مع المنصات</li>
-                </ul>
-                <a href="/auth/register/" class="pricing-btn secondary">ابدأ مجاناً</a>
-            </div>
-            
-            <!-- خطة المسوق - في الوسط -->
-            <div class="pricing-card featured">
-                <h3>خطة المسوق</h3>
-                <p class="pricing-subtitle">الأكثر شعبية للمسوقين</p>
-                <div class="price">499 ريال <span>/ شهر</span></div>
+        <div class="pricing-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 900px;">
+            <!-- خطة المسوق العقاري -->
+            <div class="pricing-card featured" style="transform: none;">
+                <h3>المسوق العقاري</h3>
+                <p class="pricing-subtitle">للمسوقين العقاريين المحترفين</p>
+                
+                <!-- Period Tabs -->
+                <div style="display: flex; gap: 6px; margin: 16px 0 12px; flex-wrap: wrap; justify-content: center;">
+                    <button class="estate-period-tab active" onclick="selectEstatePeriod('monthly', this)">شهري</button>
+                    <button class="estate-period-tab" onclick="selectEstatePeriod('quarterly', this)">3 أشهر <small style="color:#4ade80;">-10%</small></button>
+                    <button class="estate-period-tab" onclick="selectEstatePeriod('semi', this)">6 أشهر <small style="color:#4ade80;">-15%</small></button>
+                    <button class="estate-period-tab" onclick="selectEstatePeriod('annual', this)">سنوي <small style="color:#4ade80;">-25%</small></button>
+                </div>
+
+                <div class="price" id="estatePrice">199 ريال <span id="estatePeriod">/ شهر</span></div>
+                <div id="estateSaving" style="display: none; font-size: 13px; color: #4ade80; margin-bottom: 8px;"></div>
+                <div style="margin-bottom: 14px; padding: 6px 14px; background: rgba(107,184,201,0.1); border: 1px solid rgba(107,184,201,0.2); border-radius: 8px; display: inline-block; font-size: 12px; color: var(--cyan);">🎁 تجربة مجانية 5 أيام</div>
+
                 <ul class="pricing-features">
                     <li><span class="check">✓</span> عقارات غير محدودة</li>
                     <li><span class="check">✓</span> محادثات غير محدودة</li>
@@ -1842,29 +1877,29 @@
                     <li><span class="check">✓</span> تخصيص الشات بوت</li>
                     <li><span class="check">✓</span> تقارير وتحليلات متقدمة</li>
                     <li><span class="check">✓</span> دعم فني أولوية</li>
-                    <li><span class="check">✓</span> White Label (علامتك التجارية)</li>
                 </ul>
-                <a href="/auth/register/" class="pricing-btn">اشترك الآن</a>
+                <a href="/auth/register/" class="pricing-btn">ابدأ التجربة المجانية</a>
             </div>
             
-            <!-- خطة الشركات - على اليسار (الأفضل) -->
-            <div class="pricing-card enterprise">
-                <h3>خطة الشركات</h3>
-                <p class="pricing-subtitle">للشركات والمكاتب العقارية الكبرى</p>
+            <!-- خطة المؤسسات والشركات -->
+            <div class="pricing-card enterprise" style="transform: none;">
+                <h3>المؤسسات والشركات العقارية</h3>
+                <p class="pricing-subtitle">حلول مخصصة للشركات والمكاتب الكبرى</p>
                 <div class="price">تواصل معنا</div>
                 <ul class="pricing-features">
-                    <li><span class="check">✓</span> عقارات غير محدودة</li>
-                    <li><span class="check">✓</span> محادثات غير محدودة</li>
-                    <li><span class="check">✓</span> نموذج ذكاء اصطناعي عالي الجودة</li>
-                    <li><span class="check">✓</span> نشر العقارات للمنصات العقارية</li>
-                    <li><span class="check">✓</span> تحليلات وتقارير شاملة</li>
+                    <li><span class="check">✓</span> جميع مميزات خطة المسوق</li>
                     <li><span class="check">✓</span> دعم فني على مدار الساعة</li>
                     <li><span class="check">✓</span> ربط WhatsApp Business</li>
                     <li><span class="check">✓</span> API مخصص للتكامل</li>
                     <li><span class="check">✓</span> Webhooks للإشعارات</li>
                     <li><span class="check">✓</span> White Label (علامتك التجارية)</li>
+                    <li><span class="check">✓</span> نشر تلقائي على المنصات</li>
+                    <li><span class="check">✓</span> حسابات متعددة للفريق</li>
                 </ul>
-                <a href="/auth/register/" class="pricing-btn enterprise-btn">تواصل معنا</a>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="https://wa.me/966535156358" target="_blank" class="pricing-btn enterprise-btn" style="background: #25D366; color: white; border: none;">واتساب</a>
+                    <a href="mailto:info@inify.ai" class="pricing-btn" style="font-size: 13px;">✉️ info@inify.ai</a>
+                </div>
             </div>
         </div>
     </section>
@@ -2164,6 +2199,36 @@
             const theme = getTheme();
             setTheme(theme);
         })();
+
+        // ═══════════════════════════════════════════════════════════
+        // Pricing Period Switcher
+        // ═══════════════════════════════════════════════════════════
+        const estatePrices = {
+            monthly:   { total: 199,  perMonth: 199,  label: '/ شهر',    months: 1 },
+            quarterly: { total: 537,  perMonth: 179,  label: '/ 3 أشهر', months: 3 },
+            semi:      { total: 1015, perMonth: 169,  label: '/ 6 أشهر', months: 6 },
+            annual:    { total: 1791, perMonth: 149,  label: '/ سنة',    months: 12 }
+        };
+
+        function selectEstatePeriod(period, btn) {
+            document.querySelectorAll('.estate-period-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            const p = estatePrices[period];
+            const priceEl = document.getElementById('estatePrice');
+            const periodEl = document.getElementById('estatePeriod');
+            const savingEl = document.getElementById('estateSaving');
+
+            priceEl.innerHTML = p.total + ' ريال <span id="estatePeriod">' + p.label + '</span>';
+
+            const saving = (199 * p.months) - p.total;
+            if (saving > 0) {
+                savingEl.style.display = 'block';
+                savingEl.textContent = '(' + p.perMonth + ' ريال/شهر بدلاً من 199 — توفير ' + saving + ' ريال)';
+            } else {
+                savingEl.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>

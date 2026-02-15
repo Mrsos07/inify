@@ -16,7 +16,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 def home(request):
-    """الصفحة الرئيسية - Landing Page"""
+    """الصفحة الرئيسية - واجهة الشركة"""
+    return render(request, 'company_home.html')
+
+
+def estate_home(request):
+    """صفحة الوكيل العقاري - Landing Page"""
     return render(request, 'index.html')
 
 
@@ -126,7 +131,7 @@ def profile_view(request):
         try:
             agent = Agent.objects.get(user=request.user)
             context = {
-                'user_id': request.user.id,
+                'user_id': str(agent.id),
                 'user_name': request.user.get_full_name() or request.user.username,
                 'user_email': request.user.email,
                 'user_phone': agent.phone or '',
@@ -135,7 +140,7 @@ def profile_view(request):
             }
         except Agent.DoesNotExist:
             context = {
-                'user_id': request.user.id,
+                'user_id': str(request.user.id),
                 'user_name': request.user.get_full_name() or request.user.username,
                 'user_email': request.user.email,
                 'user_phone': '',
@@ -249,6 +254,7 @@ def register_view(request):
             phone = request.POST.get('phone', '')
             company_name = request.POST.get('company_name', '')
             city = request.POST.get('city', '')
+            fal_license = request.POST.get('fal_license', '')
             password = request.POST.get('password', '')
             
             # Validate required fields
@@ -257,6 +263,9 @@ def register_view(request):
             
             if not phone:
                 return JsonResponse({'success': False, 'error': 'رقم الجوال مطلوب'})
+            
+            if not fal_license:
+                return JsonResponse({'success': False, 'error': 'رخصة فال مطلوبة'})
             
             # Validate email not exists
             if User.objects.filter(email=email).exists():
@@ -285,15 +294,33 @@ def register_view(request):
             )
             
             # Create agent profile
-            from apps.agents.models import Agent
+            from apps.agents.models import Agent, Subscription
             agent = Agent.objects.create(
                 user=user,
                 company_name=company_name or '',
                 phone=phone or '',
                 city=city or '',
+                fal_license=fal_license or '',
                 email=email,
                 is_email_verified=False
             )
+            
+            # Auto-create 5-day trial subscription
+            from services.streampay_service import streampay_service
+            now = tz_util.now()
+            trial_end = streampay_service.get_trial_end_date(now)
+            Subscription.objects.create(
+                agent=agent,
+                plan_key='monthly',
+                status='trial',
+                amount=0,
+                trial_start=now,
+                trial_end=trial_end,
+            )
+            agent.subscription_plan = 'pro'
+            agent.subscription_start = now
+            agent.subscription_expires = trial_end
+            agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
             
             # Send verification email
             from services.email_service import email_service
@@ -1428,3 +1455,320 @@ def get_agent_stats(request, agent_id):
         return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Profile API Views
+# ═══════════════════════════════════════════════════════════════════
+
+@login_required
+@csrf_exempt
+def profile_update_api(request):
+    """API - تحديث الملف الشخصي"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body)
+        user = request.user
+        user.first_name = data.get('first_name', user.first_name)
+        user.last_name = data.get('last_name', user.last_name)
+        user.save(update_fields=['first_name', 'last_name'])
+
+        from apps.agents.models import Agent
+        try:
+            agent = Agent.objects.get(user=user)
+            if 'company_name' in data:
+                agent.company_name = data['company_name']
+            if 'phone' in data:
+                agent.phone = data['phone']
+            agent.save()
+        except Agent.DoesNotExist:
+            pass
+
+        return JsonResponse({'success': True, 'message': 'تم حفظ التغييرات بنجاح'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@csrf_exempt
+def change_password_api(request):
+    """API - تغيير كلمة المرور"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body)
+        current_password = data.get('current_password', '')
+        new_password = data.get('new_password', '')
+
+        if not current_password or not new_password:
+            return JsonResponse({'success': False, 'error': 'جميع الحقول مطلوبة'})
+
+        if len(new_password) < 8:
+            return JsonResponse({'success': False, 'error': 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'})
+
+        user = request.user
+        if not user.check_password(current_password):
+            return JsonResponse({'success': False, 'error': 'كلمة المرور الحالية غير صحيحة'})
+
+        user.set_password(new_password)
+        user.save()
+
+        from django.contrib.auth import update_session_auth_hash
+        update_session_auth_hash(request, user)
+
+        return JsonResponse({'success': True, 'message': 'تم تغيير كلمة المرور بنجاح'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Payment & Subscription Views
+# ═══════════════════════════════════════════════════════════════════
+from django.utils import timezone as tz_util
+
+@login_required
+def subscription_page(request):
+    """صفحة إدارة الاشتراك"""
+    return render(request, 'subscription.html')
+
+
+@login_required
+def subscription_status_api(request):
+    """API - حالة الاشتراك الحالية"""
+    try:
+        agent = request.user.agent_profile
+        from apps.agents.models import Subscription
+
+        sub = Subscription.objects.filter(agent=agent).order_by('-created_at').first()
+
+        if not sub:
+            return JsonResponse({
+                'success': True,
+                'has_subscription': False,
+                'status': 'none',
+                'message': 'لا يوجد اشتراك حالي',
+            })
+
+        return JsonResponse({
+            'success': True,
+            'has_subscription': True,
+            'status': sub.status,
+            'plan_key': sub.plan_key,
+            'plan_label': sub.get_plan_key_display(),
+            'is_active': sub.is_active,
+            'is_trial': sub.status == 'trial',
+            'is_trial_active': sub.is_trial_active,
+            'days_remaining': sub.days_remaining,
+            'trial_end': sub.trial_end.isoformat() if sub.trial_end else None,
+            'end_date': sub.end_date.isoformat() if sub.end_date else None,
+            'amount': str(sub.amount),
+        })
+    except Exception as e:
+        logger.error(f"Subscription status error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@csrf_exempt
+def start_trial_api(request):
+    """API - بدء الفترة التجريبية (5 أيام)"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    try:
+        agent = request.user.agent_profile
+        from apps.agents.models import Subscription
+        from services.streampay_service import streampay_service
+
+        existing = Subscription.objects.filter(agent=agent).exclude(status__in=['expired', 'cancelled']).first()
+        if existing:
+            return JsonResponse({'success': False, 'error': 'لديك اشتراك بالفعل'})
+
+        now = tz_util.now()
+        sub = Subscription.objects.create(
+            agent=agent,
+            plan_key='monthly',
+            status='trial',
+            amount=0,
+            trial_start=now,
+            trial_end=streampay_service.get_trial_end_date(now),
+        )
+
+        agent.subscription_plan = 'pro'
+        agent.subscription_start = now
+        agent.subscription_expires = sub.trial_end
+        agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
+
+        return JsonResponse({
+            'success': True,
+            'message': 'تم بدء الفترة التجريبية! استمتع بـ 5 أيام مجانية.',
+            'trial_end': sub.trial_end.isoformat(),
+            'days_remaining': sub.days_remaining,
+        })
+    except Exception as e:
+        logger.error(f"Start trial error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@csrf_exempt
+def subscribe_api(request):
+    """API - إنشاء رابط دفع للاشتراك"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    try:
+        agent = request.user.agent_profile
+        data = json.loads(request.body) if request.body else {}
+        plan_key = data.get('plan_key', 'monthly')
+
+        from services.streampay_service import streampay_service
+        from apps.agents.models import Subscription
+
+        result = streampay_service.create_payment_link(
+            agent=agent,
+            plan_key=plan_key,
+            is_trial=False,
+        )
+
+        if result['success']:
+            existing_trial = Subscription.objects.filter(agent=agent, status='trial').first()
+            if existing_trial:
+                existing_trial.plan_key = plan_key
+                existing_trial.status = 'pending'
+                existing_trial.amount = result['amount']
+                existing_trial.payment_link_id = result['payment_link_id']
+                existing_trial.save()
+            else:
+                Subscription.objects.create(
+                    agent=agent,
+                    plan_key=plan_key,
+                    status='pending',
+                    amount=result['amount'],
+                    payment_link_id=result['payment_link_id'],
+                )
+
+            return JsonResponse({
+                'success': True,
+                'payment_url': result['url'],
+                'amount': result['amount'],
+            })
+        else:
+            return JsonResponse({'success': False, 'error': result['error']})
+
+    except Exception as e:
+        logger.error(f"Subscribe error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+def payment_success_view(request):
+    """صفحة نجاح الدفع - redirect من StreamPay"""
+    payment_id = request.GET.get('id', '')
+    invoice_id = request.GET.get('invoice_id', '')
+    status = request.GET.get('status', '')
+
+    try:
+        agent = request.user.agent_profile
+        from apps.agents.models import Subscription
+        from services.streampay_service import streampay_service
+
+        sub = Subscription.objects.filter(
+            agent=agent, status__in=['pending', 'trial']
+        ).order_by('-created_at').first()
+
+        if sub and status == 'paid':
+            now = tz_util.now()
+            sub.status = 'active'
+            sub.payment_id = payment_id
+            sub.invoice_id = invoice_id
+            sub.start_date = now
+            sub.end_date = streampay_service.get_subscription_end_date(sub.plan_key, now)
+            sub.save()
+
+            agent.subscription_plan = 'pro'
+            agent.subscription_start = now
+            agent.subscription_expires = sub.end_date
+            agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
+
+            logger.info(f"Payment success for agent {agent.id}: plan={sub.plan_key}")
+    except Exception as e:
+        logger.error(f"Payment success handler error: {e}")
+
+    return render(request, 'payment_result.html', {
+        'success': True, 'status': status, 'payment_id': payment_id,
+    })
+
+
+@login_required
+def payment_failure_view(request):
+    """صفحة فشل الدفع - redirect من StreamPay"""
+    return render(request, 'payment_result.html', {
+        'success': False,
+        'status': request.GET.get('status', ''),
+        'message': request.GET.get('message', ''),
+    })
+
+
+@csrf_exempt
+def streampay_webhook(request):
+    """Webhook handler for StreamPay events"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        from services.streampay_service import streampay_service
+        from apps.agents.models import Subscription, Agent
+
+        sig = request.headers.get('X-Webhook-Signature', '')
+        if streampay_service.webhook_secret and sig:
+            if not streampay_service.verify_webhook_signature(request.body, sig):
+                logger.warning("Invalid webhook signature")
+                return JsonResponse({'error': 'Invalid signature'}, status=401)
+
+        payload = json.loads(request.body)
+        event_type = payload.get('event_type', '')
+        data = payload.get('data', {})
+        logger.info(f"StreamPay webhook: {event_type}")
+
+        if event_type == 'PAYMENT_SUCCEEDED':
+            metadata = data.get('metadata', {})
+            agent_id = metadata.get('agent_id')
+            plan_key = metadata.get('plan_key', 'monthly')
+
+            if agent_id:
+                try:
+                    agent = Agent.objects.get(id=agent_id)
+                    sub = Subscription.objects.filter(
+                        agent=agent, status__in=['pending', 'trial']
+                    ).order_by('-created_at').first()
+
+                    if sub:
+                        now = tz_util.now()
+                        sub.status = 'active'
+                        sub.payment_id = data.get('payment', {}).get('id', '')
+                        sub.invoice_id = data.get('invoice', {}).get('id', '')
+                        sub.start_date = now
+                        sub.end_date = streampay_service.get_subscription_end_date(plan_key, now)
+                        sub.save()
+
+                        agent.subscription_plan = 'pro'
+                        agent.subscription_start = now
+                        agent.subscription_expires = sub.end_date
+                        agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
+                        logger.info(f"Webhook: Activated subscription for agent {agent_id}")
+                except Agent.DoesNotExist:
+                    logger.error(f"Webhook: Agent {agent_id} not found")
+
+        elif event_type == 'SUBSCRIPTION_CANCELED':
+            metadata = data.get('metadata', {})
+            agent_id = metadata.get('agent_id')
+            if agent_id:
+                Subscription.objects.filter(agent_id=agent_id, status='active').update(status='cancelled')
+
+        return JsonResponse({'success': True})
+
+    except Exception as e:
+        logger.error(f"Webhook error: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
