@@ -664,6 +664,13 @@ def dashboard_view(request):
     # حساب المحادثات من Conversation model فقط
     total_conversations = conversations.count()
     
+    # Subscription info
+    from apps.agents.models import Subscription
+    sub = Subscription.objects.filter(agent=agent).order_by('-created_at').first()
+    is_trial = sub and sub.status == 'trial'
+    is_paid_active = sub and sub.status == 'active' and sub.is_active
+    show_popup = request.GET.get('welcome') == '1' and not is_paid_active
+
     context = {
         'user_name': user.get_full_name() or user.username,
         'user_first_name': user.first_name or user.username,
@@ -678,7 +685,11 @@ def dashboard_view(request):
         'appointments_count': appointments.count(),
         'recent_properties': properties_data,
         'recent_leads': leads_data,
-        'active_page': 'dashboard'
+        'active_page': 'dashboard',
+        'show_subscription_popup': show_popup,
+        'subscription_status': sub.status if sub else 'none',
+        'subscription_is_trial': is_trial,
+        'subscription_days_remaining': sub.days_remaining if sub else 0,
     }
     
     return render(request, 'dashboard/index.html', context)

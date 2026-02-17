@@ -1073,6 +1073,463 @@
         }
     </style>
     
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- Subscription Popup -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div id="subscriptionPopup" class="sub-popup-overlay" style="display: none;">
+        <div class="sub-popup-container">
+            <!-- Header -->
+            <div class="sub-popup-header">
+                <button class="sub-popup-close" onclick="closeSubscriptionPopup()">&times;</button>
+                <div class="sub-popup-icon">🎉</div>
+                <h2>مرحباً بك في Inify!</h2>
+                <p class="sub-popup-subtitle">حسابك مفعّل الآن. لديك <span class="trial-badge">{{ subscription_days_remaining }} أيام تجريبية مجانية</span></p>
+                <p class="sub-popup-desc">اختر خطة الاشتراك المناسبة لك لتستمتع بجميع المزايا بدون انقطاع</p>
+            </div>
+
+            <!-- Features -->
+            <div class="sub-features-bar">
+                <div class="sub-feature-item"><span class="sub-feature-icon">🤖</span><span>وكيل ذكي 24/7</span></div>
+                <div class="sub-feature-item"><span class="sub-feature-icon">💬</span><span>واتساب تلقائي</span></div>
+                <div class="sub-feature-item"><span class="sub-feature-icon">🏠</span><span>عقارات غير محدودة</span></div>
+                <div class="sub-feature-item"><span class="sub-feature-icon">📊</span><span>تحليلات متقدمة</span></div>
+            </div>
+
+            <!-- Plans Grid -->
+            <div class="sub-plans-grid">
+                <!-- Monthly -->
+                <div class="sub-plan-card" data-plan="monthly">
+                    <div class="sub-plan-name">شهري</div>
+                    <div class="sub-plan-price">
+                        <span class="sub-price-amount">199</span>
+                        <span class="sub-price-unit">ريال/شهر</span>
+                    </div>
+                    <ul class="sub-plan-features">
+                        <li>✓ جميع المزايا</li>
+                        <li>✓ دعم فني</li>
+                        <li>✓ إلغاء أي وقت</li>
+                    </ul>
+                    <button class="sub-plan-btn" onclick="subscribePlan('monthly')">اشترك الآن</button>
+                </div>
+
+                <!-- Quarterly -->
+                <div class="sub-plan-card" data-plan="quarterly">
+                    <div class="sub-plan-badge">خصم 10%</div>
+                    <div class="sub-plan-name">3 أشهر</div>
+                    <div class="sub-plan-price">
+                        <span class="sub-price-amount">537</span>
+                        <span class="sub-price-unit">ريال</span>
+                    </div>
+                    <div class="sub-plan-monthly">179 ريال/شهر</div>
+                    <ul class="sub-plan-features">
+                        <li>✓ جميع المزايا</li>
+                        <li>✓ دعم فني أولوية</li>
+                        <li>✓ توفير 60 ريال</li>
+                    </ul>
+                    <button class="sub-plan-btn" onclick="subscribePlan('quarterly')">اشترك الآن</button>
+                </div>
+
+                <!-- Semi-Annual - Popular -->
+                <div class="sub-plan-card popular" data-plan="semi">
+                    <div class="sub-plan-badge popular-badge">الأكثر طلباً</div>
+                    <div class="sub-plan-name">6 أشهر</div>
+                    <div class="sub-plan-price">
+                        <span class="sub-price-amount">1,015</span>
+                        <span class="sub-price-unit">ريال</span>
+                    </div>
+                    <div class="sub-plan-monthly">169 ريال/شهر</div>
+                    <ul class="sub-plan-features">
+                        <li>✓ جميع المزايا</li>
+                        <li>✓ دعم فني VIP</li>
+                        <li>✓ توفير 179 ريال</li>
+                    </ul>
+                    <button class="sub-plan-btn popular-btn" onclick="subscribePlan('semi')">اشترك الآن</button>
+                </div>
+
+                <!-- Annual -->
+                <div class="sub-plan-card" data-plan="annual">
+                    <div class="sub-plan-badge">خصم 25%</div>
+                    <div class="sub-plan-name">سنوي</div>
+                    <div class="sub-plan-price">
+                        <span class="sub-price-amount">1,791</span>
+                        <span class="sub-price-unit">ريال</span>
+                    </div>
+                    <div class="sub-plan-monthly">149 ريال/شهر</div>
+                    <ul class="sub-plan-features">
+                        <li>✓ جميع المزايا</li>
+                        <li>✓ دعم فني VIP</li>
+                        <li>✓ توفير 597 ريال</li>
+                    </ul>
+                    <button class="sub-plan-btn" onclick="subscribePlan('annual')">اشترك الآن</button>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="sub-popup-footer">
+                <button class="sub-skip-btn" onclick="closeSubscriptionPopup()">
+                    متابعة بالفترة التجريبية المجانية ←
+                </button>
+                <p class="sub-footer-note">يمكنك الاشتراك لاحقاً من صفحة الإعدادات</p>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* ═══════════════════════════════════════════════════════════ */
+        /* Subscription Popup Styles                                  */
+        /* ═══════════════════════════════════════════════════════════ */
+        .sub-popup-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: subFadeIn 0.3s ease;
+        }
+        @keyframes subFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .sub-popup-container {
+            background: var(--card-bg, #0f1923);
+            border: 1px solid rgba(107, 184, 201, 0.2);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 92vh;
+            overflow-y: auto;
+            padding: 40px 36px 30px;
+            position: relative;
+            animation: subSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 30px 100px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(107, 184, 201, 0.1);
+        }
+        @keyframes subSlideUp {
+            from { opacity: 0; transform: translateY(40px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .sub-popup-close {
+            position: absolute;
+            top: 16px; left: 16px;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .sub-popup-close:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        /* Header */
+        .sub-popup-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .sub-popup-icon {
+            font-size: 56px;
+            margin-bottom: 12px;
+            animation: subBounce 0.6s ease 0.3s both;
+        }
+        @keyframes subBounce {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .sub-popup-header h2 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6bb8c9, #a8d8ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+        .sub-popup-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 6px;
+        }
+        .trial-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .sub-popup-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Features Bar */
+        .sub-features-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+            padding: 14px 20px;
+            background: rgba(107, 184, 201, 0.06);
+            border: 1px solid rgba(107, 184, 201, 0.12);
+            border-radius: 14px;
+        }
+        .sub-feature-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 500;
+        }
+        .sub-feature-icon {
+            font-size: 16px;
+        }
+
+        /* Plans Grid */
+        .sub-plans-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .sub-plan-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 24px 16px 20px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .sub-plan-card:hover {
+            border-color: rgba(107, 184, 201, 0.4);
+            background: rgba(107, 184, 201, 0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(107, 184, 201, 0.15);
+        }
+        .sub-plan-card.popular {
+            border-color: rgba(107, 184, 201, 0.5);
+            background: rgba(107, 184, 201, 0.1);
+            box-shadow: 0 8px 30px rgba(107, 184, 201, 0.15);
+        }
+        .sub-plan-badge {
+            position: absolute;
+            top: -10px;
+            right: 50%;
+            transform: translateX(50%);
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            padding: 3px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .sub-plan-badge.popular-badge {
+            background: linear-gradient(135deg, #6bb8c9, #2E5A8B);
+        }
+        .sub-plan-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 12px;
+            margin-top: 4px;
+        }
+        .sub-plan-price {
+            margin-bottom: 4px;
+        }
+        .sub-price-amount {
+            font-size: 32px;
+            font-weight: 800;
+            color: #6bb8c9;
+        }
+        .sub-price-unit {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-right: 4px;
+        }
+        .sub-plan-monthly {
+            font-size: 12px;
+            color: rgba(107, 184, 201, 0.7);
+            margin-bottom: 12px;
+        }
+        .sub-plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 12px 0 16px;
+            text-align: right;
+        }
+        .sub-plan-features li {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 4px 0;
+        }
+        .sub-plan-btn {
+            width: 100%;
+            padding: 10px 16px;
+            border: 1px solid rgba(107, 184, 201, 0.3);
+            background: rgba(107, 184, 201, 0.1);
+            color: #6bb8c9;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        .sub-plan-btn:hover {
+            background: rgba(107, 184, 201, 0.25);
+            border-color: rgba(107, 184, 201, 0.5);
+            transform: scale(1.03);
+        }
+        .sub-plan-btn.popular-btn {
+            background: linear-gradient(135deg, #2E5A8B, #4A90A4);
+            border: none;
+            color: #fff;
+        }
+        .sub-plan-btn.popular-btn:hover {
+            background: linear-gradient(135deg, #3a6fa0, #5aa0b4);
+            box-shadow: 0 6px 20px rgba(46, 90, 139, 0.4);
+        }
+        .sub-plan-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Footer */
+        .sub-popup-footer {
+            text-align: center;
+        }
+        .sub-skip-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 8px 20px;
+            transition: color 0.2s;
+            font-family: inherit;
+        }
+        .sub-skip-btn:hover {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .sub-footer-note {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.3);
+            margin-top: 6px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sub-popup-container {
+                padding: 28px 18px 20px;
+                max-height: 95vh;
+            }
+            .sub-popup-header h2 { font-size: 22px; }
+            .sub-popup-icon { font-size: 44px; }
+            .sub-plans-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            .sub-features-bar { gap: 12px; }
+            .sub-feature-item { font-size: 12px; }
+        }
+        @media (max-width: 480px) {
+            .sub-plans-grid {
+                grid-template-columns: 1fr;
+            }
+            .sub-popup-container {
+                padding: 24px 14px 16px;
+                border-radius: 16px;
+            }
+        }
+    </style>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        // Subscription Popup Logic
+        // ═══════════════════════════════════════════════════════════
+        {% if show_subscription_popup %}
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                document.getElementById('subscriptionPopup').style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }, 800);
+        });
+        {% endif %}
+
+        function closeSubscriptionPopup() {
+            const popup = document.getElementById('subscriptionPopup');
+            popup.style.animation = 'subFadeOut 0.25s ease forwards';
+            setTimeout(function() {
+                popup.style.display = 'none';
+                popup.style.animation = '';
+                document.body.style.overflow = '';
+            }, 250);
+            // Remove welcome param from URL
+            if (window.history.replaceState) {
+                const url = new URL(window.location);
+                url.searchParams.delete('welcome');
+                window.history.replaceState({}, '', url);
+            }
+        }
+
+        async function subscribePlan(planKey) {
+            const btn = document.querySelector(`.sub-plan-card[data-plan="${planKey}"] .sub-plan-btn`);
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'جاري التحويل...';
+
+            try {
+                const response = await fetch('/api/subscription/subscribe/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ plan_key: planKey }),
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.payment_url) {
+                    window.location.href = data.payment_url;
+                } else {
+                    alert(data.error || 'حدث خطأ في إنشاء رابط الدفع');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+    </script>
+
+    <style>
+        @keyframes subFadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+    </style>
+
     <!-- Theme Toggle Script -->
     <script src="/static/js/theme.js"></script>
 </body>
