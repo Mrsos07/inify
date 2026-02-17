@@ -284,6 +284,91 @@
             opacity: 0.7;
         }
 
+        /* Agreements Section */
+        .agreements-section {
+            margin-top: 24px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .agreement-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 16px;
+            background: rgba(10, 22, 40, 0.4);
+            border: 1px solid rgba(107, 184, 201, 0.12);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .agreement-item:hover {
+            border-color: rgba(107, 184, 201, 0.3);
+            background: rgba(10, 22, 40, 0.6);
+        }
+
+        .agreement-item.checked {
+            border-color: rgba(74, 222, 128, 0.4);
+            background: rgba(74, 222, 128, 0.05);
+        }
+
+        .agreement-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            accent-color: #4ade80;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .agreement-text {
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .agreement-text a {
+            color: var(--cyan);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .agreement-text a:hover {
+            text-decoration: underline;
+        }
+
+        .google-section {
+            transition: all 0.4s;
+        }
+
+        .google-section.disabled {
+            opacity: 0.35;
+            pointer-events: none;
+            filter: grayscale(0.5);
+        }
+
+        .google-lock-msg {
+            text-align: center;
+            color: rgba(255, 193, 7, 0.7);
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .google-section.disabled .google-lock-msg {
+            display: block;
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
         @media (max-width: 480px) {
             .form-row {
                 grid-template-columns: 1fr;
@@ -342,11 +427,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label>رخصة فال</label>
-                    <input type="text" name="fal_license" placeholder="أدخل رقم رخصة فال" required>
-                </div>
-
-                <div class="form-group">
                     <label>كلمة المرور</label>
                     <input type="password" name="password" placeholder="أدخل كلمة المرور" required>
                 </div>
@@ -356,26 +436,41 @@
                     <input type="password" name="password2" placeholder="أعد إدخال كلمة المرور" required>
                 </div>
 
-                <button type="submit" class="submit-btn">إنشاء الحساب</button>
-
-                <!-- Google Sign-Up -->
-                <div class="divider">
-                    <span>أو</span>
+                <!-- Agreements Section -->
+                <div class="agreements-section">
+                    <label class="agreement-item" id="termsItem">
+                        <input type="checkbox" name="accept_terms" id="acceptTerms" onchange="updateAgreements()">
+                        <span class="agreement-text">
+                            أوافق على <a href="/terms/" target="_blank">الشروط والأحكام</a> و <a href="/privacy/" target="_blank">سياسة الخصوصية</a> الخاصة بمنصة Inify
+                        </span>
+                    </label>
+                    <label class="agreement-item" id="falItem">
+                        <input type="checkbox" name="accept_fal" id="acceptFal" onchange="updateAgreements()">
+                        <span class="agreement-text">
+                            أقر بأنني أمتلك رخصة فال سارية المفعول تمكنني من مزاولة التسويق العقاري بشكل نظامي وقانوني وفقاً لأنظمة الهيئة العامة للعقار
+                        </span>
+                    </label>
                 </div>
 
-                <a href="/accounts/google/login/?next=/dashboard/" class="social-btn" style="text-decoration: none;">
-                    <svg width="20" height="20" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    التسجيل بـ Google
-                </a>
+                <button type="submit" class="submit-btn" id="submitBtn" disabled>إنشاء الحساب</button>
 
-                <p class="terms">
-                    بإنشاء حساب، أنت توافق على <a href="/terms/" target="_blank">شروط الاستخدام</a> و <a href="/privacy/" target="_blank">سياسة الخصوصية</a>
-                </p>
+                <!-- Google Sign-Up -->
+                <div class="google-section disabled" id="googleSection">
+                    <div class="divider">
+                        <span>أو</span>
+                    </div>
+
+                    <a href="/accounts/google/login/?next=/dashboard/" class="social-btn" id="googleBtn" style="text-decoration: none;">
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        التسجيل بـ Google
+                    </a>
+                    <p class="google-lock-msg">يجب الموافقة على الشروط والإقرارات أعلاه أولاً</p>
+                </div>
             </form>
         </div>
 
@@ -385,6 +480,27 @@
     </div>
 
     <script>
+        function updateAgreements() {
+            const termsChecked = document.getElementById('acceptTerms').checked;
+            const falChecked = document.getElementById('acceptFal').checked;
+            const allChecked = termsChecked && falChecked;
+            
+            // Toggle checked class on items
+            document.getElementById('termsItem').classList.toggle('checked', termsChecked);
+            document.getElementById('falItem').classList.toggle('checked', falChecked);
+            
+            // Enable/disable submit button
+            document.getElementById('submitBtn').disabled = !allChecked;
+            
+            // Show/hide Google sign-in
+            const googleSection = document.getElementById('googleSection');
+            if (allChecked) {
+                googleSection.classList.remove('disabled');
+            } else {
+                googleSection.classList.add('disabled');
+            }
+        }
+
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -394,10 +510,21 @@
             const successDiv = document.getElementById('successMessage');
             const successText = document.getElementById('successText');
             
+            // Validate agreements
+            if (!document.getElementById('acceptTerms').checked || !document.getElementById('acceptFal').checked) {
+                alert('يجب الموافقة على جميع الشروط والإقرارات');
+                return;
+            }
+            
             if (password2 && password !== password2.value) {
                 alert('كلمات المرور غير متطابقة');
                 return;
             }
+            
+            // Disable submit button
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'جاري إنشاء الحساب...';
             
             try {
                 const formData = new FormData(form);
@@ -419,18 +546,22 @@
                         successText.textContent = data.message || 'تحقق من بريدك الإلكتروني لتفعيل الحساب';
                         successDiv.classList.add('show');
                         
-                        // Redirect after 3 seconds
+                        // Redirect after 4 seconds
                         setTimeout(() => {
                             window.location.href = '/auth/login/';
-                        }, 3000);
+                        }, 4000);
                     } else {
                         window.location.href = '/dashboard/';
                     }
                 } else {
                     alert(data.error || 'حدث خطأ في التسجيل');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'إنشاء الحساب';
                 }
             } catch (error) {
                 alert('حدث خطأ في الاتصال');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'إنشاء الحساب';
             }
         });
     </script>

@@ -213,19 +213,19 @@ def login_view(request):
         
         if user is not None:
             if user.is_active:
-                # التحقق من تفعيل البريد الإلكتروني - معطل مؤقتاً
-                # from apps.agents.models import Agent
-                # try:
-                #     agent = Agent.objects.get(user=user)
-                #     if not agent.is_email_verified:
-                #         print(f"[LOGIN] Email not verified for: {user.username}")
-                #         return JsonResponse({
-                #             'success': False, 
-                #             'error': 'يرجى تفعيل حسابك عبر الرابط المرسل إلى بريدك الإلكتروني',
-                #             'email_not_verified': True
-                #         })
-                # except Agent.DoesNotExist:
-                #     pass  # المستخدم ليس وكيل (ربما أدمن)
+                # التحقق من تفعيل البريد الإلكتروني
+                from apps.agents.models import Agent
+                try:
+                    agent = Agent.objects.get(user=user)
+                    if not agent.is_email_verified:
+                        print(f"[LOGIN] Email not verified for: {user.username}")
+                        return JsonResponse({
+                            'success': False, 
+                            'error': 'يرجى تفعيل حسابك عبر الرابط المرسل إلى بريدك الإلكتروني',
+                            'email_not_verified': True
+                        })
+                except Agent.DoesNotExist:
+                    pass  # المستخدم ليس وكيل (ربما أدمن)
                 
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 print(f"[LOGIN] Login successful for: {user.username}")
@@ -254,8 +254,9 @@ def register_view(request):
             phone = request.POST.get('phone', '')
             company_name = request.POST.get('company_name', '')
             city = request.POST.get('city', '')
-            fal_license = request.POST.get('fal_license', '')
             password = request.POST.get('password', '')
+            accept_terms = request.POST.get('accept_terms', '')
+            accept_fal = request.POST.get('accept_fal', '')
             
             # Validate required fields
             if not email or not password:
@@ -264,8 +265,11 @@ def register_view(request):
             if not phone:
                 return JsonResponse({'success': False, 'error': 'رقم الجوال مطلوب'})
             
-            if not fal_license:
-                return JsonResponse({'success': False, 'error': 'رخصة فال مطلوبة'})
+            if not accept_terms:
+                return JsonResponse({'success': False, 'error': 'يجب الموافقة على الشروط والأحكام'})
+            
+            if not accept_fal:
+                return JsonResponse({'success': False, 'error': 'يجب الإقرار بامتلاك رخصة فال'})
             
             # Validate email not exists
             if User.objects.filter(email=email).exists():
@@ -300,7 +304,6 @@ def register_view(request):
                 company_name=company_name or '',
                 phone=phone or '',
                 city=city or '',
-                fal_license=fal_license or '',
                 email=email,
                 is_email_verified=False
             )
