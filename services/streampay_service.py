@@ -144,6 +144,127 @@ class StreamPayService:
             logger.error(f"StreamPay request error: {e}")
             return {'success': False, 'error': 'تعذر الاتصال ببوابة الدفع'}
 
+    # ─── API: Fetch Invoice ─────────────────────────────────────────
+
+    def get_invoice(self, invoice_id):
+        """
+        Fetch invoice details from StreamPay to verify payment.
+        
+        Args:
+            invoice_id: StreamPay invoice UUID
+        
+        Returns:
+            dict with invoice data or None
+        """
+        try:
+            response = requests.get(
+                f'{STREAMPAY_BASE_URL}/invoices/{invoice_id}',
+                headers=self._get_headers(),
+                timeout=30,
+            )
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Get invoice error: {response.status_code} - {response.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Get invoice request error: {e}")
+            return None
+
+    # ─── API: Fetch Subscription ──────────────────────────────────────
+
+    def get_subscription(self, subscription_id):
+        """
+        Fetch subscription details from StreamPay.
+        
+        Args:
+            subscription_id: StreamPay subscription UUID
+        
+        Returns:
+            dict with subscription data or None
+        """
+        try:
+            response = requests.get(
+                f'{STREAMPAY_BASE_URL}/subscriptions/{subscription_id}',
+                headers=self._get_headers(),
+                timeout=30,
+            )
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Get subscription error: {response.status_code} - {response.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Get subscription request error: {e}")
+            return None
+
+    # ─── API: Cancel Subscription ─────────────────────────────────────
+
+    def cancel_subscription(self, subscription_id):
+        """
+        Cancel a subscription in StreamPay.
+        
+        Args:
+            subscription_id: StreamPay subscription UUID
+        
+        Returns:
+            dict with 'success' and optional 'error'
+        """
+        try:
+            response = requests.post(
+                f'{STREAMPAY_BASE_URL}/subscriptions/{subscription_id}/cancel',
+                headers=self._get_headers(),
+                timeout=30,
+            )
+            if response.status_code == 200:
+                logger.info(f"Subscription {subscription_id} cancelled")
+                return {'success': True}
+            else:
+                logger.error(f"Cancel subscription error: {response.status_code} - {response.text}")
+                return {'success': False, 'error': f'خطأ: {response.status_code}'}
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Cancel subscription request error: {e}")
+            return {'success': False, 'error': 'تعذر الاتصال ببوابة الدفع'}
+
+    # ─── API: Create Consumer ─────────────────────────────────────────
+
+    def create_or_get_consumer(self, agent):
+        """
+        Create a consumer in StreamPay for the agent (for recurring billing).
+        
+        Args:
+            agent: Agent model instance
+        
+        Returns:
+            dict with 'success', 'consumer_id' or 'error'
+        """
+        try:
+            payload = {
+                'name': f"{agent.user.first_name} {agent.user.last_name}".strip() or agent.user.username,
+                'email': agent.email or agent.user.email,
+                'phone': agent.phone or '',
+            }
+
+            response = requests.post(
+                f'{STREAMPAY_BASE_URL}/consumers',
+                json=payload,
+                headers=self._get_headers(),
+                timeout=30,
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                consumer_id = data.get('id', '')
+                logger.info(f"Consumer created/found for agent {agent.id}: {consumer_id}")
+                return {'success': True, 'consumer_id': consumer_id}
+            else:
+                logger.error(f"Create consumer error: {response.status_code} - {response.text}")
+                return {'success': False, 'error': f'خطأ: {response.status_code}'}
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Create consumer request error: {e}")
+            return {'success': False, 'error': 'تعذر الاتصال ببوابة الدفع'}
+
     # ─── Webhook Verification ────────────────────────────────────────
 
     def verify_webhook_signature(self, raw_body, signature_header):

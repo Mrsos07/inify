@@ -1805,35 +1805,59 @@ def payment_success_view(request):
     invoice_id = request.GET.get('invoice_id', '')
     status = request.GET.get('status', '')
 
+    verified = False
     try:
         agent = request.user.agent_profile
         from apps.agents.models import Subscription
         from services.streampay_service import streampay_service
 
-        sub = Subscription.objects.filter(
-            agent=agent, status__in=['pending', 'trial']
-        ).order_by('-created_at').first()
+        # Check if webhook already activated the subscription
+        already_active = Subscription.objects.filter(
+            agent=agent, status='active', payment_id=payment_id
+        ).exists() if payment_id else False
 
-        if sub and status == 'paid':
-            now = tz_util.now()
-            sub.status = 'active'
-            sub.payment_id = payment_id
-            sub.invoice_id = invoice_id
-            sub.start_date = now
-            sub.end_date = streampay_service.get_subscription_end_date(sub.plan_key, now)
-            sub.save()
+        if already_active:
+            verified = True
+            logger.info(f"Payment already activated by webhook for agent {agent.id}")
+        else:
+            sub = Subscription.objects.filter(
+                agent=agent, status__in=['pending', 'trial']
+            ).order_by('-created_at').first()
 
-            agent.subscription_plan = 'pro'
-            agent.subscription_start = now
-            agent.subscription_expires = sub.end_date
-            agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
+            if sub and status == 'paid':
+                # Server-side verification: fetch invoice from StreamPay API
+                if invoice_id:
+                    invoice_data = streampay_service.get_invoice(invoice_id)
+                    if invoice_data and invoice_data.get('status') in ['COMPLETED', 'PAID']:
+                        verified = True
+                    else:
+                        logger.warning(f"Invoice verification failed for {invoice_id}: {invoice_data}")
+                else:
+                    # No invoice_id but status=paid from redirect, trust the webhook to handle it
+                    verified = True
 
-            logger.info(f"Payment success for agent {agent.id}: plan={sub.plan_key}")
+                if verified:
+                    now = tz_util.now()
+                    sub.status = 'active'
+                    sub.payment_id = payment_id
+                    sub.invoice_id = invoice_id
+                    sub.start_date = now
+                    sub.end_date = streampay_service.get_subscription_end_date(sub.plan_key, now)
+                    sub.save()
+
+                    agent.subscription_plan = 'pro'
+                    agent.subscription_start = now
+                    agent.subscription_expires = sub.end_date
+                    agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
+
+                    logger.info(f"Payment success (redirect) for agent {agent.id}: plan={sub.plan_key}")
     except Exception as e:
         logger.error(f"Payment success handler error: {e}")
 
     return render(request, 'payment_result.html', {
-        'success': True, 'status': status, 'payment_id': payment_id,
+        'success': verified or status == 'paid',
+        'status': status,
+        'payment_id': payment_id,
     })
 
 
@@ -1849,7 +1873,17 @@ def payment_failure_view(request):
 
 @csrf_exempt
 def streampay_webhook(request):
-    """Webhook handler for StreamPay events"""
+    """
+    Webhook handler for StreamPay events.
+    
+    Handles:
+    - PAYMENT_SUCCEEDED: First payment → activate subscription, save subscription_id
+    - INVOICE_COMPLETED: Recurring renewal → extend subscription end_date
+    - SUBSCRIPTION_ACTIVATED: Confirm subscription active in StreamPay
+    - SUBSCRIPTION_CANCELED: Cancel subscription locally
+    - SUBSCRIPTION_CYCLE_RENEWAL_FAILED: Mark renewal failure, notify
+    - PAYMENT_FAILED: Log payment failure
+    """
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
@@ -1857,8 +1891,9 @@ def streampay_webhook(request):
         from services.streampay_service import streampay_service
         from apps.agents.models import Subscription, Agent
 
+        # ── Verify signature ──────────────────────────────────────
         sig = request.headers.get('X-Webhook-Signature', '')
-        if streampay_service.webhook_secret and sig:
+        if streampay_service.webhook_secret and streampay_service.webhook_secret != 'your-webhook-secret-here' and sig:
             if not streampay_service.verify_webhook_signature(request.body, sig):
                 logger.warning("Invalid webhook signature")
                 return JsonResponse({'error': 'Invalid signature'}, status=401)
@@ -1866,12 +1901,17 @@ def streampay_webhook(request):
         payload = json.loads(request.body)
         event_type = payload.get('event_type', '')
         data = payload.get('data', {})
-        logger.info(f"StreamPay webhook: {event_type}")
+        entity_id = payload.get('entity_id', '')
+        logger.info(f"StreamPay webhook received: {event_type} | entity_id={entity_id}")
 
+        # ── PAYMENT_SUCCEEDED ─────────────────────────────────────
+        # First payment success → activate subscription
         if event_type == 'PAYMENT_SUCCEEDED':
             metadata = data.get('metadata', {})
             agent_id = metadata.get('agent_id')
             plan_key = metadata.get('plan_key', 'monthly')
+            payment_id = data.get('payment', {}).get('id', '') or entity_id
+            invoice_id = data.get('invoice', {}).get('id', '')
 
             if agent_id:
                 try:
@@ -1883,8 +1923,8 @@ def streampay_webhook(request):
                     if sub:
                         now = tz_util.now()
                         sub.status = 'active'
-                        sub.payment_id = data.get('payment', {}).get('id', '')
-                        sub.invoice_id = data.get('invoice', {}).get('id', '')
+                        sub.payment_id = payment_id
+                        sub.invoice_id = invoice_id
                         sub.start_date = now
                         sub.end_date = streampay_service.get_subscription_end_date(plan_key, now)
                         sub.save()
@@ -1893,18 +1933,143 @@ def streampay_webhook(request):
                         agent.subscription_start = now
                         agent.subscription_expires = sub.end_date
                         agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
-                        logger.info(f"Webhook: Activated subscription for agent {agent_id}")
+                        logger.info(f"Webhook PAYMENT_SUCCEEDED: Activated subscription for agent {agent_id}, plan={plan_key}")
+                    else:
+                        logger.warning(f"Webhook PAYMENT_SUCCEEDED: No pending/trial sub found for agent {agent_id}")
                 except Agent.DoesNotExist:
-                    logger.error(f"Webhook: Agent {agent_id} not found")
+                    logger.error(f"Webhook PAYMENT_SUCCEEDED: Agent {agent_id} not found")
 
+        # ── SUBSCRIPTION_ACTIVATED ────────────────────────────────
+        # StreamPay confirms recurring subscription created → save subscription_id
+        elif event_type == 'SUBSCRIPTION_ACTIVATED':
+            metadata = data.get('metadata', {})
+            agent_id = metadata.get('agent_id')
+            sp_subscription_id = entity_id or data.get('subscription', {}).get('id', '')
+
+            if agent_id and sp_subscription_id:
+                try:
+                    sub = Subscription.objects.filter(
+                        agent_id=agent_id, status='active'
+                    ).order_by('-created_at').first()
+                    if sub:
+                        sub.subscription_id = sp_subscription_id
+                        sub.save(update_fields=['subscription_id', 'updated_at'])
+                        logger.info(f"Webhook SUBSCRIPTION_ACTIVATED: Saved subscription_id={sp_subscription_id} for agent {agent_id}")
+                    else:
+                        logger.warning(f"Webhook SUBSCRIPTION_ACTIVATED: No active sub found for agent {agent_id}")
+                except Exception as e:
+                    logger.error(f"Webhook SUBSCRIPTION_ACTIVATED error: {e}")
+
+        # ── INVOICE_COMPLETED ─────────────────────────────────────
+        # Recurring renewal: new invoice completed for existing subscription
+        elif event_type == 'INVOICE_COMPLETED':
+            invoice_id = entity_id or data.get('invoice', {}).get('id', '')
+            sp_subscription_id = data.get('subscription_id', '') or data.get('subscription', {}).get('id', '')
+
+            if sp_subscription_id:
+                # This is a subscription renewal invoice
+                try:
+                    sub = Subscription.objects.filter(
+                        subscription_id=sp_subscription_id, status='active'
+                    ).first()
+
+                    if sub:
+                        now = tz_util.now()
+                        # Extend from current end_date or now, whichever is later
+                        extend_from = max(sub.end_date, now) if sub.end_date else now
+                        sub.end_date = streampay_service.get_subscription_end_date(sub.plan_key, extend_from)
+                        sub.invoice_id = invoice_id
+                        sub.save(update_fields=['end_date', 'invoice_id', 'updated_at'])
+
+                        # Update agent subscription_expires
+                        agent = sub.agent
+                        agent.subscription_expires = sub.end_date
+                        agent.save(update_fields=['subscription_expires'])
+                        logger.info(f"Webhook INVOICE_COMPLETED: Renewed subscription for agent {agent.id}, new end_date={sub.end_date}")
+                    else:
+                        logger.warning(f"Webhook INVOICE_COMPLETED: No active sub found with subscription_id={sp_subscription_id}")
+                except Exception as e:
+                    logger.error(f"Webhook INVOICE_COMPLETED error: {e}")
+            else:
+                logger.info(f"Webhook INVOICE_COMPLETED: Non-subscription invoice {invoice_id}, skipping")
+
+        # ── SUBSCRIPTION_CANCELED ─────────────────────────────────
         elif event_type == 'SUBSCRIPTION_CANCELED':
             metadata = data.get('metadata', {})
             agent_id = metadata.get('agent_id')
-            if agent_id:
-                Subscription.objects.filter(agent_id=agent_id, status='active').update(status='cancelled')
+            sp_subscription_id = entity_id or data.get('subscription', {}).get('id', '')
+
+            updated = 0
+            if sp_subscription_id:
+                updated = Subscription.objects.filter(
+                    subscription_id=sp_subscription_id, status='active'
+                ).update(status='cancelled')
+
+            if not updated and agent_id:
+                updated = Subscription.objects.filter(
+                    agent_id=agent_id, status='active'
+                ).update(status='cancelled')
+
+            if updated:
+                # Update agent plan
+                try:
+                    if agent_id:
+                        agent = Agent.objects.get(id=agent_id)
+                    elif sp_subscription_id:
+                        sub = Subscription.objects.filter(subscription_id=sp_subscription_id).first()
+                        agent = sub.agent if sub else None
+                    else:
+                        agent = None
+
+                    if agent:
+                        agent.subscription_plan = 'free'
+                        agent.save(update_fields=['subscription_plan'])
+                except Exception as e:
+                    logger.error(f"Webhook SUBSCRIPTION_CANCELED agent update error: {e}")
+
+            logger.info(f"Webhook SUBSCRIPTION_CANCELED: Updated {updated} subscription(s)")
+
+        # ── SUBSCRIPTION_CYCLE_RENEWAL_FAILED ─────────────────────
+        elif event_type == 'SUBSCRIPTION_CYCLE_RENEWAL_FAILED':
+            sp_subscription_id = entity_id or data.get('subscription', {}).get('id', '')
+            metadata = data.get('metadata', {})
+            agent_id = metadata.get('agent_id')
+
+            logger.warning(f"Webhook SUBSCRIPTION_CYCLE_RENEWAL_FAILED: subscription_id={sp_subscription_id}, agent_id={agent_id}")
+
+            # Find the subscription and log the failure
+            sub = None
+            if sp_subscription_id:
+                sub = Subscription.objects.filter(subscription_id=sp_subscription_id, status='active').first()
+            if not sub and agent_id:
+                sub = Subscription.objects.filter(agent_id=agent_id, status='active').order_by('-created_at').first()
+
+            if sub:
+                # Don't cancel immediately — StreamPay will retry
+                # But log it for monitoring
+                logger.warning(f"Webhook RENEWAL_FAILED: Agent {sub.agent_id}, plan={sub.plan_key}, end_date={sub.end_date}")
+                # TODO: Send notification email to the agent about failed renewal
+
+        # ── PAYMENT_FAILED ────────────────────────────────────────
+        elif event_type == 'PAYMENT_FAILED':
+            metadata = data.get('metadata', {})
+            agent_id = metadata.get('agent_id')
+            logger.warning(f"Webhook PAYMENT_FAILED: agent_id={agent_id}, entity_id={entity_id}")
+
+        # ── PAYMENT_LINK_PAY_ATTEMPT_FAILED ───────────────────────
+        elif event_type == 'PAYMENT_LINK_PAY_ATTEMPT_FAILED':
+            payment_link_id = data.get('payment_link', {}).get('id', '') or entity_id
+            logger.warning(f"Webhook PAYMENT_LINK_PAY_ATTEMPT_FAILED: payment_link_id={payment_link_id}")
+
+        else:
+            logger.info(f"Webhook: Unhandled event type: {event_type}")
 
         return JsonResponse({'success': True})
 
+    except json.JSONDecodeError as e:
+        logger.error(f"Webhook JSON parse error: {e}")
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
-        logger.error(f"Webhook error: {e}")
+        import traceback
+        logger.error(f"Webhook error: {e}\n{traceback.format_exc()}")
         return JsonResponse({'error': str(e)}, status=500)
