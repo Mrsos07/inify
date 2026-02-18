@@ -1099,36 +1099,62 @@
             flex: 1;
             margin-bottom: 18px;
             padding: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
 
         .pricing-features li {
             list-style: none;
-            padding: 6px 0;
-            font-size: 13px;
+            padding: 9px 12px 9px 14px;
+            font-size: 13.5px;
             color: var(--text-muted);
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 8px;
+            justify-content: space-between;
+            flex-direction: row;
+            direction: rtl;
+            gap: 10px;
+            border-radius: 10px;
+            transition: background 0.2s;
+            text-align: right;
+        }
+
+        .pricing-features li:hover {
+            background: rgba(107, 184, 201, 0.06);
+        }
+
+        .pricing-features li::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--cyan);
+            flex-shrink: 0;
+            opacity: 0.65;
+            order: 1;
+        }
+
+        .pricing-features li::after {
+            display: none;
         }
 
         .pricing-card.featured .pricing-features li {
-            color: #555;
+            color: rgba(10, 22, 40, 0.72);
         }
 
-        .pricing-features li .check {
-            color: var(--cyan);
-            font-weight: 700;
-            font-size: 14px;
+        .pricing-card.featured .pricing-features li::before {
+            background: var(--blue-mid);
         }
 
+        .pricing-card.enterprise .pricing-features li::before {
+            background: var(--cyan);
+        }
+
+        .pricing-features li .check,
         .pricing-features li .cross {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .pricing-card.featured .pricing-features li .check {
-            color: var(--blue-mid);
+            display: none;
         }
 
         .pricing-btn {
@@ -2307,12 +2333,12 @@
                 <div style="margin-bottom: 14px; padding: 6px 14px; background: rgba(107,184,201,0.1); border: 1px solid rgba(107,184,201,0.2); border-radius: 8px; display: inline-block; font-size: 12px; color: var(--cyan);">تجربة مجانية 5 أيام</div>
 
                 <ul class="pricing-features">
-                    <li><span class="check">✅</span> عقارات غير محدودة</li>
-                    <li><span class="check">✅</span> محادثات غير محدودة</li>
-                    <li><span class="check">✅</span> لوحة تحكم متقدمة</li>
-                    <li><span class="check">✅</span> تخصيص الشات بوت</li>
-                    <li><span class="check">✅</span> تقارير وتحليلات متقدمة</li>
-                    <li><span class="check">✅</span> دعم فني أولوية</li>
+                    <li>عقارات غير محدودة</li>
+                    <li>محادثات غير محدودة</li>
+                    <li>لوحة تحكم متقدمة</li>
+                    <li>تخصيص الشات بوت</li>
+                    <li>تقارير وتحليلات متقدمة</li>
+                    <li>دعم فني أولوية</li>
                 </ul>
                 <a href="/auth/register/" class="pricing-btn">ابدأ التجربة المجانية</a>
             </div>
@@ -2323,14 +2349,14 @@
                 <p class="pricing-subtitle">حلول مخصصة للشركات والمكاتب الكبرى</p>
                 <div class="price">تواصل معنا</div>
                 <ul class="pricing-features">
-                    <li><span class="check">✅</span> جميع مميزات خطة المسوق</li>
-                    <li><span class="check">✅</span> دعم فني على مدار الساعة</li>
-                    <li><span class="check">✅</span> ربط WhatsApp Business</li>
-                    <li><span class="check">✅</span> API مخصص للتكامل</li>
-                    <li><span class="check">✅</span> Webhooks للإشعارات</li>
-                    <li><span class="check">✅</span> White Label (علامتك التجارية)</li>
-                    <li><span class="check">✅</span> نشر تلقائي على المنصات</li>
-                    <li><span class="check">✅</span> حسابات متعددة للفريق</li>
+                    <li>جميع مميزات خطة المسوق</li>
+                    <li>دعم فني على مدار الساعة</li>
+                    <li>ربط WhatsApp Business</li>
+                    <li>API مخصص للتكامل</li>
+                    <li>Webhooks للإشعارات</li>
+                    <li>White Label (علامتك التجارية)</li>
+                    <li>نشر تلقائي على المنصات</li>
+                    <li>حسابات متعددة للفريق</li>
                 </ul>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <a href="https://wa.me/966535156358" target="_blank" class="pricing-btn enterprise-btn" style="background: #25D366; color: white; border: none;">تواصل واتساب</a>
