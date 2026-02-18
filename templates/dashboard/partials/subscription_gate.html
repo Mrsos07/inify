@@ -72,6 +72,16 @@
         <div class="exp-footer">
             <p>🔒 دفع آمن عبر StreamPay · إلغاء في أي وقت</p>
         </div>
+
+        <div class="exp-logout-row">
+            <form method="post" action="/auth/logout/">
+                {% csrf_token %}
+                <button type="submit" class="exp-logout-btn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    تسجيل الخروج
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -234,6 +244,36 @@
     }
     .exp-footer { text-align: center; }
     .exp-footer p { font-size: 12px; color: rgba(255, 255, 255, 0.3); }
+
+    .exp-logout-row {
+        display: flex;
+        justify-content: center;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .exp-logout-btn {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.35);
+        font-size: 13px;
+        font-family: inherit;
+        padding: 8px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.25s;
+        direction: rtl;
+    }
+
+    .exp-logout-btn:hover {
+        border-color: rgba(239, 68, 68, 0.35);
+        color: rgba(239, 68, 68, 0.7);
+        background: rgba(239, 68, 68, 0.05);
+    }
 
     @media (max-width: 768px) {
         .exp-popup-container { padding: 28px 18px 22px; }
