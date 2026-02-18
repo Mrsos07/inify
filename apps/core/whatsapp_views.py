@@ -176,11 +176,7 @@ def whatsapp_connect(request):
     
     logger.info(f"Instance created in Evolution API: {instance_name}")
     
-    # الخطوة 2: تسجيل Webhook بشكل منفصل
-    webhook_result = whatsapp_service.set_webhook(instance_name, webhook_url)
-    logger.info(f"Webhook registration result: {webhook_result.get('success')}")
-    
-    # الخطوة 3: حفظ Instance في قاعدة البيانات
+    # الخطوة 2: حفظ Instance في قاعدة البيانات
     instance = WhatsAppInstance.objects.create(
         agent=agent,
         instance_name=instance_name,

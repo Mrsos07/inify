@@ -168,14 +168,9 @@ class WhatsAppService:
                 'webhookBase64': False,
                 'events': [
                     'MESSAGES_UPSERT',
-                    'MESSAGES_UPDATE',
-                    'SEND_MESSAGE',
                     'CONNECTION_UPDATE',
                     'QRCODE_UPDATED',
-                    'CONTACTS_UPSERT',
-                    'CONTACTS_UPDATE',
-                    'CHATS_UPSERT',
-                    'CHATS_UPDATE'
+                    'CONTACTS_UPSERT'
                 ]
             }
         }
@@ -455,8 +450,13 @@ class WhatsAppService:
                 message_content = data.get('message', {})
                 push_name = data.get('pushName', '')
                 
-                # تجاهل الرسائل الصادرة
-                if key.get('fromMe'):
+                # تجاهل الرسائل الصادرة (fromMe=True أو messageType يشير لرسالة صادرة)
+                if key.get('fromMe') or data.get('messageType') == 'senderKeyDistributionMessage':
+                    return None
+                
+                # تجاهل أي رسالة صادرة من الـ instance نفسه
+                message_type = list(message_content.keys())[0] if message_content else ''
+                if message_type in ('senderKeyDistributionMessage', 'protocolMessage', 'reactionMessage'):
                     return None
                 
                 # ══════════════════════════════════════════════════════
