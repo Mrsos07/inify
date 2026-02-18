@@ -738,7 +738,58 @@
             opacity: 0.9;
         }
 
-        /* Saudi Arabia Map SVG */
+        /* Saudi Arabia Map Container */
+        .saudi-map-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .saudi-map-img {
+            width: 88%;
+            max-width: 360px;
+            height: auto;
+            position: relative;
+            z-index: 1;
+            /* Dark mode: invert white→black map to cyan tint */
+            filter: invert(1) sepia(1) saturate(2) hue-rotate(160deg) brightness(0.85) drop-shadow(0 0 18px rgba(107, 184, 201, 0.4));
+            transition: filter 0.4s;
+        }
+
+        .saudi-map-img:hover {
+            filter: invert(1) sepia(1) saturate(2.5) hue-rotate(160deg) brightness(1) drop-shadow(0 0 28px rgba(107, 184, 201, 0.6));
+        }
+
+        .saudi-map-glow {
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, rgba(107, 184, 201, 0.12) 0%, transparent 70%);
+            animation: pulse-glow 4s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        .saudi-map-fallback {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        body.light-mode .saudi-map-img {
+            /* Light mode: keep map dark on light background */
+            filter: invert(0) sepia(1) saturate(1.5) hue-rotate(160deg) brightness(0.6) drop-shadow(0 0 14px rgba(74, 144, 164, 0.3));
+        }
+
+        body.light-mode .saudi-map-img:hover {
+            filter: invert(0) sepia(1) saturate(2) hue-rotate(160deg) brightness(0.5) drop-shadow(0 0 22px rgba(74, 144, 164, 0.5));
+        }
+
+        /* Saudi Arabia Map SVG (fallback) */
         .saudi-map-svg {
             width: 85%;
             max-width: 340px;
@@ -1758,46 +1809,23 @@
             <div class="about-visual">
                 <div class="about-image-wrapper">
                     <div class="about-pattern">
-                        <svg class="saudi-map-svg" viewBox="0 0 1000 900" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Saudi Arabia — accurate geographic outline -->
-                            <path class="saudi-map-path" d="
-                              M 120,80 L 135,72 L 152,66 L 172,62 L 194,60 L 218,60 L 242,62
-                              L 264,66 L 284,72 L 302,80 L 318,90 L 330,102 L 338,116
-                              L 342,130 L 342,144 L 338,158 L 330,170 L 318,180 L 304,188
-                              L 320,184 L 338,182 L 358,182 L 378,184 L 398,188 L 418,194
-                              L 438,202 L 456,212 L 472,224 L 486,238 L 498,252 L 508,268
-                              L 514,284 L 518,300 L 518,316 L 514,332 L 508,346
-                              L 524,340 L 542,336 L 562,334 L 582,334 L 602,336
-                              L 620,340 L 636,346 L 650,354 L 662,364 L 672,376
-                              L 678,388 L 682,402 L 682,416 L 678,430 L 670,442
-                              L 658,452 L 644,460 L 628,466 L 610,468 L 592,466
-                              L 576,462 L 562,454 L 550,444
-                              L 552,460 L 552,478 L 548,496 L 540,512 L 528,526
-                              L 514,538 L 498,546 L 480,552 L 462,554 L 444,552
-                              L 426,546 L 410,538 L 396,526 L 384,512 L 376,496
-                              L 370,480 L 368,464 L 368,448
-                              L 352,456 L 334,462 L 316,466 L 298,466 L 280,462
-                              L 264,456 L 250,446 L 238,434 L 228,420 L 222,404
-                              L 218,388 L 218,372 L 220,356
-                              L 202,362 L 184,366 L 166,368 L 148,366 L 130,362
-                              L 114,354 L 100,344 L 88,330 L 80,314 L 74,298
-                              L 72,282 L 72,266 L 76,250 L 82,236 L 90,222
-                              L 100,210 L 88,204 L 78,196 L 70,186 L 64,174
-                              L 60,162 L 58,148 L 58,134 L 60,120 L 64,106
-                              L 70,94 L 78,84 L 88,76 L 100,70 L 112,66 L 120,80 Z
-                            " stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                            <!-- Riyadh capital dot + pulse -->
-                            <circle class="saudi-city-dot" cx="420" cy="340" r="10"/>
-                            <circle class="saudi-city-pulse" cx="420" cy="340" r="22"/>
-                            <!-- Jeddah -->
-                            <circle class="saudi-city-dot-sm" cx="130" cy="390" r="7"/>
-                            <!-- Dammam -->
-                            <circle class="saudi-city-dot-sm" cx="600" cy="310" r="7"/>
-                            <!-- Mecca -->
-                            <circle class="saudi-city-dot-sm" cx="155" cy="420" r="6"/>
-                            <!-- Riyadh label -->
-                            <text class="saudi-city-label" x="438" y="348" font-size="22" font-family="BalooBhaijaan2, sans-serif">الرياض</text>
-                        </svg>
+                        <div class="saudi-map-container">
+                            <img 
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Saudi_Arabia_%28orthographic_projection%29.svg/500px-Saudi_Arabia_%28orthographic_projection%29.svg.png"
+                                alt="خريطة المملكة العربية السعودية"
+                                class="saudi-map-img"
+                                onerror="this.style.display='none'; document.getElementById('saudi-map-fallback').style.display='flex';"
+                            >
+                            <div id="saudi-map-fallback" class="saudi-map-fallback" style="display:none;">
+                                <svg class="saudi-map-svg" viewBox="0 0 800 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path class="saudi-map-path" d="M 155,95 C 165,85 185,75 210,70 C 240,64 275,62 310,64 C 345,66 378,72 405,82 C 425,90 440,102 448,116 C 455,130 455,146 450,160 C 465,154 482,150 500,148 C 522,146 545,148 566,154 C 588,160 608,170 625,183 C 642,196 655,212 663,230 C 670,247 672,265 668,282 C 664,298 654,312 640,323 C 658,318 678,316 698,318 C 718,320 737,326 752,336 C 767,346 778,360 783,376 C 788,392 786,410 778,426 C 770,442 756,455 738,464 C 720,473 699,477 678,476 C 658,475 639,469 623,459 C 626,474 626,490 622,506 C 617,524 607,540 593,553 C 578,566 560,575 540,580 C 520,585 498,585 477,580 C 456,575 437,566 421,553 C 405,540 393,524 386,506 C 380,490 378,474 380,458 C 364,468 346,475 327,478 C 306,481 284,479 264,472 C 244,465 226,453 212,438 C 198,423 188,405 183,386 C 178,367 178,347 183,328 C 165,334 146,337 127,336 C 108,335 89,330 73,320 C 57,310 44,296 36,279 C 28,262 25,243 27,224 C 29,205 36,187 48,172 C 60,157 76,145 94,137 C 112,129 132,125 152,124 C 140,118 130,110 122,100 Z" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle class="saudi-city-dot" cx="490" cy="330" r="9"/>
+                                    <circle class="saudi-city-pulse" cx="490" cy="330" r="20"/>
+                                    <text class="saudi-city-label" x="505" y="338" font-size="18" font-family="BalooBhaijaan2, sans-serif">الرياض</text>
+                                </svg>
+                            </div>
+                            <div class="saudi-map-glow"></div>
+                        </div>
                     </div>
                 </div>
             </div>
