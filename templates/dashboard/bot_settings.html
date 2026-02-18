@@ -254,6 +254,44 @@
             font-size: 14px;
         }
 
+        /* Template chips */
+        .tpl-chips {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 10px;
+            direction: rtl;
+        }
+        .tpl-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            opacity: 0.7;
+            white-space: nowrap;
+        }
+        .tpl-chip {
+            padding: 4px 13px;
+            border-radius: 20px;
+            border: 1px solid rgba(107, 184, 201, 0.25);
+            background: rgba(107, 184, 201, 0.07);
+            color: #6bb8c9;
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tpl-chip:hover {
+            background: rgba(107, 184, 201, 0.18);
+            border-color: rgba(107, 184, 201, 0.5);
+            transform: translateY(-1px);
+        }
+        .tpl-chip.applied {
+            background: rgba(74, 222, 128, 0.12);
+            border-color: rgba(74, 222, 128, 0.35);
+            color: #4ade80;
+        }
+
         .form-group input,
         .form-group textarea,
         .form-group select {
@@ -1607,6 +1645,12 @@
                         
                         <div class="form-group">
                             <label>سياسة التسعير والدفع</label>
+                            <div class="tpl-chips">
+                                <span class="tpl-label">نماذج جاهزة:</span>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('pricingPolicy', 'pricing_standard')">سياسة قياسية</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('pricingPolicy', 'pricing_flexible')">تفاوض مرن</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('pricingPolicy', 'pricing_installment')">تقسيط وبنوك</button>
+                            </div>
                             <textarea id="pricingPolicy" placeholder="مثال:
 - الأسعار قابلة للتفاوض بنسبة 5-10%
 - الدفع نقداً أو بالتقسيط
@@ -1615,6 +1659,12 @@
 
                         <div class="form-group">
                             <label>سياسة المعاينة والحجز</label>
+                            <div class="tpl-chips">
+                                <span class="tpl-label">نماذج جاهزة:</span>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('viewingPolicy', 'viewing_standard')">معاينة قياسية</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('viewingPolicy', 'viewing_strict')">حجز مع عربون</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('viewingPolicy', 'viewing_open')">معاينة مفتوحة</button>
+                            </div>
                             <textarea id="viewingPolicy" placeholder="مثال:
 - المعاينة مجانية وبدون التزام
 - يجب حجز موعد مسبق
@@ -1627,6 +1677,12 @@
                         
                         <div class="form-group">
                             <label>نبذة عن الشركة</label>
+                            <div class="tpl-chips">
+                                <span class="tpl-label">نماذج جاهزة:</span>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('companyInfo', 'company_realestate')">شركة عقارية</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('companyInfo', 'company_broker')">وسيط عقاري</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('companyInfo', 'company_developer')">مطور عقاري</button>
+                            </div>
                             <textarea id="companyInfo" placeholder="مثال:
 - شركة عقارية مرخصة من الهيئة العامة للعقار
 - خبرة 10 سنوات في السوق السعودي
@@ -1635,6 +1691,12 @@
 
                         <div class="form-group">
                             <label>مناطق العمل</label>
+                            <div class="tpl-chips">
+                                <span class="tpl-label">نماذج جاهزة:</span>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('workAreas', 'areas_riyadh')">الرياض</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('workAreas', 'areas_jeddah')">جدة</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('workAreas', 'areas_ksa')">المملكة كاملة</button>
+                            </div>
                             <textarea id="workAreas" placeholder="مثال:
 - الرياض (شمال، شرق، غرب)
 - جدة
@@ -1647,6 +1709,12 @@
                         
                         <div class="form-group">
                             <label>الخدمات المقدمة</label>
+                            <div class="tpl-chips">
+                                <span class="tpl-label">نماذج جاهزة:</span>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('services', 'services_full')">خدمات شاملة</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('services', 'services_rental')">تأجير فقط</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('services', 'services_sale')">بيع وشراء</button>
+                            </div>
                             <textarea id="services" placeholder="مثال:
 - بيع وشراء العقارات
 - تأجير الشقق والفلل
@@ -1656,6 +1724,12 @@
 
                         <div class="form-group">
                             <label>أنواع العقارات المتوفرة</label>
+                            <div class="tpl-chips">
+                                <span class="tpl-label">نماذج جاهزة:</span>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('propertyTypes', 'props_residential')">سكني</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('propertyTypes', 'props_commercial')">تجاري</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('propertyTypes', 'props_all')">سكني وتجاري</button>
+                            </div>
                             <textarea id="propertyTypes" placeholder="مثال:
 - شقق سكنية (غرفة - 5 غرف)
 - فلل مستقلة ودوبلكس
@@ -1669,6 +1743,11 @@
                         
                         <div class="form-group">
                             <label>بيانات التواصل</label>
+                            <div class="tpl-chips">
+                                <span class="tpl-label">نماذج جاهزة:</span>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('contactInfo', 'contact_standard')">نموذج قياسي</button>
+                                <button type="button" class="tpl-chip" onclick="applyTemplate('contactInfo', 'contact_whatsapp')">واتساب أساسي</button>
+                            </div>
                             <textarea id="contactInfo" placeholder="مثال:
 - رقم الجوال: 05XXXXXXXX
 - البريد: info@company.com
@@ -1987,7 +2066,153 @@
 
     <script>
         // Django handles authentication
-        
+
+        // ═══════════════════════════════════════════════════════════
+        // Template library for context fields
+        // ═══════════════════════════════════════════════════════════
+        const TEMPLATES = {
+            // سياسة التسعير
+            pricing_standard: `- الأسعار المعروضة نهائية وغير قابلة للتفاوض
+- طرق الدفع المقبولة: نقداً، تحويل بنكي، شيك مصرفي
+- عمولة الوساطة 2.5% من قيمة الصفقة تُدفع عند إتمام العقد
+- يُشترط دفع 10% مقدم عند توقيع العقد`,
+
+            pricing_flexible: `- الأسعار قابلة للتفاوض بنسبة تصل إلى 10%
+- نرحب بجميع العروض الجادة من المشترين المؤهلين
+- الدفع نقداً يمنح أولوية في التفاوض
+- يمكن مناقشة شروط الدفع بمرونة حسب كل حالة`,
+
+            pricing_installment: `- متاح التمويل عبر جميع البنوك السعودية المعتمدة
+- برامج التقسيط تصل إلى 25 سنة للمواطنين
+- نساعد في استكمال إجراءات التمويل العقاري
+- الدفع نقداً أو بالتقسيط أو عبر صندوق التنمية العقارية
+- عمولة الوساطة 2% تُدفع عند إتمام الصفقة`,
+
+            // سياسة المعاينة
+            viewing_standard: `- المعاينة مجانية وبدون أي التزام
+- يجب حجز موعد مسبق قبل 24 ساعة على الأقل
+- مواعيد المعاينة: السبت إلى الخميس من 9 صباحاً حتى 9 مساءً
+- الحجز الأولي يتطلب عربون قابل للاسترداد`,
+
+            viewing_strict: `- المعاينة تتطلب حجز موعد مسبق
+- الحجز الجاد يستلزم دفع عربون 5,000 ريال
+- العربون يُخصم من قيمة الصفقة عند الشراء
+- العربون غير قابل للاسترداد في حال التراجع من المشتري
+- مدة الحجز 7 أيام فقط`,
+
+            viewing_open: `- أبوابنا مفتوحة للمعاينة طوال أيام الأسبوع
+- لا يلزم حجز مسبق للعقارات المعروضة
+- فريقنا متاح للرد على استفساراتك في أي وقت
+- يمكن ترتيب جولة ميدانية خلال ساعات`,
+
+            // معلومات الشركة
+            company_realestate: `- شركة عقارية مرخصة من الهيئة العامة للعقار برقم [رقم الترخيص]
+- خبرة أكثر من 10 سنوات في السوق العقاري السعودي
+- متخصصون في العقارات السكنية والتجارية والصناعية
+- فريق من المستشارين العقاريين المعتمدين
+- أكثر من 500 صفقة ناجحة منذ التأسيس`,
+
+            company_broker: `- وسيط عقاري معتمد من الهيئة العامة للعقار
+- نعمل بشفافية تامة لخدمة مصالح البائع والمشتري
+- خبرة واسعة في تقييم العقارات وإتمام الصفقات
+- نضمن سلامة الإجراءات القانونية لجميع العقود
+- متاحون 7 أيام في الأسبوع لخدمتك`,
+
+            company_developer: `- مطور عقاري معتمد بخبرة في تطوير المشاريع السكنية والتجارية
+- نلتزم بأعلى معايير الجودة في البناء والتشطيب
+- جميع مشاريعنا مرخصة ومعتمدة من الجهات الحكومية
+- نقدم ضمان بناء لمدة 10 سنوات على الهيكل الإنشائي
+- خيارات تشطيب متعددة تناسب جميع الأذواق`,
+
+            // مناطق العمل
+            areas_riyadh: `- الرياض: حي النرجس، الياسمين، العارض، الملقا
+- شمال الرياض: حي الصحافة، الغدير، الندى
+- شرق الرياض: حي الروضة، المونسية، الحمراء
+- غرب الرياض: حي العليا، السليمانية، الورود
+- وسط الرياض: حي المعذر، البديعة، الوزارات`,
+
+            areas_jeddah: `- جدة: حي الشاطئ، الروضة، الزهراء، الحمراء
+- شمال جدة: حي الفيصلية، السلامة، الأمواج
+- جنوب جدة: حي البوادي، الرحاب، الفيحاء
+- وسط جدة: البلد التاريخي، الصفا، الربوة`,
+
+            areas_ksa: `- الرياض وضواحيها
+- جدة والمنطقة الغربية
+- الدمام والخبر والمنطقة الشرقية
+- مكة المكرمة والمدينة المنورة
+- أبها وجازان والمنطقة الجنوبية
+- تبوك والمنطقة الشمالية`,
+
+            // الخدمات
+            services_full: `- بيع وشراء العقارات السكنية والتجارية
+- تأجير الشقق والفلل والمكاتب
+- إدارة الأملاك والمجمعات السكنية
+- التقييم العقاري المعتمد
+- الاستشارات العقارية والاستثمارية
+- خدمات ما بعد البيع والمتابعة`,
+
+            services_rental: `- تأجير الشقق (مفروشة وغير مفروشة)
+- تأجير الفلل والدوبلكسات
+- تأجير المكاتب والمحلات التجارية
+- إدارة العقارات المؤجرة نيابةً عن الملاك
+- تحصيل الإيجارات ومتابعة العقود`,
+
+            services_sale: `- بيع الشقق السكنية بجميع أحجامها
+- بيع الفلل المستقلة والمجمعات السكنية
+- بيع الأراضي السكنية والتجارية
+- بيع المكاتب والمحلات التجارية
+- المساعدة في إجراءات نقل الملكية`,
+
+            // أنواع العقارات
+            props_residential: `- شقق سكنية: استوديو، غرفة، غرفتين، 3 غرف، 4 غرف، 5 غرف
+- فلل مستقلة ودوبلكسات
+- تاون هاوس ومجمعات سكنية
+- أراضي سكنية جاهزة للبناء`,
+
+            props_commercial: `- مكاتب تجارية (مساحات مختلفة)
+- محلات تجارية في مواقع حيوية
+- مستودعات ومخازن
+- أراضي تجارية وصناعية
+- عمارات استثمارية للبيع`,
+
+            props_all: `- شقق سكنية بجميع الأحجام
+- فلل ودوبلكسات وتاون هاوس
+- مكاتب ومحلات تجارية
+- مستودعات ومخازن
+- أراضي سكنية وتجارية وصناعية
+- عمارات استثمارية`,
+
+            // معلومات التواصل
+            contact_standard: `- رقم الجوال / واتساب: 05XXXXXXXX
+- البريد الإلكتروني: info@company.com
+- الموقع الإلكتروني: www.company.com
+- العنوان: الرياض، حي [اسم الحي]، شارع [اسم الشارع]
+- أوقات العمل: السبت - الخميس، 9 صباحاً - 9 مساءً`,
+
+            contact_whatsapp: `- واتساب للتواصل الفوري: 05XXXXXXXX
+- متاحون على واتساب طوال اليوم
+- للاستفسارات العاجلة يُفضل التواصل عبر واتساب
+- البريد الإلكتروني: info@company.com`,
+        };
+
+        function applyTemplate(fieldId, templateKey) {
+            const el = document.getElementById(fieldId);
+            if (!el || !TEMPLATES[templateKey]) return;
+
+            // Fill the textarea
+            el.value = TEMPLATES[templateKey];
+            el.dispatchEvent(new Event('input'));
+
+            // Visual feedback on the clicked chip
+            const chips = el.closest('.form-group').querySelectorAll('.tpl-chip');
+            chips.forEach(c => c.classList.remove('applied'));
+            event.target.classList.add('applied');
+            setTimeout(() => event.target.classList.remove('applied'), 1800);
+
+            // Scroll textarea into view
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
         // Helper function to get cookie value
         function getCookie(name) {
             let cookieValue = null;
