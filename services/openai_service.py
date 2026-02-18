@@ -20,7 +20,7 @@ class OpenAIService:
         
         # المفتاح من .env أولاً، ثم من قاعدة البيانات
         self.api_key = os.getenv('OPENAI_API_KEY') or self.global_settings.get('openai_api_key', '')
-        self.model = self.global_settings.get('openai_model', 'gpt-4o-mini')
+        self.model = self.global_settings.get('openai_model', 'gpt-4.1-mini')
         self.system_prompt = self._build_system_prompt()
         
         # تهيئة العميل

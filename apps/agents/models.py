@@ -253,53 +253,35 @@ class AgentSettings(models.Model):
 class GlobalSettings(models.Model):
     """إعدادات النظام العامة - تُطبق على جميع المستخدمين"""
     
-    # مزود الذكاء الاصطناعي
-    AI_PROVIDER_CHOICES = [
-        ('gemini', 'Google Gemini'),
-        ('openai', 'OpenAI GPT'),
-    ]
-    
-    ai_provider = models.CharField(
-        max_length=20,
-        choices=AI_PROVIDER_CHOICES,
-        default='gemini',
-        verbose_name='مزود الذكاء الاصطناعي'
-    )
-    
-    # النموذج المستخدم - Gemini
-    AI_MODEL_CHOICES = [
-        ('gemini-2.0-flash', 'Gemini 2.0 Flash - سريع جداً'),
-        ('gemini-1.5-flash', 'Gemini 1.5 Flash - سريع'),
-        ('gemini-1.5-pro', 'Gemini 1.5 Pro - متوازن'),
-        ('gemini-2.5-pro-preview-05-06', 'Gemini 2.5 Pro - الأفضل جودة'),
-        ('gemini-2.5-flash-preview-05-20', 'Gemini 2.5 Flash - الأحدث والأسرع'),
-        ('gemini-3-pro-preview', 'Gemini 3 Pro - الجيل الثالث'),
-    ]
-    
-    # نماذج OpenAI
+    # نماذج OpenAI المتاحة
     OPENAI_MODEL_CHOICES = [
-        ('gpt-5', 'GPT-5 - الجيل الخامس 🚀'),
-        ('gpt-5-mini', 'GPT-5 Mini - سريع وذكي ⚡'),
-        ('gpt-5-mini-2025-08-07', 'GPT-5 Mini (2025-08-07) - الأحدث ⚡'),
-        ('gpt-4.1', 'GPT-4.1 - الأحدث'),
-        ('gpt-4o', 'GPT-4o - الأفضل'),
+        ('gpt-4.1', 'GPT-4.1 - الأفضل جودة 🧠'),
+        ('gpt-4.1-mini', 'GPT-4.1 Mini - الأحدث والأذكى بسعر مناسب ⚡ (موصى به)'),
+        ('gpt-4o', 'GPT-4o - ممتاز'),
         ('gpt-4o-mini', 'GPT-4o Mini - سريع وموفر'),
         ('gpt-4-turbo', 'GPT-4 Turbo - متوازن'),
         ('gpt-3.5-turbo', 'GPT-3.5 Turbo - اقتصادي'),
     ]
     
-    ai_model = models.CharField(
-        max_length=100, 
-        choices=AI_MODEL_CHOICES,
-        default='gemini-3-pro-preview',
-        verbose_name='نموذج Gemini'
+    ai_provider = models.CharField(
+        max_length=20,
+        default='openai',
+        verbose_name='مزود الذكاء الاصطناعي',
+        editable=False
     )
     
     openai_model = models.CharField(
         max_length=100,
         choices=OPENAI_MODEL_CHOICES,
-        default='gpt-4o-mini',
+        default='gpt-4.1-mini',
         verbose_name='نموذج OpenAI'
+    )
+    
+    ai_model = models.CharField(
+        max_length=100,
+        default='gpt-4.1-mini',
+        verbose_name='النموذج المستخدم',
+        editable=False
     )
     
     # مفتاح OpenAI

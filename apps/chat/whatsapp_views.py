@@ -405,17 +405,9 @@ class WhatsAppWebhookView(View):
         # بناء سياق العقارات
         properties_context = self._build_properties_context(properties)
         
-        # تحديد مزود الذكاء الاصطناعي
-        global_settings = GlobalSettings.objects.first()
-        ai_provider = global_settings.ai_provider if global_settings else 'gemini'
-        
-        # استخدام الخدمة المناسبة
-        if ai_provider == 'openai':
-            from services.openai_service import OpenAIService
-            ai_service = OpenAIService(agent=agent)
-        else:
-            from services.gemini_service import GeminiService
-            ai_service = GeminiService(agent=agent)
+        # استخدام OpenAI دائماً
+        from services.openai_service import OpenAIService
+        ai_service = OpenAIService(agent=agent)
         
         if not ai_service.is_available:
             logger.error("AI service not available for WhatsApp")

@@ -1,32 +1,19 @@
 # -*- coding: utf-8 -*-
 """
 RAG Service - خدمة استرجاع المعلومات المعززة بالذكاء الاصطناعي
-باستخدام Gemini للبحث الذكي في العقارات
 وكيل ذكاء اصطناعي عقاري متكامل
 """
 
 import os
 import json
 import re
-import google.generativeai as genai
 from typing import List, Dict, Any, Optional
-from django.conf import settings
 
 
 class RAGService:
     """خدمة RAG للبحث الذكي في العقارات - وكيل ذكاء اصطناعي"""
     
     def __init__(self):
-        # تكوين Gemini
-        self.api_key = os.getenv('GEMINI_API_KEY', '')
-        if self.api_key:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
-        else:
-            self.model = None
-        
-        self.embedding_model = 'models/embedding-001'
-        
         # كلمات مفتاحية لطلب الصور والفيديوهات
         self.media_keywords = [
             'صور', 'صورة', 'صوره', 'صورها', 'صورته', 'صورتها',
@@ -192,31 +179,6 @@ class RAGService:
             context_parts.append(prop_text)
         
         return "\n".join(context_parts)
-    
-    def _smart_search(self, query: str, context: str, properties) -> str:
-        """بحث ذكي باستخدام Gemini"""
-        try:
-            prompt = f"""أنت مساعد عقاري ذكي. بناءً على استفسار العميل والعقارات المتاحة، قم بما يلي:
-
-1. حدد العقارات الأكثر ملاءمة للاستفسار
-2. قدم ملخصاً واضحاً ومفيداً
-3. اذكر تفاصيل العقارات المناسبة (السعر، المساحة، الموقع، عدد الغرف)
-4. إذا كانت هناك صور متاحة، أشر إلى ذلك
-
-استفسار العميل: {query}
-
-العقارات المتاحة:
-{context}
-
-قدم إجابة مفيدة وموجزة بالعربية. إذا لم تجد عقارات مناسبة، اقترح بدائل من المتاح.
-"""
-            
-            response = self.model.generate_content(prompt)
-            return response.text
-            
-        except Exception as e:
-            print(f"Gemini Error: {e}")
-            return self._simple_search(query, properties)
     
     def _simple_search(self, query: str, properties) -> str:
         """بحث بسيط بدون AI"""

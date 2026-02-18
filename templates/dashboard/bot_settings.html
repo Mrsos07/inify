@@ -2237,7 +2237,7 @@
             agentName: 'Inify',
             agentDescription: 'وكيل عقاري ذكي',
             welcomeMessage: 'مرحباً! 👋 أنا وكيلك العقاري الذكي. كيف يمكنني مساعدتك اليوم؟',
-            model: 'gemini-3-pro-preview',
+            model: 'gpt-4.1-mini',
             systemPrompt: `أنت وكيل عقاري ذكي اسمك Inify. مهمتك مساعدة العملاء في:
 - البحث عن العقارات المناسبة لاحتياجاتهم
 - الإجابة عن استفساراتهم حول العقارات المتاحة
@@ -2785,7 +2785,7 @@
 
         // Toggle API key visibility
         function toggleApiKey() {
-            const input = document.getElementById('geminiApiKey');
+            const input = document.getElementById('openaiApiKey');
             input.type = input.type === 'password' ? 'text' : 'password';
         }
 
@@ -2797,9 +2797,7 @@
 
         // Toggle AI Provider
         function toggleAIProvider() {
-            const isGemini = document.getElementById('providerGemini').checked;
-            document.getElementById('geminiSettings').style.display = isGemini ? 'block' : 'none';
-            document.getElementById('openaiSettings').style.display = isGemini ? 'none' : 'block';
+            document.getElementById('openaiSettings').style.display = 'block';
         }
 
         // Tab switching

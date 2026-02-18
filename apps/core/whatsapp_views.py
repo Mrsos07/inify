@@ -463,15 +463,8 @@ def _process_whatsapp_message(instance, message_data):
         # ═══════════════════════════════════════════════════════════
         # 3️⃣ تحديد مزود AI وإنشاء الخدمة
         # ═══════════════════════════════════════════════════════════
-        global_settings = GlobalSettings.objects.first()
-        ai_provider = global_settings.ai_provider if global_settings else 'gemini'
-        
-        if ai_provider == 'openai':
-            from services.openai_service import OpenAIService
-            ai_service = OpenAIService(agent=agent)
-        else:
-            from services.gemini_service import GeminiService
-            ai_service = GeminiService(agent=agent)
+        from services.openai_service import OpenAIService
+        ai_service = OpenAIService(agent=agent)
         
         if not ai_service.is_available:
             logger.error("AI service not available")
