@@ -1558,55 +1558,114 @@ class EmbedChatAPI(View):
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
     
     def _build_properties_context(self, properties):
-        """بناء سياق العقارات"""
+        """بناء سياق العقارات الكامل مع جميع التفاصيل والمميزات"""
+        from datetime import datetime
+
         if not properties.exists():
             return "لا توجد عقارات متاحة حالياً"
-        
+
         context = f"العقارات المتاحة ({properties.count()} عقار):\n"
-        context += "═" * 40 + "\n"
-        
-        for i, prop in enumerate(properties, 1):
+
+        for i, prop in enumerate(properties[:15], 1):
             listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
-            
+
             # فترة الإيجار
             price_suffix = ''
             if prop.status == 'for_rent':
-                period_labels = {'yearly': '/سنوياً', 'monthly': '/شهرياً', 'daily': '/يومياً'}
-                price_suffix = period_labels.get(prop.rent_period, '/سنوياً')
-            
-            context += f"\n【عقار {i}】 🔖 الرقم المرجعي: {prop.reference_number}\n"
-            context += f"• العنوان: {prop.title}\n"
-            context += f"• النوع: {prop.get_property_type_display()} - {listing_type}\n"
-            context += f"• المدينة: {prop.city}\n"
-            context += f"• الحي: {prop.neighborhood or 'غير محدد'}\n"
-            if prop.address:
-                context += f"• العنوان التفصيلي: {prop.address}\n"
-            context += f"• السعر: {prop.price:,.0f} ريال{price_suffix}"
-            if prop.is_negotiable:
-                context += " (قابل للتفاوض)"
-            context += "\n"
-            if prop.size:
-                context += f"• المساحة: {prop.size} م²\n"
-            if prop.bedrooms:
-                context += f"• غرف النوم: {prop.bedrooms}\n"
-            if prop.bathrooms:
-                context += f"• الحمامات: {prop.bathrooms}\n"
-            if prop.living_rooms:
-                context += f"• غرف المعيشة: {prop.living_rooms}\n"
-            if prop.floor_number:
-                context += f"• الطابق: {prop.floor_number}\n"
-            if prop.furnishing:
-                context += f"• التأثيث: {prop.get_furnishing_display()}\n"
-            
+                rent_periods = {'yearly': '/سنوياً', 'monthly': '/شهرياً', 'daily': '/يومياً'}
+                price_suffix = rent_periods.get(prop.rent_period, '/سنوياً')
+
+            # عمر العقار
+            property_age = "غير محدد"
+            if prop.year_built:
+                property_age = f"{datetime.now().year - prop.year_built} سنة (بني {prop.year_built})"
+            elif prop.age_years:
+                property_age = f"{prop.age_years} سنة"
+
+            # التأثيث
+            furnishing_map = {
+                'furnished': 'مفروش بالكامل',
+                'semi_furnished': 'نصف مفروش',
+                'unfurnished': 'غير مفروش'
+            }
+            furnishing_display = furnishing_map.get(prop.furnishing, 'غير محدد')
+
+            # الطابق
+            floor_info = f"الطابق {prop.floor_number}" if prop.floor_number is not None else "غير محدد"
+
             # المميزات
-            amenities = [a.get_amenity_display() for a in prop.amenities.all()]
-            if amenities:
-                context += f"• المميزات: {', '.join(amenities)}\n"
-            
-            if prop.description:
-                context += f"• الوصف: {prop.description}\n"
-        
-        context += "═" * 40
+            amenities_qs = prop.amenities.all()
+            amenities_codes = [a.amenity for a in amenities_qs]
+            amenities_names = [a.get_amenity_display() for a in amenities_qs]
+
+            has_elevator   = 'elevator'    in amenities_codes
+            has_pool       = 'pool'        in amenities_codes
+            has_garden     = 'garden'      in amenities_codes
+            has_balcony    = 'balcony'     in amenities_codes
+            has_ac         = 'central_ac'  in amenities_codes
+            has_security   = 'security'    in amenities_codes
+            has_gym        = 'gym'         in amenities_codes
+            has_maid       = 'maid_room'   in amenities_codes
+            has_driver     = 'driver_room' in amenities_codes
+            has_storage    = 'storage'     in amenities_codes
+            has_playground = 'playground'  in amenities_codes
+            has_intercom   = 'intercom'    in amenities_codes
+            has_cctv       = 'cctv'        in amenities_codes
+            has_internet   = 'internet'    in amenities_codes
+            has_sea_view   = 'sea_view'    in amenities_codes
+            has_city_view  = 'city_view'   in amenities_codes
+
+            parking_count = prop.parking_spaces or 0
+            has_parking = 'parking' in amenities_codes or parking_count > 0
+
+            context += f"""
+══════════════════════════════════════
+عقار {i}: [{prop.reference_number}] {prop.title}
+══════════════════════════════════════
+النوع: {prop.get_property_type_display()} - {listing_type}
+الوصف: {prop.description or 'لا يوجد'}
+
+الموقع:
+- المدينة: {prop.city}
+- الحي: {prop.neighborhood or 'غير محدد'}
+- الشارع: {prop.street or 'غير محدد'}
+- العنوان: {prop.address or 'غير محدد'}
+
+السعر: {prop.price:,.0f} ريال{price_suffix}
+قابل للتفاوض: {'نعم' if prop.is_negotiable else 'لا'}
+
+التفاصيل:
+- المساحة: {prop.size} م²
+- غرف النوم: {prop.bedrooms}
+- الحمامات: {prop.bathrooms}
+- غرف المعيشة: {prop.living_rooms}
+- رقم الطابق: {floor_info}
+- عدد الطوابق: {prop.floors}
+- مواقف السيارات: {parking_count}
+- التأثيث: {furnishing_display}
+- عمر العقار: {property_age}
+
+المميزات:
+- مصعد: {'✅ يوجد' if has_elevator else '❌ لا يوجد'}
+- موقف سيارات: {'✅ يوجد (' + str(parking_count) + ' مواقف)' if has_parking else '❌ لا يوجد'}
+- تكييف مركزي: {'✅ يوجد' if has_ac else '❌ لا يوجد'}
+- مسبح: {'✅ يوجد' if has_pool else '❌ لا يوجد'}
+- حديقة: {'✅ يوجد' if has_garden else '❌ لا يوجد'}
+- شرفة/بلكونة: {'✅ يوجد' if has_balcony else '❌ لا يوجد'}
+- حراسة أمنية: {'✅ يوجد' if has_security else '❌ لا يوجد'}
+- صالة رياضية: {'✅ يوجد' if has_gym else '❌ لا يوجد'}
+- غرفة خادمة: {'✅ يوجد' if has_maid else '❌ لا يوجد'}
+- غرفة سائق: {'✅ يوجد' if has_driver else '❌ لا يوجد'}
+- مخزن: {'✅ يوجد' if has_storage else '❌ لا يوجد'}
+- ملعب أطفال: {'✅ يوجد' if has_playground else '❌ لا يوجد'}
+- إنترنت: {'✅ يوجد' if has_internet else '❌ لا يوجد'}
+- كاميرات مراقبة: {'✅ يوجد' if has_cctv else '❌ لا يوجد'}
+- اتصال داخلي: {'✅ يوجد' if has_intercom else '❌ لا يوجد'}
+- إطلالة بحرية: {'✅ يوجد' if has_sea_view else '❌ لا يوجد'}
+- إطلالة على المدينة: {'✅ يوجد' if has_city_view else '❌ لا يوجد'}
+جميع المميزات: {', '.join(amenities_names) if amenities_names else 'لا توجد مميزات مضافة'}
+"""
+
         return context
     
     def _build_system_prompt(self, agent, properties_context):
@@ -1683,6 +1742,24 @@ class EmbedChatAPI(View):
             
             if default_rules:
                 final_prompt += f"\n\n═══ قواعد إضافية ═══\n{default_rules}"
+            
+            # تعليمات إلزامية تتجاوز أي تعليمات سابقة
+            final_prompt += """
+
+═══════════════════════════════════════════════════════════
+🚨 تعليمات إلزامية - أولوية قصوى (تطغى على كل ما سبق):
+═══════════════════════════════════════════════════════════
+
+✅ البيانات الكاملة لجميع العقارات موجودة أعلاه في السياق.
+✅ أجب على أي سؤال عن تفاصيل العقار مباشرة من البيانات أعلاه.
+✅ إذا سأل العميل عن مصعد، موقف، تكييف، دور، عمر، حديقة، مسبح، أو أي ميزة - أجب فوراً من البيانات.
+
+❌ ممنوع طلب المدينة أو الحي إذا كانت العقارات موجودة في السياق أعلاه.
+❌ ممنوع قول "ممكن تخبرني المدينة" إذا كان السؤال عن تفصيل عقار موجود.
+❌ ممنوع التهرب من الإجابة المباشرة.
+
+📌 قاعدة ذهبية: إذا كانت المعلومة موجودة في بيانات العقارات أعلاه → أجب عنها مباشرة بدون أي سؤال.
+"""
             
             return final_prompt
         

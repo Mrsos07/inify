@@ -453,33 +453,122 @@ class WhatsAppWebhookView(View):
             return {'text': "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.", 'properties_to_show': []}
     
     def _build_properties_context(self, properties):
-        """بناء سياق العقارات (بدون روابط الصور - يتم إرسالها كميديا)"""
+        """بناء سياق العقارات الكامل مع جميع التفاصيل والمميزات"""
         from apps.properties.models import PropertyImage
-        
+        from datetime import datetime
+
         if not properties.exists():
             return "لا توجد عقارات متاحة حالياً"
-        
+
         context = f"العقارات المتاحة ({properties.count()} عقار):\n"
-        context += "\n⚠️ تعليمات مهمة: عند ذكر عقار للعميل، اذكر الرقم المرجعي فقط وسيتم إرسال صوره تلقائياً. لا تضع روابط الصور في الرد.\n"
-        
-        for i, prop in enumerate(properties[:10], 1):  # أول 10 عقارات فقط
+        context += "\n⚠️ تعليمات: عند ذكر عقار اذكر رقمه المرجعي فقط وسيتم إرسال صوره تلقائياً. لا تضع روابط صور في الرد.\n"
+
+        for i, prop in enumerate(properties[:15], 1):
             listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
-            
-            # عدد الصور المتاحة
+
+            # فترة الإيجار
+            price_suffix = ''
+            if prop.status == 'for_rent':
+                rent_periods = {'yearly': '/سنوياً', 'monthly': '/شهرياً', 'daily': '/يومياً'}
+                price_suffix = rent_periods.get(prop.rent_period, '/سنوياً')
+
+            # عمر العقار
+            property_age = "غير محدد"
+            if prop.year_built:
+                property_age = f"{datetime.now().year - prop.year_built} سنة (بني {prop.year_built})"
+            elif prop.age_years:
+                property_age = f"{prop.age_years} سنة"
+
+            # التأثيث
+            furnishing_map = {
+                'furnished': 'مفروش بالكامل',
+                'semi_furnished': 'نصف مفروش',
+                'unfurnished': 'غير مفروش'
+            }
+            furnishing_display = furnishing_map.get(prop.furnishing, 'غير محدد')
+
+            # الطابق
+            floor_info = f"الطابق {prop.floor_number}" if prop.floor_number is not None else "غير محدد"
+
+            # المميزات
+            amenities_qs = prop.amenities.all()
+            amenities_codes = [a.amenity for a in amenities_qs]
+            amenities_names = [a.get_amenity_display() for a in amenities_qs]
+
+            has_elevator  = 'elevator'   in amenities_codes
+            has_pool      = 'pool'       in amenities_codes
+            has_garden    = 'garden'     in amenities_codes
+            has_balcony   = 'balcony'    in amenities_codes
+            has_ac        = 'central_ac' in amenities_codes
+            has_security  = 'security'   in amenities_codes
+            has_gym       = 'gym'        in amenities_codes
+            has_maid      = 'maid_room'  in amenities_codes
+            has_driver    = 'driver_room' in amenities_codes
+            has_storage   = 'storage'    in amenities_codes
+            has_playground= 'playground' in amenities_codes
+            has_intercom  = 'intercom'   in amenities_codes
+            has_cctv      = 'cctv'       in amenities_codes
+            has_internet  = 'internet'   in amenities_codes
+            has_sea_view  = 'sea_view'   in amenities_codes
+            has_city_view = 'city_view'  in amenities_codes
+
+            parking_count = prop.parking_spaces or 0
+            has_parking = 'parking' in amenities_codes or parking_count > 0
+
+            # عدد الصور
             images_count = PropertyImage.objects.filter(property=prop).count()
-            images_info = f"📷 {images_count} صور متاحة" if images_count > 0 else "📷 لا توجد صور"
-            
-            context += f"\n{i}. [{prop.reference_number}] {prop.title} - {listing_type}\n"
-            context += f"   📍 {prop.city}"
-            if prop.neighborhood:
-                context += f" - {prop.neighborhood}"
-            context += f"\n   💰 {prop.price:,.0f} ريال\n"
-            if prop.bedrooms:
-                context += f"   🛏️ {prop.bedrooms} غرف"
-            if prop.size:
-                context += f" | 📐 {prop.size} م²"
-            context += f"\n   {images_info}\n"
-        
+            images_info = f"{images_count} صور متاحة" if images_count > 0 else "لا توجد صور"
+
+            context += f"""
+══════════════════════════════════════
+عقار {i}: [{prop.reference_number}] {prop.title}
+══════════════════════════════════════
+النوع: {prop.get_property_type_display()} - {listing_type}
+الوصف: {prop.description or 'لا يوجد'}
+
+الموقع:
+- المدينة: {prop.city}
+- الحي: {prop.neighborhood or 'غير محدد'}
+- الشارع: {prop.street or 'غير محدد'}
+- العنوان: {prop.address or 'غير محدد'}
+
+السعر: {prop.price:,.0f} ريال{price_suffix}
+قابل للتفاوض: {'نعم' if prop.is_negotiable else 'لا'}
+
+التفاصيل:
+- المساحة: {prop.size} م²
+- غرف النوم: {prop.bedrooms}
+- الحمامات: {prop.bathrooms}
+- غرف المعيشة: {prop.living_rooms}
+- رقم الطابق: {floor_info}
+- عدد الطوابق: {prop.floors}
+- مواقف السيارات: {parking_count}
+- التأثيث: {furnishing_display}
+- عمر العقار: {property_age}
+
+المميزات:
+- مصعد: {'✅ يوجد' if has_elevator else '❌ لا يوجد'}
+- موقف سيارات: {'✅ يوجد (' + str(parking_count) + ' مواقف)' if has_parking else '❌ لا يوجد'}
+- تكييف مركزي: {'✅ يوجد' if has_ac else '❌ لا يوجد'}
+- مسبح: {'✅ يوجد' if has_pool else '❌ لا يوجد'}
+- حديقة: {'✅ يوجد' if has_garden else '❌ لا يوجد'}
+- شرفة/بلكونة: {'✅ يوجد' if has_balcony else '❌ لا يوجد'}
+- حراسة أمنية: {'✅ يوجد' if has_security else '❌ لا يوجد'}
+- صالة رياضية: {'✅ يوجد' if has_gym else '❌ لا يوجد'}
+- غرفة خادمة: {'✅ يوجد' if has_maid else '❌ لا يوجد'}
+- غرفة سائق: {'✅ يوجد' if has_driver else '❌ لا يوجد'}
+- مخزن: {'✅ يوجد' if has_storage else '❌ لا يوجد'}
+- ملعب أطفال: {'✅ يوجد' if has_playground else '❌ لا يوجد'}
+- إنترنت: {'✅ يوجد' if has_internet else '❌ لا يوجد'}
+- كاميرات مراقبة: {'✅ يوجد' if has_cctv else '❌ لا يوجد'}
+- اتصال داخلي: {'✅ يوجد' if has_intercom else '❌ لا يوجد'}
+- إطلالة بحرية: {'✅ يوجد' if has_sea_view else '❌ لا يوجد'}
+- إطلالة على المدينة: {'✅ يوجد' if has_city_view else '❌ لا يوجد'}
+جميع المميزات: {', '.join(amenities_names) if amenities_names else 'لا توجد مميزات مضافة'}
+
+الصور: {images_info}
+"""
+
         return context
     
     def _extract_mentioned_properties(self, response_text: str, properties):
