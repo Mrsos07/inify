@@ -655,6 +655,108 @@
             opacity: 0.9;
         }
 
+        /* Saudi Arabia Map SVG */
+        .saudi-map-svg {
+            width: 85%;
+            max-width: 340px;
+            height: auto;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 0 18px rgba(107, 184, 201, 0.35));
+        }
+
+        .saudi-map-path {
+            fill: rgba(107, 184, 201, 0.12);
+            stroke: var(--cyan);
+            stroke-width: 2.5;
+            transition: fill 0.4s;
+        }
+
+        .saudi-map-svg:hover .saudi-map-path {
+            fill: rgba(107, 184, 201, 0.22);
+        }
+
+        .saudi-map-detail {
+            fill: none;
+            stroke: rgba(107, 184, 201, 0.5);
+        }
+
+        .saudi-city-dot {
+            fill: var(--cyan);
+            filter: drop-shadow(0 0 6px rgba(107, 184, 201, 0.8));
+        }
+
+        .saudi-city-dot-sm {
+            fill: rgba(107, 184, 201, 0.7);
+            filter: drop-shadow(0 0 4px rgba(107, 184, 201, 0.5));
+        }
+
+        .saudi-city-pulse {
+            fill: none;
+            stroke: var(--cyan);
+            stroke-width: 1.5;
+            opacity: 0.4;
+            animation: city-pulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes city-pulse {
+            0%, 100% { r: 12; opacity: 0.4; }
+            50% { r: 18; opacity: 0.1; }
+        }
+
+        .saudi-city-label {
+            fill: var(--cyan);
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        /* Light mode map */
+        body.light-mode .saudi-map-path {
+            fill: rgba(74, 144, 164, 0.1);
+            stroke: var(--blue-mid);
+        }
+
+        body.light-mode .saudi-map-detail {
+            stroke: rgba(74, 144, 164, 0.4);
+        }
+
+        body.light-mode .saudi-city-dot,
+        body.light-mode .saudi-city-dot-sm {
+            fill: var(--blue-mid);
+        }
+
+        body.light-mode .saudi-city-pulse {
+            stroke: var(--blue-mid);
+        }
+
+        body.light-mode .saudi-city-label {
+            fill: var(--blue-mid);
+        }
+
+        body.light-mode .saudi-map-svg {
+            filter: drop-shadow(0 0 14px rgba(74, 144, 164, 0.25));
+        }
+
+        /* Hero h1 line height for multi-line */
+        .hero h1 {
+            line-height: 1.25 !important;
+        }
+
+        /* Service/Solution icon SVG */
+        .service-icon svg,
+        .solution-icon svg,
+        .contact-card-icon svg {
+            width: 28px;
+            height: 28px;
+            color: var(--cyan);
+        }
+
+        .contact-icon-large svg {
+            width: 36px;
+            height: 36px;
+            color: var(--midnight);
+        }
+
         /* Services Section */
         .services-section {
             background: linear-gradient(180deg, var(--midnight) 0%, rgba(30, 58, 95, 0.2) 50%, var(--midnight) 100%);
@@ -919,6 +1021,14 @@
             justify-content: center;
             flex-shrink: 0;
             font-size: 24px;
+            color: var(--midnight);
+        }
+
+        .solution-icon svg {
+            width: 26px;
+            height: 26px;
+            color: var(--midnight);
+            stroke: var(--midnight);
         }
 
         .solution-text {
@@ -1000,6 +1110,16 @@
         .contact-card-icon {
             font-size: 32px;
             margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--cyan);
+        }
+
+        .contact-card-icon svg {
+            width: 32px;
+            height: 32px;
+            color: var(--cyan);
         }
 
         .contact-card h4 {
@@ -1507,17 +1627,14 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <div class="hero-icon">
-                <img src="/static/2x/logo1@2x.png" alt="Inify">
-            </div>
             <div class="hero-badge en">Inify Core LLC</div>
-            <h1>نبني <span>حلول ذكاء اصطناعي</span> تُحوّل طريقة عملك</h1>
+            <h1>مستقبل الابتكار في المملكة<br><span>حلول ذكاء اصطناعي</span><br>تُعيد تعريف الأعمال</h1>
             <p class="hero-subtitle">
-                شركة تقنية سعودية متخصصة في تطوير منتجات وحلول الذكاء الاصطناعي 
-                التي تساعد الشركات والأفراد على أتمتة أعمالهم وزيادة إنتاجيتهم
+                في Inify Core LLC، ندمج الخبرات العالمية بالرؤية المحلية لتطوير أنظمة ذكية
+                ترفع من كفاءة ونمو مؤسستك.
             </p>
             <div class="hero-buttons">
-                <a href="#contact" class="btn-primary">تواصل معنا</a>
+                <a href="#contact" class="btn-primary">تواصل مع خبرائنا</a>
                 <a href="#projects" class="btn-secondary">تعرّف على مشاريعنا</a>
             </div>
         </div>
@@ -1553,7 +1670,37 @@
             <div class="about-visual">
                 <div class="about-image-wrapper">
                     <div class="about-pattern">
-                        <span class="about-pattern-icon">🧠</span>
+                        <svg class="saudi-map-svg" viewBox="0 0 500 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Saudi Arabia map outline -->
+                            <path class="saudi-map-path" d="
+                                M 60,80 L 75,65 L 95,60 L 120,55 L 145,50 L 170,48 L 195,50 L 215,55
+                                L 230,52 L 248,48 L 265,50 L 278,58 L 290,65 L 305,70 L 318,68
+                                L 330,72 L 342,80 L 350,90 L 355,102 L 358,115 L 360,128
+                                L 365,138 L 372,148 L 378,158 L 382,170 L 385,182
+                                L 388,192 L 390,202 L 392,215 L 393,228 L 392,240
+                                L 390,252 L 386,262 L 380,270 L 372,276 L 362,280
+                                L 350,282 L 338,280 L 325,275 L 312,268 L 298,260
+                                L 285,252 L 272,245 L 258,240 L 244,238 L 230,240
+                                L 216,245 L 202,252 L 188,260 L 174,268 L 160,275
+                                L 146,280 L 132,282 L 118,280 L 105,275 L 93,268
+                                L 82,260 L 73,250 L 66,238 L 62,225 L 60,212
+                                L 58,198 L 58,185 L 60,172 L 63,160 L 67,148
+                                L 70,136 L 70,124 L 68,112 L 64,100 L 60,88 Z
+                            " stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <!-- Gulf coast detail -->
+                            <path class="saudi-map-detail" d="M 355,102 L 362,95 L 370,88 L 378,82 L 385,78 L 392,76 L 398,78 L 402,84 L 400,92 L 395,98 L 388,102 L 380,105 L 372,106 L 364,105 L 358,103 Z" stroke-width="1.5"/>
+                            <!-- Red Sea coast detail -->
+                            <path class="saudi-map-detail" d="M 60,80 L 52,88 L 46,98 L 42,110 L 40,124 L 40,138 L 42,152 L 46,165 L 52,177 L 58,188" stroke-width="1.5" stroke-dasharray="4,3"/>
+                            <!-- Riyadh dot -->
+                            <circle class="saudi-city-dot" cx="248" cy="185" r="6"/>
+                            <circle class="saudi-city-pulse" cx="248" cy="185" r="12"/>
+                            <!-- Jeddah dot -->
+                            <circle class="saudi-city-dot-sm" cx="105" cy="210" r="4"/>
+                            <!-- Dammam dot -->
+                            <circle class="saudi-city-dot-sm" cx="368" cy="148" r="4"/>
+                            <!-- Riyadh label -->
+                            <text class="saudi-city-label" x="258" y="190" font-size="13" font-family="BalooBhaijaan2, sans-serif">الرياض</text>
+                        </svg>
                     </div>
                 </div>
             </div>
@@ -1569,32 +1716,44 @@
         </div>
         <div class="services-grid">
             <div class="service-card">
-                <div class="service-icon">🤖</div>
+                <div class="service-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h.01M15 9h.01M9 15c.83 1 2.17 1 3 0"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/></svg>
+                </div>
                 <h3>وكلاء ذكاء اصطناعي</h3>
                 <p>تطوير وكلاء محادثة ذكية مخصصة لقطاعك، تتعامل مع العملاء بلغتهم وتفهم احتياجاتهم بدقة.</p>
             </div>
             <div class="service-card">
-                <div class="service-icon">⚙️</div>
+                <div class="service-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/></svg>
+                </div>
                 <h3>أتمتة العمليات</h3>
                 <p>تحويل العمليات اليدوية المتكررة إلى عمليات آلية ذكية توفر الوقت وتقلل الأخطاء البشرية.</p>
             </div>
             <div class="service-card">
-                <div class="service-icon">📊</div>
+                <div class="service-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                </div>
                 <h3>تحليل البيانات</h3>
                 <p>استخراج رؤى قيّمة من بياناتك باستخدام خوارزميات متقدمة تساعدك على اتخاذ قرارات أفضل.</p>
             </div>
             <div class="service-card">
-                <div class="service-icon">🔗</div>
+                <div class="service-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                </div>
                 <h3>تكامل الأنظمة</h3>
                 <p>ربط أنظمتك الحالية مع حلول الذكاء الاصطناعي بسلاسة دون الحاجة لتغيير بنيتك التحتية.</p>
             </div>
             <div class="service-card">
-                <div class="service-icon">🛡️</div>
+                <div class="service-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
                 <h3>حلول مخصصة</h3>
                 <p>تصميم وتطوير حلول تقنية مخصصة بالكامل تناسب طبيعة عملك واحتياجاتك الفريدة.</p>
             </div>
             <div class="service-card">
-                <div class="service-icon">💼</div>
+                <div class="service-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+                </div>
                 <h3>الخدمات الاستشارية</h3>
                 <p>استشارات متخصصة في التحول الرقمي والذكاء الاصطناعي، مع خارطة طريق واضحة لتبني التقنية في مؤسستك.</p>
             </div>
@@ -1657,42 +1816,54 @@
         </div>
         <div class="solutions-grid">
             <div class="solution-card">
-                <div class="solution-icon">🏠</div>
+                <div class="solution-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                </div>
                 <div class="solution-text">
                     <h3>القطاع العقاري</h3>
                     <p>وكلاء ذكاء اصطناعي يديرون محادثات العملاء ويعرضون العقارات المناسبة ويحجزون المعاينات تلقائياً.</p>
                 </div>
             </div>
             <div class="solution-card">
-                <div class="solution-icon">🏥</div>
+                <div class="solution-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                </div>
                 <div class="solution-text">
                     <h3>القطاع الصحي</h3>
                     <p>حجز مواعيد ذكي، متابعة المرضى، وإدارة الاستفسارات الطبية الأولية بكفاءة عالية.</p>
                 </div>
             </div>
             <div class="solution-card">
-                <div class="solution-icon">🛒</div>
+                <div class="solution-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                </div>
                 <div class="solution-text">
                     <h3>التجارة الإلكترونية</h3>
                     <p>مساعد تسوّق ذكي يساعد العملاء في اختيار المنتجات والإجابة عن استفساراتهم على مدار الساعة.</p>
                 </div>
             </div>
             <div class="solution-card">
-                <div class="solution-icon">🎓</div>
+                <div class="solution-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                </div>
                 <div class="solution-text">
                     <h3>قطاع التعليم</h3>
                     <p>مساعد تعليمي ذكي يجيب على أسئلة الطلاب ويقدم محتوى تعليمي مخصص حسب مستوى المتعلم.</p>
                 </div>
             </div>
             <div class="solution-card">
-                <div class="solution-icon">⚖️</div>
+                <div class="solution-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
                 <div class="solution-text">
                     <h3>القطاع القانوني</h3>
                     <p>تحليل العقود والمستندات القانونية وتقديم استشارات أولية ذكية لتوفير وقت المحامين.</p>
                 </div>
             </div>
             <div class="solution-card">
-                <div class="solution-icon">🏦</div>
+                <div class="solution-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                </div>
                 <div class="solution-text">
                     <h3>القطاع المالي</h3>
                     <p>تحليل البيانات المالية، الكشف عن الاحتيال، وتقديم توصيات مالية ذكية ومخصصة.</p>
@@ -1704,23 +1875,31 @@
     <!-- Contact Section -->
     <section class="section contact-section reveal" id="contact">
         <div class="contact-wrapper">
-            <div class="contact-icon-large">📞</div>
+            <div class="contact-icon-large">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.38 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
             <h2>تواصل معنا</h2>
             <p>نسعد بتواصلك معنا لمناقشة كيف يمكننا مساعدتك في تحويل أعمالك بالذكاء الاصطناعي</p>
             
             <div class="contact-cards">
                 <div class="contact-card">
-                    <div class="contact-card-icon">📱</div>
+                    <div class="contact-card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                    </div>
                     <h4>الجوال</h4>
                     <a href="tel:+966535156358" dir="ltr">+966 53 515 6358</a>
                 </div>
                 <div class="contact-card">
-                    <div class="contact-card-icon">✉️</div>
+                    <div class="contact-card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </div>
                     <h4>البريد الإلكتروني</h4>
                     <a href="mailto:info@inify.ai">info@inify.ai</a>
                 </div>
                 <div class="contact-card">
-                    <div class="contact-card-icon">📍</div>
+                    <div class="contact-card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </div>
                     <h4>الموقع</h4>
                     <p>المملكة العربية السعودية</p>
                 </div>
