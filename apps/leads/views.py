@@ -20,6 +20,7 @@ from .serializers import (
     AIAgentAvailabilityRequestSerializer, AIAgentBookingRequestSerializer
 )
 from services.lead_service import LeadService
+from apps.core.decorators import HasActiveSubscription
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -32,7 +33,7 @@ class LeadViewSet(viewsets.ModelViewSet):
     """ViewSet للعملاء المحتملين"""
     
     authentication_classes = [CsrfExemptSessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasActiveSubscription]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'source', 'urgency', 'looking_for']
     search_fields = ['name', 'phone', 'email', 'city_preference']
@@ -169,8 +170,79 @@ class ViewingAppointmentViewSet(viewsets.ModelViewSet):
         return ViewingAppointmentSerializer
     
     def perform_create(self, serializer):
-        """إنشاء موعد معاينة جديد"""
-        serializer.save(agent=self.request.user.agent_profile)
+        """إنشاء موعد معاينة جديد وإرسال تأكيد واتساب للعميل"""
+        agent = self.request.user.agent_profile
+        appointment = serializer.save(agent=agent)
+        
+        # إرسال رسالة تأكيد واتساب للعميل
+        self._send_whatsapp_confirmation(appointment, agent)
+    
+    def _send_whatsapp_confirmation(self, appointment, agent):
+        """إرسال رسالة تأكيد الحجز عبر واتساب للعميل"""
+        try:
+            # التحقق من وجود ربط واتساب نشط
+            whatsapp_instance = agent.whatsapp_instance
+            if whatsapp_instance.status != 'connected':
+                return
+            
+            client_phone = appointment.lead.phone
+            if not client_phone:
+                return
+            
+            # تنسيق التاريخ والوقت
+            from datetime import datetime
+            date_obj = appointment.scheduled_date
+            time_obj = appointment.scheduled_time
+            
+            day_names = {0: 'الاثنين', 1: 'الثلاثاء', 2: 'الأربعاء', 3: 'الخميس', 4: 'الجمعة', 5: 'السبت', 6: 'الأحد'}
+            month_names = {1: 'يناير', 2: 'فبراير', 3: 'مارس', 4: 'أبريل', 5: 'مايو', 6: 'يونيو',
+                          7: 'يوليو', 8: 'أغسطس', 9: 'سبتمبر', 10: 'أكتوبر', 11: 'نوفمبر', 12: 'ديسمبر'}
+            
+            day_name = day_names.get(date_obj.weekday(), '')
+            formatted_date = f"{day_name} {date_obj.day} {month_names.get(date_obj.month, '')} {date_obj.year}"
+            formatted_time = time_obj.strftime('%I:%M %p').replace('AM', 'صباحاً').replace('PM', 'مساءً')
+            
+            # بناء معلومات التواصل
+            contact_parts = []
+            if agent.company_name:
+                contact_parts.append(f"🏢 {agent.company_name}")
+            contact_phone = agent.whatsapp or agent.phone
+            if contact_phone:
+                contact_parts.append(f"📞 {contact_phone}")
+            if agent.bot_contact_info:
+                contact_parts.append(agent.bot_contact_info)
+            
+            contact_section = '\n'.join(contact_parts) if contact_parts else ''
+            
+            # بناء الرسالة
+            client_name = appointment.lead.name or 'عزيزي العميل'
+            property_title = appointment.property.title if appointment.property else 'العقار'
+            
+            message = f"""✅ تم تأكيد موعد المعاينة
+
+مرحباً {client_name}،
+
+يسعدنا إبلاغك بأنه تم حجز موعد معاينة العقار بنجاح.
+
+🏠 العقار: {property_title}
+📅 التاريخ: {formatted_date}
+🕐 الوقت: {formatted_time}
+
+نرجو الحضور في الموعد المحدد. إذا كنت بحاجة إلى تغيير الموعد أو لديك أي استفسار، يرجى التواصل معنا.
+
+{contact_section}
+
+شكراً لثقتك بنا 🙏"""
+            
+            from services.whatsapp_service import whatsapp_service
+            whatsapp_service.send_text_message(
+                whatsapp_instance.instance_name,
+                client_phone,
+                message.strip()
+            )
+            whatsapp_instance.increment_sent()
+        except Exception:
+            pass  # لا نوقف الحجز إذا فشل إرسال الواتساب
     
     @action(detail=True, methods=['post'])
     def confirm(self, request, pk=None):
@@ -721,6 +793,8 @@ def list_leads(request):
                 'urgency': lead.urgency,
                 'looking_for': lead.looking_for,
                 'city_preference': lead.city_preference,
+                'property_type_preference': lead.property_type_preference,
+                'neighborhood_preference': lead.neighborhood_preference,
                 'budget_min': float(lead.budget_min) if lead.budget_min else None,
                 'budget_max': float(lead.budget_max) if lead.budget_max else None,
                 'score': lead.score,

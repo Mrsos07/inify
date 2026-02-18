@@ -1,85 +1,108 @@
 # -*- coding: utf-8 -*-
 """
 Subscription Middleware - التحقق من صلاحية الاشتراك
-يمنع الوصول إلى لوحة التحكم عند انتهاء الاشتراك
+يحظر عمليات الكتابة (POST/PUT/DELETE) على الـ APIs عند انتهاء الاشتراك
+ويسمح بعرض الصفحات مع بوب أب الاشتراك المنتهي
 """
 
-from django.shortcuts import redirect
-from django.urls import reverse
+import logging
+from django.http import JsonResponse
 
+logger = logging.getLogger(__name__)
 
-# المسارات المحمية التي تتطلب اشتراك نشط
-PROTECTED_PATHS = [
-    '/dashboard/',
-    '/profile/',
-    '/chat/',
-    '/clients/',
-    '/settings/',
-    '/properties/',
+# API paths where write operations are blocked when subscription expires
+BLOCKED_WRITE_PREFIXES = [
+    '/api/v1/properties/',
+    '/api/v1/leads/',
+    '/api/whatsapp/connect/',
+    '/api/whatsapp/disconnect/',
+    '/api/whatsapp/settings/',
+    '/api/whatsapp/send/',
+    '/api/settings/save/',
 ]
 
-# المسارات المستثناة (يمكن الوصول إليها بدون اشتراك)
-EXEMPT_PATHS = [
-    '/subscription/',
-    '/api/subscription/',
-    '/payment/',
+# Paths always allowed regardless of subscription status
+ALWAYS_ALLOWED_PREFIXES = [
     '/auth/',
-    '/api/profile/',
+    '/api/subscription/',
     '/api/admin/',
-    '/admin/',
-    '/embed/',
-    '/api/embed/',
+    '/payment/',
     '/webhooks/',
+    '/api/whatsapp/status/',
+    '/api/whatsapp/qr/',
+    '/api/whatsapp/check/',
+    '/api/agent/',
+    '/api/profile/',
+    '/api/embed/',
     '/static/',
     '/media/',
-    '/',
+    '/health/',
+    '/embed/',
+    '/chat/',
+    '/admin/',
+    '/pricing/',
+    '/subscription/',
+    '/terms/',
+    '/privacy/',
 ]
+
+# Safe HTTP methods — never block reads
+SAFE_METHODS = {'GET', 'HEAD', 'OPTIONS'}
 
 
 class SubscriptionMiddleware:
     """
-    Middleware للتحقق من صلاحية الاشتراك قبل الوصول للوحة التحكم.
-    - إذا انتهى الاشتراك/التجربة → redirect لصفحة تجديد الاشتراك
-    - إذا الاشتراك قريب من الانتهاء → يضيف تنبيه في السياق
+    Middleware للتحقق من صلاحية الاشتراك.
+    - عمليات الكتابة (POST/PUT/DELETE) على الـ APIs المحمية → 403 JSON
+    - صفحات الداشبورد تُحمّل بشكل طبيعي مع flag للبوب أب
     """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # تخطي إذا المستخدم غير مسجل
         if not request.user.is_authenticated:
             return self.get_response(request)
 
-        # تخطي المسارات المستثناة
-        path = request.path
-        if any(path.startswith(exempt) for exempt in EXEMPT_PATHS if exempt != '/'):
-            return self.get_response(request)
-
-        # تخطي إذا المسار ليس محمي
-        is_protected = any(path.startswith(p) for p in PROTECTED_PATHS)
-        if not is_protected:
-            return self.get_response(request)
-
-        # تخطي إذا المستخدم admin/superuser
+        # Always allow superusers / staff
         if request.user.is_superuser or request.user.is_staff:
             return self.get_response(request)
 
-        # التحقق من وجود agent profile
-        try:
-            agent = request.user.agent_profile
-        except Exception:
+        path = request.path
+
+        # Always allowed paths — skip all checks
+        if self._is_always_allowed(path):
             return self.get_response(request)
 
-        # التحقق من الاشتراك
-        if not agent.has_active_subscription:
-            # الاشتراك منتهي → redirect لصفحة التجديد
-            if path != '/subscription/expired/':
-                return redirect('/subscription/expired/')
+        # For write operations on blocked APIs — check subscription
+        if request.method not in SAFE_METHODS and self._is_blocked_write(path):
+            if not self._has_active_sub(request.user):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'انتهى اشتراكك. يرجى تجديد الاشتراك لمتابعة استخدام الخدمة.',
+                    'subscription_expired': True,
+                }, status=403)
 
-        # إضافة معلومات الاشتراك للـ request لاستخدامها في القوالب
-        request.subscription_days_remaining = agent.subscription_days_remaining
-        request.subscription_expiring_soon = agent.is_subscription_expiring_soon
-        request.has_active_subscription = agent.has_active_subscription
+        # For bot-settings POST — also block
+        if request.method == 'POST' and path.rstrip('/') == '/dashboard/bot-settings':
+            if not self._has_active_sub(request.user):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'انتهى اشتراكك. يرجى تجديد الاشتراك لمتابعة استخدام الخدمة.',
+                    'subscription_expired': True,
+                }, status=403)
 
         return self.get_response(request)
+
+    def _is_always_allowed(self, path):
+        return any(path.startswith(p) for p in ALWAYS_ALLOWED_PREFIXES)
+
+    def _is_blocked_write(self, path):
+        return any(path.startswith(p) for p in BLOCKED_WRITE_PREFIXES)
+
+    def _has_active_sub(self, user):
+        try:
+            agent = user.agent_profile
+            return agent.has_active_subscription
+        except Exception:
+            return True  # No agent profile — don't block

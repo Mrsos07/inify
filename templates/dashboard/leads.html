@@ -1411,7 +1411,7 @@
             }
             
             // Build interested properties HTML
-            let propertiesHtml = '<p style="color: var(--text-muted);">لا توجد عقارات محددة</p>';
+            let propertiesHtml = '';
             const interestedProps = client.interested_properties || client.interested_properties_list || client.interestedProperties || [];
             if (interestedProps.length > 0) {
                 propertiesHtml = interestedProps.map(p => 
@@ -1425,6 +1425,112 @@
                         <div style="color: var(--cyan);">←</div>
                     </div>`
                 ).join('');
+            }
+            
+            // Build property preferences from lead fields + conversation analysis
+            let preferencesHtml = '';
+            const prefParts = [];
+            
+            // Property type preference
+            const typeLabels = {'apartment': 'شقة', 'villa': 'فيلا', 'land': 'أرض', 'office': 'مكتب', 'shop': 'محل تجاري', 'building': 'عمارة', 'duplex': 'دوبلكس', 'floor': 'دور', 'farm': 'مزرعة', 'warehouse': 'مستودع', 'rest_house': 'استراحة'};
+            if (client.property_type_preference) {
+                const typeLabel = typeLabels[client.property_type_preference] || client.property_type_preference;
+                prefParts.push({icon: '🏠', label: 'نوع العقار', value: typeLabel});
+            }
+            
+            // Looking for (buy/rent)
+            if (client.looking_for) {
+                const lookingLabels = {'buy': 'شراء', 'rent': 'إيجار', 'both': 'شراء وإيجار'};
+                prefParts.push({icon: '🔍', label: 'يبحث عن', value: lookingLabels[client.looking_for] || client.looking_for});
+            }
+            
+            // City preference
+            if (client.city_preference) {
+                prefParts.push({icon: '📍', label: 'المدينة', value: client.city_preference});
+            }
+            
+            // Neighborhood preference
+            if (client.neighborhood_preference) {
+                prefParts.push({icon: '🏘️', label: 'الحي', value: client.neighborhood_preference});
+            }
+            
+            // Budget
+            if (client.budget_min || client.budget_max) {
+                let budgetStr = '';
+                if (client.budget_min && client.budget_max) {
+                    budgetStr = `${parseInt(client.budget_min).toLocaleString('ar-SA')} - ${parseInt(client.budget_max).toLocaleString('ar-SA')} ريال`;
+                } else if (client.budget_max) {
+                    budgetStr = `حتى ${parseInt(client.budget_max).toLocaleString('ar-SA')} ريال`;
+                } else {
+                    budgetStr = `من ${parseInt(client.budget_min).toLocaleString('ar-SA')} ريال`;
+                }
+                prefParts.push({icon: '💰', label: 'الميزانية', value: budgetStr});
+            }
+            
+            // Analyze conversation for property interests if no preferences set
+            if (prefParts.length === 0) {
+                const msgs = client.conversation || client.messages || [];
+                const allText = msgs.map(m => m.content || '').join(' ');
+                
+                const typeKeywords = {
+                    'شقة': 'شقة', 'شقق': 'شقة', 'apartment': 'شقة',
+                    'فيلا': 'فيلا', 'فلل': 'فيلا', 'villa': 'فيلا',
+                    'أرض': 'أرض', 'ارض': 'أرض', 'land': 'أرض',
+                    'دوبلكس': 'دوبلكس', 'duplex': 'دوبلكس',
+                    'مكتب': 'مكتب', 'مكاتب': 'مكتب', 'office': 'مكتب',
+                    'محل': 'محل تجاري', 'shop': 'محل تجاري',
+                    'عمارة': 'عمارة', 'building': 'عمارة',
+                    'استراحة': 'استراحة', 'استراحه': 'استراحة',
+                    'مزرعة': 'مزرعة', 'مزرعه': 'مزرعة',
+                };
+                const foundTypes = new Set();
+                Object.keys(typeKeywords).forEach(kw => {
+                    if (allText.includes(kw)) foundTypes.add(typeKeywords[kw]);
+                });
+                if (foundTypes.size > 0) {
+                    prefParts.push({icon: '🏠', label: 'نوع العقار (من المحادثة)', value: Array.from(foundTypes).join('، ')});
+                }
+                
+                const purposeKeywords = {'شراء': 'شراء', 'اشتري': 'شراء', 'buy': 'شراء', 'إيجار': 'إيجار', 'ايجار': 'إيجار', 'استئجار': 'إيجار', 'rent': 'إيجار'};
+                const foundPurpose = new Set();
+                Object.keys(purposeKeywords).forEach(kw => {
+                    if (allText.includes(kw)) foundPurpose.add(purposeKeywords[kw]);
+                });
+                if (foundPurpose.size > 0) {
+                    prefParts.push({icon: '🔍', label: 'يبحث عن (من المحادثة)', value: Array.from(foundPurpose).join('، ')});
+                }
+                
+                const cityKeywords = ['الرياض', 'جدة', 'مكة', 'المدينة', 'الدمام', 'الخبر', 'الطائف', 'تبوك', 'أبها', 'جازان', 'نجران', 'حائل', 'ينبع', 'الجبيل', 'القصيم', 'بريدة'];
+                const foundCities = [];
+                cityKeywords.forEach(city => {
+                    if (allText.includes(city)) foundCities.push(city);
+                });
+                if (foundCities.length > 0) {
+                    prefParts.push({icon: '📍', label: 'المدينة (من المحادثة)', value: foundCities.join('، ')});
+                }
+            }
+            
+            if (prefParts.length > 0) {
+                preferencesHtml = `
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        ${prefParts.map(p => `
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(107, 184, 201, 0.08); border: 1px solid rgba(107, 184, 201, 0.15); border-radius: 10px;">
+                                <span style="font-size: 18px;">${p.icon}</span>
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 2px;">${p.label}</div>
+                                    <div style="font-size: 14px; color: var(--text-light); font-weight: 600;">${p.value}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            // Combine: explicit properties first, then preferences
+            if (!propertiesHtml && !preferencesHtml) {
+                propertiesHtml = '<p style="color: var(--text-muted);">لا توجد عقارات محددة</p>';
+            } else {
+                propertiesHtml = propertiesHtml + preferencesHtml;
             }
             
             // Build viewing appointments HTML
@@ -1770,10 +1876,14 @@
                 });
                 
                 if (response.ok) {
-                    alert('✅ تم حجز موعد المعاينة بنجاح');
+                    const client = clients.find(c => String(c.id) === String(currentViewingClientId));
+                    const clientPhone = client?.phone || '';
+                    const successMsg = clientPhone
+                        ? '✅ تم حجز موعد المعاينة بنجاح\n📲 تم إرسال رسالة تأكيد واتساب للعميل تلقائياً'
+                        : '✅ تم حجز موعد المعاينة بنجاح';
+                    alert(successMsg);
                     
                     // Update client status
-                    const client = clients.find(c => String(c.id) === String(currentViewingClientId));
                     if (client) {
                         client.status = 'viewing_scheduled';
                     }
@@ -1972,9 +2082,9 @@
         }
     </script>
     
+    {% include "dashboard/partials/subscription_gate.html" %}
+
     <!-- Theme Toggle Script -->
     <script src="/static/js/theme.js"></script>
 </body>
 </html>
-
-

@@ -10,15 +10,21 @@ def subscription_context(request):
     context = {
         'subscription_expiring_soon': False,
         'subscription_days_remaining': 0,
+        'subscription_expired': False,
     }
 
     if not request.user.is_authenticated:
         return context
 
+    if request.user.is_superuser or request.user.is_staff:
+        return context
+
     try:
         agent = request.user.agent_profile
+        has_active = agent.has_active_subscription
         context['subscription_days_remaining'] = agent.subscription_days_remaining
-        context['subscription_expiring_soon'] = agent.is_subscription_expiring_soon
+        context['subscription_expiring_soon'] = has_active and 0 < agent.subscription_days_remaining <= 3
+        context['subscription_expired'] = not has_active
     except Exception:
         pass
 

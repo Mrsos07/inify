@@ -20,12 +20,13 @@ from .serializers import (
     PropertyCreateSerializer, PropertyImageSerializer
 )
 from services.property_service import PropertyService
+from apps.core.decorators import HasActiveSubscription
 
 
 class PropertyViewSet(viewsets.ModelViewSet):
     """ViewSet للعقارات"""
     
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasActiveSubscription]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['property_type', 'status', 'city', 'neighborhood', 'is_featured']
     search_fields = ['title', 'description', 'city', 'neighborhood', 'address']

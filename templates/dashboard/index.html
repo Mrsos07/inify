@@ -1174,6 +1174,36 @@
         </div>
     </div>
 
+    {% include "dashboard/partials/subscription_gate.html" %}
+
+    <style>
+        /* Subscription warning banner */
+        .subscription-warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .subscription-warning-text {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 14px; color: #f59e0b; font-weight: 600;
+        }
+        .btn-renew {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff; padding: 8px 20px;
+            border-radius: 8px; text-decoration: none;
+            font-size: 13px; font-weight: 700;
+            transition: all 0.3s;
+        }
+        .btn-renew:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+    </style>
+
     <style>
         /* ═══════════════════════════════════════════════════════════ */
         /* Subscription Popup Styles                                  */
@@ -1462,63 +1492,33 @@
 
     <script>
         // ═══════════════════════════════════════════════════════════
-        // Subscription Popup Logic
+        // Welcome Subscription Popup Logic (expired popup is in shared partial)
         // ═══════════════════════════════════════════════════════════
         {% if show_subscription_popup %}
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                document.getElementById('subscriptionPopup').style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            }, 800);
+            // Only show welcome popup if expired popup is NOT showing
+            if (!document.getElementById('expiredPopup') || document.getElementById('expiredPopup').style.display !== 'flex') {
+                setTimeout(function() {
+                    var sp = document.getElementById('subscriptionPopup');
+                    if (sp) { sp.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+                }, 800);
+            }
         });
         {% endif %}
 
         function closeSubscriptionPopup() {
-            const popup = document.getElementById('subscriptionPopup');
+            var popup = document.getElementById('subscriptionPopup');
+            if (!popup) return;
             popup.style.animation = 'subFadeOut 0.25s ease forwards';
             setTimeout(function() {
                 popup.style.display = 'none';
                 popup.style.animation = '';
                 document.body.style.overflow = '';
             }, 250);
-            // Remove welcome param from URL
             if (window.history.replaceState) {
-                const url = new URL(window.location);
+                var url = new URL(window.location);
                 url.searchParams.delete('welcome');
                 window.history.replaceState({}, '', url);
-            }
-        }
-
-        async function subscribePlan(planKey) {
-            const btn = document.querySelector(`.sub-plan-card[data-plan="${planKey}"] .sub-plan-btn`);
-            const originalText = btn.textContent;
-            btn.disabled = true;
-            btn.textContent = 'جاري التحويل...';
-
-            try {
-                const response = await fetch('/api/subscription/subscribe/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken'),
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ plan_key: planKey }),
-                });
-
-                const data = await response.json();
-
-                if (data.success && data.payment_url) {
-                    window.location.href = data.payment_url;
-                } else {
-                    alert(data.error || 'حدث خطأ في إنشاء رابط الدفع');
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                }
-            } catch (error) {
-                alert('حدث خطأ في الاتصال');
-                btn.disabled = false;
-                btn.textContent = originalText;
             }
         }
     </script>

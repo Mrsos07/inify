@@ -1,0 +1,332 @@
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- Subscription Gate - Expired Popup + Global Fetch Interceptor -->
+<!-- Include before </body> on every dashboard page              -->
+<!-- Requires context: subscription_expired (bool)                -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<!-- Expired Subscription Popup (cannot be dismissed) -->
+<div id="expiredPopup" class="exp-popup-overlay" style="display: none;">
+    <div class="exp-popup-container">
+        <div class="exp-popup-glow"></div>
+
+        <div class="exp-popup-header">
+            <div class="exp-icon-wrap">
+                <div class="exp-icon-ring"></div>
+                <div class="exp-icon">⏰</div>
+            </div>
+            <h2 class="exp-title">انتهت فترة الاشتراك</h2>
+            <p class="exp-subtitle">للاستمرار في استخدام جميع مزايا Inify، يرجى تفعيل اشتراكك الآن</p>
+        </div>
+
+        <div class="exp-locked-bar">
+            <div class="exp-locked-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                الخدمات المتوقفة حالياً
+            </div>
+            <div class="exp-locked-items">
+                <span class="exp-locked-chip">🏠 إضافة عقارات</span>
+                <span class="exp-locked-chip">📱 ربط واتساب</span>
+                <span class="exp-locked-chip">🤖 إعدادات الوكيل</span>
+                <span class="exp-locked-chip">💬 إرسال رسائل</span>
+            </div>
+        </div>
+
+        <div class="exp-plans-grid">
+            <div class="exp-plan-card" data-plan="monthly">
+                <div class="exp-plan-name">شهري</div>
+                <div class="exp-plan-price"><span class="exp-amount">199</span><span class="exp-unit"> ريال/شهر</span></div>
+                <button class="exp-plan-btn" onclick="subscribePlan('monthly')">اشترك الآن</button>
+            </div>
+            <div class="exp-plan-card" data-plan="quarterly">
+                <div class="exp-plan-save">وفّر 10%</div>
+                <div class="exp-plan-name">3 أشهر</div>
+                <div class="exp-plan-price"><span class="exp-amount">537</span><span class="exp-unit"> ريال</span></div>
+                <div class="exp-plan-per">179 ريال/شهر</div>
+                <button class="exp-plan-btn" onclick="subscribePlan('quarterly')">اشترك الآن</button>
+            </div>
+            <div class="exp-plan-card best" data-plan="semi">
+                <div class="exp-plan-save best-save">الأفضل قيمة</div>
+                <div class="exp-plan-name">6 أشهر</div>
+                <div class="exp-plan-price"><span class="exp-amount">1,015</span><span class="exp-unit"> ريال</span></div>
+                <div class="exp-plan-per">169 ريال/شهر</div>
+                <button class="exp-plan-btn best-btn" onclick="subscribePlan('semi')">اشترك الآن</button>
+            </div>
+            <div class="exp-plan-card" data-plan="annual">
+                <div class="exp-plan-save">وفّر 25%</div>
+                <div class="exp-plan-name">سنوي</div>
+                <div class="exp-plan-price"><span class="exp-amount">1,791</span><span class="exp-unit"> ريال</span></div>
+                <div class="exp-plan-per">149 ريال/شهر</div>
+                <button class="exp-plan-btn" onclick="subscribePlan('annual')">اشترك الآن</button>
+            </div>
+        </div>
+
+        <div class="exp-features">
+            <div class="exp-feat"><span>✅</span> وكيل ذكي يعمل 24/7</div>
+            <div class="exp-feat"><span>✅</span> ربط واتساب تلقائي</div>
+            <div class="exp-feat"><span>✅</span> عقارات غير محدودة</div>
+            <div class="exp-feat"><span>✅</span> تحليلات وتقارير</div>
+            <div class="exp-feat"><span>✅</span> إدارة عملاء متقدمة</div>
+            <div class="exp-feat"><span>✅</span> دعم فني مباشر</div>
+        </div>
+
+        <div class="exp-footer">
+            <p>🔒 دفع آمن عبر StreamPay · إلغاء في أي وقت</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .exp-popup-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(16px);
+        z-index: 999999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        animation: expFadeIn 0.4s ease;
+    }
+    @keyframes expFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .exp-popup-container {
+        background: linear-gradient(180deg, #0d1b2a 0%, #0f2234 100%);
+        border: 1px solid rgba(107, 184, 201, 0.25);
+        border-radius: 28px;
+        width: 100%;
+        max-width: 860px;
+        max-height: 94vh;
+        overflow-y: auto;
+        padding: 44px 40px 32px;
+        position: relative;
+        animation: expSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6), 0 0 80px rgba(107, 184, 201, 0.08);
+    }
+    @keyframes expSlideUp {
+        from { opacity: 0; transform: translateY(50px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .exp-popup-glow {
+        position: absolute;
+        top: -1px; left: 50%; transform: translateX(-50%);
+        width: 200px; height: 3px;
+        background: linear-gradient(90deg, transparent, #6bb8c9, transparent);
+        border-radius: 0 0 4px 4px;
+    }
+
+    .exp-popup-header { text-align: center; margin-bottom: 28px; }
+    .exp-icon-wrap {
+        position: relative;
+        width: 80px; height: 80px;
+        margin: 0 auto 18px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .exp-icon-ring {
+        position: absolute; inset: 0;
+        border: 2px solid rgba(239, 68, 68, 0.3);
+        border-radius: 50%;
+        animation: expRingPulse 2s ease-in-out infinite;
+    }
+    @keyframes expRingPulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.15); opacity: 0; }
+    }
+    .exp-icon {
+        font-size: 48px;
+        animation: expIconShake 0.6s ease 0.5s both;
+    }
+    @keyframes expIconShake {
+        0%, 100% { transform: rotate(0); }
+        20% { transform: rotate(-12deg); }
+        40% { transform: rotate(12deg); }
+        60% { transform: rotate(-6deg); }
+        80% { transform: rotate(6deg); }
+    }
+    .exp-title {
+        font-size: 30px; font-weight: 800; color: #fff; margin-bottom: 10px;
+    }
+    .exp-subtitle {
+        font-size: 15px; color: rgba(255, 255, 255, 0.55);
+        max-width: 480px; margin: 0 auto; line-height: 1.6;
+    }
+
+    .exp-locked-bar {
+        background: rgba(239, 68, 68, 0.06);
+        border: 1px solid rgba(239, 68, 68, 0.15);
+        border-radius: 14px;
+        padding: 16px 20px; margin-bottom: 28px;
+    }
+    .exp-locked-title {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 14px; font-weight: 700; color: #ef4444; margin-bottom: 12px;
+    }
+    .exp-locked-items { display: flex; flex-wrap: wrap; gap: 8px; }
+    .exp-locked-chip {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.12);
+        padding: 5px 14px; border-radius: 20px;
+        font-size: 12px; color: rgba(255, 255, 255, 0.6);
+    }
+
+    .exp-plans-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        gap: 14px; margin-bottom: 24px;
+    }
+    .exp-plan-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px; padding: 22px 14px 18px;
+        text-align: center; position: relative; transition: all 0.3s ease;
+    }
+    .exp-plan-card:hover {
+        border-color: rgba(107, 184, 201, 0.4);
+        background: rgba(107, 184, 201, 0.06);
+        transform: translateY(-3px);
+    }
+    .exp-plan-card.best {
+        border-color: rgba(107, 184, 201, 0.5);
+        background: rgba(107, 184, 201, 0.08);
+        box-shadow: 0 8px 30px rgba(107, 184, 201, 0.12);
+    }
+    .exp-plan-save {
+        position: absolute; top: -9px; right: 50%; transform: translateX(50%);
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff; padding: 2px 12px; border-radius: 20px;
+        font-size: 10px; font-weight: 700; white-space: nowrap;
+    }
+    .exp-plan-save.best-save { background: linear-gradient(135deg, #6bb8c9, #2E5A8B); }
+    .exp-plan-name {
+        font-size: 15px; font-weight: 700;
+        color: rgba(255, 255, 255, 0.85); margin-bottom: 8px; margin-top: 2px;
+    }
+    .exp-amount { font-size: 30px; font-weight: 800; color: #6bb8c9; }
+    .exp-unit { font-size: 12px; color: rgba(255, 255, 255, 0.4); }
+    .exp-plan-per { font-size: 11px; color: rgba(107, 184, 201, 0.6); margin-bottom: 10px; }
+    .exp-plan-btn {
+        width: 100%; padding: 9px 14px;
+        border: 1px solid rgba(107, 184, 201, 0.3);
+        background: rgba(107, 184, 201, 0.1);
+        color: #6bb8c9; border-radius: 10px;
+        font-size: 13px; font-weight: 700;
+        cursor: pointer; transition: all 0.3s; font-family: inherit; margin-top: 10px;
+    }
+    .exp-plan-btn:hover {
+        background: rgba(107, 184, 201, 0.25);
+        border-color: rgba(107, 184, 201, 0.5);
+    }
+    .exp-plan-btn.best-btn {
+        background: linear-gradient(135deg, #2E5A8B, #4A90A4);
+        border: none; color: #fff;
+    }
+    .exp-plan-btn.best-btn:hover { box-shadow: 0 6px 20px rgba(46, 90, 139, 0.4); }
+    .exp-plan-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .exp-features {
+        display: grid; grid-template-columns: repeat(3, 1fr);
+        gap: 8px 16px; margin-bottom: 20px; padding: 16px 20px;
+        background: rgba(107, 184, 201, 0.04);
+        border: 1px solid rgba(107, 184, 201, 0.1); border-radius: 14px;
+    }
+    .exp-feat {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 13px; color: rgba(255, 255, 255, 0.65);
+    }
+    .exp-footer { text-align: center; }
+    .exp-footer p { font-size: 12px; color: rgba(255, 255, 255, 0.3); }
+
+    @media (max-width: 768px) {
+        .exp-popup-container { padding: 28px 18px 22px; }
+        .exp-title { font-size: 24px; }
+        .exp-plans-grid { grid-template-columns: repeat(2, 1fr); }
+        .exp-features { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+        .exp-plans-grid { grid-template-columns: 1fr; }
+        .exp-features { grid-template-columns: 1fr; }
+        .exp-popup-container { padding: 22px 14px 16px; border-radius: 18px; }
+    }
+</style>
+
+<script>
+(function() {
+    // ═══════════════════════════════════════════════════════════
+    // Subscription Gate — shows expired popup & intercepts fetch
+    // ═══════════════════════════════════════════════════════════
+    var _subExpired = {% if subscription_expired %}true{% else %}false{% endif %};
+
+    function _showExpiredPopup() {
+        var el = document.getElementById('expiredPopup');
+        if (el && el.style.display !== 'flex') {
+            el.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    // Show immediately on page load if expired
+    if (_subExpired) {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(_showExpiredPopup, 300);
+        });
+    }
+
+    // Global fetch interceptor — catch 403 subscription_expired from ANY API call
+    var _origFetch = window.fetch;
+    window.fetch = function() {
+        return _origFetch.apply(this, arguments).then(function(response) {
+            if (response.status === 403) {
+                // Clone so we can read body without consuming it
+                var clone = response.clone();
+                clone.json().then(function(data) {
+                    if (data && data.subscription_expired) {
+                        _showExpiredPopup();
+                    }
+                }).catch(function() {});
+            }
+            return response;
+        });
+    };
+
+    // Subscribe plan helper (available globally)
+    window.subscribePlan = window.subscribePlan || async function subscribePlan(planKey) {
+        var btn = document.querySelector('.exp-plan-card[data-plan="' + planKey + '"] .exp-plan-btn');
+        if (!btn) btn = document.querySelector('.sub-plan-card[data-plan="' + planKey + '"] .sub-plan-btn');
+        if (!btn) return;
+
+        var originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'جاري التحويل...';
+
+        try {
+            // getCookie may or may not exist on the page
+            var csrfToken = '';
+            if (typeof getCookie === 'function') {
+                csrfToken = getCookie('csrftoken');
+            } else {
+                var m = document.cookie.match(/csrftoken=([^;]+)/);
+                csrfToken = m ? m[1] : '';
+            }
+
+            var resp = await _origFetch('/api/subscription/subscribe/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                credentials: 'include',
+                body: JSON.stringify({ plan_key: planKey }),
+            });
+            var data = await resp.json();
+
+            if (data.success && data.payment_url) {
+                window.location.href = data.payment_url;
+            } else {
+                alert(data.error || 'حدث خطأ في إنشاء رابط الدفع');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        } catch (e) {
+            alert('حدث خطأ في الاتصال');
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    };
+})();
+</script>

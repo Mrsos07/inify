@@ -13,6 +13,7 @@ from django.utils import timezone
 
 from services.whatsapp_service import whatsapp_service
 from apps.agents.models import Agent, WhatsAppInstance
+from apps.core.decorators import subscription_required
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,7 @@ def whatsapp_status(request):
 
 @login_required
 @csrf_exempt
+@subscription_required
 def whatsapp_connect(request):
     """
     الخطوة 1: إنشاء Instance جديد في Evolution API
@@ -281,6 +283,7 @@ def whatsapp_get_qr(request):
 
 @login_required
 @csrf_exempt
+@subscription_required
 def whatsapp_disconnect(request):
     """حذف ربط الواتساب بالكامل"""
     if request.method != 'POST':
@@ -313,6 +316,7 @@ def whatsapp_disconnect(request):
 
 @login_required
 @csrf_exempt
+@subscription_required
 def whatsapp_settings(request):
     """تحديث إعدادات الواتساب"""
     try:
@@ -706,7 +710,8 @@ def _extract_date_time(message, conversation_history):
 
 
 @login_required
-@csrf_exempt  
+@csrf_exempt
+@subscription_required
 def whatsapp_send_message(request):
     """إرسال رسالة واتساب"""
     if request.method != 'POST':

@@ -669,7 +669,11 @@ def dashboard_view(request):
     sub = Subscription.objects.filter(agent=agent).order_by('-created_at').first()
     is_trial = sub and sub.status == 'trial'
     is_paid_active = sub and sub.status == 'active' and sub.is_active
-    show_popup = request.GET.get('welcome') == '1' and not is_paid_active
+    sub_is_active = sub.is_active if sub else False
+    sub_expired = sub is not None and not sub_is_active
+    show_welcome = request.GET.get('welcome') == '1' and not is_paid_active
+    days_left = sub.days_remaining if sub else 0
+    expiring_soon = sub_is_active and 0 < days_left <= 3
 
     context = {
         'user_name': user.get_full_name() or user.username,
@@ -686,10 +690,12 @@ def dashboard_view(request):
         'recent_properties': properties_data,
         'recent_leads': leads_data,
         'active_page': 'dashboard',
-        'show_subscription_popup': show_popup,
+        'show_subscription_popup': show_welcome,
         'subscription_status': sub.status if sub else 'none',
         'subscription_is_trial': is_trial,
-        'subscription_days_remaining': sub.days_remaining if sub else 0,
+        'subscription_days_remaining': days_left,
+        'subscription_expired': sub_expired,
+        'subscription_expiring_soon': expiring_soon,
     }
     
     return render(request, 'dashboard/index.html', context)
@@ -851,6 +857,7 @@ def bot_settings_view(request):
     from apps.agents.models import Agent
     import base64
     from django.core.files.base import ContentFile
+    from apps.core.decorators import check_active_subscription
     
     user = request.user
     
@@ -866,6 +873,15 @@ def bot_settings_view(request):
         )
     
     if request.method == 'POST':
+        # Block POST when subscription is expired
+        if not user.is_superuser and not user.is_staff:
+            is_active, _ = check_active_subscription(user)
+            if not is_active:
+                return JsonResponse({
+                    'status': 'error',
+                    'error': 'انتهى اشتراكك. يرجى تجديد الاشتراك لمتابعة استخدام الخدمة.',
+                    'subscription_expired': True,
+                }, status=403)
         try:
             # Update bot settings
             agent.bot_name = request.POST.get('bot_name', agent.bot_name)
