@@ -870,23 +870,12 @@ class EmbedChatAPI(View):
             # بناء سياق العقارات
             properties_context = self._build_properties_context(properties)
             
-            # بناء الـ prompt
-            system_prompt = self._build_system_prompt(agent, properties_context)
-            
-            # تحديد مزود الذكاء الاصطناعي من الإعدادات
+            # استخدام OpenAI دائماً
+            from services.openai_service import OpenAIService
             from apps.agents.models import GlobalSettings
             global_settings = GlobalSettings.objects.first()
-            ai_provider = global_settings.ai_provider if global_settings else 'gemini'
-            
-            # استخدام الخدمة المناسبة
-            if ai_provider == 'openai':
-                from services.openai_service import OpenAIService
-                ai_service = OpenAIService(agent=agent)
-                logger.info(f"Embed Chat - AI Provider: OpenAI | Model: {global_settings.openai_model}")
-            else:
-                from services.gemini_service import GeminiService
-                ai_service = GeminiService(agent=agent)
-                logger.info(f"Embed Chat - AI Provider: Gemini | Model: {global_settings.ai_model}")
+            ai_service = OpenAIService(agent=agent)
+            logger.info(f"Embed Chat - AI Provider: OpenAI | Model: {global_settings.openai_model if global_settings else 'gpt-4.1-mini'}")
             
             if not ai_service.is_available:
                 return JsonResponse({'success': False, 'error': 'خدمة AI غير متاحة'}, status=503)
@@ -1565,6 +1554,7 @@ class EmbedChatAPI(View):
             return "لا توجد عقارات متاحة حالياً"
 
         context = f"العقارات المتاحة ({properties.count()} عقار):\n"
+        context += "\n⚠️ تعليمات: عند ذكر عقار اذكر رقمه المرجعي فقط. لا تضع روابط صور في الرد.\n"
 
         for i, prop in enumerate(properties[:15], 1):
             listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
