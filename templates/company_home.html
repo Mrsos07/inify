@@ -1473,49 +1473,253 @@
 
         /* ═══════════════════════ Light Mode ═══════════════════════ */
         body.light-mode {
-            --midnight: #F8F9FA;
-            --dark-blue: #E9ECEF;
-            --pearl: #1A1A2E;
-            --text-muted: rgba(26, 26, 46, 0.7);
-            background: #F8F9FA;
-            color: #1A1A2E;
+            --midnight: #F4F6F9;
+            --dark-blue: #EAF0F6;
+            --blue-mid: #3A7D96;
+            --cyan: #3A7D96;
+            --cyan-light: #5BA3BC;
+            --pearl: #1C2B3A;
+            --text-muted: rgba(28, 43, 58, 0.62);
+            background: #F4F6F9;
+            color: #1C2B3A;
         }
 
+        /* Header */
         body.light-mode .header {
-            background: rgba(248, 249, 250, 0.95);
-            border-bottom-color: rgba(74, 144, 164, 0.15);
+            background: rgba(244, 246, 249, 0.92);
+            backdrop-filter: blur(20px);
+            border-bottom-color: rgba(58, 125, 150, 0.12);
+            box-shadow: 0 1px 12px rgba(0, 0, 0, 0.06);
         }
 
         body.light-mode .header-logo img { filter: none; }
-        body.light-mode .logo-text { color: #1A1A2E; }
-        body.light-mode .header-center a { color: #1A1A2E; }
-        body.light-mode .nav-link-btn { color: #1A1A2E; }
-        body.light-mode .menu-icon { color: #1A1A2E; }
+        body.light-mode .logo-text { color: #1C2B3A; }
+        body.light-mode .header-center a { color: #1C2B3A; }
+        body.light-mode .header-center a:hover { color: #3A7D96; background: rgba(58, 125, 150, 0.08); }
+        body.light-mode .nav-link-btn { color: #1C2B3A; }
+        body.light-mode .nav-link-btn:hover { color: #3A7D96; background: rgba(58, 125, 150, 0.08); }
+        body.light-mode .menu-icon { color: #1C2B3A; }
+        body.light-mode .header-brand-tagline { color: rgba(28, 43, 58, 0.5); }
 
+        /* Hero */
         body.light-mode .hero::before {
-            background: linear-gradient(180deg, rgba(248,249,250,0.8) 0%, rgba(248,249,250,0.5) 40%, rgba(248,249,250,0.85) 100%);
+            background: linear-gradient(180deg,
+                rgba(244,246,249,0.72) 0%,
+                rgba(244,246,249,0.38) 45%,
+                rgba(244,246,249,0.80) 100%
+            );
         }
 
-        body.light-mode .hero-icon img { filter: none; }
-        body.light-mode .hero h1 { color: #1A1A2E; }
+        body.light-mode .hero h1 { color: #1C2B3A; }
+        body.light-mode .hero-subtitle { color: rgba(28, 43, 58, 0.68); }
 
-        body.light-mode .service-card,
-        body.light-mode .solution-card,
-        body.light-mode .contact-card,
+        body.light-mode .hero-badge {
+            background: rgba(58, 125, 150, 0.08);
+            border-color: rgba(58, 125, 150, 0.2);
+            color: #3A7D96;
+        }
+
+        body.light-mode .btn-hero-cta {
+            background: #1C2B3A;
+            color: #F4F6F9;
+            box-shadow: 0 8px 28px rgba(28, 43, 58, 0.18);
+        }
+
+        body.light-mode .btn-hero-cta:hover {
+            background: #243547;
+            box-shadow: 0 12px 36px rgba(28, 43, 58, 0.24);
+        }
+
+        body.light-mode .btn-hero-cta svg { color: #F4F6F9; }
+
+        /* Sections */
+        body.light-mode .section {
+            background: #F4F6F9;
+        }
+
+        body.light-mode .services-section {
+            background: linear-gradient(180deg, #F4F6F9 0%, #EEF3F8 50%, #F4F6F9 100%);
+        }
+
+        body.light-mode .solutions-section {
+            background: linear-gradient(180deg, #F4F6F9 0%, #EEF3F8 50%, #F4F6F9 100%);
+        }
+
+        body.light-mode .section-badge {
+            background: rgba(58, 125, 150, 0.08);
+            border-color: rgba(58, 125, 150, 0.18);
+            color: #3A7D96;
+        }
+
+        body.light-mode .section-title { color: #1C2B3A; }
+        body.light-mode .section-desc { color: rgba(28, 43, 58, 0.62); }
+
+        /* Cards */
+        body.light-mode .service-card {
+            background: #FFFFFF;
+            border-color: rgba(58, 125, 150, 0.12);
+            box-shadow: 0 2px 16px rgba(28, 43, 58, 0.06);
+        }
+
+        body.light-mode .service-card:hover {
+            border-color: rgba(58, 125, 150, 0.25);
+            box-shadow: 0 8px 32px rgba(28, 43, 58, 0.1);
+        }
+
+        body.light-mode .service-card h3 { color: #1C2B3A; }
+        body.light-mode .service-card p { color: rgba(28, 43, 58, 0.62); }
+
+        body.light-mode .service-icon {
+            background: rgba(58, 125, 150, 0.08);
+            border-color: rgba(58, 125, 150, 0.15);
+            color: #3A7D96;
+        }
+
+        body.light-mode .solution-card {
+            background: #FFFFFF;
+            border-color: rgba(58, 125, 150, 0.12);
+            box-shadow: 0 2px 16px rgba(28, 43, 58, 0.06);
+        }
+
+        body.light-mode .solution-card:hover {
+            border-color: rgba(58, 125, 150, 0.25);
+            box-shadow: 0 8px 32px rgba(28, 43, 58, 0.1);
+        }
+
+        body.light-mode .solution-text h3 { color: #1C2B3A; }
+        body.light-mode .solution-text p { color: rgba(28, 43, 58, 0.62); }
+
+        body.light-mode .contact-card {
+            background: #FFFFFF;
+            border-color: rgba(58, 125, 150, 0.12);
+            box-shadow: 0 2px 16px rgba(28, 43, 58, 0.06);
+        }
+
+        body.light-mode .contact-card:hover {
+            border-color: rgba(58, 125, 150, 0.25);
+            box-shadow: 0 8px 32px rgba(28, 43, 58, 0.1);
+        }
+
+        body.light-mode .contact-card h4 { color: #1C2B3A; }
+        body.light-mode .contact-card p,
+        body.light-mode .contact-card a { color: rgba(28, 43, 58, 0.62); }
+
         body.light-mode .stat-item {
             background: #FFFFFF;
-            border-color: rgba(74, 144, 164, 0.2);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border-color: rgba(58, 125, 150, 0.12);
+            box-shadow: 0 2px 12px rgba(28, 43, 58, 0.05);
         }
 
+        body.light-mode .stat-number { color: #3A7D96; }
+        body.light-mode .stat-label { color: rgba(28, 43, 58, 0.55); }
+
+        /* About */
+        body.light-mode .about-content h2 { color: #1C2B3A; }
+        body.light-mode .about-content h2 span { color: #3A7D96; }
+        body.light-mode .about-content p { color: rgba(28, 43, 58, 0.65); }
+
+        body.light-mode .about-image-wrapper {
+            border-color: rgba(58, 125, 150, 0.15);
+        }
+
+        body.light-mode .about-pattern {
+            background: linear-gradient(145deg, rgba(234, 240, 246, 0.8), rgba(244, 246, 249, 0.9));
+        }
+
+        /* Project card */
         body.light-mode .project-card {
             background: #FFFFFF;
-            border-color: rgba(74, 144, 164, 0.2);
+            border-color: rgba(58, 125, 150, 0.15);
+            box-shadow: 0 4px 24px rgba(28, 43, 58, 0.08);
         }
 
-        body.light-mode .footer { background: #E9ECEF; }
-        body.light-mode .footer-brand .logo-text { color: #1A1A2E; }
-        body.light-mode .footer-col h4 { color: #1A1A2E; }
+        body.light-mode .project-content h3 { color: #1C2B3A; }
+        body.light-mode .project-content p { color: rgba(28, 43, 58, 0.62); }
+        body.light-mode .project-tag {
+            background: rgba(58, 125, 150, 0.08);
+            border-color: rgba(58, 125, 150, 0.18);
+            color: #3A7D96;
+        }
+
+        body.light-mode .project-feature {
+            background: rgba(58, 125, 150, 0.06);
+            border-color: rgba(58, 125, 150, 0.14);
+            color: #1C2B3A;
+        }
+
+        /* Contact section */
+        body.light-mode .contact-section {
+            border-top-color: rgba(58, 125, 150, 0.1);
+        }
+
+        body.light-mode .contact-wrapper h2 { color: #1C2B3A; }
+        body.light-mode .contact-wrapper > p { color: rgba(28, 43, 58, 0.62); }
+
+        body.light-mode .contact-cta {
+            background: linear-gradient(135deg, rgba(58, 125, 150, 0.06), rgba(234, 240, 246, 0.5));
+            border-color: rgba(58, 125, 150, 0.15);
+        }
+
+        body.light-mode .contact-cta p { color: #1C2B3A; }
+
+        body.light-mode .btn-secondary {
+            color: #1C2B3A;
+            border-color: rgba(58, 125, 150, 0.3);
+        }
+
+        body.light-mode .btn-secondary:hover {
+            color: #3A7D96;
+            background: rgba(58, 125, 150, 0.08);
+            border-color: #3A7D96;
+        }
+
+        /* Mobile menu */
+        body.light-mode .mobile-menu {
+            background: linear-gradient(180deg, #F4F6F9 0%, #EAF0F6 100%);
+        }
+
+        body.light-mode .mobile-menu-links a {
+            color: #1C2B3A;
+            background: rgba(58, 125, 150, 0.06);
+        }
+
+        body.light-mode .mobile-menu-links a:hover {
+            background: rgba(58, 125, 150, 0.14);
+        }
+
+        body.light-mode .mobile-menu-close { color: #1C2B3A; }
+
+        /* Footer */
+        body.light-mode .footer {
+            background: #EAF0F6;
+            border-top: 1px solid rgba(58, 125, 150, 0.1);
+        }
+
+        body.light-mode .footer-brand .logo-text { color: #1C2B3A; }
+        body.light-mode .footer-brand .tagline { color: #3A7D96; }
+        body.light-mode .footer-col h4 { color: #1C2B3A; }
+        body.light-mode .footer-col a { color: rgba(28, 43, 58, 0.6); }
+        body.light-mode .footer-col a:hover { color: #3A7D96; }
+        body.light-mode .footer-bottom { border-top-color: rgba(58, 125, 150, 0.12); }
+        body.light-mode .footer-bottom .company,
+        body.light-mode .footer-bottom .copyright { color: rgba(28, 43, 58, 0.5); }
+        body.light-mode .footer-bottom .copyright span { color: #3A7D96; }
+
+        /* Theme toggle */
+        body.light-mode .theme-toggle-btn {
+            background: rgba(58, 125, 150, 0.08);
+            border-color: rgba(58, 125, 150, 0.2);
+            color: #3A7D96;
+        }
+
+        /* Saudi map in light mode */
+        body.light-mode .saudi-map-img {
+            filter: brightness(0) saturate(100%) invert(35%) sepia(40%) saturate(600%) hue-rotate(160deg) brightness(0.85) drop-shadow(0 0 14px rgba(58, 125, 150, 0.25));
+        }
+
+        body.light-mode .saudi-map-img:hover {
+            filter: brightness(0) saturate(100%) invert(35%) sepia(40%) saturate(800%) hue-rotate(160deg) brightness(0.9) drop-shadow(0 0 22px rgba(58, 125, 150, 0.4));
+        }
 
         /* Theme Toggle */
         .theme-toggle-btn {
