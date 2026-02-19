@@ -32,6 +32,13 @@
         </div>
 
         <div class="exp-plans-grid">
+            <div class="exp-plan-card exp-plan-trial" data-plan="trial_day">
+                <div class="exp-plan-save exp-trial-save">🧪 تجربة</div>
+                <div class="exp-plan-name">يوم تجريبي</div>
+                <div class="exp-plan-price"><span class="exp-amount">1</span><span class="exp-unit"> ريال</span></div>
+                <div class="exp-plan-per">ليوم واحد فقط</div>
+                <button class="exp-plan-btn exp-trial-btn" onclick="subscribePlan('trial_day')">جرّب الآن</button>
+            </div>
             <div class="exp-plan-card" data-plan="monthly">
                 <div class="exp-plan-name">شهري</div>
                 <div class="exp-plan-price"><span class="exp-amount">199</span><span class="exp-unit"> ريال/شهر</span></div>
@@ -180,8 +187,27 @@
     }
 
     .exp-plans-grid {
-        display: grid; grid-template-columns: repeat(4, 1fr);
-        gap: 14px; margin-bottom: 24px;
+        display: grid; grid-template-columns: repeat(5, 1fr);
+        gap: 12px; margin-bottom: 24px;
+    }
+    .exp-plan-trial {
+        border-color: rgba(251,191,36,0.3) !important;
+    }
+    .exp-plan-trial:hover {
+        border-color: rgba(251,191,36,0.6) !important;
+        background: rgba(251,191,36,0.06) !important;
+    }
+    .exp-trial-save {
+        background: linear-gradient(135deg, #f59e0b, #b45309) !important;
+    }
+    .exp-trial-btn {
+        border-color: rgba(251,191,36,0.4) !important;
+        color: #fbbf24 !important;
+        background: rgba(251,191,36,0.08) !important;
+    }
+    .exp-trial-btn:hover {
+        background: rgba(251,191,36,0.18) !important;
+        border-color: rgba(251,191,36,0.6) !important;
     }
     .exp-plan-card {
         background: rgba(255, 255, 255, 0.03);
@@ -275,6 +301,9 @@
         background: rgba(239, 68, 68, 0.05);
     }
 
+    @media (max-width: 900px) {
+        .exp-plans-grid { grid-template-columns: repeat(3, 1fr); }
+    }
     @media (max-width: 768px) {
         .exp-popup-container { padding: 28px 18px 22px; }
         .exp-title { font-size: 24px; }

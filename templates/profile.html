@@ -528,12 +528,17 @@
         /* Plans Grid */
         .plans-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
             margin-top: 20px;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1100px) {
+            .plans-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (max-width: 700px) {
             .plans-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -617,6 +622,22 @@
         .plan-card.current {
             border-color: var(--cyan);
             background: rgba(107, 184, 201, 0.1);
+        }
+
+        .plan-trial-card {
+            border-color: rgba(251,191,36,0.35) !important;
+        }
+        .plan-trial-card:hover {
+            border-color: rgba(251,191,36,0.65) !important;
+            background: rgba(251,191,36,0.06) !important;
+        }
+        .plan-trial-card.selected {
+            border-color: #fbbf24 !important;
+            background: rgba(251,191,36,0.08) !important;
+        }
+        .plan-trial-badge {
+            font-size: 11px; font-weight: 700;
+            color: #fbbf24; margin-bottom: 6px;
         }
 
         .plan-card.current::after {
@@ -964,6 +985,12 @@
 
                     <h4 style="margin-bottom: 12px; font-size: 15px;" id="plansTitle">اختر خطتك</h4>
                     <div class="plans-grid" id="plansGrid">
+                        <div class="plan-card plan-trial-card" data-plan="trial_day" onclick="selectPlan('trial_day')">
+                            <div class="plan-trial-badge">🧪 تجربة</div>
+                            <div class="plan-name">يوم تجريبي</div>
+                            <div class="plan-price" style="color:#fbbf24;">1 <span>ريال</span></div>
+                            <div class="plan-permonth">ليوم واحد فقط</div>
+                        </div>
                         <div class="plan-card selected" data-plan="monthly" onclick="selectPlan('monthly')">
                             <div class="plan-name">شهري</div>
                             <div class="plan-price">199 <span>ريال</span></div>
