@@ -540,11 +540,27 @@ def verify_email_view(request):
         # Mark user as verified
         try:
             user = User.objects.get(email=email)
-            from apps.agents.models import Agent
+            from apps.agents.models import Agent, Subscription
+            from services.streampay_service import streampay_service
             agent = Agent.objects.get(user=user)
             agent.is_email_verified = True
             agent.save()
-            
+
+            # Reset trial to start NOW (not at registration time)
+            from django.utils import timezone as _tz
+            now = _tz.now()
+            trial_sub = Subscription.objects.filter(
+                agent=agent, status='trial'
+            ).order_by('-created_at').first()
+            if trial_sub:
+                trial_end = streampay_service.get_trial_end_date(now)
+                trial_sub.trial_start = now
+                trial_sub.trial_end = trial_end
+                trial_sub.save(update_fields=['trial_start', 'trial_end', 'updated_at'])
+                agent.subscription_start = now
+                agent.subscription_expires = trial_end
+                agent.save(update_fields=['subscription_start', 'subscription_expires'])
+
             # Login the user
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return render(request, 'auth/verify-email.html', {'success': True})

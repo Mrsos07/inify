@@ -580,11 +580,18 @@ class Subscription(models.Model):
     
     @property
     def days_remaining(self):
-        """عدد الأيام المتبقية"""
+        """عدد الأيام المتبقية (يُقرّب للأعلى لتجنب عرض 0 قبل انتهاء المدة)"""
+        import math
         if self.status == 'trial' and self.trial_end:
             delta = self.trial_end - timezone.now()
-            return max(0, delta.days)
+            seconds = delta.total_seconds()
+            if seconds <= 0:
+                return 0
+            return max(1, math.ceil(seconds / 86400))
         if self.status == 'active' and self.end_date:
             delta = self.end_date - timezone.now()
-            return max(0, delta.days)
+            seconds = delta.total_seconds()
+            if seconds <= 0:
+                return 0
+            return max(1, math.ceil(seconds / 86400))
         return 0
