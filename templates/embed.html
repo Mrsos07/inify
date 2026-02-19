@@ -1607,34 +1607,65 @@
             showTyping();
             
             try {
-                const response = await getAIResponse(message);
+                const result = await getAIResponse(message);
+                const responseText = result.text || result;
                 hideTyping();
-                addMessage(response, 'bot');
-                conversationHistory.push({ role: 'assistant', content: response });
+                addMessage(responseText, 'bot');
+                conversationHistory.push({ role: 'assistant', content: responseText });
                 
-                // عرض كروت العقارات فقط إذا لم تكن رسالة اهتمام
-                // مع تأخير 5 ثواني لإعطاء المستخدم وقت لقراءة الرد
+                // ═══════════════════════════════════════════════════════════
+                // عرض كروت العقارات مع الصور والفيديوهات من Backend
+                // ═══════════════════════════════════════════════════════════
                 if (!isInterestMessage) {
-                    const mentionedProperties = findMentionedProperties(response);
-                    if (mentionedProperties.length > 0) {
-                        lastSearchedProperties = mentionedProperties;
-                        const propertyCards = generatePropertyCards();
-                        if (propertyCards) {
-                            // إظهار مؤشر الكتابة أثناء الانتظار
-                            setTimeout(() => {
-                                showTyping();
-                            }, 2000);
-                            
-                            // عرض العقارات بعد 5 ثواني
-                            setTimeout(() => {
-                                hideTyping();
-                                addMessage(propertyCards, 'bot', true);
-                            }, 5000);
+                    // أولاً: حاول عرض الصور من backendPropertiesMedia
+                    const mediaKeys = Object.keys(backendPropertiesMedia);
+                    if (mediaKeys.length > 0) {
+                        // ابحث عن العقارات المذكورة في الرد
+                        const mentionedMedia = [];
+                        for (const propId of mediaKeys) {
+                            const media = backendPropertiesMedia[propId];
+                            const ref = media.reference || '';
+                            const title = media.title || '';
+                            // تحقق إذا ذُكر الرقم المرجعي أو العنوان في الرد
+                            if (ref && responseText.includes(ref)) {
+                                mentionedMedia.push(media);
+                            } else if (title && responseText.includes(title.substring(0, 10))) {
+                                mentionedMedia.push(media);
+                            }
+                        }
+
+                        // إذا لم نجد مطابقة محددة لكن الرد يتحدث عن عقارات، اعرض الكل
+                        const propertyPresentKeywords = ['لدي', 'عندي', 'عندنا', 'متوفر', 'موجود', 'لقيت', 'وجدت', 'شقة', 'فيلا', 'خيارات', 'عروض', 'عقار'];
+                        const hasPresentKeyword = propertyPresentKeywords.some(kw => responseText.includes(kw));
+                        const mediaTouse = mentionedMedia.length > 0 ? mentionedMedia : (hasPresentKeyword ? Object.values(backendPropertiesMedia) : []);
+
+                        if (mediaTouse.length > 0) {
+                            const mediaCards = generateMediaCards(mediaTouse);
+                            if (mediaCards) {
+                                setTimeout(() => { showTyping(); }, 1500);
+                                setTimeout(() => {
+                                    hideTyping();
+                                    addMessage(mediaCards, 'bot', true);
+                                }, 3500);
+                            }
+                        }
+                    } else {
+                        // Fallback: استخدام العقارات المحملة من API (بدون صور)
+                        const mentionedProperties = findMentionedProperties(responseText);
+                        if (mentionedProperties.length > 0) {
+                            lastSearchedProperties = mentionedProperties;
+                            const propertyCards = generatePropertyCards();
+                            if (propertyCards) {
+                                setTimeout(() => { showTyping(); }, 2000);
+                                setTimeout(() => {
+                                    hideTyping();
+                                    addMessage(propertyCards, 'bot', true);
+                                }, 5000);
+                            }
                         }
                     }
                 }
                 
-                // إعادة تعيين متغير الاهتمام
                 isInterestMessage = false;
             } catch (error) {
                 hideTyping();
@@ -1927,6 +1958,9 @@
             if (typing) typing.remove();
         }
 
+        // مخزن الصور والفيديوهات من Backend
+        let backendPropertiesMedia = {};
+
         // Get AI response - استخدام Backend API الآمن
         async function getAIResponse(userMessage) {
             try {
@@ -1949,18 +1983,25 @@
                     console.log('%c   Provider: ' + data.ai_info.provider.toUpperCase(), 'color: #4ade80;');
                     console.log('%c   Model: ' + data.ai_info.model, 'color: #4ade80;');
                 }
+
+                // تحديث مخزن الصور والفيديوهات من Backend
+                if (data.properties_media && Object.keys(data.properties_media).length > 0) {
+                    backendPropertiesMedia = data.properties_media;
+                    console.log('🖼️ Properties media loaded:', Object.keys(backendPropertiesMedia).length, 'properties');
+                }
                 
                 if (!response.ok || !data.success) {
                     console.error('API Error:', data.error);
-                    return 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.';
+                    return { text: 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.', media: null };
                 }
                 
-                // الرد يأتي مباشرة من Backend
-                return data.response || 'عذراً، لم أتمكن من معالجة طلبك.';
+                return {
+                    text: data.response || 'عذراً، لم أتمكن من معالجة طلبك.',
+                    media: data.properties_media || null
+                };
             } catch (error) {
                 console.error('Fetch Error:', error);
-                console.error('Error Details:', error.message);
-                return 'عذراً، حدث خطأ في الاتصال. يرجى التحقق من اتصال الإنترنت.';
+                return { text: 'عذراً، حدث خطأ في الاتصال. يرجى التحقق من اتصال الإنترنت.', media: null };
             }
         }
 
@@ -2223,7 +2264,74 @@
             return results.slice(0, 5);
         }
 
-        // Generate property cards HTML
+        // Generate media cards from Backend properties_media
+        function generateMediaCards(mediaList) {
+            if (!mediaList || mediaList.length === 0) return '';
+
+            // تحديث lastSearchedProperties بالعقارات من backendPropertiesMedia
+            lastSearchedProperties = mediaList.map(m => {
+                // ابحث عن العقار في properties المحملة
+                const found = properties.find(p => String(p.id) === String(m.property_id));
+                return found || {
+                    id: m.property_id,
+                    title: m.title,
+                    reference_number: m.reference,
+                    mainImage: m.primary_image,
+                    images: m.images ? m.images.map(img => img.url) : [],
+                    videos: m.videos || []
+                };
+            });
+
+            return `
+                <div class="properties-container">
+                    ${mediaList.map((m, i) => {
+                        const prop = lastSearchedProperties[i];
+                        const hasImages = m.images && m.images.length > 0;
+                        const hasVideos = m.videos && m.videos.length > 0;
+                        const primaryImg = m.primary_image || (hasImages ? m.images[0].url : null);
+                        const listingLabel = prop && prop.status === 'for_rent' ? 'للإيجار' : 'للبيع';
+                        return `
+                        <div class="property-card" style="cursor:pointer;transition:all 0.3s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                            ${primaryImg ? `
+                                <div class="property-image" onclick="openGallery(${i})">
+                                    <img src="${primaryImg}" alt="${m.title}" loading="lazy">
+                                    <span class="property-badge">${listingLabel}</span>
+                                    ${hasImages && m.images.length > 1 ? `<span style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;padding:3px 8px;border-radius:6px;">📷 ${m.images.length}</span>` : ''}
+                                    ${hasVideos ? `<span style="position:absolute;bottom:8px;right:${hasImages && m.images.length > 1 ? '60px' : '8px'};background:rgba(239,68,68,0.85);color:#fff;font-size:11px;padding:3px 8px;border-radius:6px;">▶ فيديو</span>` : ''}
+                                </div>
+                            ` : `<div class="property-image" style="display:flex;align-items:center;justify-content:center;background:rgba(30,58,95,0.4);"><span style="font-size:40px;">🏠</span></div>`}
+                            <div class="property-content">
+                                ${m.reference ? `<div style="font-size:10px;color:var(--cyan);margin-bottom:4px;font-family:monospace;">🔖 ${m.reference}</div>` : ''}
+                                <div class="property-title">${m.title}</div>
+                                ${prop && prop.city ? `<div class="property-location">📍 ${prop.city}${prop.neighborhood ? ' - ' + prop.neighborhood : ''}</div>` : ''}
+                                ${prop ? `<div class="property-details">
+                                    ${prop.size ? `<span>📐 ${prop.size} م²</span>` : ''}
+                                    ${prop.bedrooms ? `<span>🛏️ ${prop.bedrooms} غرف</span>` : ''}
+                                    ${prop.bathrooms ? `<span>🚿 ${prop.bathrooms} حمام</span>` : ''}
+                                </div>` : ''}
+                                ${prop && prop.price ? `<div class="property-price">${formatPrice(prop.price)} ريال</div>` : ''}
+                                ${hasVideos ? `
+                                <div style="margin-top:8px;">
+                                    ${m.videos.map((v, vi) => `
+                                    <div style="margin-bottom:6px;">
+                                        <video controls style="width:100%;border-radius:8px;max-height:160px;background:#000;" poster="${v.thumbnail || ''}" preload="none">
+                                            <source src="${v.url}">
+                                        </video>
+                                        ${v.title ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${v.title}</div>` : ''}
+                                    </div>`).join('')}
+                                </div>` : ''}
+                                <div style="display:flex;gap:8px;margin-top:10px;">
+                                    <button onclick="selectProperty(${i})" style="flex:1;padding:10px;background:linear-gradient(135deg,#ec4899,#f43f5e);color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">❤️ مهتم</button>
+                                    <button onclick="openBookingModal(${i})" style="flex:1;padding:10px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">📅 حجز معاينة</button>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // Generate property cards HTML (fallback - no backend images)
         function generatePropertyCards() {
             if (lastSearchedProperties.length === 0) return '';
             
@@ -2490,9 +2598,16 @@
             if (!property) return;
             
             currentGalleryProperty = property;
-            currentGalleryImages = property.images && property.images.length > 0 
-                ? property.images 
-                : (property.mainImage ? [property.mainImage] : []);
+
+            // استخدام الصور من backendPropertiesMedia إذا متوفرة
+            const mediaEntry = backendPropertiesMedia[String(property.id)];
+            if (mediaEntry && mediaEntry.images && mediaEntry.images.length > 0) {
+                currentGalleryImages = mediaEntry.images.map(img => img.url || img);
+            } else {
+                currentGalleryImages = property.images && property.images.length > 0
+                    ? property.images.map(img => typeof img === 'string' ? img : img.url)
+                    : (property.mainImage ? [property.mainImage] : []);
+            }
             
             if (currentGalleryImages.length === 0) {
                 alert('لا توجد صور لهذا العقار');
@@ -2531,7 +2646,8 @@
 
         function showGalleryImage() {
             const img = document.getElementById('galleryImage');
-            img.src = currentGalleryImages[currentGalleryIndex];
+            const src = currentGalleryImages[currentGalleryIndex];
+            img.src = typeof src === 'string' ? src : (src.url || src);
             img.alt = currentGalleryProperty?.title || 'صورة العقار';
             
             // Update counter

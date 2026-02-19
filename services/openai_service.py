@@ -39,29 +39,27 @@ class OpenAIService:
             logger.warning("⚠️ OpenAI API key not configured")
     
     def _build_system_prompt(self) -> str:
-        """بناء System Prompt مع إعدادات الوكيل (يتم جلبه من الأدمن في كل مرة)"""
-        # جلب الإعدادات من الأدمن في كل مرة للحصول على آخر تحديث
-        fresh_settings = self._get_global_settings()
-        base_prompt = fresh_settings.get('system_prompt', '')
-        
+        """بناء System Prompt من prompts/system_prompt.py كمصدر وحيد"""
+        from prompts.system_prompt import NEWRA_SYSTEM_PROMPT
+
         if not self.agent:
-            return base_prompt
-        
+            return NEWRA_SYSTEM_PROMPT
+
         # معلومات الوكيل
         bot_name = self.agent.bot_name or "Inify"
         company_name = self.agent.company_name or ""
         city = self.agent.city or ""
         custom_prompt = getattr(self.agent, 'bot_system_prompt', '') or ''
-        
+
         # إعدادات السياق الإضافية
         pricing_policy = getattr(self.agent, 'bot_pricing_policy', '') or ''
         viewing_policy = getattr(self.agent, 'bot_viewing_policy', '') or ''
         work_areas = getattr(self.agent, 'bot_work_areas', '') or ''
         services = getattr(self.agent, 'bot_services', '') or ''
         contact_info = getattr(self.agent, 'bot_contact_info', '') or ''
-        
-        # استبدال المتغيرات في الـ Prompt الأساسي
-        prompt = base_prompt.replace('{bot_name}', bot_name)
+
+        # استبدال المتغيرات في البرومبت
+        prompt = NEWRA_SYSTEM_PROMPT.replace('{bot_name}', bot_name)
         prompt = prompt.replace('{company_name}', company_name)
         prompt = prompt.replace('{city}', city)
         
@@ -112,7 +110,16 @@ class OpenAIService:
 ═══════════════════════════════════════════════════════════
 """
         
-        return prompt + agent_info + datetime_info
+        no_question_rule = """
+═══════════════════════════════════════════════════════════
+🔴 قاعدة إلزامية - أولوية قصوى:
+═══════════════════════════════════════════════════════════
+آخر جملة في كل رد يجب أن تكون خبرية - ليست سؤالاً.
+ممنوع منعاً باتاً إنهاء الرد بـ: "هل تريد..." / "هل تحب..." / "هل تحتاج..." / "هل يناسبك..." / "ما رأيك؟" / "أنا هنا للمساعدة" / "لا تتردد في السؤال" / أي جملة تنتهي بـ ؟
+إذا احتجت أن تسأل → ضع السؤال في بداية الرد أو منتصفه فقط ثم أكمل بجملة خبرية.
+═══════════════════════════════════════════════════════════
+"""
+        return prompt + agent_info + datetime_info + no_question_rule
     
     def _get_global_settings(self) -> dict:
         """جلب الإعدادات العامة من قاعدة البيانات"""
@@ -192,11 +199,11 @@ class OpenAIService:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=0.7,
-                max_tokens=400,
-                top_p=0.9,
-                frequency_penalty=0.7,
-                presence_penalty=0.5,
+                temperature=0.5,
+                max_tokens=500,
+                top_p=0.85,
+                frequency_penalty=0.6,
+                presence_penalty=0.3,
             )
             
             return response.choices[0].message.content

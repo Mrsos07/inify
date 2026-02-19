@@ -874,6 +874,7 @@ class EmbedChatAPI(View):
             from services.openai_service import OpenAIService
             from apps.agents.models import GlobalSettings
             global_settings = GlobalSettings.objects.first()
+            ai_provider = 'openai'
             ai_service = OpenAIService(agent=agent)
             logger.info(f"Embed Chat - AI Provider: OpenAI | Model: {global_settings.openai_model if global_settings else 'gpt-4.1-mini'}")
             
@@ -1523,14 +1524,18 @@ class EmbedChatAPI(View):
             # تحديد معلومات النموذج للـ response
             model_info = {
                 'provider': ai_provider,
-                'model': global_settings.openai_model if ai_provider == 'openai' else global_settings.ai_model
+                'model': (global_settings.openai_model if global_settings else 'gpt-4.1-mini') if ai_provider == 'openai' else (global_settings.ai_model if global_settings else 'unknown')
             }
             
+            # استخراج الصور والفيديوهات لإرسالها في الـ response
+            properties_media = self._get_properties_media(properties)
+
             response_data = {
                 'success': True,
                 'response': response_text,
                 'agent': agent.bot_name or 'Inify',
-                'ai_info': model_info
+                'ai_info': model_info,
+                'properties_media': properties_media,
             }
             
             if lead_created:
@@ -1547,14 +1552,14 @@ class EmbedChatAPI(View):
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
     
     def _build_properties_context(self, properties):
-        """بناء سياق العقارات الكامل مع جميع التفاصيل والمميزات"""
+        """بناء سياق العقارات الكامل مع جميع التفاصيل والمميزات والصور"""
         from datetime import datetime
 
         if not properties.exists():
             return "لا توجد عقارات متاحة حالياً"
 
         context = f"العقارات المتاحة ({properties.count()} عقار):\n"
-        context += "\n⚠️ تعليمات: عند ذكر عقار اذكر رقمه المرجعي فقط. لا تضع روابط صور في الرد.\n"
+        context += "\n⚠️ تعليمات: عند ذكر عقار اذكر رقمه المرجعي [REF-XXXX] فقط في نصك. الصور تُعرض تلقائياً في الواجهة.\n"
 
         for i, prop in enumerate(properties[:15], 1):
             listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
@@ -1608,9 +1613,19 @@ class EmbedChatAPI(View):
             parking_count = prop.parking_spaces or 0
             has_parking = 'parking' in amenities_codes or parking_count > 0
 
+            # الصور
+            images_qs = prop.images.all().order_by('order', 'created_at')
+            images_info = f"عدد الصور: {images_qs.count()}"
+
+            # الفيديوهات
+            videos_qs = prop.videos.all() if hasattr(prop, 'videos') else []
+            videos_count = videos_qs.count() if hasattr(videos_qs, 'count') else 0
+            videos_info = f"عدد الفيديوهات: {videos_count}"
+
             context += f"""
 ══════════════════════════════════════
 عقار {i}: [{prop.reference_number}] {prop.title}
+ID: {prop.id}
 ══════════════════════════════════════
 النوع: {prop.get_property_type_display()} - {listing_type}
 الوصف: {prop.description or 'لا يوجد'}
@@ -1634,6 +1649,8 @@ class EmbedChatAPI(View):
 - مواقف السيارات: {parking_count}
 - التأثيث: {furnishing_display}
 - عمر العقار: {property_age}
+- {images_info}
+- {videos_info}
 
 المميزات:
 - مصعد: {'✅ يوجد' if has_elevator else '❌ لا يوجد'}
@@ -1657,29 +1674,62 @@ class EmbedChatAPI(View):
 """
 
         return context
+
+    def _get_properties_media(self, properties):
+        """استخراج الصور والفيديوهات لجميع العقارات لإرسالها في الـ response"""
+        media_map = {}
+        for prop in properties[:15]:
+            images = []
+            for img in prop.images.all().order_by('-is_primary', 'order', 'created_at'):
+                if img.image:
+                    try:
+                        images.append({
+                            'url': img.image.url,
+                            'is_primary': img.is_primary,
+                            'alt': img.alt_text or prop.title,
+                        })
+                    except Exception:
+                        pass
+
+            videos = []
+            if hasattr(prop, 'videos'):
+                for vid in prop.videos.all():
+                    try:
+                        if vid.video:
+                            videos.append({
+                                'url': vid.video.url,
+                                'title': vid.title or prop.title,
+                                'thumbnail': vid.thumbnail.url if vid.thumbnail else None,
+                            })
+                    except Exception:
+                        pass
+
+            if images or videos:
+                media_map[str(prop.id)] = {
+                    'property_id': str(prop.id),
+                    'reference': prop.reference_number,
+                    'title': prop.title,
+                    'images': images,
+                    'videos': videos,
+                    'primary_image': images[0]['url'] if images else None,
+                }
+        return media_map
     
     def _build_system_prompt(self, agent, properties_context):
         """
         بناء الـ Prompt الكامل:
-        1. System Prompt ← من صفحة الأدمن
+        1. System Prompt ← من prompts/system_prompt.py (المصدر الوحيد)
         2. Agent Info ← معلومات المسوق
         3. RAG Context ← العقارات المتاحة
         """
-        from apps.agents.models import GlobalSettings
-        
+        from prompts.system_prompt import NEWRA_SYSTEM_PROMPT
+
         # ═══════════════════════════════════════════════════════════
-        # 1. SYSTEM PROMPT من الأدمن
+        # 1. SYSTEM PROMPT من prompts/system_prompt.py (المصدر الوحيد)
         # ═══════════════════════════════════════════════════════════
-        try:
-            global_settings = GlobalSettings.objects.first()
-            system_prompt = global_settings.system_prompt if global_settings and global_settings.system_prompt else ''
-            default_rules = global_settings.default_rules if global_settings and global_settings.default_rules else ''
-            logger.info(f"📋 Global System Prompt: {'✅ موجود' if system_prompt else '❌ فارغ'}")
-            logger.info(f"📋 Default Rules: {'✅ موجود' if default_rules else '❌ فارغ'}")
-        except Exception as e:
-            logger.error(f"❌ Error loading global settings: {e}")
-            system_prompt = ''
-            default_rules = ''
+        system_prompt = NEWRA_SYSTEM_PROMPT
+        default_rules = ''
+        logger.info("📋 System Prompt: ✅ محمّل من prompts/system_prompt.py")
         
         # ═══════════════════════════════════════════════════════════
         # 2. AGENT INFO - معلومات المسوق
@@ -1717,10 +1767,10 @@ class EmbedChatAPI(View):
         # بناء الـ Prompt النهائي
         # ═══════════════════════════════════════════════════════════
         
-        # إذا كان هناك System Prompt في الأدمن
+        # بناء البرومبت النهائي دائماً من prompts/system_prompt.py
         if system_prompt:
             final_prompt = system_prompt
-            
+
             # استبدال المتغيرات
             final_prompt = final_prompt.replace('{bot_name}', agent.bot_name or 'Inify')
             final_prompt = final_prompt.replace('{company_name}', agent.company_name or '')
@@ -1749,6 +1799,19 @@ class EmbedChatAPI(View):
 ❌ ممنوع التهرب من الإجابة المباشرة.
 
 📌 قاعدة ذهبية: إذا كانت المعلومة موجودة في بيانات العقارات أعلاه → أجب عنها مباشرة بدون أي سؤال.
+
+═══════════════════════════════════════════════════════════
+🔴 قاعدة الصمت في النهاية - لا استثناء مطلقاً:
+═══════════════════════════════════════════════════════════
+آخر كلمة في ردك يجب أن تكون معلومة أو جملة خبرية - ليست سؤالاً.
+ممنوع منعاً باتاً إنهاء الرد بـ:
+- أي جملة تنتهي بـ ؟
+- "هل تريد..." / "هل تحب..." / "هل تحتاج..."
+- "هل عندك..." / "هل يناسبك..."
+- "ما رأيك؟" / "كيف ذلك؟" / "أي شيء آخر؟"
+- "هل لديك أسئلة؟" / "هل تود..."
+- "أنا هنا للمساعدة" / "لا تتردد في السؤال"
+إذا أردت أن تسأل، ضع السؤال في بداية الرد أو منتصفه فقط، ثم أكمل بجملة خبرية.
 """
             
             return final_prompt
@@ -1756,31 +1819,32 @@ class EmbedChatAPI(View):
         # ═══════════════════════════════════════════════════════════
         # Prompt افتراضي إذا لم يكن هناك إعدادات في الأدمن
         # ═══════════════════════════════════════════════════════════
-        return f"""أنت وكيل عقاري سعودي محترف.
+        bot_name_val = agent.bot_name or 'Inify'
+        return f"""أنت {bot_name_val}، مستشار عقاري محترف.
+تتحدث كإنسان حقيقي خبير في المبيعات العقارية - لست روبوتاً.
 
 {agent_info}
 
 {rag_context}
 
-═══ طريقة الرد ═══
-• ردود قصيرة (3 أسطر كحد أقصى)
-• لا تكرر معلومات العقار - الكارت يعرضها
-• لا تنهي كل رد بسؤال - اترك مجال للعميل يرد بحرية
-• لا تسأل أكثر من سؤال واحد في الرد الواحد إذا احتجت تسأل
-
-═══ عند اهتمام العميل بعقار ═══
-⚠️ ممنوع تكرار عرض العقار أو تفاصيله!
-✅ قدّم المعلومات المطلوبة مباشرة بدون سؤال إضافي
+═══ منهجية الرد ═══
+• ردود مركّزة 2-4 أسطر - لا إطالة ولا حشو
+• إذا كانت العقارات موجودة في السياق → اعرضها مباشرة بدون أسئلة
+• لا تكرر معلومات العقار - الكارت يعرضها تلقائياً
+• نوّع في عباراتك وافتتاحياتك في كل رد
+• لا تضع إيموجي في الردود
 
 ═══ هويتك ═══
-⚠️ ممنوع منعاً باتاً ذكر:
-- Google أو قوقل
-- Gemini أو أي نموذج AI
-- OpenAI أو ChatGPT
-- أي شركة تقنية
+ممنوع ذكر: Google / Gemini / OpenAI / ChatGPT / أي نموذج AI
+إذا سُئلت "من أنت؟": قل فقط "أنا {bot_name_val}، مستشارك العقاري"
 
-✅ إذا سُئلت "من أنت؟" أو "ما النموذج؟":
-قل فقط: "أنا {bot_name}، مستشارك العقاري الذكي 🏠"
+═══════════════════════════════════════════════════════════
+🔴 قاعدة إلزامية - أولوية قصوى:
+═══════════════════════════════════════════════════════════
+آخر جملة في كل رد يجب أن تكون خبرية - ليست سؤالاً.
+ممنوع منعاً باتاً إنهاء الرد بـ: "هل تريد..." / "هل تحب..." / "هل تحتاج..." / "هل يناسبك..." / "ما رأيك؟" / "أنا هنا للمساعدة" / "لا تتردد في السؤال" / أي جملة تنتهي بـ ؟
+إذا احتجت أن تسأل → ضع السؤال في بداية الرد أو منتصفه فقط ثم أكمل بجملة خبرية.
+═══════════════════════════════════════════════════════════
 """
 
 
