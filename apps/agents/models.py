@@ -160,15 +160,18 @@ class Agent(models.Model):
     @property
     def has_active_subscription(self):
         """هل لدى المسوق اشتراك نشط (تجريبي أو مدفوع)"""
-        sub = self.subscriptions.exclude(status__in=['expired', 'cancelled']).order_by('-created_at').first()
-        if sub:
-            return sub.is_active
+        for sub in self.subscriptions.exclude(status__in=['expired', 'cancelled']).order_by('-created_at'):
+            if sub.is_active:
+                return True
         return False
 
     @property
     def active_subscription(self):
-        """الحصول على الاشتراك النشط"""
-        return self.subscriptions.exclude(status__in=['expired', 'cancelled']).order_by('-created_at').first()
+        """الحصول على الاشتراك النشط - يُرجع أول اشتراك فعلاً نشط"""
+        for sub in self.subscriptions.exclude(status__in=['expired', 'cancelled']).order_by('-created_at'):
+            if sub.is_active:
+                return sub
+        return None
 
     @property
     def subscription_days_remaining(self):

@@ -1796,14 +1796,14 @@ def subscribe_api(request):
         )
 
         if result['success']:
-            existing_trial = Subscription.objects.filter(agent=agent, status='trial').first()
-            if existing_trial:
-                existing_trial.plan_key = plan_key
-                existing_trial.status = 'pending'
-                existing_trial.amount = result['amount']
-                existing_trial.payment_link_id = result['payment_link_id']
-                existing_trial.save()
-            else:
+            # لا نُحوّل الـ trial النشط إلى pending أبداً - نُنشئ subscription جديدة للدفع
+            active_trial = Subscription.objects.filter(
+                agent=agent, status='trial'
+            ).first()
+            active_trial_is_valid = active_trial and active_trial.is_trial_active
+
+            if active_trial_is_valid:
+                # الـ trial لا يزال سارياً - أنشئ subscription جديدة منفصلة للدفع
                 Subscription.objects.create(
                     agent=agent,
                     plan_key=plan_key,
@@ -1811,6 +1811,24 @@ def subscribe_api(request):
                     amount=result['amount'],
                     payment_link_id=result['payment_link_id'],
                 )
+            else:
+                # لا يوجد trial نشط - ابحث عن pending موجود أو أنشئ جديداً
+                existing_pending = Subscription.objects.filter(
+                    agent=agent, status='pending'
+                ).order_by('-created_at').first()
+                if existing_pending:
+                    existing_pending.plan_key = plan_key
+                    existing_pending.amount = result['amount']
+                    existing_pending.payment_link_id = result['payment_link_id']
+                    existing_pending.save()
+                else:
+                    Subscription.objects.create(
+                        agent=agent,
+                        plan_key=plan_key,
+                        status='pending',
+                        amount=result['amount'],
+                        payment_link_id=result['payment_link_id'],
+                    )
 
             return JsonResponse({
                 'success': True,
