@@ -25,6 +25,7 @@ class StreamPayService:
         self.api_secret = os.environ.get('STREAMPAY_API_SECRET', '')
         self.webhook_secret = os.environ.get('STREAMPAY_WEBHOOK_SECRET', '')
         self.product_ids = {
+            'trial_day': os.environ.get('STREAMPAY_PRODUCT_TRIAL_DAY_ID', ''),
             'monthly': os.environ.get('STREAMPAY_PRODUCT_MONTHLY_ID', ''),
             'quarterly': os.environ.get('STREAMPAY_PRODUCT_QUARTERLY_ID', ''),
             'semi': os.environ.get('STREAMPAY_PRODUCT_SEMI_ID', ''),
@@ -49,6 +50,12 @@ class StreamPayService:
 
     # ─── Pricing Constants ───────────────────────────────────────────
     PLANS = {
+        'trial_day': {
+            'days': 1,
+            'price': 1,
+            'discount': 0,
+            'label': 'يوم تجريبي',
+        },
         'monthly': {
             'months': 1,
             'price': 199,
@@ -309,6 +316,8 @@ class StreamPayService:
         """Get subscription end date based on plan"""
         plan = self.PLANS.get(plan_key, self.PLANS['monthly'])
         start = start_date or timezone.now()
+        if 'days' in plan:
+            return start + timedelta(days=plan['days'])
         return start + timedelta(days=plan['months'] * 30)
 
 

@@ -87,6 +87,13 @@
             font-size: 12px; color: #4ade80;
         }
         .plan-permonth { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .plan-trial { border-color: rgba(251,191,36,0.4); position: relative; }
+        .plan-trial:hover { border-color: #fbbf24; }
+        .plan-trial.selected { border-color: #fbbf24; background: rgba(251,191,36,0.08); }
+        .plan-badge-top {
+            font-size: 11px; font-weight: 700; color: #fbbf24;
+            margin-bottom: 8px; letter-spacing: 0.5px;
+        }
 
         .subscribe-btn {
             width: 100%; padding: 16px; border-radius: 14px; font-family: inherit;
@@ -151,6 +158,12 @@
                 </div>
 
                 <div class="plans-grid" id="plansGrid">
+                    <div class="plan-card plan-trial" data-plan="trial_day" onclick="selectPlan('trial_day')">
+                        <div class="plan-badge-top">🧪 تجربة</div>
+                        <div class="plan-name">يوم تجريبي</div>
+                        <div class="plan-price">1 <span>ريال</span></div>
+                        <div class="plan-permonth">ليوم واحد فقط</div>
+                    </div>
                     <div class="plan-card selected" data-plan="monthly" onclick="selectPlan('monthly')">
                         <div class="plan-name">شهري</div>
                         <div class="plan-price">199 <span>ريال</span></div>

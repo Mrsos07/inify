@@ -507,6 +507,7 @@ class Subscription(models.Model):
     """نموذج الاشتراكات والمدفوعات"""
     
     PLAN_CHOICES = [
+        ('trial_day', 'يوم تجريبي - 1 ريال'),
         ('monthly', 'شهري - 199 ريال'),
         ('quarterly', '3 أشهر - 537 ريال'),
         ('semi', '6 أشهر - 1,015 ريال'),
