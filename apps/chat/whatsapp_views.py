@@ -386,10 +386,12 @@ class WhatsAppWebhookView(View):
         from services.lead_extraction_service import LeadExtractionService
         lead_extractor = LeadExtractionService()
         
-        # اكتشاف الاهتمام وإنشاء Lead تلقائياً
-        if lead_extractor.detect_interest(message_text):
-            logger.info(f"🎯 Interest detected in message from {phone}")
-            # إنشاء Lead إذا لم يكن موجوداً
+        # اكتشاف الاهتمام أو طلب المعاينة وإنشاء/تحديث Lead تلقائياً
+        is_interested = lead_extractor.detect_interest(message_text)
+        wants_viewing = lead_extractor.detect_viewing_request(message_text)
+        
+        if is_interested or wants_viewing:
+            logger.info(f"🎯 Interest/viewing detected from {phone} (interest={is_interested}, viewing={wants_viewing})")
             lead = lead_extractor.create_lead_from_whatsapp(
                 agent=agent,
                 conversation=conversation,
@@ -397,7 +399,7 @@ class WhatsAppWebhookView(View):
                 sender_name=sender_name
             )
             if lead:
-                logger.info(f"✅ Lead created/updated: {lead.id} - {lead.name} ({lead.phone})")
+                logger.info(f"✅ Lead created/updated: {lead.id} - {lead.name} ({lead.phone}) status={lead.status}")
         
         # جلب العقارات
         properties = Property.objects.filter(agent=agent, is_active=True)

@@ -7,6 +7,7 @@ import re
 import logging
 from typing import Dict, Optional, List
 from django.utils import timezone
+from django.db import models
 
 logger = logging.getLogger(__name__)
 
@@ -187,6 +188,36 @@ class LeadExtractionService:
         
         return None
     
+    # كلمات تدل على طلب المعاينة تحديداً
+    VIEWING_KEYWORDS = [
+        'ابي اشوفها', 'أبي أشوفها', 'ابغى اشوفها', 'أبغى أشوفها',
+        'نبي نشوفها', 'ابي معاينة', 'أبي معاينة', 'ابي معاينه',
+        'حابب اشوفها', 'حابب أشوفها', 'ودي اشوفها', 'ودي أشوفها',
+        'اشوفها', 'أشوفها', 'معاينة', 'معاينه', 'زيارة', 'موعد معاينة',
+        'ابحجز', 'أبحجز', 'احجز', 'أحجز', 'حجز معاينة',
+    ]
+
+    def detect_viewing_request(self, message_text: str) -> bool:
+        """اكتشاف ما إذا كان العميل يطلب معاينة تحديداً"""
+        message_lower = message_text.lower()
+        return any(keyword in message_lower for keyword in self.VIEWING_KEYWORDS)
+
+    def normalize_phone(self, phone: str) -> str:
+        """تنسيق رقم الجوال إلى صيغة موحدة 05xxxxxxxx"""
+        if not phone:
+            return phone
+        # إزالة كل شيء ما عدا الأرقام
+        digits = re.sub(r'[^\d]', '', phone)
+        # إزالة كود الدولة
+        if digits.startswith('966'):
+            digits = digits[3:]
+        elif digits.startswith('00966'):
+            digits = digits[5:]
+        # إضافة الصفر إذا لم يكن موجوداً
+        if digits.startswith('5') and len(digits) == 9:
+            digits = '0' + digits
+        return digits
+
     def extract_lead_data(self, conversation_messages: List[Dict], phone_from_whatsapp: str = None) -> Dict:
         """
         استخراج بيانات العميل من المحادثة
@@ -200,7 +231,8 @@ class LeadExtractionService:
         """
         result = {
             'is_interested': False,
-            'phone': phone_from_whatsapp,
+            'wants_viewing': False,
+            'phone': self.normalize_phone(phone_from_whatsapp) if phone_from_whatsapp else None,
             'property_type': None,
             'budget': None,
             'bedrooms': None,
@@ -209,23 +241,35 @@ class LeadExtractionService:
             'extracted_from_messages': []
         }
         
-        # تحليل كل رسالة
+        # تحليل كل رسالة (المستخدم والوكيل معاً للمدينة)
         for msg in conversation_messages:
-            if msg.get('role') != 'user':
-                continue
-            
+            role = msg.get('role', '')
             content = msg.get('content', '')
+
+            # المدينة: ابحث في رسائل الجميع
+            if not result['city']:
+                city = self.extract_city(content)
+                if city:
+                    result['city'] = city
+
+            # باقي الاستخراجات من رسائل المستخدم فقط
+            if role != 'user':
+                continue
             
             # اكتشاف الاهتمام
             if self.detect_interest(content):
                 result['is_interested'] = True
                 result['extracted_from_messages'].append(content[:100])
+
+            # اكتشاف طلب المعاينة
+            if self.detect_viewing_request(content):
+                result['wants_viewing'] = True
             
             # استخراج رقم الجوال
             if not result['phone']:
                 phone = self.extract_phone(content)
                 if phone:
-                    result['phone'] = phone
+                    result['phone'] = self.normalize_phone(phone)
             
             # استخراج نوع العقار
             if not result['property_type']:
@@ -244,12 +288,6 @@ class LeadExtractionService:
                 bedrooms = self.extract_bedrooms(content)
                 if bedrooms:
                     result['bedrooms'] = bedrooms
-            
-            # استخراج المدينة
-            if not result['city']:
-                city = self.extract_city(content)
-                if city:
-                    result['city'] = city
         
         return result
     
@@ -266,63 +304,138 @@ class LeadExtractionService:
         Returns:
             Lead object أو None
         """
-        from apps.leads.models import Lead, LeadSource
+        from apps.leads.models import Lead, LeadSource, LeadStatus
+        from apps.properties.models import Property
+        
+        # تنسيق الرقم
+        normalized_phone = self.normalize_phone(phone)
         
         # جلب رسائل المحادثة
-        messages = conversation.get_messages_for_ai(limit=20)
+        messages = conversation.get_messages_for_ai(limit=30)
         
         # استخراج البيانات
-        extracted_data = self.extract_lead_data(messages, phone)
+        extracted_data = self.extract_lead_data(messages, normalized_phone)
         
         # التحقق من الاهتمام
         if not extracted_data['is_interested']:
             logger.info(f"No interest detected in conversation {conversation.id}")
             return None
         
-        # التحقق من عدم وجود عميل بنفس الرقم
-        existing_lead = Lead.objects.filter(
-            agent=agent,
-            phone=phone
-        ).first()
+        # تحديد الحالة بناءً على طلب المعاينة
+        lead_status = LeadStatus.VIEWING_SCHEDULED if extracted_data['wants_viewing'] else LeadStatus.NEW
+        
+        # استخراج العقارات المذكورة في المحادثة
+        interested_props = self._extract_interested_properties(agent, messages)
+        
+        # التحقق من عدم وجود عميل بنفس الرقم (جرب صيغ مختلفة)
+        existing_lead = None
+        for p in [normalized_phone, phone, re.sub(r'[^\d]', '', phone)]:
+            if p:
+                existing_lead = Lead.objects.filter(agent=agent, phone=p).first()
+                if not existing_lead:
+                    existing_lead = Lead.objects.filter(agent=agent, whatsapp=p).first()
+                if existing_lead:
+                    break
         
         if existing_lead:
-            logger.info(f"Lead already exists for phone {phone}")
-            # تحديث البيانات إذا كانت جديدة
+            logger.info(f"Lead already exists for phone {normalized_phone}, updating...")
+            updated = False
             if extracted_data['property_type'] and not existing_lead.property_type_preference:
                 existing_lead.property_type_preference = extracted_data['property_type']
+                updated = True
             if extracted_data['city'] and not existing_lead.city_preference:
                 existing_lead.city_preference = extracted_data['city']
+                updated = True
             if extracted_data['bedrooms'] and not existing_lead.bedrooms_min:
                 existing_lead.bedrooms_min = extracted_data['bedrooms']
+                updated = True
             if extracted_data['budget']:
-                if extracted_data['budget'].get('min'):
+                if extracted_data['budget'].get('min') and not existing_lead.budget_min:
                     existing_lead.budget_min = extracted_data['budget']['min']
-                if extracted_data['budget'].get('max'):
+                    updated = True
+                if extracted_data['budget'].get('max') and not existing_lead.budget_max:
                     existing_lead.budget_max = extracted_data['budget']['max']
-            existing_lead.save()
+                    updated = True
+            # تحديث الحالة إذا طلب معاينة
+            if extracted_data['wants_viewing'] and existing_lead.status == LeadStatus.NEW:
+                existing_lead.status = LeadStatus.VIEWING_SCHEDULED
+                updated = True
+            # ربط العقارات المهتم بها
+            if interested_props:
+                for prop in interested_props:
+                    existing_lead.interested_properties.add(prop)
+                updated = True
+            if updated:
+                existing_lead.save()
             return existing_lead
         
         # إنشاء عميل جديد
         try:
+            viewing_note = 'طلب معاينة' if extracted_data['wants_viewing'] else 'أبدى اهتماماً'
             lead = Lead.objects.create(
                 agent=agent,
                 conversation=conversation,
                 name=sender_name or 'عميل من واتساب',
-                phone=phone,
-                whatsapp=phone,
+                phone=normalized_phone,
+                whatsapp=normalized_phone,
                 source=LeadSource.WHATSAPP,
-                status='new',
+                status=lead_status,
+                preferred_contact_method='whatsapp',
                 property_type_preference=extracted_data['property_type'] or '',
                 city_preference=extracted_data['city'] or '',
                 bedrooms_min=extracted_data['bedrooms'],
                 budget_min=extracted_data['budget'].get('min') if extracted_data['budget'] else None,
                 budget_max=extracted_data['budget'].get('max') if extracted_data['budget'] else None,
-                notes=f"تم إنشاؤه تلقائياً من محادثة واتساب\nرسائل الاهتمام: {', '.join(extracted_data['extracted_from_messages'][:3])}"
+                notes=(
+                    f"تم إنشاؤه تلقائياً من واتساب - {viewing_note}\n"
+                    f"رسائل الاهتمام: {', '.join(extracted_data['extracted_from_messages'][:3])}"
+                )
             )
             
-            logger.info(f"✅ Created lead {lead.id} from WhatsApp conversation {conversation.id}")
+            # ربط العقارات المهتم بها
+            if interested_props:
+                for prop in interested_props:
+                    lead.interested_properties.add(prop)
+            
+            # حساب التقييم
+            lead.calculate_score()
+            lead.save()
+            
+            logger.info(f"✅ Created lead {lead.id} from WhatsApp - status: {lead_status}")
             return lead
             
         except Exception as e:
             logger.error(f"Error creating lead from WhatsApp: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return None
+
+    def _extract_interested_properties(self, agent, messages: List[Dict]):
+        """استخراج العقارات المذكورة في المحادثة"""
+        from apps.properties.models import Property
+        import re
+        
+        found_props = []
+        full_text = ' '.join(msg.get('content', '') for msg in messages)
+        
+        # البحث عن الأرقام المرجعية في النص
+        ref_patterns = [
+            r'\b([A-Z]{2}-[A-Z]{2}-\d+)\b',
+            r'\b(ال-[A-Z]{2}-\d+)\b',
+            r'رقم.*?([A-Z0-9\-]+)',
+        ]
+        
+        for pattern in ref_patterns:
+            matches = re.findall(pattern, full_text, re.IGNORECASE)
+            for ref in matches:
+                prop = Property.objects.filter(agent=agent, reference_number=ref).first()
+                if prop and prop not in found_props:
+                    found_props.append(prop)
+        
+        # إذا لم نجد بالرقم المرجعي، خذ أول عقار نشط
+        if not found_props:
+            first_prop = Property.objects.filter(agent=agent, is_active=True).first()
+            if first_prop:
+                found_props.append(first_prop)
+        
+        return found_props
