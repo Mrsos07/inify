@@ -271,14 +271,32 @@ def register_view(request):
             if not accept_fal:
                 return JsonResponse({'success': False, 'error': 'يجب الإقرار بامتلاك رخصة فال'})
             
-            # Validate email not exists
-            if User.objects.filter(email=email).exists():
-                return JsonResponse({'success': False, 'error': 'البريد الإلكتروني مستخدم بالفعل'})
-            
-            # Validate phone not exists
+            # Validate email not exists (case-insensitive)
+            if User.objects.filter(email__iexact=email).exists():
+                return JsonResponse({'success': False, 'error': 'البريد الإلكتروني مستخدم بالفعل، يرجى تسجيل الدخول أو استخدام بريد آخر', 'field': 'email'})
+
+            # Normalize phone: strip non-digits, handle 966/+966 prefix → 05xxxxxxxx
+            import re as _re
+            def _normalize_phone(p):
+                digits = _re.sub(r'\D', '', p)
+                if digits.startswith('966') and len(digits) >= 12:
+                    digits = '0' + digits[3:]
+                elif digits.startswith('00966'):
+                    digits = '0' + digits[5:]
+                if digits.startswith('5') and len(digits) == 9:
+                    digits = '0' + digits
+                return digits
+
+            normalized_phone = _normalize_phone(phone)
+
+            # Validate phone not exists (check all common formats)
             from apps.agents.models import Agent
-            if Agent.objects.filter(phone=phone).exists():
-                return JsonResponse({'success': False, 'error': 'رقم الجوال مستخدم بالفعل'})
+            phone_variants = {normalized_phone, phone}
+            if len(normalized_phone) == 10 and normalized_phone.startswith('05'):
+                phone_variants.add('966' + normalized_phone[1:])
+                phone_variants.add('+966' + normalized_phone[1:])
+            if Agent.objects.filter(phone__in=phone_variants).exists():
+                return JsonResponse({'success': False, 'error': 'رقم الجوال مستخدم بالفعل، يرجى استخدام رقم آخر أو تسجيل الدخول', 'field': 'phone'})
             
             # Create username from email
             username = email.split('@')[0]

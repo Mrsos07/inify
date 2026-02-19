@@ -369,6 +369,42 @@
             box-shadow: none !important;
         }
 
+        .field-error {
+            color: #f87171;
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+            padding: 6px 10px;
+            background: rgba(248, 113, 113, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(248, 113, 113, 0.25);
+        }
+
+        .field-error.show {
+            display: block;
+        }
+
+        .form-group input.input-error {
+            border-color: rgba(248, 113, 113, 0.6);
+            box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1);
+        }
+
+        .general-error {
+            background: rgba(248, 113, 113, 0.12);
+            border: 1px solid rgba(248, 113, 113, 0.35);
+            color: #f87171;
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+        }
+
+        .general-error.show {
+            display: block;
+        }
+
         @media (max-width: 480px) {
             .form-row {
                 grid-template-columns: 1fr;
@@ -405,6 +441,8 @@
             </div>
             
             <form id="registerForm">
+                <div class="general-error" id="generalError"></div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label>الاسم الأول</label>
@@ -418,12 +456,14 @@
 
                 <div class="form-group">
                     <label>البريد الإلكتروني</label>
-                    <input type="email" name="email" placeholder="أدخل البريد الإلكتروني" required>
+                    <input type="email" name="email" id="emailInput" placeholder="أدخل البريد الإلكتروني" required>
+                    <div class="field-error" id="emailError"></div>
                 </div>
 
                 <div class="form-group">
                     <label>رقم الهاتف</label>
-                    <input type="tel" name="phone" placeholder="05xxxxxxxx" required>
+                    <input type="tel" name="phone" id="phoneInput" placeholder="05xxxxxxxx" required>
+                    <div class="field-error" id="phoneError"></div>
                 </div>
 
                 <div class="form-group">
@@ -484,15 +524,9 @@
             const termsChecked = document.getElementById('acceptTerms').checked;
             const falChecked = document.getElementById('acceptFal').checked;
             const allChecked = termsChecked && falChecked;
-            
-            // Toggle checked class on items
             document.getElementById('termsItem').classList.toggle('checked', termsChecked);
             document.getElementById('falItem').classList.toggle('checked', falChecked);
-            
-            // Enable/disable submit button
             document.getElementById('submitBtn').disabled = !allChecked;
-            
-            // Show/hide Google sign-in
             const googleSection = document.getElementById('googleSection');
             if (allChecked) {
                 googleSection.classList.remove('disabled');
@@ -501,68 +535,101 @@
             }
         }
 
+        function clearErrors() {
+            ['emailError', 'phoneError'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.textContent = ''; el.classList.remove('show'); }
+            });
+            ['emailInput', 'phoneInput'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('input-error');
+            });
+            const ge = document.getElementById('generalError');
+            if (ge) { ge.textContent = ''; ge.classList.remove('show'); }
+        }
+
+        function showFieldError(field, message) {
+            if (field === 'email') {
+                const el = document.getElementById('emailError');
+                const inp = document.getElementById('emailInput');
+                if (el) { el.textContent = message; el.classList.add('show'); }
+                if (inp) { inp.classList.add('input-error'); inp.focus(); }
+            } else if (field === 'phone') {
+                const el = document.getElementById('phoneError');
+                const inp = document.getElementById('phoneInput');
+                if (el) { el.textContent = message; el.classList.add('show'); }
+                if (inp) { inp.classList.add('input-error'); inp.focus(); }
+            } else {
+                const ge = document.getElementById('generalError');
+                if (ge) { ge.textContent = message; ge.classList.add('show'); }
+            }
+        }
+
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+            clearErrors();
+
             const form = e.target;
             const password = form.querySelector('input[name="password"]').value;
             const password2 = form.querySelector('input[name="password2"]');
             const successDiv = document.getElementById('successMessage');
             const successText = document.getElementById('successText');
-            
-            // Validate agreements
+
             if (!document.getElementById('acceptTerms').checked || !document.getElementById('acceptFal').checked) {
-                alert('يجب الموافقة على جميع الشروط والإقرارات');
+                showFieldError('general', 'يجب الموافقة على جميع الشروط والإقرارات');
                 return;
             }
-            
+
             if (password2 && password !== password2.value) {
-                alert('كلمات المرور غير متطابقة');
+                showFieldError('general', 'كلمات المرور غير متطابقة');
                 return;
             }
-            
-            // Disable submit button
+
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.textContent = 'جاري إنشاء الحساب...';
-            
+
             try {
                 const formData = new FormData(form);
-                
                 const response = await fetch('/auth/register/', {
                     method: 'POST',
                     body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     if (data.require_verification) {
-                        // Hide form and show success message
                         form.style.display = 'none';
                         successText.textContent = data.message || 'تحقق من بريدك الإلكتروني لتفعيل الحساب';
                         successDiv.classList.add('show');
-                        
-                        // Redirect after 4 seconds
-                        setTimeout(() => {
-                            window.location.href = '/auth/login/';
-                        }, 4000);
+                        setTimeout(() => { window.location.href = '/auth/login/'; }, 4000);
                     } else {
                         window.location.href = '/dashboard/';
                     }
                 } else {
-                    alert(data.error || 'حدث خطأ في التسجيل');
+                    showFieldError(data.field || 'general', data.error || 'حدث خطأ في التسجيل');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'إنشاء الحساب';
                 }
             } catch (error) {
-                alert('حدث خطأ في الاتصال');
+                showFieldError('general', 'حدث خطأ في الاتصال، يرجى المحاولة مجدداً');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'إنشاء الحساب';
             }
+        });
+
+        // Clear field error on input change
+        document.getElementById('emailInput').addEventListener('input', function() {
+            const el = document.getElementById('emailError');
+            if (el) { el.textContent = ''; el.classList.remove('show'); }
+            this.classList.remove('input-error');
+        });
+        document.getElementById('phoneInput').addEventListener('input', function() {
+            const el = document.getElementById('phoneError');
+            if (el) { el.textContent = ''; el.classList.remove('show'); }
+            this.classList.remove('input-error');
         });
     </script>
     
