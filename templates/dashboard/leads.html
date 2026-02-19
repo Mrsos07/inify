@@ -1640,7 +1640,14 @@
                 ${appointmentsHtml}
                 <div class="detail-group">
                     <div class="detail-label">الحالة</div>
-                    <div class="detail-value"><span class="status-badge ${client.status}">${getStatusLabel(client.status)}</span></div>
+                    <div class="detail-value" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <span class="status-badge ${client.status}" id="modalStatusBadge">${getStatusLabel(client.status)}</span>
+                        <button onclick="updateStatus('${client.id}')" style="
+                            padding:6px 14px;border-radius:8px;border:1px solid rgba(107,184,201,0.4);
+                            background:rgba(107,184,201,0.1);color:#6bb8c9;cursor:pointer;
+                            font-size:12px;font-weight:600;transition:all 0.2s;
+                        ">✏️ تحديث الحالة</button>
+                    </div>
                 </div>
                 <div class="detail-group">
                     <div class="detail-label">تاريخ التسجيل</div>
