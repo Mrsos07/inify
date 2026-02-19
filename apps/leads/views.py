@@ -822,6 +822,29 @@ def list_leads(request):
         return JsonResponse({'success': False, 'error': str(e), 'leads': []}, status=500)
 
 
+def leads_stats(request):
+    """إحصائيات العملاء الحية - خفيفة وسريعة"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'غير مسجل الدخول'}, status=401)
+    try:
+        agent = request.user.agent_profile
+        leads_qs = Lead.objects.filter(agent=agent)
+        from apps.leads.models import ViewingAppointment
+        stats = {
+            'new': leads_qs.filter(status='new').count(),
+            'interested': leads_qs.filter(status='interested').count(),
+            'contacted': leads_qs.filter(status='contacted').count(),
+            'converted': leads_qs.filter(status='converted').count(),
+            'appointments': ViewingAppointment.objects.filter(
+                agent=agent, status__in=['pending', 'confirmed']
+            ).count(),
+            'total': leads_qs.count(),
+        }
+        return JsonResponse({'success': True, 'stats': stats})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
 @csrf_exempt
 def save_lead_from_chat(request, agent_id):
     """حفظ عميل من الشات المضمن"""

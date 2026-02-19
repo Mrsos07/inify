@@ -7,7 +7,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     LeadViewSet, ViewingAppointmentViewSet, PropertyCalendarViewSet,
-    AIAgentCalendarAPI, save_lead_from_chat, list_leads, book_viewing_from_chat
+    AIAgentCalendarAPI, save_lead_from_chat, list_leads, book_viewing_from_chat,
+    leads_stats
 )
 
 # Router للمواعيد والتقويمات
@@ -22,6 +23,7 @@ leads_router.register(r'', LeadViewSet, basename='lead')
 urlpatterns = [
     # API للداشبورد - يجب أن تكون أولاً
     path('my/', list_leads, name='list-my-leads'),
+    path('stats/', leads_stats, name='leads-stats'),
     
     # API للشات
     path('chat/<uuid:agent_id>/', save_lead_from_chat, name='save-lead-from-chat'),

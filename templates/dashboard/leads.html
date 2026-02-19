@@ -1110,6 +1110,32 @@
         // Load on page load
         loadClients();
 
+        // تحديث الإحصائيات فقط كل 15 ثانية (خفيف وسريع)
+        async function refreshStats() {
+            try {
+                const response = await fetch('/api/v1/leads/stats/', {
+                    credentials: 'same-origin'
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.stats) {
+                        const s = data.stats;
+                        document.getElementById('newCount').textContent = s.new;
+                        document.getElementById('interestedCount').textContent = s.interested;
+                        document.getElementById('contactedCount').textContent = s.contacted;
+                        document.getElementById('convertedCount').textContent = s.converted;
+                        const apptEl = document.getElementById('appointmentsCount');
+                        if (apptEl) apptEl.textContent = s.appointments;
+                        // إذا تغير العدد الكلي → أعد تحميل قائمة العملاء
+                        if (s.total !== clients.length) {
+                            loadClients();
+                        }
+                    }
+                }
+            } catch (e) {}
+        }
+        setInterval(refreshStats, 15000);
+
         // Update stats
         function updateStats() {
             // حساب عدد المعاينات
