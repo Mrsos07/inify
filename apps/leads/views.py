@@ -109,6 +109,33 @@ class LeadViewSet(viewsets.ModelViewSet):
         
         return Response({'status': 'تمت إضافة الملاحظة'})
     
+    @action(detail=True, methods=['post'])
+    def update_status(self, request, pk=None):
+        """تحديث حالة العميل"""
+        lead = self.get_object()
+        new_status = request.data.get('status')
+        
+        valid_statuses = ['new', 'interested', 'contacted', 'converted', 'viewing_scheduled', 'won', 'lost', 'on_hold']
+        if not new_status or new_status not in valid_statuses:
+            return Response({'error': f'حالة غير صالحة. الحالات المتاحة: {", ".join(valid_statuses)}'}, status=400)
+        
+        old_status = lead.status
+        lead.status = new_status
+        lead.save(update_fields=['status'])
+        
+        LeadActivity.objects.create(
+            lead=lead,
+            activity_type='status_changed',
+            description=f'تم تغيير الحالة من {old_status} إلى {new_status}'
+        )
+        
+        return Response({
+            'success': True,
+            'id': str(lead.id),
+            'status': lead.status,
+            'status_display': lead.get_status_display()
+        })
+
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """إحصائيات العملاء المحتملين"""
@@ -908,8 +935,8 @@ def save_lead_from_chat(request, agent_id):
                             added_any = True
                     except Property.DoesNotExist:
                         pass
-            # تحديث حالة العميل إلى مهتم
-            if added_any and lead.status == 'new':
+            # تحديث حالة العميل إلى مهتم (إذا لم يكن في حالة أعلى)
+            if added_any and lead.status in ('new', 'interested'):
                 lead.status = 'interested'
                 lead.save(update_fields=['status'])
 

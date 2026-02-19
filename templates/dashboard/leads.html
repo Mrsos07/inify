@@ -1680,44 +1680,97 @@
             window.open(whatsappUrl, '_blank');
         }
 
-        // Update client status
+        // Update client status - shows a selection dialog
         async function updateStatus(id) {
-            const statuses = ['new', 'interested', 'contacted', 'converted'];
             const client = clients.find(c => String(c.id) === String(id));
             if (!client) return;
-            
-            const currentIndex = statuses.indexOf(client.status);
-            const nextIndex = (currentIndex + 1) % statuses.length;
-            const newStatus = statuses[nextIndex];
-            
-            try {
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                                  document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
-                
-                const response = await fetch(`/api/v1/leads/${id}/update_status/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ status: newStatus })
-                });
-                
-                if (response.ok) {
-                    console.log('✅ Status updated in database');
-                    client.status = newStatus;
-                    renderClients();
-                    updateStats();
-                } else {
-                    const data = await response.json().catch(() => ({}));
-                    console.error('❌ Failed to update status:', data);
-                    alert('فشل تحديث الحالة: ' + (data.error || 'خطأ غير معروف'));
+
+            const statusOptions = [
+                { value: 'new',               label: '🆕 جديد' },
+                { value: 'interested',         label: '⭐ مهتم' },
+                { value: 'contacted',          label: '📞 تم التواصل' },
+                { value: 'viewing_scheduled',  label: '📅 موعد معاينة' },
+                { value: 'converted',          label: '✅ تم التحويل' },
+                { value: 'won',                label: '🏆 تم البيع/التأجير' },
+                { value: 'lost',               label: '❌ خسارة' },
+                { value: 'on_hold',            label: '⏸ معلق' },
+            ];
+
+            // بناء نافذة الاختيار
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;
+                display:flex;align-items:center;justify-content:center;
+            `;
+
+            const box = document.createElement('div');
+            box.style.cssText = `
+                background:#1a2332;border-radius:16px;padding:28px 24px;
+                min-width:280px;box-shadow:0 20px 60px rgba(0,0,0,0.5);
+                border:1px solid rgba(107,184,201,0.2);
+            `;
+
+            box.innerHTML = `
+                <h3 style="margin:0 0 6px;color:#f8f8f8;font-size:16px;">تحديث حالة العميل</h3>
+                <p style="margin:0 0 18px;color:#8899aa;font-size:13px;">${client.name || 'العميل'}</p>
+                <div id="statusOptionsList" style="display:flex;flex-direction:column;gap:8px;">
+                    ${statusOptions.map(s => `
+                        <button data-val="${s.value}" style="
+                            padding:10px 16px;border-radius:10px;border:1px solid
+                            ${s.value === client.status ? '#6bb8c9' : 'rgba(255,255,255,0.1)'};
+                            background:${s.value === client.status ? 'rgba(107,184,201,0.2)' : 'transparent'};
+                            color:${s.value === client.status ? '#6bb8c9' : '#cdd9e5'};
+                            cursor:pointer;text-align:right;font-size:14px;
+                            transition:all 0.2s;
+                        ">${s.label}${s.value === client.status ? ' (الحالية)' : ''}</button>
+                    `).join('')}
+                </div>
+                <button id="cancelStatusBtn" style="
+                    margin-top:16px;width:100%;padding:10px;border-radius:10px;
+                    border:1px solid rgba(255,255,255,0.1);background:transparent;
+                    color:#8899aa;cursor:pointer;font-size:14px;
+                ">إلغاء</button>
+            `;
+
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+
+            // إغلاق عند الضغط خارج الصندوق
+            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+            box.querySelector('#cancelStatusBtn').addEventListener('click', () => overlay.remove());
+
+            // عند اختيار حالة
+            box.querySelector('#statusOptionsList').addEventListener('click', async (e) => {
+                const btn = e.target.closest('button[data-val]');
+                if (!btn) return;
+                const newStatus = btn.dataset.val;
+                if (newStatus === client.status) { overlay.remove(); return; }
+
+                overlay.remove();
+
+                try {
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                                      document.cookie.split('; ').find(r => r.startsWith('csrftoken='))?.split('=')[1] || '';
+
+                    const response = await fetch(`/api/v1/leads/${id}/update_status/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ status: newStatus })
+                    });
+
+                    if (response.ok) {
+                        client.status = newStatus;
+                        renderClients();
+                        updateStats();
+                    } else {
+                        const data = await response.json().catch(() => ({}));
+                        alert('فشل تحديث الحالة: ' + (data.error || 'خطأ غير معروف'));
+                    }
+                } catch (err) {
+                    alert('حدث خطأ أثناء تحديث الحالة');
                 }
-            } catch (error) {
-                console.error('Error updating status:', error);
-                alert('حدث خطأ أثناء تحديث الحالة');
-            }
+            });
         }
 
         // Delete client
