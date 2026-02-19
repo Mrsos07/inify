@@ -1620,13 +1620,14 @@
                     // أولاً: حاول عرض الصور من backendPropertiesMedia
                     const mediaKeys = Object.keys(backendPropertiesMedia);
                     if (mediaKeys.length > 0) {
-                        // ابحث عن العقارات المذكورة في الرد
+                        // ابحث عن العقارات المذكورة في الرد (غير المعروضة سابقاً فقط)
                         const mentionedMedia = [];
                         for (const propId of mediaKeys) {
+                            // تخطي العقارات المعروضة سابقاً
+                            if (displayedPropertyIds.has(propId)) continue;
                             const media = backendPropertiesMedia[propId];
                             const ref = media.reference || '';
                             const title = media.title || '';
-                            // تحقق إذا ذُكر الرقم المرجعي أو العنوان في الرد
                             if (ref && responseText.includes(ref)) {
                                 mentionedMedia.push(media);
                             } else if (title && responseText.includes(title.substring(0, 10))) {
@@ -1634,12 +1635,26 @@
                             }
                         }
 
-                        // إذا لم نجد مطابقة محددة لكن الرد يتحدث عن عقارات، اعرض الكل
-                        const propertyPresentKeywords = ['لدي', 'عندي', 'عندنا', 'متوفر', 'موجود', 'لقيت', 'وجدت', 'شقة', 'فيلا', 'خيارات', 'عروض', 'عقار'];
+                        // إذا لم نجد مطابقة محددة، ابحث عن كلمات تقديم العقارات
+                        // لكن فقط اعرض العقارات غير المعروضة سابقاً
+                        const propertyPresentKeywords = ['لدي', 'عندي', 'عندنا', 'متوفر', 'موجود', 'لقيت', 'وجدت', 'خيارات', 'عروض'];
                         const hasPresentKeyword = propertyPresentKeywords.some(kw => responseText.includes(kw));
-                        const mediaTouse = mentionedMedia.length > 0 ? mentionedMedia : (hasPresentKeyword ? Object.values(backendPropertiesMedia) : []);
+                        let mediaTouse = [];
+                        if (mentionedMedia.length > 0) {
+                            mediaTouse = mentionedMedia;
+                        } else if (hasPresentKeyword) {
+                            // فقط العقارات غير المعروضة
+                            mediaTouse = Object.entries(backendPropertiesMedia)
+                                .filter(([id]) => !displayedPropertyIds.has(id))
+                                .map(([, media]) => media);
+                        }
 
                         if (mediaTouse.length > 0) {
+                            // تسجيل العقارات كمعروضة قبل عرضها
+                            mediaTouse.forEach(m => {
+                                if (m.property_id) displayedPropertyIds.add(String(m.property_id));
+                                if (m.reference) displayedPropertyIds.add(m.reference);
+                            });
                             const mediaCards = generateMediaCards(mediaTouse);
                             if (mediaCards) {
                                 setTimeout(() => { showTyping(); }, 1500);
@@ -1984,10 +1999,10 @@
                     console.log('%c   Model: ' + data.ai_info.model, 'color: #4ade80;');
                 }
 
-                // تحديث مخزن الصور والفيديوهات من Backend
+                // دمج الصور والفيديوهات الجديدة في المخزن (بدون استبدال القديم)
                 if (data.properties_media && Object.keys(data.properties_media).length > 0) {
-                    backendPropertiesMedia = data.properties_media;
-                    console.log('🖼️ Properties media loaded:', Object.keys(backendPropertiesMedia).length, 'properties');
+                    Object.assign(backendPropertiesMedia, data.properties_media);
+                    console.log('🖼️ Properties media merged:', Object.keys(backendPropertiesMedia).length, 'properties total');
                 }
                 
                 if (!response.ok || !data.success) {
