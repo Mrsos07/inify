@@ -11,10 +11,12 @@ from encrypted_model_fields.fields import EncryptedCharField, EncryptedEmailFiel
 class LeadStatus(models.TextChoices):
     """حالة العميل المحتمل"""
     NEW = 'new', 'جديد'
+    INTERESTED = 'interested', 'مهتم'
     CONTACTED = 'contacted', 'تم التواصل'
-    QUALIFIED = 'qualified', 'مؤهل'
     VIEWING_SCHEDULED = 'viewing_scheduled', 'موعد معاينة'
+    QUALIFIED = 'qualified', 'مؤهل'
     NEGOTIATING = 'negotiating', 'قيد التفاوض'
+    CONVERTED = 'converted', 'تم التحويل'
     WON = 'won', 'تم البيع/التأجير'
     LOST = 'lost', 'خسارة'
     ON_HOLD = 'on_hold', 'معلق'

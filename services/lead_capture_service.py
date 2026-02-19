@@ -333,16 +333,17 @@ class LeadCaptureService:
                 notes=f"تم إنشاؤه تلقائياً من الشات\nمستوى الاهتمام: {extracted_info.get('interest_level', 'غير محدد')}"
             )
             
-            # إضافة العقار المهتم به
+            # إضافة العقار المهتم به وتحديث الحالة إلى interested
             if interested_property_id:
                 try:
                     if isinstance(interested_property_id, str):
                         interested_property_id = uuid.UUID(interested_property_id)
                     prop = Property.objects.get(id=interested_property_id)
                     lead.interested_properties.add(prop)
+                    lead.status = 'interested'
                 except (Property.DoesNotExist, ValueError):
                     pass
-            
+
             # حساب التقييم
             lead.calculate_score()
             lead.save()
@@ -549,8 +550,8 @@ class LeadCaptureService:
                 status='pending'
             )
             
-            # تحديث حالة العميل
-            lead.status = 'viewing_scheduled'
+            # تحديث حالة العميل إلى "تم التواصل" بعد حجز الموعد
+            lead.status = 'contacted'
             lead.save()
             
             # تسجيل النشاط

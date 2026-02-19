@@ -106,10 +106,20 @@ class LeadSerializer(serializers.ModelSerializer):
         return [
             {
                 'id': str(a.id),
-                'property_title': a.property.title,
+                'property_title': a.property.title if a.property else '',
+                'scheduled_date': str(a.scheduled_date),
+                'scheduled_time': str(a.scheduled_time)[:5],
                 'date': str(a.scheduled_date),
-                'time': str(a.scheduled_time),
+                'time': str(a.scheduled_time)[:5],
                 'status': a.status,
+                'status_display': dict({
+                    'pending': 'قيد الانتظار',
+                    'confirmed': 'مؤكد',
+                    'completed': 'تم',
+                    'cancelled': 'ملغي',
+                    'no_show': 'لم يحضر',
+                    'rescheduled': 'تم إعادة الجدولة'
+                }).get(a.status, a.status),
                 'booked_by': getattr(a, 'booked_by', None)
             }
             for a in appointments

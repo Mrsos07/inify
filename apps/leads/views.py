@@ -173,7 +173,13 @@ class ViewingAppointmentViewSet(viewsets.ModelViewSet):
         """إنشاء موعد معاينة جديد وإرسال تأكيد واتساب للعميل"""
         agent = self.request.user.agent_profile
         appointment = serializer.save(agent=agent)
-        
+
+        # تحويل حالة العميل إلى "تم التواصل" بعد حجز الموعد
+        lead = appointment.lead
+        if lead and lead.status not in ('contacted', 'qualified', 'negotiating', 'converted', 'won'):
+            lead.status = 'contacted'
+            lead.save(update_fields=['status'])
+
         # إرسال رسالة تأكيد واتساب للعميل
         self._send_whatsapp_confirmation(appointment, agent)
     
@@ -653,7 +659,7 @@ class AIAgentCalendarAPI(APIView):
                 phone=data.get('client_phone', ''),
                 email=data.get('client_email', ''),
                 source='website_chat',
-                status='viewing_scheduled',
+                status='contacted',
                 notes=notes_text
             )
             lead.interested_properties.add(property_obj)
@@ -671,8 +677,8 @@ class AIAgentCalendarAPI(APIView):
             status='pending'
         )
         
-        # تحديث حالة العميل
-        lead.status = 'viewing_scheduled'
+        # تحديث حالة العميل إلى "تم التواصل" بعد حجز الموعد
+        lead.status = 'contacted'
         lead.save()
         
         # إنشاء نشاط
@@ -866,20 +872,24 @@ def save_lead_from_chat(request, agent_id):
         # Add interested properties and update interested_count
         interested_properties = data.get('interested_properties', [])
         if interested_properties:
+            added_any = False
             for prop_data in interested_properties:
                 prop_id = prop_data.get('id')
                 if prop_id:
                     try:
                         prop = Property.objects.get(id=prop_id)
-                        # Check if not already added
                         if not lead.interested_properties.filter(id=prop.id).exists():
                             lead.interested_properties.add(prop)
-                            # Increment interested_count
                             prop.interested_count += 1
                             prop.save(update_fields=['interested_count'])
+                            added_any = True
                     except Property.DoesNotExist:
                         pass
-        
+            # تحديث حالة العميل إلى مهتم
+            if added_any and lead.status == 'new':
+                lead.status = 'interested'
+                lead.save(update_fields=['status'])
+
         return JsonResponse({
             'success': True, 
             'lead_id': str(lead.id),

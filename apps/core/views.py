@@ -781,11 +781,13 @@ def leads_view(request):
     leads = Lead.objects.filter(agent=agent).prefetch_related('interested_properties').order_by('-created_at')
     
     # Stats
+    from apps.leads.models import ViewingAppointment
     stats = {
         'new': leads.filter(status='new').count(),
+        'interested': leads.filter(status='interested').count(),
         'contacted': leads.filter(status='contacted').count(),
-        'qualified': leads.filter(status='qualified').count(),
-        'won': leads.filter(status='won').count(),
+        'converted': leads.filter(status='converted').count(),
+        'appointments': ViewingAppointment.objects.filter(agent=agent, status__in=['pending', 'confirmed']).count(),
     }
     
     context = {
