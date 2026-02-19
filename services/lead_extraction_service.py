@@ -340,11 +340,21 @@ class LeadExtractionService:
         if existing_lead:
             logger.info(f"Lead already exists for phone {normalized_phone}, updating...")
             updated = False
-            if extracted_data['property_type'] and not existing_lead.property_type_preference:
-                existing_lead.property_type_preference = extracted_data['property_type']
+            # استكمال البيانات من العقار المرتبط إذا لم تُستخرج من النص
+            prop_type_fallback = extracted_data['property_type']
+            city_fallback = extracted_data['city']
+            if interested_props:
+                first_prop = interested_props[0]
+                if not prop_type_fallback and first_prop.property_type:
+                    prop_type_fallback = first_prop.property_type
+                if not city_fallback and first_prop.city:
+                    city_fallback = first_prop.city
+
+            if prop_type_fallback and not existing_lead.property_type_preference:
+                existing_lead.property_type_preference = prop_type_fallback
                 updated = True
-            if extracted_data['city'] and not existing_lead.city_preference:
-                existing_lead.city_preference = extracted_data['city']
+            if city_fallback and not existing_lead.city_preference:
+                existing_lead.city_preference = city_fallback
                 updated = True
             if extracted_data['bedrooms'] and not existing_lead.bedrooms_min:
                 existing_lead.bedrooms_min = extracted_data['bedrooms']
@@ -371,6 +381,16 @@ class LeadExtractionService:
         
         # إنشاء عميل جديد
         try:
+            # استكمال البيانات من العقار المرتبط إذا لم تُستخرج من النص
+            prop_type = extracted_data['property_type']
+            city = extracted_data['city']
+            if interested_props:
+                first_prop = interested_props[0]
+                if not prop_type and first_prop.property_type:
+                    prop_type = first_prop.property_type
+                if not city and first_prop.city:
+                    city = first_prop.city
+
             viewing_note = 'طلب معاينة' if extracted_data['wants_viewing'] else 'أبدى اهتماماً'
             lead = Lead.objects.create(
                 agent=agent,
@@ -381,8 +401,8 @@ class LeadExtractionService:
                 source=LeadSource.WHATSAPP,
                 status=lead_status,
                 preferred_contact_method='whatsapp',
-                property_type_preference=extracted_data['property_type'] or '',
-                city_preference=extracted_data['city'] or '',
+                property_type_preference=prop_type or '',
+                city_preference=city or '',
                 bedrooms_min=extracted_data['bedrooms'],
                 budget_min=extracted_data['budget'].get('min') if extracted_data['budget'] else None,
                 budget_max=extracted_data['budget'].get('max') if extracted_data['budget'] else None,
