@@ -602,10 +602,10 @@ class WhatsAppWebhookView(View):
     def _send_property_images(self, instance_name: str, phone: str, 
                               properties: list, wa_instance):
         """
-        إرسال صور العقارات المذكورة عبر الواتساب
+        إرسال صور وفيديوهات العقارات المذكورة عبر الواتساب
         """
         import time
-        from apps.properties.models import PropertyImage
+        from apps.properties.models import PropertyImage, PropertyVideo
         
         site_url = os.getenv('SITE_URL', 'https://inify.ai').rstrip('/')
         
@@ -622,20 +622,7 @@ class WhatsAppWebhookView(View):
                         property=prop
                     ).first()
                 
-                if not primary_image or not primary_image.image:
-                    logger.info(f"No image found for property: {prop.reference_number}")
-                    continue
-                
-                # بناء URL كامل للصورة
-                image_url = primary_image.image.url
-                if image_url.startswith('/'):
-                    full_image_url = f"{site_url}{image_url}"
-                elif image_url.startswith('http'):
-                    full_image_url = image_url
-                else:
-                    full_image_url = f"{site_url}/media/{image_url}"
-                
-                # إعداد caption للصورة
+                # إعداد caption مشترك
                 listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
                 caption = f"🏠 {prop.title}\n"
                 caption += f"📍 {prop.city}"
@@ -647,31 +634,77 @@ class WhatsAppWebhookView(View):
                 if prop.size:
                     caption += f" | 📐 {prop.size} م²"
                 caption += f"\n🔖 الرقم المرجعي: {prop.reference_number}"
-                
-                time.sleep(0.5)
-                
-                logger.info(f"📷 Sending property image: {prop.reference_number} to {phone}")
-                print(f"[IMAGE] Sending image for {prop.reference_number}: {full_image_url}")
-                
-                result = whatsapp_service.send_media_message(
-                    instance_name=instance_name,
-                    phone_number=phone,
-                    media_url=full_image_url,
-                    media_type='image',
-                    caption=caption
-                )
-                
-                if result.get('success'):
-                    wa_instance.increment_sent()
-                    logger.info(f"✅ Image sent successfully for {prop.reference_number}")
-                    print(f"[IMAGE] ✅ Success: {prop.reference_number}")
+
+                # ─── إرسال الصورة ───
+                if primary_image and primary_image.image:
+                    image_url = primary_image.image.url
+                    if image_url.startswith('/'):
+                        full_image_url = f"{site_url}{image_url}"
+                    elif image_url.startswith('http'):
+                        full_image_url = image_url
+                    else:
+                        full_image_url = f"{site_url}/media/{image_url}"
+                    
+                    time.sleep(0.5)
+                    logger.info(f"📷 Sending property image: {prop.reference_number} to {phone}")
+                    print(f"[IMAGE] Sending image for {prop.reference_number}: {full_image_url}")
+                    
+                    result = whatsapp_service.send_media_message(
+                        instance_name=instance_name,
+                        phone_number=phone,
+                        media_url=full_image_url,
+                        media_type='image',
+                        caption=caption
+                    )
+                    
+                    if result.get('success'):
+                        wa_instance.increment_sent()
+                        logger.info(f"✅ Image sent successfully for {prop.reference_number}")
+                        print(f"[IMAGE] ✅ Success: {prop.reference_number}")
+                    else:
+                        logger.error(f"❌ Failed to send image: {result.get('error')}")
+                        print(f"[IMAGE] ❌ Failed: {result.get('error')}")
                 else:
-                    logger.error(f"❌ Failed to send image: {result.get('error')}")
-                    print(f"[IMAGE] ❌ Failed: {result.get('error')}")
+                    logger.info(f"No image found for property: {prop.reference_number}")
+
+                # ─── إرسال الفيديو إن وُجد ───
+                property_video = PropertyVideo.objects.filter(property=prop).order_by('order').first()
+                if property_video and property_video.video:
+                    video_url = property_video.video.url
+                    if video_url.startswith('/'):
+                        full_video_url = f"{site_url}{video_url}"
+                    elif video_url.startswith('http'):
+                        full_video_url = video_url
+                    else:
+                        full_video_url = f"{site_url}/media/{video_url}"
+                    
+                    time.sleep(1)
+                    logger.info(f"🎬 Sending property video: {prop.reference_number} to {phone}")
+                    print(f"[VIDEO] Sending video for {prop.reference_number}: {full_video_url}")
+                    
+                    video_caption = f"🎬 جولة فيديو - {prop.title}"
+                    if property_video.title:
+                        video_caption = f"🎬 {property_video.title}"
+                    
+                    result = whatsapp_service.send_media_message(
+                        instance_name=instance_name,
+                        phone_number=phone,
+                        media_url=full_video_url,
+                        media_type='video',
+                        caption=video_caption
+                    )
+                    
+                    if result.get('success'):
+                        wa_instance.increment_sent()
+                        logger.info(f"✅ Video sent successfully for {prop.reference_number}")
+                        print(f"[VIDEO] ✅ Success: {prop.reference_number}")
+                    else:
+                        logger.error(f"❌ Failed to send video: {result.get('error')}")
+                        print(f"[VIDEO] ❌ Failed: {result.get('error')}")
                     
             except Exception as e:
-                logger.error(f"Error sending property image: {e}")
-                print(f"[IMAGE] Error: {e}")
+                logger.error(f"Error sending property media: {e}")
+                print(f"[MEDIA] Error: {e}")
                 continue
     
     def _extract_and_remove_image_urls(self, text: str):
