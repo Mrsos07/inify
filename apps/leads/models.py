@@ -88,7 +88,8 @@ class Lead(models.Model):
     looking_for = models.CharField(
         max_length=20,
         choices=[('buy', 'شراء'), ('rent', 'إيجار'), ('both', 'كلاهما')],
-        default='buy',
+        default='',
+        blank=True,
         verbose_name='يبحث عن'
     )
     property_type_preference = models.CharField(max_length=100, blank=True, verbose_name='نوع العقار المفضل')

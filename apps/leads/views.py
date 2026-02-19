@@ -855,7 +855,7 @@ def save_lead_from_chat(request, agent_id):
                 phone=phone,
                 source='chatbot',
                 status='new',
-                looking_for=data.get('looking_for', 'buy'),
+                looking_for=data.get('looking_for', ''),
                 city_preference=data.get('city', ''),
                 property_type_preference=data.get('interest', ''),
                 notes=f"محادثة الشات:\n{data.get('conversation', '')}"

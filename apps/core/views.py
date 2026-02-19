@@ -719,7 +719,7 @@ def dashboard_view(request):
         'leads_count': leads.count(),
         'conversations_count': total_conversations,
         'views_count': sum(p.views_count for p in properties),
-        'interested_count': sum(p.interested_count for p in properties),
+        'interested_count': leads.count(),
         'appointments_count': appointments.count(),
         'recent_properties': properties_data,
         'recent_leads': leads_data,
