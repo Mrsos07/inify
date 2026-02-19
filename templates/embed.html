@@ -1617,40 +1617,23 @@
                 // عرض كروت العقارات مع الصور والفيديوهات من Backend
                 // ═══════════════════════════════════════════════════════════
                 if (!isInterestMessage) {
-                    // أولاً: حاول عرض الصور من backendPropertiesMedia
+                    // ═══════════════════════════════════════════════════════════
+                    // عرض بطاقة العقار فقط إذا ذكر الوكيل الرقم المرجعي صراحةً
+                    // ═══════════════════════════════════════════════════════════
                     const mediaKeys = Object.keys(backendPropertiesMedia);
                     if (mediaKeys.length > 0) {
-                        // ابحث عن العقارات المذكورة في الرد (غير المعروضة سابقاً فقط)
-                        const mentionedMedia = [];
+                        const mediaTouse = [];
                         for (const propId of mediaKeys) {
-                            // تخطي العقارات المعروضة سابقاً
                             if (displayedPropertyIds.has(propId)) continue;
                             const media = backendPropertiesMedia[propId];
                             const ref = media.reference || '';
-                            const title = media.title || '';
+                            // فقط إذا ذُكر الرقم المرجعي صراحةً في رد الوكيل
                             if (ref && responseText.includes(ref)) {
-                                mentionedMedia.push(media);
-                            } else if (title && responseText.includes(title.substring(0, 10))) {
-                                mentionedMedia.push(media);
+                                mediaTouse.push(media);
                             }
                         }
 
-                        // إذا لم نجد مطابقة محددة، ابحث عن كلمات تقديم العقارات
-                        // لكن فقط اعرض العقارات غير المعروضة سابقاً
-                        const propertyPresentKeywords = ['لدي', 'عندي', 'عندنا', 'متوفر', 'موجود', 'لقيت', 'وجدت', 'خيارات', 'عروض'];
-                        const hasPresentKeyword = propertyPresentKeywords.some(kw => responseText.includes(kw));
-                        let mediaTouse = [];
-                        if (mentionedMedia.length > 0) {
-                            mediaTouse = mentionedMedia;
-                        } else if (hasPresentKeyword) {
-                            // فقط العقارات غير المعروضة
-                            mediaTouse = Object.entries(backendPropertiesMedia)
-                                .filter(([id]) => !displayedPropertyIds.has(id))
-                                .map(([, media]) => media);
-                        }
-
                         if (mediaTouse.length > 0) {
-                            // تسجيل العقارات كمعروضة قبل عرضها
                             mediaTouse.forEach(m => {
                                 if (m.property_id) displayedPropertyIds.add(String(m.property_id));
                                 if (m.reference) displayedPropertyIds.add(m.reference);
@@ -1665,7 +1648,7 @@
                             }
                         }
                     } else {
-                        // Fallback: استخدام العقارات المحملة من API (بدون صور)
+                        // Fallback: فقط إذا ذُكر الرقم المرجعي أو الحي أو السعر
                         const mentionedProperties = findMentionedProperties(responseText);
                         if (mentionedProperties.length > 0) {
                             lastSearchedProperties = mentionedProperties;
@@ -1702,40 +1685,20 @@
             }
             
             const responseLower = response.toLowerCase();
-            
-            // الكلمات التي تدل على عرض عقارات
-            const presentationKeywords = ['لدي', 'عندي', 'عندنا', 'متوفر', 'موجود', 'لقيت', 'وجدت', 'شقة', 'فيلا', 'خيارات', 'عروض'];
-            const hasPresentationKeyword = presentationKeywords.some(kw => responseLower.includes(kw));
-            
-            if (!hasPresentationKeyword) return [];
-            
             const foundProperties = [];
             
             for (const prop of properties) {
-                // ═══════════════════════════════════════════════════════════
-                // تخطي العقارات التي تم عرضها بالفعل
-                // ═══════════════════════════════════════════════════════════
+                // تخطي العقارات المعروضة سابقاً
                 if (displayedPropertyIds.has(prop.id) || displayedPropertyIds.has(prop.reference_number)) {
-                    console.log('⏭️ Skipping already displayed property:', prop.reference_number);
                     continue;
                 }
                 
-                // البحث بالحي أو السعر أو المساحة أو الرقم المرجعي
-                const districtMatch = prop.district && responseLower.includes(prop.district.toLowerCase());
-                const priceMatch = prop.price && (
-                    response.includes(prop.price.toString()) || 
-                    response.includes(prop.price.toLocaleString('ar-SA')) ||
-                    response.includes(formatPrice(prop.price))
-                );
-                const areaMatch = prop.area && response.includes(prop.area.toString());
+                // عرض البطاقة فقط إذا ذُكر الرقم المرجعي صراحةً
                 const refMatch = prop.reference_number && response.includes(prop.reference_number);
                 
-                // إذا ذكر الحي أو السعر أو المساحة أو الرقم المرجعي
-                if (districtMatch || priceMatch || areaMatch || refMatch) {
-                    console.log('🏠 Found mentioned property:', prop.title);
+                if (refMatch) {
+                    console.log('🏠 Found property by reference:', prop.reference_number);
                     foundProperties.push(prop);
-                    
-                    // إضافة للقائمة المعروضة
                     if (prop.id) displayedPropertyIds.add(prop.id);
                     if (prop.reference_number) displayedPropertyIds.add(prop.reference_number);
                 }
