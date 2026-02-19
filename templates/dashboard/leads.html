@@ -1043,6 +1043,24 @@
     <script>
         // Django handles authentication
         
+        // ═══════════════════════════════════════════════════════════
+        // بيانات العملاء مُحقونة مباشرة من Django (لا تعتمد على API)
+        // ═══════════════════════════════════════════════════════════
+        const djangoStats = {
+            new: {{ stats.new|default:0 }},
+            interested: {{ stats.interested|default:0 }},
+            contacted: {{ stats.contacted|default:0 }},
+            converted: {{ stats.converted|default:0 }},
+            appointments: {{ stats.appointments|default:0 }}
+        };
+
+        // تحديث الإحصائيات فوراً من Django
+        document.getElementById('newCount').textContent = djangoStats.new;
+        document.getElementById('interestedCount').textContent = djangoStats.interested;
+        document.getElementById('contactedCount').textContent = djangoStats.contacted;
+        document.getElementById('convertedCount').textContent = djangoStats.converted;
+        document.getElementById('appointmentsCount').textContent = djangoStats.appointments;
+
         // تحميل العملاء من قاعدة البيانات
         let clients = [];
         
