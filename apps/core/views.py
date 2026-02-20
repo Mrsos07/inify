@@ -1347,6 +1347,16 @@ def get_all_users(request):
                     else:
                         sub_end = any_sub.end_date.isoformat() if any_sub.end_date else None
             
+            # إحصائيات التوكنات
+            from apps.agents.models import TokenUsage
+            token_stats = TokenUsage.get_agent_stats(agent)
+
+            # تكلفة gpt-4.1-mini: $0.40/1M input, $1.60/1M output
+            cost_usd = (
+                token_stats['prompt_tokens'] * 0.40 / 1_000_000 +
+                token_stats['completion_tokens'] * 1.60 / 1_000_000
+            )
+
             users_data.append({
                 'id': str(agent.id),
                 'name': user.get_full_name() or user.username,
@@ -1366,7 +1376,16 @@ def get_all_users(request):
                 'propertiesCount': properties_count,
                 'isActive': agent.is_active,
                 'createdAt': user.date_joined.isoformat(),
-                'lastLogin': user.last_login.isoformat() if user.last_login else None
+                'lastLogin': user.last_login.isoformat() if user.last_login else None,
+                'tokenStats': {
+                    'total': token_stats['total_tokens'],
+                    'prompt': token_stats['prompt_tokens'],
+                    'completion': token_stats['completion_tokens'],
+                    'month': token_stats['month_tokens'],
+                    'today': token_stats['today_tokens'],
+                    'requests': token_stats['total_requests'],
+                    'costUsd': round(cost_usd, 4),
+                }
             })
         
         return JsonResponse({

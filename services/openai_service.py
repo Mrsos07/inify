@@ -7,6 +7,7 @@ import os
 import logging
 from typing import Dict, List, Optional
 from openai import OpenAI
+import tiktoken
 
 logger = logging.getLogger(__name__)
 
@@ -207,7 +208,24 @@ class OpenAIService:
                 presence_penalty=0.3,
             )
             
-            return response.choices[0].message.content
+            reply = response.choices[0].message.content
+
+            # تسجيل استهلاك التوكنات
+            try:
+                usage = response.usage
+                if usage and self.agent:
+                    from apps.agents.models import TokenUsage
+                    TokenUsage.log(
+                        agent=self.agent,
+                        prompt_tokens=usage.prompt_tokens,
+                        completion_tokens=usage.completion_tokens,
+                        model=self.model,
+                        source='web_chat',
+                    )
+            except Exception as log_err:
+                logger.warning(f"Token logging failed: {log_err}")
+
+            return reply
             
         except Exception as e:
             logger.error(f"OpenAI Error: {e}")
@@ -229,7 +247,24 @@ class OpenAIService:
                 max_tokens=2000,
             )
             
-            return response.choices[0].message.content
+            reply = response.choices[0].message.content
+
+            # تسجيل استهلاك التوكنات
+            try:
+                usage = response.usage
+                if usage and self.agent:
+                    from apps.agents.models import TokenUsage
+                    TokenUsage.log(
+                        agent=self.agent,
+                        prompt_tokens=usage.prompt_tokens,
+                        completion_tokens=usage.completion_tokens,
+                        model=self.model,
+                        source='web_chat',
+                    )
+            except Exception as log_err:
+                logger.warning(f"Token logging failed: {log_err}")
+
+            return reply
             
         except Exception as e:
             logger.error(f"OpenAI Error: {e}")

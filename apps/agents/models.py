@@ -506,6 +506,87 @@ class WhatsAppInstance(models.Model):
         self.save(update_fields=['messages_sent'])
 
 
+class TokenUsage(models.Model):
+    """تتبع استهلاك التوكنات لكل مستخدم"""
+
+    SOURCE_CHOICES = [
+        ('web_chat', 'محادثة الويب'),
+        ('whatsapp', 'واتساب'),
+        ('api', 'API'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    agent = models.ForeignKey(
+        Agent,
+        on_delete=models.CASCADE,
+        related_name='token_usages',
+        verbose_name='المسوق'
+    )
+    prompt_tokens = models.PositiveIntegerField(default=0, verbose_name='توكنات الإدخال')
+    completion_tokens = models.PositiveIntegerField(default=0, verbose_name='توكنات الإخراج')
+    total_tokens = models.PositiveIntegerField(default=0, verbose_name='إجمالي التوكنات')
+    model = models.CharField(max_length=50, default='gpt-4.1-mini', verbose_name='النموذج')
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='web_chat', verbose_name='المصدر')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='التاريخ')
+
+    class Meta:
+        verbose_name = 'استهلاك توكنات'
+        verbose_name_plural = 'استهلاك التوكنات'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['agent', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.agent} - {self.total_tokens} tokens ({self.created_at.date()})"
+
+    @classmethod
+    def log(cls, agent, prompt_tokens, completion_tokens, model='gpt-4.1-mini', source='web_chat'):
+        """تسجيل استهلاك التوكنات"""
+        return cls.objects.create(
+            agent=agent,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=prompt_tokens + completion_tokens,
+            model=model,
+            source=source,
+        )
+
+    @classmethod
+    def get_agent_stats(cls, agent):
+        """إحصائيات استهلاك التوكنات لمسوق معين"""
+        from django.db.models import Sum
+        from django.utils import timezone
+        import datetime
+
+        qs = cls.objects.filter(agent=agent)
+        totals = qs.aggregate(
+            total_prompt=Sum('prompt_tokens'),
+            total_completion=Sum('completion_tokens'),
+            total_all=Sum('total_tokens'),
+        )
+
+        # هذا الشهر
+        now = timezone.now()
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        month_qs = qs.filter(created_at__gte=month_start)
+        month_totals = month_qs.aggregate(total=Sum('total_tokens'))
+
+        # اليوم
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_qs = qs.filter(created_at__gte=today_start)
+        today_totals = today_qs.aggregate(total=Sum('total_tokens'))
+
+        return {
+            'total_tokens': totals['total_all'] or 0,
+            'prompt_tokens': totals['total_prompt'] or 0,
+            'completion_tokens': totals['total_completion'] or 0,
+            'month_tokens': month_totals['total'] or 0,
+            'today_tokens': today_totals['total'] or 0,
+            'total_requests': qs.count(),
+        }
+
+
 class Subscription(models.Model):
     """نموذج الاشتراكات والمدفوعات"""
     

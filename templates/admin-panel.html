@@ -938,6 +938,7 @@
             <div class="admin-tabs">
                 <button class="admin-tab active" onclick="switchAdminTab('users')">👥 إدارة المستخدمين</button>
                 <button class="admin-tab" onclick="switchAdminTab('subscriptions')">💳 إدارة الاشتراكات</button>
+                <button class="admin-tab" onclick="switchAdminTab('tokens')">🔢 استهلاك التوكنات</button>
                 <button class="admin-tab" onclick="switchAdminTab('ai')">🤖 إعدادات Inify</button>
             </div>
 
@@ -1088,6 +1089,59 @@
                         </thead>
                         <tbody id="subscriptionsTableBody">
                             <!-- Subscriptions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tokens Usage Tab -->
+            <div class="admin-tab-content" id="tokensTab">
+                <!-- Summary Stats -->
+                <div class="stats-grid" style="margin-bottom:24px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#6bb8c9,#4a90a4);">🔢</div>
+                        <div class="stat-info"><h3 id="totalTokensAll">0</h3><p>إجمالي التوكنات</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">📅</div>
+                        <div class="stat-info"><h3 id="totalTokensMonth">0</h3><p>توكنات هذا الشهر</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a);">💵</div>
+                        <div class="stat-info"><h3 id="totalCostUsd">$0.0000</h3><p>التكلفة الإجمالية (USD)</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#a855f7,#7c3aed);">📨</div>
+                        <div class="stat-info"><h3 id="totalRequests">0</h3><p>إجمالي الطلبات</p></div>
+                    </div>
+                </div>
+
+                <!-- Tokens Table -->
+                <h2 class="section-title">🔢 استهلاك التوكنات لكل مستخدم</h2>
+                <div class="users-table-container">
+                    <div class="table-header">
+                        <div class="search-box">
+                            <input type="text" id="tokenSearchInput" placeholder="🔍 بحث عن مستخدم..." oninput="filterTokensTable()">
+                        </div>
+                        <small style="color:var(--text-muted);align-self:center;">
+                            التكلفة محسوبة على أساس gpt-4.1-mini: $0.40/1M input · $1.60/1M output
+                        </small>
+                    </div>
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>المستخدم</th>
+                                <th>إجمالي التوكنات</th>
+                                <th>توكنات الإدخال</th>
+                                <th>توكنات الإخراج</th>
+                                <th>هذا الشهر</th>
+                                <th>اليوم</th>
+                                <th>الطلبات</th>
+                                <th>التكلفة (USD)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tokensTableBody">
+                            <tr><td colspan="8" style="text-align:center;color:var(--text-muted);">جاري التحميل...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -2250,7 +2304,82 @@
                 loadAISettings();
             } else if (tab === 'subscriptions') {
                 loadSubscriptions();
+            } else if (tab === 'tokens') {
+                loadTokens();
             }
+        }
+
+        // ============ Token Usage Functions ============
+        let allTokensData = [];
+
+        function loadTokens() {
+            allTokensData = allUsers.map(u => ({
+                id: u.id,
+                name: u.name || 'بدون اسم',
+                email: u.email,
+                company: u.company || '',
+                tokens: u.tokenStats || { total: 0, prompt: 0, completion: 0, month: 0, today: 0, requests: 0, costUsd: 0 }
+            }));
+            renderTokensTable(allTokensData);
+        }
+
+        function renderTokensTable(data) {
+            // Summary totals
+            let totalAll = 0, totalMonth = 0, totalCost = 0, totalReqs = 0;
+            data.forEach(u => {
+                totalAll   += u.tokens.total    || 0;
+                totalMonth += u.tokens.month    || 0;
+                totalCost  += u.tokens.costUsd  || 0;
+                totalReqs  += u.tokens.requests || 0;
+            });
+            document.getElementById('totalTokensAll').textContent   = totalAll.toLocaleString('ar-SA');
+            document.getElementById('totalTokensMonth').textContent = totalMonth.toLocaleString('ar-SA');
+            document.getElementById('totalCostUsd').textContent     = '$' + totalCost.toFixed(4);
+            document.getElementById('totalRequests').textContent    = totalReqs.toLocaleString('ar-SA');
+
+            // Table rows - sorted by total tokens desc
+            const sorted = [...data].sort((a, b) => (b.tokens.total || 0) - (a.tokens.total || 0));
+            const tbody = document.getElementById('tokensTableBody');
+
+            if (sorted.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">لا توجد بيانات</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = sorted.map(u => {
+                const t = u.tokens;
+                const costColor = t.costUsd > 1 ? '#ef4444' : t.costUsd > 0.1 ? '#f59e0b' : '#22c55e';
+                return `
+                    <tr>
+                        <td>
+                            <div class="user-info">
+                                <div class="user-avatar">${u.name.charAt(0)}</div>
+                                <div>
+                                    <div class="user-name">${u.name}</div>
+                                    <div class="user-email">${u.email}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><strong style="color:var(--cyan);">${(t.total || 0).toLocaleString('ar-SA')}</strong></td>
+                        <td style="color:var(--text-muted);">${(t.prompt || 0).toLocaleString('ar-SA')}</td>
+                        <td style="color:var(--text-muted);">${(t.completion || 0).toLocaleString('ar-SA')}</td>
+                        <td>${(t.month || 0).toLocaleString('ar-SA')}</td>
+                        <td>${(t.today || 0).toLocaleString('ar-SA')}</td>
+                        <td>${(t.requests || 0).toLocaleString('ar-SA')}</td>
+                        <td><strong style="color:${costColor};">$${(t.costUsd || 0).toFixed(4)}</strong></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterTokensTable() {
+            const q = document.getElementById('tokenSearchInput').value.toLowerCase();
+            const filtered = allTokensData.filter(u =>
+                u.name.toLowerCase().includes(q) ||
+                u.email.toLowerCase().includes(q) ||
+                (u.company || '').toLowerCase().includes(q)
+            );
+            renderTokensTable(filtered);
         }
 
         // Load AI settings from database

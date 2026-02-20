@@ -142,6 +142,20 @@ class NewraAIService:
                         tool_results
                     )
             
+            # تسجيل استهلاك التوكنات
+            try:
+                if self.agent and response.usage:
+                    from apps.agents.models import TokenUsage
+                    TokenUsage.log(
+                        agent=self.agent,
+                        prompt_tokens=response.usage.prompt_tokens,
+                        completion_tokens=response.usage.completion_tokens,
+                        model=self.model,
+                        source='whatsapp',
+                    )
+            except Exception as _te:
+                logger.warning(f"Token logging failed: {_te}")
+
             return {
                 'content': assistant_message.content,
                 'tool_calls': tool_calls,
