@@ -1825,7 +1825,8 @@
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileMenu()"></div>
 
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
+    {% include 'dashboard/partials/sidebar.html' %}
+    <aside class="sidebar d-none" id="sidebar-old" style="display:none!important">
         <a href="/dashboard/" class="sidebar-logo" style="display: flex; align-items: center; gap: 12px;">
             <img src="/static/images/newra-logo.png" alt="Newra" style="height: 28px; filter: brightness(0) invert(1);">
             <img src="/static/images/inify-logo.png" alt="Inify" style="height: 28px;">

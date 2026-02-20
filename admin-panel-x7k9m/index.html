@@ -1947,7 +1947,7 @@
             
             const role = user.role || 'free';
             const plan = SUBSCRIPTION_PLANS[role] || SUBSCRIPTION_PLANS.free;
-            const expiry = user.subscriptionExpiry ? new Date(user.subscriptionExpiry).toLocaleDateString('ar-SA') : '-';
+            const expiry = user.subscriptionExpires ? new Date(user.subscriptionExpires).toLocaleDateString('ar-SA') : '-';
             
             document.getElementById('subModalBody').innerHTML = `
                 <div class="sub-modal-info">
@@ -2039,28 +2039,35 @@
                 
             } else if (selectedSubAction === 'renew') {
                 const role = allUsers[userIndex].role;
-                const plan = SUBSCRIPTION_PLANS[role];
                 
-                // Extend from current expiry or from now if expired
-                let baseDate = allUsers[userIndex].subscriptionExpiry ? new Date(allUsers[userIndex].subscriptionExpiry) : now;
-                if (baseDate < now) baseDate = now;
-                
-                const newExpiry = new Date(baseDate.getTime() + duration * 24 * 60 * 60 * 1000);
-                allUsers[userIndex].subscriptionExpiry = newExpiry.toISOString();
-                
-                // Add to history
-                if (!allUsers[userIndex].subscriptionHistory) {
-                    allUsers[userIndex].subscriptionHistory = [];
+                // استخدام API لتجديد الاشتراك
+                try {
+                    const response = await fetch('/api/admin/users/update-plan/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            userId: selectedSubUserId,
+                            plan: role,
+                            duration: duration
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const newExpiry = data.subscriptionExpires ? new Date(data.subscriptionExpires) : null;
+                        allUsers[userIndex].subscriptionExpires = data.subscriptionExpires;
+                        const expiryStr = newExpiry ? newExpiry.toLocaleDateString('ar-SA') : '-';
+                        alert(`✅ تم تجديد الاشتراك بنجاح!\n\nينتهي في: ${expiryStr}`);
+                        await loadUsers();
+                    } else {
+                        alert('❌ خطأ: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Error renewing plan:', error);
+                    alert('❌ خطأ في الاتصال بالخادم');
                 }
-                allUsers[userIndex].subscriptionHistory.push({
-                    action: 'renew',
-                    plan: role,
-                    duration: duration,
-                    amount: plan.price * (duration / 30),
-                    date: now.toISOString()
-                });
-                
-                alert(`✅ تم تجديد الاشتراك بنجاح!\n\nينتهي في: ${newExpiry.toLocaleDateString('ar-SA')}`);
             }
             
             localStorage.setItem('newra_users', JSON.stringify(allUsers));

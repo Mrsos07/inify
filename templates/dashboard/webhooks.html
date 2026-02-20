@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Webhooks - Inify</title>
+<link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<link rel="stylesheet" href="/static/css/theme.css">
+<style>
+@font-face{font-family:BalooBhaijaan2;src:url(/static/BalooBhaijaan2-Regular.ttf) format(truetype);font-weight:400}
+@font-face{font-family:BalooBhaijaan2;src:url(/static/BalooBhaijaan2-Bold.ttf) format(truetype);font-weight:700}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--midnight:#0A1628;--dark-blue:#1E3A5F;--cyan:#6BB8C9;--pearl:#F8F8F8;--text-muted:rgba(248,248,248,.6);--card-bg:rgba(30,58,95,.4);--border:rgba(107,184,201,.15)}
+body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(--pearl);min-height:100vh}
+.premium-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:linear-gradient(135deg,#0A1628,#122a45)}
+.grid-pattern{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background-image:linear-gradient(rgba(107,184,201,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(107,184,201,.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+.layout{display:flex;min-height:100vh}
+.main-content{flex:1;padding:28px;overflow-y:auto;margin-right:240px}
+@media(max-width:768px){.main-content{margin-right:0;padding:16px}}
+.page-header{margin-bottom:28px}
+.page-header h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.page-header p{color:var(--text-muted);font-size:13px}
+.section-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px}
+.section-card h2{font-size:16px;color:var(--cyan);margin-bottom:16px}
+.btn-gold{background:linear-gradient(135deg,#FFD700,#FFA500);color:#0A1628;border:none;padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit}
+.btn-outline{background:rgba(107,184,201,.1);color:var(--cyan);border:1px solid rgba(107,184,201,.2);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit}
+.btn-danger{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit}
+.btn-warn{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px}
+.stat-mini{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.stat-mini .num{font-size:26px;font-weight:700}
+.stat-mini .txt{font-size:12px;color:var(--text-muted);margin-top:4px}
+.wh-card{background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px}
+.wh-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.wh-name{font-size:15px;font-weight:700}
+.wh-url{font-family:monospace;font-size:12px;color:var(--cyan);word-break:break-all;margin-top:3px}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.b-on{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.b-off{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.wh-events{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.ev-tag{background:rgba(107,184,201,.1);color:var(--cyan);border:1px solid rgba(107,184,201,.2);padding:3px 10px;border-radius:20px;font-size:11px}
+.wh-stats{display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap}
+.wh-stat .val{font-size:18px;font-weight:700}
+.wh-stat .lbl{font-size:11px;color:var(--text-muted)}
+.wh-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wh-secret{font-family:monospace;font-size:11px;color:rgba(248,248,248,.4);background:rgba(0,0,0,.3);padding:6px 12px;border-radius:8px;margin-bottom:14px;word-break:break-all}
+.ev-guide{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.ev-item{background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.ev-item .ev-code{font-family:monospace;font-size:12px;color:#FFD700;margin-bottom:4px}
+.ev-item .ev-desc{font-size:12px;color:var(--text-muted)}
+.log-table{width:100%;border-collapse:collapse;font-size:12px}
+.log-table th{text-align:right;padding:8px 12px;background:rgba(107,184,201,.08);color:var(--text-muted);font-weight:600;border-bottom:1px solid rgba(107,184,201,.1)}
+.log-table td{padding:8px 12px;border-bottom:1px solid rgba(107,184,201,.06)}
+.s-ok{color:#22c55e;font-weight:700}.s-fail{color:#ef4444;font-weight:700}.s-pend{color:#f59e0b;font-weight:700}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.modal.show{display:flex}
+.modal-box{background:#1E3A5F;border:1px solid rgba(107,184,201,.25);border-radius:16px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-box h3{font-size:17px;margin-bottom:20px}
+.fg{margin-bottom:16px}
+.fg label{display:block;font-size:13px;color:var(--text-muted);margin-bottom:6px}
+.fg input{width:100%;padding:11px 14px;background:rgba(10,22,40,.6);border:1px solid rgba(107,184,201,.2);border-radius:10px;color:var(--pearl);font-family:inherit;font-size:14px;box-sizing:border-box}
+.fg input:focus{outline:none;border-color:var(--cyan)}
+.ev-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.ev-check{display:flex;align-items:center;gap:8px;background:rgba(10,22,40,.4);border:1px solid rgba(107,184,201,.15);border-radius:8px;padding:8px 10px;cursor:pointer}
+.ev-check input[type=checkbox]{accent-color:var(--cyan);width:15px;height:15px;cursor:pointer;flex-shrink:0}
+.ev-check span{font-size:12px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.empty-state{text-align:center;padding:48px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:14px;margin-bottom:20px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1E3A5F;border:1px solid rgba(107,184,201,.3);border-radius:12px;padding:12px 24px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.toast.ok{border-color:rgba(34,197,94,.4);color:#22c55e}
+.toast.err{border-color:rgba(239,68,68,.4);color:#ef4444}
+.code-block{background:rgba(0,0,0,.4);border:1px solid rgba(107,184,201,.15);border-radius:10px;padding:16px;font-family:monospace;font-size:12px;color:#4ade80;white-space:pre-wrap;overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="premium-bg"></div>
+<div class="grid-pattern"></div>
+<div class="layout">
+{% include 'dashboard/partials/sidebar.html' %}
+<div class="main-content">
+  <div class="page-header">
+    <h1>🔔 Webhooks</h1>
+    <p>استقبل إشعارات فورية في أنظمة CRM الخارجية عند حدوث أي نشاط على حسابك</p>
+  </div>
+  <div class="stats-row">
+    <div class="stat-mini"><div class="num" style="color:#FFD700;" id="sTotal">0</div><div class="txt">إجمالي Webhooks</div></div>
+    <div class="stat-mini"><div class="num" style="color:#22c55e;" id="sActive">0</div><div class="txt">نشط</div></div>
+    <div class="stat-mini"><div class="num" style="color:var(--cyan);" id="sSent">0</div><div class="txt">إجمالي المرسل</div></div>
+    <div class="stat-mini"><div class="num" style="color:#f59e0b;" id="sFailed">0</div><div class="txt">إجمالي الفاشل</div></div>
+  </div>
+  <div class="section-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+      <h2 style="margin-bottom:0;">🔗 Webhooks المُعدَّة</h2>
+      <button class="btn-gold" onclick="openCreate()">+ إنشاء Webhook جديد</button>
+    </div>
+    <div id="whList">
+      {% if webhooks %}
+        {% for wh in webhooks %}
+        <div class="wh-card" id="wc-{{ wh.id }}" data-active="{{ wh.is_active|lower }}" data-sent="{{ wh.total_sent }}" data-failed="{{ wh.total_failed }}">
+          <div class="wh-header">
+            <div>
+              <div class="wh-name">{{ wh.name }}</div>
+              <div class="wh-url">{{ wh.url }}</div>
+            </div>
+            <span class="badge {% if wh.is_active %}b-on{% else %}b-off{% endif %}">{% if wh.is_active %}● نشط{% else %}○ معطّل{% endif %}</span>
+          </div>
+          <div class="wh-events">{% for ev in wh.events %}<span class="ev-tag">{{ ev }}</span>{% endfor %}</div>
+          <div class="wh-stats">
+            <div class="wh-stat"><div class="val">{{ wh.total_sent }}</div><div class="lbl">مُرسَل</div></div>
+            <div class="wh-stat"><div class="val" style="color:{% if wh.total_failed > 0 %}#ef4444{% else %}#22c55e{% endif %}">{{ wh.total_failed }}</div><div class="lbl">فاشل</div></div>
+            <div class="wh-stat"><div class="val" style="font-size:12px;color:var(--text-muted);">{% if wh.last_success_at %}{{ wh.last_success_at|date:"d/m H:i" }}{% else %}—{% endif %}</div><div class="lbl">آخر نجاح</div></div>
+          </div>
+          <div class="wh-secret">🔑 Secret: ••••••••{{ wh.secret|slice:"-4:" }}</div>
+          <div class="wh-actions">
+            <button class="btn-outline" onclick="testWH('{{ wh.id }}',this)">⚡ اختبار</button>
+            <button class="btn-outline" onclick="showLogs('{{ wh.id }}','{{ wh.name }}')">📋 السجل</button>
+            <button class="btn-outline" onclick="editWH('{{ wh.id }}')">✏️ تعديل</button>
+            <button class="btn-warn" onclick="toggleWH('{{ wh.id }}',{{ wh.is_active|lower }})">{% if wh.is_active %}⏸ تعطيل{% else %}▶ تفعيل{% endif %}</button>
+            <button class="btn-danger" onclick="deleteWH('{{ wh.id }}','{{ wh.name }}')">🗑 حذف</button>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <div class="icon">🔔</div>
+          <p>لا توجد Webhooks بعد — أنشئ أول Webhook لاستقبال الإشعارات في نظام CRM الخاص بك</p>
+          <button class="btn-gold" onclick="openCreate()">+ إنشاء أول Webhook</button>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="section-card">
+    <h2>📡 الأحداث المتاحة</h2>
+    <div class="ev-guide">
+      {% for val, label in available_events %}
+      <div class="ev-item"><div class="ev-code">{{ val }}</div><div class="ev-desc">{{ label }}</div></div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="section-card">
+    <h2>📦 مثال على الـ Payload المُرسَل</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:14px;">يُرسَل كـ HTTP POST — Content-Type: application/json</p>
+    <div class="code-block">{"event":"lead.created","timestamp":"2026-02-20T14:30:00+03:00","data":{"id":"uuid","name":"أحمد محمد","phone":"0555123456","status":"new","source":"chatbot","urgency":"immediate","score":45,"city_preference":"الرياض","budget_min":500000,"budget_max":900000,"created_at":"2026-02-20T14:30:00+03:00"}}</div>
+    <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">🔐 التحقق: <code style="color:var(--cyan);font-family:monospace;">X-Inify-Signature: sha256=HMAC_SHA256(secret, body)</code></p>
+  </div>
+</div>
+</div>
+<div class="modal" id="createModal">
+  <div class="modal-box">
+    <h3 id="modalTitle">🔔 إنشاء Webhook جديد</h3>
+    <input type="hidden" id="editId">
+    <div class="fg"><label>اسم الـ Webhook</label><input type="text" id="whName" placeholder="مثال: HubSpot، Salesforce، Zapier"></div>
+    <div class="fg"><label>رابط الاستقبال (URL)</label><input type="url" id="whUrl" placeholder="https://your-crm.com/webhook/inify"></div>
+    <div class="fg">
+      <label>الأحداث المشترك بها</label>
+      <div class="ev-grid" id="evGrid">
+        {% for val, label in available_events %}
+        <label class="ev-check"><input type="checkbox" name="ev" value="{{ val }}"><span>{{ label }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="whActive" checked style="accent-color:var(--cyan);width:16px;height:16px;">
+        <span>نشط فور الإنشاء</span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeModal()">إلغاء</button>
+      <button class="btn-gold" onclick="saveWH()">حفظ</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="logsModal">
+  <div class="modal-box" style="max-width:700px;">
+    <h3 id="logsTitle">📋 سجل الإرسال</h3>
+    <div style="overflow-x:auto;">
+      <table class="log-table">
+        <thead><tr><th>الحدث</th><th>الحالة</th><th>HTTP</th><th>المدة</th><th>الوقت</th></tr></thead>
+        <tbody id="logsBody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:16px;text-align:left;"><button class="btn-outline" onclick="document.getElementById('logsModal').classList.remove('show')">إغلاق</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const API='/api/v1/agents/webhooks/';
+function csrf(){let v='';document.cookie.split(';').forEach(c=>{const p=c.trim().split('=');if(p[0]==='csrftoken')v=decodeURIComponent(p[1]);});return v;}
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+type;setTimeout(()=>el.className='toast',3500);}
+function openCreate(){document.getElementById('editId').value='';document.getElementById('modalTitle').textContent='🔔 إنشاء Webhook جديد';document.getElementById('whName').value='';document.getElementById('whUrl').value='';document.getElementById('whActive').checked=true;document.querySelectorAll('#evGrid input[type=checkbox]').forEach(cb=>cb.checked=false);document.getElementById('createModal').classList.add('show');}
+function closeModal(){document.getElementById('createModal').classList.remove('show');}
+async function saveWH(){
+  const id=document.getElementById('editId').value;
+  const name=document.getElementById('whName').value.trim();
+  const url=document.getElementById('whUrl').value.trim();
+  const events=[...document.querySelectorAll('#evGrid input[type=checkbox]:checked')].map(cb=>cb.value);
+  const is_active=document.getElementById('whActive').checked;
+  if(!name){toast('أدخل اسم الـ Webhook','err');return;}
+  if(!url||!url.startsWith('http')){toast('أدخل رابط صالح يبدأ بـ http','err');return;}
+  if(!events.length){toast('اختر حدثاً واحداً على الأقل','err');return;}
+  try{
+    const res=await fetch(id?API+id+'/':API,{method:id?'PUT':'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},credentials:'same-origin',body:JSON.stringify({name,url,events,is_active})});
+    const data=await res.json();
+    if(data.success){toast(id?'✅ تم التحديث':'✅ تم الإنشاء');closeModal();setTimeout(()=>location.reload(),700);}
+    else toast(data.error||'حدث خطأ','err');
+  }catch(e){toast('خطأ في الاتصال','err');}
+}
+async function editWH(id){
+  try{
+    const res=await fetch(API+id+'/',{credentials:'same-origin'});
+    const data=await res.json();
+    if(!data.success){toast('خطأ في التحميل','err');return;}
+    const wh=data.webhook;
+    document.getElementById('editId').value=id;
+    document.getElementById('modalTitle').textContent='✏️ تعديل Webhook';
+    document.getElementById('whName').value=wh.name;
+    document.getElementById('whUrl').value=wh.url;
+    document.getElementById('whActive').checked=wh.is_active;
+    document.querySelectorAll('#evGrid input[type=checkbox]').forEach(cb=>cb.checked=wh.events.includes(cb.value));
+    document.getElementById('createModal').classList.add('show');
+  }catch(e){toast('خطأ في الاتصال','err');}
+}
+async function testWH(id,btn){
+  btn.disabled=true;btn.textContent='⏳ جاري...';
+  try{
+    const res=await fetch(API+id+'/test/',{method:'POST',headers:{'X-CSRFToken':csrf()},credentials:'same-origin'});
+    const data=await res.json();
+    if(data.success)toast('✅ نجح الاختبار — HTTP '+data.response_status+' في '+data.duration_ms+'ms');
+    else toast('❌ فشل: '+(data.error||'HTTP '+data.response_status),'err');
+  }catch(e){toast('خطأ في الاتصال','err');}
+  btn.disabled=false;btn.textContent='⚡ اختبار';
+}
+async function toggleWH(id,active){
+  try{
+    const res=await fetch(API+id+'/',{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},credentials:'same-origin',body:JSON.stringify({is_active:!active})});
+    const data=await res.json();
+    if(data.success){toast(active?'تم التعطيل':'✅ تم التفعيل');setTimeout(()=>location.reload(),600);}
+    else toast(data.error||'حدث خطأ','err');
+  }catch(e){toast('خطأ في الاتصال','err');}
+}
+async function deleteWH(id,name){
+  if(!confirm('هل تريد حذف "'+name+'" نهائياً؟'))return;
+  try{
+    const res=await fetch(API+id+'/',{method:'DELETE',headers:{'X-CSRFToken':csrf()},credentials:'same-origin'});
+    const data=await res.json();
+    if(data.success){toast('تم الحذف');const c=document.getElementById('wc-'+id);if(c)c.remove();updateStats();}
+    else toast(data.error||'حدث خطأ','err');
+  }catch(e){toast('خطأ في الاتصال','err');}
+}
+async function showLogs(id,name){
+  document.getElementById('logsTitle').textContent='📋 سجل: '+name;
+  document.getElementById('logsBody').innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">جاري التحميل...</td></tr>';
+  document.getElementById('logsModal').classList.add('show');
+  try{
+    const res=await fetch(API+id+'/logs/',{credentials:'same-origin'});
+    const data=await res.json();
+    if(!data.success||!data.logs.length){document.getElementById('logsBody').innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">لا توجد سجلات بعد</td></tr>';return;}
+    document.getElementById('logsBody').innerHTML=data.logs.map(lg=>{
+      const cls=lg.status==='success'?'s-ok':lg.status==='failed'?'s-fail':'s-pend';
+      const dt=new Date(lg.created_at).toLocaleString('ar-SA');
+      return '<tr><td style="font-family:monospace;font-size:11px;color:#FFD700;">'+lg.event+'</td><td class="'+cls+'">'+lg.status+'</td><td>'+(lg.response_status||'—')+'</td><td>'+(lg.duration_ms?lg.duration_ms+'ms':'—')+'</td><td style="color:var(--text-muted);font-size:11px;">'+dt+'</td></tr>';
+    }).join('');
+  }catch(e){document.getElementById('logsBody').innerHTML='<tr><td colspan="5" style="text-align:center;color:#ef4444;">خطأ في التحميل</td></tr>';}
+}
+function updateStats(){
+  const cards=document.querySelectorAll('.wh-card');
+  let active=0,sent=0,failed=0;
+  cards.forEach(c=>{if(c.dataset.active==='true')active++;sent+=parseInt(c.dataset.sent)||0;failed+=parseInt(c.dataset.failed)||0;});
+  document.getElementById('sTotal').textContent=cards.length;
+  document.getElementById('sActive').textContent=active;
+  document.getElementById('sSent').textContent=sent;
+  document.getElementById('sFailed').textContent=failed;
+}
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
+updateStats();
+</script>
+</body>
+</html>

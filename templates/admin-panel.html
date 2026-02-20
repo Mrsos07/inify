@@ -939,6 +939,7 @@
                 <button class="admin-tab active" onclick="switchAdminTab('users')">👥 إدارة المستخدمين</button>
                 <button class="admin-tab" onclick="switchAdminTab('subscriptions')">💳 إدارة الاشتراكات</button>
                 <button class="admin-tab" onclick="switchAdminTab('tokens')">🔢 استهلاك التوكنات</button>
+                <button class="admin-tab" onclick="switchAdminTab('apikeys')">🔑 مفاتيح API</button>
                 <button class="admin-tab" onclick="switchAdminTab('ai')">🤖 إعدادات Inify</button>
             </div>
 
@@ -1141,6 +1142,59 @@
                             </tr>
                         </thead>
                         <tbody id="tokensTableBody">
+                            <tr><td colspan="8" style="text-align:center;color:var(--text-muted);">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- API Keys Tab -->
+            <div class="admin-tab-content" id="apikeysTab">
+                <!-- Summary Stats -->
+                <div class="stats-grid" style="margin-bottom:24px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#FFD700,#FFA500);">🔑</div>
+                        <div class="stat-info"><h3 id="totalApiKeys">0</h3><p>إجمالي المفاتيح</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a);">✅</div>
+                        <div class="stat-info"><h3 id="activeApiKeys">0</h3><p>مفاتيح نشطة</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#6bb8c9,#4a90a4);">📨</div>
+                        <div class="stat-info"><h3 id="totalApiRequests">0</h3><p>إجمالي الطلبات</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#a855f7,#7c3aed);">🏢</div>
+                        <div class="stat-info"><h3 id="companiesWithKeys">0</h3><p>شركات تستخدم API</p></div>
+                    </div>
+                </div>
+
+                <h2 class="section-title">🔑 مفاتيح API لكل شركة</h2>
+                <div class="users-table-container">
+                    <div class="table-header">
+                        <div class="search-box">
+                            <input type="text" id="apiKeySearchInput" placeholder="🔍 بحث عن شركة أو مفتاح..." oninput="filterApiKeysTable()">
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button onclick="openCreateApiKeyModal()" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#0A1628;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;">+ إنشاء مفتاح لشركة</button>
+                            <button onclick="refreshApiKeys()" style="background:rgba(107,184,201,.15);color:var(--cyan);border:1px solid rgba(107,184,201,.2);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;">🔄 تحديث</button>
+                        </div>
+                    </div>
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>الشركة / المستخدم</th>
+                                <th>اسم المفتاح</th>
+                                <th>المفتاح (مخفي)</th>
+                                <th>الحالة</th>
+                                <th>الطلبات</th>
+                                <th>آخر استخدام</th>
+                                <th>تاريخ الإنشاء</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="apiKeysTableBody">
                             <tr><td colspan="8" style="text-align:center;color:var(--text-muted);">جاري التحميل...</td></tr>
                         </tbody>
                     </table>
@@ -2306,6 +2360,8 @@
                 loadSubscriptions();
             } else if (tab === 'tokens') {
                 loadTokens();
+            } else if (tab === 'apikeys') {
+                loadApiKeys();
             }
         }
 
@@ -2380,6 +2436,198 @@
                 (u.company || '').toLowerCase().includes(q)
             );
             renderTokensTable(filtered);
+        }
+
+        // ============ API Keys Functions ============
+        let allApiKeysData = [];
+
+        async function loadApiKeys() {
+            try {
+                const res = await fetch('/api/admin/api-keys/', {
+                    credentials: 'same-origin'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    allApiKeysData = data.keys;
+                    renderApiKeysTable(allApiKeysData);
+                } else {
+                    document.getElementById('apiKeysTableBody').innerHTML =
+                        '<tr><td colspan="8" style="text-align:center;color:#ef4444;">خطأ في التحميل: ' + (data.error||'') + '</td></tr>';
+                }
+            } catch(e) {
+                document.getElementById('apiKeysTableBody').innerHTML =
+                    '<tr><td colspan="8" style="text-align:center;color:#ef4444;">خطأ في الاتصال</td></tr>';
+            }
+        }
+
+        function renderApiKeysTable(data) {
+            // Summary stats
+            const total = data.length;
+            const active = data.filter(k => k.is_active).length;
+            const totalReqs = data.reduce((s, k) => s + (k.requests_count || 0), 0);
+            const companies = new Set(data.map(k => k.agent_id)).size;
+            document.getElementById('totalApiKeys').textContent = total;
+            document.getElementById('activeApiKeys').textContent = active;
+            document.getElementById('totalApiRequests').textContent = totalReqs.toLocaleString('ar-SA');
+            document.getElementById('companiesWithKeys').textContent = companies;
+
+            const tbody = document.getElementById('apiKeysTableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">لا توجد مفاتيح API</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(k => {
+                const statusColor = k.is_active ? '#22c55e' : '#ef4444';
+                const statusText  = k.is_active ? 'نشط' : 'معطّل';
+                const lastUsed    = k.last_used ? new Date(k.last_used).toLocaleDateString('ar-SA') : 'لم يُستخدم';
+                const createdAt   = new Date(k.created_at).toLocaleDateString('ar-SA');
+                const planBadge   = k.plan === 'enterprise'
+                    ? '<span style="background:rgba(255,215,0,.15);color:#FFD700;border:1px solid rgba(255,215,0,.3);padding:2px 8px;border-radius:10px;font-size:11px;">Enterprise</span>'
+                    : '<span style="background:rgba(107,184,201,.15);color:#6BB8C9;border:1px solid rgba(107,184,201,.3);padding:2px 8px;border-radius:10px;font-size:11px;">Pro</span>';
+                return `
+                <tr id="akrow-${k.id}">
+                    <td>
+                        <div class="user-info">
+                            <div class="user-avatar">${(k.company_name||k.agent_name||'?').charAt(0)}</div>
+                            <div>
+                                <div class="user-name">${k.company_name || k.agent_name || 'بدون اسم'}</div>
+                                <div class="user-email">${k.agent_email || ''} ${planBadge}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${k.name}</td>
+                    <td><code style="font-family:monospace;font-size:12px;color:#4ade80;background:rgba(74,222,128,.1);padding:3px 8px;border-radius:6px;">${k.key_preview}</code></td>
+                    <td><span style="color:${statusColor};font-weight:700;">${statusText}</span></td>
+                    <td><strong style="color:var(--cyan);">${(k.requests_count||0).toLocaleString('ar-SA')}</strong></td>
+                    <td style="color:var(--text-muted);font-size:12px;">${lastUsed}</td>
+                    <td style="color:var(--text-muted);font-size:12px;">${createdAt}</td>
+                    <td>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <button onclick="toggleApiKey('${k.id}', ${k.is_active})"
+                                style="background:${k.is_active ? 'rgba(245,158,11,.15)' : 'rgba(34,197,94,.15)'};color:${k.is_active ? '#f59e0b' : '#22c55e'};border:1px solid ${k.is_active ? 'rgba(245,158,11,.3)' : 'rgba(34,197,94,.3)'};padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;">
+                                ${k.is_active ? '⏸ تعطيل' : '▶ تفعيل'}
+                            </button>
+                            <button onclick="deleteApiKeyAdmin('${k.id}')"
+                                style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;">
+                                🗑 حذف
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function filterApiKeysTable() {
+            const q = document.getElementById('apiKeySearchInput').value.toLowerCase();
+            const filtered = allApiKeysData.filter(k =>
+                (k.company_name||'').toLowerCase().includes(q) ||
+                (k.agent_name||'').toLowerCase().includes(q) ||
+                (k.agent_email||'').toLowerCase().includes(q) ||
+                (k.name||'').toLowerCase().includes(q) ||
+                (k.key_preview||'').toLowerCase().includes(q)
+            );
+            renderApiKeysTable(filtered);
+        }
+
+        function refreshApiKeys() { loadApiKeys(); }
+
+        function openCreateApiKeyModal() {
+            // populate agent select from allUsers
+            const sel = document.getElementById('adminKeyAgentSelect');
+            sel.innerHTML = '<option value="">-- اختر شركة --</option>';
+            const eligible = allUsers.filter(u => u.subscription_plan === 'enterprise' || u.subscription_plan === 'pro' || u.role === 'agency');
+            // fallback: show all if none eligible
+            const list = eligible.length > 0 ? eligible : allUsers;
+            list.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.id;
+                opt.textContent = (u.company || u.name || u.email) + ' (' + (u.subscription_plan || u.role || 'free') + ')';
+                sel.appendChild(opt);
+            });
+            document.getElementById('adminKeyNameInput').value = '';
+            document.getElementById('adminNewKeyReveal').style.display = 'none';
+            document.getElementById('adminKeyModalActions').style.display = 'flex';
+            document.getElementById('adminKeyModalClose').style.display = 'none';
+            const modal = document.getElementById('adminCreateKeyModal');
+            modal.style.display = 'flex';
+        }
+
+        function closeCreateApiKeyModal() {
+            document.getElementById('adminCreateKeyModal').style.display = 'none';
+            loadApiKeys();
+        }
+
+        function copyAdminKey() {
+            const val = document.getElementById('adminNewKeyValue').textContent;
+            navigator.clipboard.writeText(val).then(() => {
+                event.target.textContent = '✓ تم النسخ';
+            });
+        }
+
+        async function adminCreateKey() {
+            const agentId = document.getElementById('adminKeyAgentSelect').value;
+            const name = document.getElementById('adminKeyNameInput').value.trim();
+            if (!agentId) { alert('اختر شركة أولاً'); return; }
+            if (!name) { alert('أدخل اسم المفتاح'); return; }
+            try {
+                const res = await fetch('/api/admin/api-keys/create/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ agent_id: agentId, name: name })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('adminNewKeyValue').textContent = data.key;
+                    document.getElementById('adminNewKeyReveal').style.display = 'block';
+                    document.getElementById('adminKeyModalActions').style.display = 'none';
+                    document.getElementById('adminKeyModalClose').style.display = 'block';
+                } else {
+                    alert('خطأ: ' + (data.error || 'حدث خطأ'));
+                }
+            } catch(e) { alert('خطأ في الاتصال'); }
+        }
+
+        async function toggleApiKey(keyId, currentlyActive) {
+            const action = currentlyActive ? 'disable' : 'enable';
+            try {
+                const res = await fetch(`/api/admin/api-keys/${keyId}/${action}/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                    credentials: 'same-origin'
+                });
+                const data = await res.json();
+                if (data.success) { loadApiKeys(); }
+                else { alert('خطأ: ' + (data.error || 'حدث خطأ')); }
+            } catch(e) { alert('خطأ في الاتصال'); }
+        }
+
+        async function deleteApiKeyAdmin(keyId) {
+            if (!confirm('هل تريد حذف هذا المفتاح نهائياً؟')) return;
+            try {
+                const res = await fetch(`/api/admin/api-keys/${keyId}/delete/`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': getCsrfToken() },
+                    credentials: 'same-origin'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const row = document.getElementById('akrow-' + keyId);
+                    if (row) row.remove();
+                    allApiKeysData = allApiKeysData.filter(k => k.id !== keyId);
+                    renderApiKeysTable(allApiKeysData);
+                } else { alert('خطأ: ' + (data.error || 'حدث خطأ')); }
+            } catch(e) { alert('خطأ في الاتصال'); }
+        }
+
+        function getCsrfToken() {
+            let v = null;
+            document.cookie.split(';').forEach(c => {
+                const p = c.trim().split('=');
+                if (p[0] === 'csrftoken') v = decodeURIComponent(p[1]);
+            });
+            return v;
         }
 
         // Load AI settings from database
@@ -2573,6 +2821,36 @@
             showAdminPanel();
         }
     </script>
+
+<!-- Admin Create API Key Modal -->
+<div id="adminCreateKeyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#1E3A5F;border:1px solid rgba(107,184,201,.2);border-radius:16px;padding:28px;width:100%;max-width:460px;margin:20px;">
+        <h3 style="margin-bottom:20px;font-size:17px;">🔑 إنشاء مفتاح API لشركة</h3>
+
+        <label style="font-size:13px;color:rgba(248,248,248,.7);display:block;margin-bottom:6px;">اختر الشركة / المستخدم</label>
+        <select id="adminKeyAgentSelect" style="width:100%;padding:11px 14px;background:rgba(10,22,40,.6);border:1px solid rgba(107,184,201,.2);border-radius:10px;color:#F8F8F8;font-family:inherit;font-size:14px;margin-bottom:14px;box-sizing:border-box;">
+            <option value="">-- اختر شركة --</option>
+        </select>
+
+        <label style="font-size:13px;color:rgba(248,248,248,.7);display:block;margin-bottom:6px;">اسم المفتاح</label>
+        <input type="text" id="adminKeyNameInput" placeholder="مثال: نظام ERP، موقع الشركة" style="width:100%;padding:11px 14px;background:rgba(10,22,40,.6);border:1px solid rgba(107,184,201,.2);border-radius:10px;color:#F8F8F8;font-family:inherit;font-size:14px;margin-bottom:16px;box-sizing:border-box;">
+
+        <!-- New key reveal -->
+        <div id="adminNewKeyReveal" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3);border-radius:10px;padding:14px;margin-bottom:16px;">
+            <p style="font-size:12px;color:#4ade80;margin-bottom:8px;">⚠️ احفظ المفتاح الآن — لن يظهر مرة أخرى!</p>
+            <div id="adminNewKeyValue" style="font-family:monospace;font-size:12px;word-break:break-all;color:#F8F8F8;background:rgba(0,0,0,.3);padding:10px;border-radius:8px;"></div>
+            <button onclick="copyAdminKey()" style="margin-top:10px;background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3);padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;">نسخ المفتاح</button>
+        </div>
+
+        <div id="adminKeyModalActions" style="display:flex;gap:10px;justify-content:flex-end;">
+            <button onclick="closeCreateApiKeyModal()" style="background:rgba(107,184,201,.1);color:#6BB8C9;border:1px solid rgba(107,184,201,.2);padding:9px 18px;border-radius:8px;cursor:pointer;font-family:inherit;">إلغاء</button>
+            <button onclick="adminCreateKey()" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#0A1628;border:none;padding:9px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;">إنشاء المفتاح</button>
+        </div>
+        <div id="adminKeyModalClose" style="display:none;">
+            <button onclick="closeCreateApiKeyModal()" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#0A1628;border:none;padding:9px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;">إغلاق وتحديث القائمة</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
 

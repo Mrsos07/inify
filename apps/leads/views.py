@@ -918,6 +918,12 @@ def save_lead_from_chat(request, agent_id):
             )
             lead.calculate_score()
             lead.save()
+            # Webhook: عميل جديد
+            try:
+                from apps.agents.webhook_service import dispatch_webhook, lead_payload
+                dispatch_webhook(agent, 'lead.created', lead_payload(lead))
+            except Exception:
+                pass
         
         # Add interested properties and update interested_count
         interested_properties = data.get('interested_properties', [])
@@ -939,6 +945,12 @@ def save_lead_from_chat(request, agent_id):
             if added_any and lead.status in ('new', 'interested'):
                 lead.status = 'interested'
                 lead.save(update_fields=['status'])
+                # Webhook: عميل مهتم بعقار
+                try:
+                    from apps.agents.webhook_service import dispatch_webhook, lead_payload
+                    dispatch_webhook(agent, 'lead.interested', lead_payload(lead))
+                except Exception:
+                    pass
 
         return JsonResponse({
             'success': True, 
@@ -1085,7 +1097,14 @@ def book_viewing_from_chat(request, agent_id):
         # Update lead status
         lead.status = 'viewing_scheduled'
         lead.save()
-        
+
+        # Webhook: حجز موعد معاينة
+        try:
+            from apps.agents.webhook_service import dispatch_webhook, viewing_payload
+            dispatch_webhook(agent, 'viewing.booked', viewing_payload(appointment))
+        except Exception:
+            pass
+
         # Create activity
         LeadActivity.objects.create(
             lead=lead,

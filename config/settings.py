@@ -60,6 +60,9 @@ CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', ','.join([
 ])).split(',')
 CSRF_COOKIE_SAMESITE = 'Lax'
 
+# Site URL (used for absolute URLs in production)
+SITE_URL = os.getenv('SITE_URL', 'https://inify.ai')
+
 # Application definition
 INSTALLED_APPS = [
     'daphne',  # يجب أن يكون أول INSTALLED_APPS لدعم WebSocket

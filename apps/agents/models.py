@@ -628,8 +628,7 @@ class Subscription(models.Model):
     """نموذج الاشتراكات والمدفوعات"""
     
     PLAN_CHOICES = [
-        ('trial_day', 'يوم تجريبي - 1 ريال'),
-        ('monthly', 'شهري - 199 ريال'),
+        ('monthly', 'شهري'),
         ('quarterly', '3 أشهر - 537 ريال'),
         ('semi', '6 أشهر - 1,015 ريال'),
         ('annual', 'سنوي - 1,791 ريال'),
@@ -713,3 +712,92 @@ class Subscription(models.Model):
                 return 0
             return max(1, math.ceil(seconds / 86400))
         return 0
+
+
+class Webhook(models.Model):
+    """Webhook endpoints للشركات — إرسال أحداث تلقائية لأنظمة CRM الخارجية"""
+
+    EVENT_CHOICES = [
+        ('lead.created',          'عميل جديد'),
+        ('lead.status_changed',   'تغيير حالة عميل'),
+        ('lead.interested',       'عميل مهتم بعقار'),
+        ('viewing.booked',        'حجز موعد معاينة'),
+        ('viewing.confirmed',     'تأكيد موعد معاينة'),
+        ('viewing.cancelled',     'إلغاء موعد معاينة'),
+        ('viewing.completed',     'اكتمال معاينة'),
+        ('property.created',      'إضافة عقار جديد'),
+        ('property.updated',      'تعديل عقار'),
+        ('property.sold',         'بيع عقار'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    agent = models.ForeignKey(
+        Agent,
+        on_delete=models.CASCADE,
+        related_name='webhooks',
+        verbose_name='الشركة'
+    )
+    name = models.CharField(max_length=100, verbose_name='اسم الـ Webhook')
+    url = models.URLField(max_length=500, verbose_name='رابط الاستقبال')
+    secret = models.CharField(max_length=64, blank=True, verbose_name='المفتاح السري (HMAC)')
+    events = models.JSONField(default=list, verbose_name='الأحداث المشترك بها')
+    is_active = models.BooleanField(default=True, verbose_name='نشط')
+
+    # إحصائيات
+    total_sent = models.PositiveIntegerField(default=0, verbose_name='إجمالي المرسل')
+    total_failed = models.PositiveIntegerField(default=0, verbose_name='إجمالي الفاشل')
+    last_triggered_at = models.DateTimeField(null=True, blank=True, verbose_name='آخر إرسال')
+    last_success_at = models.DateTimeField(null=True, blank=True, verbose_name='آخر نجاح')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Webhook'
+        verbose_name_plural = 'Webhooks'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.agent} — {self.name}"
+
+    @classmethod
+    def generate_secret(cls):
+        import secrets
+        return secrets.token_hex(32)
+
+    def subscribes_to(self, event):
+        return event in (self.events or [])
+
+
+class WebhookLog(models.Model):
+    """سجل إرسال Webhook لكل حدث"""
+
+    STATUS_CHOICES = [
+        ('success', 'نجاح'),
+        ('failed',  'فشل'),
+        ('pending', 'قيد الإرسال'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    webhook = models.ForeignKey(
+        Webhook,
+        on_delete=models.CASCADE,
+        related_name='logs',
+        verbose_name='الـ Webhook'
+    )
+    event = models.CharField(max_length=50, verbose_name='الحدث')
+    payload = models.JSONField(verbose_name='البيانات المرسلة')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    response_status = models.PositiveIntegerField(null=True, blank=True, verbose_name='كود الاستجابة')
+    response_body = models.TextField(blank=True, verbose_name='نص الاستجابة')
+    error_message = models.TextField(blank=True, verbose_name='رسالة الخطأ')
+    duration_ms = models.PositiveIntegerField(null=True, blank=True, verbose_name='المدة (ms)')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'سجل Webhook'
+        verbose_name_plural = 'سجلات Webhook'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.webhook.name} — {self.event} — {self.status}"

@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.conf import settings
 import json
 import logging
 
@@ -724,6 +725,7 @@ def dashboard_view(request):
         'recent_properties': properties_data,
         'recent_leads': leads_data,
         'active_page': 'dashboard',
+        'subscription_plan': agent.subscription_plan,
         'show_subscription_popup': show_welcome,
         'subscription_status': sub.status if sub else 'none',
         'subscription_is_trial': is_trial,
@@ -758,7 +760,8 @@ def properties_view(request):
     context = {
         'properties': properties,
         'agent_id': str(agent.id),
-        'active_page': 'properties'
+        'active_page': 'properties',
+        'subscription_plan': agent.subscription_plan,
     }
     
     return render(request, 'dashboard/properties.html', context)
@@ -793,7 +796,8 @@ def leads_view(request):
     context = {
         'leads': leads,
         'stats': stats,
-        'active_page': 'leads'
+        'active_page': 'leads',
+        'subscription_plan': agent.subscription_plan,
     }
     
     return render(request, 'dashboard/leads.html', context)
@@ -882,6 +886,7 @@ def conversations_view(request):
         'stats': stats,
         'active_page': 'conversations',
         'agent_id': str(agent.id),
+        'subscription_plan': agent.subscription_plan,
     }
     
     return render(request, 'dashboard/conversations.html', context)
@@ -1033,6 +1038,7 @@ def bot_settings_view(request):
         'whatsapp_phone': whatsapp_phone,
         'whatsapp_messages_received': whatsapp_messages_received,
         'whatsapp_messages_sent': whatsapp_messages_sent,
+        'subscription_plan': agent.subscription_plan,
     }
     
     return render(request, 'dashboard/bot_settings.html', context)
@@ -1058,9 +1064,36 @@ def api_docs_view(request):
         'agent_id': str(agent.id),
         'subscription_plan': agent.subscription_plan,
         'api_keys': api_keys,
-        'base_url': request.build_absolute_uri('/api/v1/properties/ext/'),
+        'base_url': settings.SITE_URL.rstrip('/') + '/api/v1/properties/ext/',
     }
     return render(request, 'dashboard/api_docs.html', context)
+
+
+from apps.core.analytics_views import analytics_view, analytics_data  # noqa
+
+
+@login_required(login_url='/auth/login/')
+def webhooks_view(request):
+    """صفحة إدارة Webhooks للمؤسسات"""
+    from apps.agents.models import Agent, Webhook
+
+    try:
+        agent = request.user.agent_profile
+    except Agent.DoesNotExist:
+        return redirect('dashboard')
+
+    if agent.subscription_plan != 'enterprise':
+        return redirect('dashboard')
+
+    webhooks = Webhook.objects.filter(agent=agent)
+    context = {
+        'active_page': 'webhooks',
+        'subscription_plan': agent.subscription_plan,
+        'webhooks': webhooks,
+        'available_events': Webhook.EVENT_CHOICES,
+        'webhooks_api_base': request.build_absolute_uri('/api/v1/agents/webhooks/'),
+    }
+    return render(request, 'dashboard/webhooks.html', context)
 
 
 @login_required(login_url='/auth/login/')
@@ -1793,12 +1826,19 @@ def subscription_status_api(request):
                 'message': 'لا يوجد اشتراك حالي',
             })
 
+        plan_names = {
+            'free': 'الباقة المجانية',
+            'pro': 'باقة المسوق العقاري',
+            'enterprise': 'باقة المؤسسات والشركات',
+        }
         return JsonResponse({
             'success': True,
             'has_subscription': True,
             'status': sub.status,
             'plan_key': sub.plan_key,
             'plan_label': sub.get_plan_key_display(),
+            'subscription_plan': agent.subscription_plan,
+            'subscription_plan_name': plan_names.get(agent.subscription_plan, 'مسوق عقاري'),
             'is_active': sub.is_active,
             'is_trial': sub.status == 'trial',
             'is_trial_active': sub.is_trial_active,
@@ -2198,3 +2238,112 @@ def streampay_webhook(request):
         import traceback
         logger.error(f"Webhook error: {e}\n{traceback.format_exc()}")
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ============================================================
+# Admin API Keys Management
+# ============================================================
+
+def admin_get_api_keys(request):
+    """GET /api/admin/api-keys/ — جميع مفاتيح API لجميع الشركات"""
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+
+    from apps.agents.models import APIKey
+    keys = APIKey.objects.select_related('agent', 'agent__user').order_by('-created_at')
+
+    keys_data = []
+    for k in keys:
+        agent = k.agent
+        user = agent.user if agent else None
+        keys_data.append({
+            'id': str(k.id),
+            'name': k.name,
+            'key_preview': k.key[:8] + '...' + k.key[-4:],
+            'is_active': k.is_active,
+            'requests_count': k.requests_count,
+            'last_used': k.last_used.isoformat() if k.last_used else None,
+            'created_at': k.created_at.isoformat(),
+            'agent_id': str(agent.id) if agent else None,
+            'agent_name': (user.get_full_name() or user.username) if user else 'بدون اسم',
+            'agent_email': user.email if user else '',
+            'company_name': agent.company_name if agent and hasattr(agent, 'company_name') else '',
+            'plan': agent.subscription_plan if agent else 'free',
+        })
+
+    return JsonResponse({'success': True, 'keys': keys_data})
+
+
+@csrf_exempt
+def admin_create_api_key(request):
+    """POST /api/admin/api-keys/create/ — إنشاء مفتاح API لأي agent من لوحة الإدارة"""
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'JSON غير صالح'}, status=400)
+
+    agent_id = body.get('agent_id')
+    name = body.get('name', '').strip()
+
+    if not agent_id or not name:
+        return JsonResponse({'success': False, 'error': 'agent_id و name مطلوبان'}, status=400)
+
+    from apps.agents.models import Agent, APIKey
+    try:
+        agent = Agent.objects.get(id=agent_id)
+    except Agent.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الشركة غير موجودة'}, status=404)
+
+    if APIKey.objects.filter(agent=agent).count() >= 10:
+        return JsonResponse({'success': False, 'error': 'الحد الأقصى 10 مفاتيح لكل شركة'}, status=400)
+
+    raw_key = APIKey.generate_key()
+    new_key = APIKey.objects.create(agent=agent, name=name, key=raw_key)
+
+    return JsonResponse({
+        'success': True,
+        'message': 'تم إنشاء المفتاح بنجاح',
+        'key': raw_key,
+        'key_id': str(new_key.id),
+        'agent_name': agent.company_name or (agent.user.get_full_name() if agent.user else ''),
+    }, status=201)
+
+
+@csrf_exempt
+def admin_toggle_api_key(request, key_id, action):
+    """POST /api/admin/api-keys/<id>/enable|disable/"""
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    from apps.agents.models import APIKey
+    try:
+        key = APIKey.objects.get(id=key_id)
+        key.is_active = (action == 'enable')
+        key.save(update_fields=['is_active'])
+        return JsonResponse({'success': True, 'is_active': key.is_active})
+    except APIKey.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'المفتاح غير موجود'}, status=404)
+
+
+@csrf_exempt
+def admin_delete_api_key(request, key_id):
+    """DELETE /api/admin/api-keys/<id>/delete/"""
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    if request.method != 'DELETE':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    from apps.agents.models import APIKey
+    try:
+        key = APIKey.objects.get(id=key_id)
+        key.delete()
+        return JsonResponse({'success': True, 'message': 'تم حذف المفتاح'})
+    except APIKey.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'المفتاح غير موجود'}, status=404)

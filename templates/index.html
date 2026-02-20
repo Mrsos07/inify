@@ -2539,6 +2539,11 @@
                     <button class="estate-period-tab" onclick="selectEstatePeriod('annual', this)">سنوي <small style="color:#4ade80;">-25%</small></button>
                 </div>
 
+                <div style="margin-bottom: 6px; display: flex; flex-direction: column; gap: 3px; align-items: center;">
+                    <span id="estateOriginalPrice" style="font-size: 20px; color: var(--blue-mid); text-decoration: line-through; font-weight: 500;">499 ريال</span>
+                    <span style="font-size: 13px; color: #f59e0b; font-weight: 600;">🎯 خصم خاص للمؤسسين</span>
+                    <span style="font-size: 12px; color: #f87171; font-weight: 500;">⚡ كمية محدودة</span>
+                </div>
                 <div class="price" id="estatePrice">199 ريال <span id="estatePeriod">/ شهر</span></div>
                 <div id="estateSaving" style="display: none; font-size: 13px; color: #4ade80; margin-bottom: 8px;"></div>
                 <div style="margin-bottom: 14px; padding: 6px 14px; background: rgba(107,184,201,0.1); border: 1px solid rgba(107,184,201,0.2); border-radius: 8px; display: inline-block; font-size: 12px; color: var(--cyan);">تجربة مجانية 5 أيام</div>
@@ -2986,10 +2991,10 @@
         // Pricing Period Switcher
         // ═══════════════════════════════════════════════════════════
         const estatePrices = {
-            monthly:   { total: 199,  perMonth: 199,  label: '/ شهر',    months: 1 },
-            quarterly: { total: 537,  perMonth: 179,  label: '/ 3 أشهر', months: 3 },
-            semi:      { total: 1015, perMonth: 169,  label: '/ 6 أشهر', months: 6 },
-            annual:    { total: 1791, perMonth: 149,  label: '/ سنة',    months: 12 }
+            monthly:   { total: 199,  original: 499,  perMonth: 199,  label: '/ شهر',    months: 1 },
+            quarterly: { total: 537,  original: 1497, perMonth: 179,  label: '/ 3 أشهر', months: 3 },
+            semi:      { total: 1015, original: 2994, perMonth: 169,  label: '/ 6 أشهر', months: 6 },
+            annual:    { total: 1791, original: 5988, perMonth: 149,  label: '/ سنة',    months: 12 }
         };
 
         function selectEstatePeriod(period, btn) {
@@ -2998,8 +3003,10 @@
 
             const p = estatePrices[period];
             const priceEl = document.getElementById('estatePrice');
-            const periodEl = document.getElementById('estatePeriod');
             const savingEl = document.getElementById('estateSaving');
+            const originalPriceEl = document.getElementById('estateOriginalPrice');
+
+            if (originalPriceEl) originalPriceEl.textContent = p.original + ' ريال';
 
             priceEl.innerHTML = p.total + ' ريال <span id="estatePeriod">' + p.label + '</span>';
 

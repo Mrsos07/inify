@@ -745,6 +745,13 @@
 
                     <div class="plan-price" style="margin-top: 20px;">
                         <div id="priceDisplay">
+                            <div style="margin-bottom: 6px;">
+                                <span id="originalPrice" style="font-size: 22px; color: var(--blue-mid); text-decoration: line-through; font-weight: 500;">499 ريال</span>
+                            </div>
+                            <div style="margin-bottom: 6px; display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
+                                <span style="font-size: 13px; color: #f59e0b; font-weight: 600;">🎯 خصم خاص للمؤسسين</span>
+                                <span style="font-size: 12px; color: #f87171; font-weight: 500;">⚡ كمية محدودة</span>
+                            </div>
                             <span class="price-amount" id="priceAmount">199</span>
                             <span class="price-currency">ريال</span>
                             <span class="price-period" id="pricePeriod">/ شهر</span>
@@ -800,6 +807,9 @@
                     <h3 class="plan-name">المؤسسات والشركات العقارية</h3>
                     <p class="plan-desc">حلول مخصصة للشركات والمكاتب العقارية الكبرى</p>
                     <div class="plan-price custom">
+                        <div style="margin-bottom: 6px;">
+                            <span style="font-size: 22px; color: var(--text-muted); text-decoration: line-through; font-weight: 500;">499 ريال</span>
+                        </div>
                         <span class="price-amount">تواصل معنا</span>
                         <span class="price-period">حسب متطلباتك</span>
                     </div>
@@ -887,10 +897,10 @@
 
     <script>
         const prices = {
-            monthly:   { total: 199,  perMonth: 199,  period: '/ شهر',    months: 1,  discount: 0 },
-            quarterly: { total: 537,  perMonth: 179,  period: '/ 3 أشهر', months: 3,  discount: 10 },
-            semi:      { total: 1015, perMonth: 169,  period: '/ 6 أشهر', months: 6,  discount: 15 },
-            annual:    { total: 1791, perMonth: 149,  period: '/ سنة',    months: 12, discount: 25 }
+            monthly:   { total: 199,  original: 499,  perMonth: 199,  period: '/ شهر',    months: 1,  discount: 0 },
+            quarterly: { total: 537,  original: 1497, perMonth: 179,  period: '/ 3 أشهر', months: 3,  discount: 10 },
+            semi:      { total: 1015, original: 2994, perMonth: 169,  period: '/ 6 أشهر', months: 6,  discount: 15 },
+            annual:    { total: 1791, original: 5988, perMonth: 149,  period: '/ سنة',    months: 12, discount: 25 }
         };
 
         function selectPeriod(period, btn) {
@@ -901,6 +911,8 @@
             const p = prices[period];
             document.getElementById('priceAmount').textContent = p.total;
             document.getElementById('pricePeriod').textContent = p.period;
+            const origEl = document.getElementById('originalPrice');
+            if (origEl) origEl.textContent = p.original + ' ريال';
 
             const saving = (199 * p.months) - p.total;
             const savingBadge = document.getElementById('savingBadge');

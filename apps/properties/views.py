@@ -792,7 +792,14 @@ def book_property_viewing(request, property_id):
         # تحديث حالة العميل
         lead.status = 'viewing_scheduled'
         lead.save()
-        
+
+        # Webhook: حجز موعد معاينة
+        try:
+            from apps.agents.webhook_service import dispatch_webhook, viewing_payload
+            dispatch_webhook(agent, 'viewing.booked', viewing_payload(appointment))
+        except Exception:
+            pass
+
         # تنسيق الرد
         day_names = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
         day_name = day_names[scheduled_date.weekday()]

@@ -32,6 +32,9 @@ urlpatterns = [
     path('dashboard/conversations/', views.conversations_view, name='conversations'),
     path('dashboard/bot-settings/', views.bot_settings_view, name='bot-settings'),
     path('dashboard/api-docs/', views.api_docs_view, name='api-docs'),
+    path('dashboard/webhooks/', views.webhooks_view, name='webhooks'),
+    path('dashboard/analytics/', views.analytics_view, name='analytics'),
+    path('dashboard/analytics/data/', views.analytics_data, name='analytics-data'),
     
     # Pricing
     path('pricing/', views.pricing_view, name='pricing'),
@@ -67,6 +70,11 @@ urlpatterns = [
     path('api/admin/users/update-plan/', views.update_user_plan, name='update-user-plan'),
     path('api/admin/users/<uuid:user_id>/delete/', views.delete_user, name='delete-user'),
     path('api/admin/expire-subscriptions/', views.admin_expire_subscriptions, name='admin-expire-subscriptions'),
+    path('api/admin/api-keys/', views.admin_get_api_keys, name='admin-get-api-keys'),
+    path('api/admin/api-keys/create/', views.admin_create_api_key, name='admin-create-api-key'),
+    path('api/admin/api-keys/<uuid:key_id>/delete/', views.admin_delete_api_key, name='admin-delete-api-key'),
+    path('api/admin/api-keys/<uuid:key_id>/enable/', views.admin_toggle_api_key, {'action': 'enable'}, name='admin-enable-api-key'),
+    path('api/admin/api-keys/<uuid:key_id>/disable/', views.admin_toggle_api_key, {'action': 'disable'}, name='admin-disable-api-key'),
     
     # Agent Stats API
     path('api/agent/<uuid:agent_id>/stats/', views.get_agent_stats, name='get-agent-stats'),
