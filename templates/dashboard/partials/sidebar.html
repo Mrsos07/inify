@@ -34,33 +34,31 @@
                 </svg>
                 المحادثات
             </a>
-            <a href="/dashboard/analytics/" class="nav-item {% if active_page == 'analytics' %}active{% endif %}">
+        </div>
+
+        {% if subscription_plan == 'enterprise' %}
+        <div class="nav-section">
+            <div class="nav-section-title">المؤسسات</div>
+            <a href="/dashboard/analytics/" class="nav-item {% if active_page == 'analytics' %}active{% endif %}" style="color: #FFD700;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
                     <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
                 </svg>
                 تحليلات
+                <span style="font-size:10px;background:#FFD70030;color:#FFD700;padding:2px 6px;border-radius:10px;margin-right:auto;">جديد</span>
             </a>
-        </div>
-
-        {% if subscription_plan == 'enterprise' or subscription_plan == 'pro' %}
-        <div class="nav-section">
-            <div class="nav-section-title">المؤسسات</div>
             <a href="/dashboard/api-docs/" class="nav-item {% if active_page == 'api_docs' %}active{% endif %}" style="color: #FFD700;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
                 </svg>
                 API للمؤسسات
-                <span style="font-size:10px;background:#FFD70030;color:#FFD700;padding:2px 6px;border-radius:10px;margin-right:auto;">جديد</span>
             </a>
-            {% if subscription_plan == 'enterprise' %}
             <a href="/dashboard/webhooks/" class="nav-item {% if active_page == 'webhooks' %}active{% endif %}" style="color: #FFD700;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
                 </svg>
                 Webhooks
             </a>
-            {% endif %}
         </div>
         {% endif %}
 
