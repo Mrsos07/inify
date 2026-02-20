@@ -506,6 +506,43 @@ class WhatsAppInstance(models.Model):
         self.save(update_fields=['messages_sent'])
 
 
+class APIKey(models.Model):
+    """مفاتيح API للمؤسسات العقارية"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    agent = models.ForeignKey(
+        Agent,
+        on_delete=models.CASCADE,
+        related_name='api_keys',
+        verbose_name='المسوق'
+    )
+    name = models.CharField(max_length=100, verbose_name='اسم المفتاح')
+    key = models.CharField(max_length=64, unique=True, verbose_name='المفتاح')
+    is_active = models.BooleanField(default=True, verbose_name='نشط')
+    last_used = models.DateTimeField(null=True, blank=True, verbose_name='آخر استخدام')
+    requests_count = models.PositiveIntegerField(default=0, verbose_name='عدد الطلبات')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+
+    class Meta:
+        verbose_name = 'مفتاح API'
+        verbose_name_plural = 'مفاتيح API'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.agent} - {self.name}"
+
+    @classmethod
+    def generate_key(cls):
+        import secrets
+        return secrets.token_hex(32)
+
+    def record_use(self):
+        from django.utils import timezone
+        self.last_used = timezone.now()
+        self.requests_count += 1
+        self.save(update_fields=['last_used', 'requests_count'])
+
+
 class TokenUsage(models.Model):
     """تتبع استهلاك التوكنات لكل مستخدم"""
 

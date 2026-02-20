@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API للمؤسسات - Inify</title>
+<link rel="icon" type="image/png" href="/static/images/inify-icon.png">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<link rel="stylesheet" href="/static/css/theme.css">
+<style>
+@font-face{font-family:BalooBhaijaan2;src:url(/static/BalooBhaijaan2-Regular.ttf) format(truetype);font-weight:400}
+@font-face{font-family:BalooBhaijaan2;src:url(/static/BalooBhaijaan2-Bold.ttf) format(truetype);font-weight:700}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--midnight:#0A1628;--dark-blue:#1E3A5F;--cyan:#6BB8C9;--pearl:#F8F8F8;--text-muted:rgba(248,248,248,.6);--card-bg:rgba(30,58,95,.4);--border:rgba(107,184,201,.15)}
+body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(--pearl);min-height:100vh}
+.premium-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:linear-gradient(135deg,#0A1628,#122a45)}
+.grid-pattern{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background-image:linear-gradient(rgba(107,184,201,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(107,184,201,.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+.section-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px}
+.section-card h2{font-size:17px;color:var(--cyan);margin-bottom:6px}
+.section-card>p{color:var(--text-muted);font-size:13px;margin-bottom:18px}
+.key-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(10,22,40,.5);border-radius:10px;margin-bottom:8px;border:1px solid var(--border);flex-wrap:wrap}
+.key-name{font-weight:600;min-width:130px}
+.key-preview{font-family:monospace;font-size:12px;color:#4ade80;background:rgba(74,222,128,.1);padding:3px 10px;border-radius:6px;flex:1}
+.key-stats{font-size:12px;color:var(--text-muted);min-width:80px;text-align:center}
+.key-date{font-size:12px;color:rgba(248,248,248,.4);min-width:90px}
+.btn-gold{background:linear-gradient(135deg,#FFD700,#FFA500);color:#0A1628;border:none;padding:11px 22px;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit;transition:all .3s}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(255,215,0,.3)}
+.btn-del{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit}
+.btn-del:hover{background:#ef4444;color:#fff}
+.ep-card{background:rgba(10,22,40,.5);border:1px solid rgba(107,184,201,.12);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.ep-head{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;user-select:none}
+.ep-head:hover{background:rgba(107,184,201,.05)}
+.mb{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;min-width:56px;text-align:center;font-family:monospace}
+.get{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.post{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
+.put{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.del{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.ep-path{font-family:monospace;font-size:13px;color:var(--pearl);flex:1}
+.ep-desc{font-size:12px;color:var(--text-muted)}
+.ep-arr{color:rgba(248,248,248,.3);transition:transform .2s;font-size:12px}
+.ep-card.open .ep-arr{transform:rotate(90deg)}
+.ep-body{display:none;padding:0 16px 16px;border-top:1px solid rgba(107,184,201,.1)}
+.ep-card.open .ep-body{display:block}
+.pt{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
+.pt th{text-align:right;padding:7px 10px;background:rgba(107,184,201,.08);color:var(--text-muted);font-weight:600;border-bottom:1px solid rgba(107,184,201,.1)}
+.pt td{padding:7px 10px;border-bottom:1px solid rgba(107,184,201,.06);vertical-align:top}
+.pn{font-family:monospace;color:var(--cyan)}
+.pty{color:#f59e0b;font-size:11px}
+.pr{color:#ef4444;font-size:11px;font-weight:700}
+.po{color:rgba(248,248,248,.4);font-size:11px}
+.cb{background:rgba(0,0,0,.4);border:1px solid rgba(107,184,201,.15);border-radius:10px;padding:14px;font-family:monospace;font-size:12px;color:#4ade80;overflow-x:auto;margin:8px 0;position:relative;white-space:pre-wrap;word-break:break-all}
+.cpb{position:absolute;top:7px;left:7px;background:rgba(107,184,201,.15);border:none;color:var(--cyan);padding:3px 9px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit}
+.cpb:hover{background:rgba(107,184,201,.3)}
+.lsm{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 5px}
+.gt{font-size:15px;font-weight:700;color:var(--pearl);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.rb{color:#93c5fd}
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center}
+.mo.show{display:flex}
+.mb2{background:#1E3A5F;border:1px solid rgba(107,184,201,.2);border-radius:16px;padding:28px;width:100%;max-width:420px}
+.mb2 h3{margin-bottom:18px;font-size:17px}
+.mi{width:100%;padding:11px 14px;background:rgba(10,22,40,.6);border:1px solid rgba(107,184,201,.2);border-radius:10px;color:var(--pearl);font-family:inherit;font-size:14px;margin-bottom:14px;box-sizing:border-box}
+.mi:focus{outline:none;border-color:var(--cyan)}
+.ma{display:flex;gap:10px;justify-content:flex-end}
+.bc{background:rgba(107,184,201,.1);color:var(--cyan);border:1px solid rgba(107,184,201,.2);padding:9px 18px;border-radius:8px;cursor:pointer;font-family:inherit}
+.nkr{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3);border-radius:10px;padding:14px;margin-top:14px}
+.nkr p{font-size:12px;color:#4ade80;margin-bottom:8px}
+.nkv{font-family:monospace;font-size:12px;word-break:break-all;color:var(--pearl);background:rgba(0,0,0,.3);padding:10px;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="premium-bg"></div>
+<div class="grid-pattern"></div>
+
+{% include "dashboard/partials/sidebar.html" %}
+
+<main class="main-content">
+<div class="page-header" style="margin-bottom:24px;">
+  <div>
+    <h1>&#x26A1; API للمؤسسات العقارية</h1>
+    <p>أرسل واسحب بيانات العقارات برمجياً من أي نظام خارجي</p>
+  </div>
+</div>
+
+<!-- API Keys -->
+<div class="section-card">
+  <h2>&#x1F511; مفاتيح API</h2>
+  <p>أنشئ مفاتيح للمصادقة. الحد الأقصى 5 مفاتيح. احفظ المفتاح فور إنشائه — لن يظهر مرة أخرى.</p>
+  <div id="keysContainer">
+    {% for key in api_keys %}
+    <div class="key-row" id="key-row-{{ key.id }}">
+      <span class="key-name">{{ key.name }}</span>
+      <span class="key-preview">{{ key.key|slice:":8" }}...{{ key.key|slice:"-4:" }}</span>
+      <span class="key-stats">{{ key.requests_count }} طلب</span>
+      <span class="key-date">{{ key.created_at|date:"Y/m/d" }}</span>
+      <button class="btn-del" onclick="deleteKey('{{ key.id }}')">حذف</button>
+    </div>
+    {% empty %}
+    <p style="color:var(--text-muted);font-size:13px;">لا توجد مفاتيح بعد. أنشئ مفتاحاً للبدء.</p>
+    {% endfor %}
+  </div>
+  <div style="margin-top:14px;">
+    <button class="btn-gold" onclick="openModal()">+ إنشاء مفتاح جديد</button>
+  </div>
+</div>
+
+<!-- Base URL -->
+<div class="section-card">
+  <h2>&#x1F310; Base URL</h2>
+  <div class="cb"><button class="cpb" onclick="cpCode(this)">نسخ</button>{{ base_url }}</div>
+  <p style="margin-top:10px;font-size:13px;color:var(--text-muted);">أرسل المفتاح في كل طلب عبر الـ header:</p>
+  <div class="cb"><button class="cpb" onclick="cpCode(this)">نسخ</button>X-API-Key: YOUR_API_KEY</div>
+</div>
+
+<!-- Endpoints -->
+<div class="section-card">
+  <h2>&#x1F4CB; Endpoints</h2>
+  <p>جميع الـ endpoints تعمل على بيانات حسابك فقط.</p>
+  <div class="gt">&#x1F3E0; العقارات</div>
+
+  <div class="ep-card" onclick="toggleEp(this)">
+    <div class="ep-head">
+      <span class="mb get">GET</span>
+      <span class="ep-path">/properties/</span>
+      <span class="ep-desc">قائمة جميع العقارات</span>
+      <span class="ep-arr">&#x25BA;</span>
+    </div>
+    <div class="ep-body">
+      <div class="lsm">Query Parameters (اختيارية)</div>
+      <table class="pt">
+        <thead><tr><th>الحقل</th><th>النوع</th><th>الوصف</th></tr></thead>
+        <tbody>
+          <tr><td class="pn">status</td><td class="pty">string</td><td>for_sale | for_rent | reserved | sold</td></tr>
+          <tr><td class="pn">type</td><td class="pty">string</td><td>apartment | villa | land | office | commercial | duplex | studio | warehouse | building</td></tr>
+          <tr><td class="pn">city</td><td class="pty">string</td><td>فلتر بالمدينة</td></tr>
+          <tr><td class="pn">is_active</td><td class="pty">boolean</td><td>true | false</td></tr>
+          <tr><td class="pn">page</td><td class="pty">integer</td><td>رقم الصفحة (افتراضي: 1)</td></tr>
+          <tr><td class="pn">per_page</td><td class="pty">integer</td><td>عدد النتائج (افتراضي: 20، أقصى: 100)</td></tr>
+        </tbody>
+      </table>
+      <div class="lsm">مثال</div>
+      <div class="cb"><button class="cpb" onclick="cpCode(this)">نسخ</button>curl -H "X-API-Key: YOUR_KEY" "{{ base_url }}?status=for_sale&city=الرياض"</div>
+      <div class="lsm">الاستجابة</div>
+      <div class="cb rb">{"success":true,"total":45,"page":1,"per_page":20,"pages":3,"properties":[{"id":"...","title":"...","price":850000,...}]}</div>
+    </div>
+  </div>
+
+  <div class="ep-card" onclick="toggleEp(this)">
+    <div class="ep-head">
+      <span class="mb post">POST</span>
+      <span class="ep-path">/properties/</span>
+      <span class="ep-desc">إضافة عقار جديد</span>
+      <span class="ep-arr">&#x25BA;</span>
+    </div>
+    <div class="ep-body">
+      <div class="lsm">Body (JSON)</div>
+      <table class="pt">
+        <thead><tr><th>الحقل</th><th>النوع</th><th>إلزامي</th><th>الوصف</th></tr></thead>
+        <tbody>
+          <tr><td class="pn">title</td><td class="pty">string</td><td class="pr">✓</td><td>عنوان العقار</td></tr>
+          <tr><td class="pn">property_type</td><td class="pty">string</td><td class="pr">✓</td><td>apartment|villa|land|office|commercial|duplex|studio|warehouse|building</td></tr>
+          <tr><td class="pn">status</td><td class="pty">string</td><td class="pr">✓</td><td>for_sale|for_rent|reserved|sold</td></tr>
+          <tr><td class="pn">city</td><td class="pty">string</td><td class="pr">✓</td><td>المدينة</td></tr>
+          <tr><td class="pn">price</td><td class="pty">number</td><td class="pr">✓</td><td>السعر بالريال</td></tr>
+          <tr><td class="pn">size</td><td class="pty">number</td><td class="pr">✓</td><td>المساحة م²</td></tr>
+          <tr><td class="pn">description</td><td class="pty">string</td><td class="po">اختياري</td><td>وصف العقار</td></tr>
+          <tr><td class="pn">neighborhood</td><td class="pty">string</td><td class="po">اختياري</td><td>الحي</td></tr>
+          <tr><td class="pn">bedrooms</td><td class="pty">integer</td><td class="po">اختياري</td><td>غرف النوم</td></tr>
+          <tr><td class="pn">bathrooms</td><td class="pty">integer</td><td class="po">اختياري</td><td>الحمامات</td></tr>
+          <tr><td class="pn">furnishing</td><td class="pty">string</td><td class="po">اختياري</td><td>furnished|semi_furnished|unfurnished</td></tr>
+          <tr><td class="pn">amenities</td><td class="pty">array</td><td class="po">اختياري</td><td>["pool","parking","gym","elevator",...]</td></tr>
+          <tr><td class="pn">latitude / longitude</td><td class="pty">number</td><td class="po">اختياري</td><td>إحداثيات GPS</td></tr>
+        </tbody>
+      </table>
+      <div class="lsm">مثال</div>
+      <div class="cb"><button class="cpb" onclick="cpCode(this)">نسخ</button>curl -X POST -H "X-API-Key: YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"title":"شقة في النرجس","property_type":"apartment","status":"for_sale","city":"الرياض","price":850000,"size":180,"bedrooms":4}' \
+  "{{ base_url }}"</div>
+      <div class="lsm">الاستجابة (201)</div>
+      <div class="cb rb">{"success":true,"message":"تم إضافة العقار بنجاح","property":{"id":"...","reference_number":"RY-SH-1234",...}}</div>
+    </div>
+  </div>
+
+  <div class="ep-card" onclick="toggleEp(this)">
+    <div class="ep-head">
+      <span class="mb get">GET</span>
+      <span class="ep-path">/properties/&lt;id&gt;/</span>
+      <span class="ep-desc">تفاصيل عقار محدد</span>
+      <span class="ep-arr">&#x25BA;</span>
+    </div>
+    <div class="ep-body">
+      <div class="cb"><button class="cpb" onclick="cpCode(this)">نسخ</button>curl -H "X-API-Key: YOUR_KEY" "{{ base_url }}&lt;property-uuid&gt;/"</div>
+    </div>
+  </div>
+
+  <div class="ep-card" onclick="toggleEp(this)">
+    <div class="ep-head">
+      <span class="mb put">PUT</span>
+      <span class="ep-path">/properties/&lt;id&gt;/</span>
+      <span class="ep-desc">تعديل عقار (أرسل الحقول المراد تعديلها فقط)</span>
+      <span class="ep-arr">&#x25BA;</span>
+    </div>
+    <div class="ep-body">
+      <div class="cb"><button class="cpb" onclick="cpCode(this)">نسخ</button>curl -X PUT -H "X-API-Key: YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"price":900000,"status":"reserved"}' \
+  "{{ base_url }}&lt;property-uuid&gt;/"</div>
+    </div>
+  </div>
+
+  <div class="ep-card" onclick="toggleEp(this)">
+    <div class="ep-head">
+      <span class="mb del">DELETE</span>
+      <span class="ep-path">/properties/&lt;id&gt;/</span>
+      <span class="ep-desc">حذف عقار</span>
+      <span class="ep-arr">&#x25BA;</span>
+    </div>
+    <div class="ep-body">
+      <div class="cb"><button class="cpb" onclick="cpCode(this)">نسخ</button>curl -X DELETE -H "X-API-Key: YOUR_KEY" "{{ base_url }}&lt;property-uuid&gt;/"</div>
+      <div class="lsm">الاستجابة</div>
+      <div class="cb rb">{"success":true,"message":"تم حذف العقار بنجاح"}</div>
+    </div>
+  </div>
+
+  <div class="gt" style="margin-top:20px;">&#x26A0;&#xFE0F; رموز الأخطاء</div>
+  <table class="pt">
+    <thead><tr><th>الكود</th><th>المعنى</th><th>السبب</th></tr></thead>
+    <tbody>
+      <tr><td class="pn">401</td><td>Unauthorized</td><td>مفتاح API مفقود أو غير صالح</td></tr>
+      <tr><td class="pn">403</td><td>Forbidden</td><td>الباقة لا تدعم هذه الميزة</td></tr>
+      <tr><td class="pn">404</td><td>Not Found</td><td>العقار غير موجود أو لا ينتمي لحسابك</td></tr>
+      <tr><td class="pn">400</td><td>Bad Request</td><td>حقول مطلوبة مفقودة أو JSON غير صالح</td></tr>
+      <tr><td class="pn">500</td><td>Server Error</td><td>خطأ داخلي في الخادم</td></tr>
+    </tbody>
+  </table>
+</div>
+</main>
+
+<!-- Modal -->
+<div class="mo" id="keyModal">
+  <div class="mb2">
+    <h3>&#x1F511; إنشاء مفتاح API جديد</h3>
+    <input type="text" class="mi" id="keyNameInput" placeholder="اسم المفتاح (مثال: نظام ERP، موقع الشركة)">
+    <div id="newKeyReveal" class="nkr" style="display:none;">
+      <p>&#x26A0;&#xFE0F; احفظ المفتاح الآن — لن يظهر مرة أخرى!</p>
+      <div class="nkv" id="newKeyValue"></div>
+      <button id="copyKeyBtn" style="margin-top:10px;background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3);padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;">نسخ المفتاح</button>
+    </div>
+    <div class="ma" id="keyModalActions">
+      <button class="bc" onclick="closeModal()">إلغاء</button>
+      <button class="btn-gold" onclick="createKey()">إنشاء</button>
+    </div>
+    <div id="keyModalClose" style="display:none;margin-top:12px;">
+      <button class="btn-gold" onclick="closeModal()">إغلاق وتحديث الصفحة</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleEp(c){c.classList.toggle('open')}
+
+function cpCode(btn){
+  var t=btn.parentElement.textContent.replace('نسخ','').trim();
+  navigator.clipboard.writeText(t).then(function(){
+    var o=btn.textContent;btn.textContent='✓ تم';
+    setTimeout(function(){btn.textContent=o},1500);
+  });
+}
+
+function openModal(){
+  document.getElementById('keyModal').classList.add('show');
+  document.getElementById('keyNameInput').value='';
+  document.getElementById('newKeyReveal').style.display='none';
+  document.getElementById('keyModalActions').style.display='flex';
+  document.getElementById('keyModalClose').style.display='none';
+}
+
+function closeModal(){
+  document.getElementById('keyModal').classList.remove('show');
+  location.reload();
+}
+
+function getCookie(n){
+  var v=null;
+  document.cookie.split(';').forEach(function(c){
+    var p=c.trim().split('=');
+    if(p[0]===n)v=decodeURIComponent(p[1]);
+  });
+  return v;
+}
+
+async function createKey(){
+  var name=document.getElementById('keyNameInput').value.trim();
+  if(!name){alert('أدخل اسم المفتاح');return;}
+  try{
+    var res=await fetch('/api/v1/properties/ext/keys/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+      credentials:'same-origin',
+      body:JSON.stringify({name:name})
+    });
+    var data=await res.json();
+    if(data.success){
+      document.getElementById('newKeyValue').textContent=data.key.key;
+      document.getElementById('newKeyReveal').style.display='block';
+      document.getElementById('keyModalActions').style.display='none';
+      document.getElementById('keyModalClose').style.display='block';
+      document.getElementById('copyKeyBtn').onclick=function(){
+        navigator.clipboard.writeText(data.key.key);
+        this.textContent='✓ تم النسخ';
+      };
+    }else{alert('خطأ: '+(data.error||'حدث خطأ'));}
+  }catch(e){alert('خطأ في الاتصال');}
+}
+
+async function deleteKey(id){
+  if(!confirm('هل تريد حذف هذا المفتاح؟ لا يمكن التراجع.'))return;
+  try{
+    var res=await fetch('/api/v1/properties/ext/keys/'+id+'/delete/',{
+      method:'DELETE',
+      headers:{'X-CSRFToken':getCookie('csrftoken')},
+      credentials:'same-origin'
+    });
+    var data=await res.json();
+    if(data.success){var r=document.getElementById('key-row-'+id);if(r)r.remove();}
+    else{alert('خطأ: '+(data.error||'حدث خطأ'));}
+  }catch(e){alert('خطأ في الاتصال');}
+}
+</script>
+
+{% include "dashboard/partials/subscription_gate.html" %}
+<script src="/static/js/theme.js"></script>
+</body>
+</html>

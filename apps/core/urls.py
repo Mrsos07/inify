@@ -31,6 +31,7 @@ urlpatterns = [
     path('dashboard/leads/', views.leads_view, name='leads'),
     path('dashboard/conversations/', views.conversations_view, name='conversations'),
     path('dashboard/bot-settings/', views.bot_settings_view, name='bot-settings'),
+    path('dashboard/api-docs/', views.api_docs_view, name='api-docs'),
     
     # Pricing
     path('pricing/', views.pricing_view, name='pricing'),

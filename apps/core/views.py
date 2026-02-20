@@ -1039,6 +1039,31 @@ def bot_settings_view(request):
 
 
 @login_required(login_url='/auth/login/')
+def api_docs_view(request):
+    """صفحة توثيق API للمؤسسات"""
+    from apps.agents.models import Agent, APIKey
+
+    try:
+        agent = request.user.agent_profile
+    except Agent.DoesNotExist:
+        return redirect('dashboard')
+
+    if agent.subscription_plan not in ('enterprise', 'pro'):
+        return redirect('dashboard')
+
+    api_keys = APIKey.objects.filter(agent=agent)
+
+    context = {
+        'active_page': 'api_docs',
+        'agent_id': str(agent.id),
+        'subscription_plan': agent.subscription_plan,
+        'api_keys': api_keys,
+        'base_url': request.build_absolute_uri('/api/v1/properties/ext/'),
+    }
+    return render(request, 'dashboard/api_docs.html', context)
+
+
+@login_required(login_url='/auth/login/')
 def test_add_property(request):
     """صفحة اختبار إضافة عقار"""
     from apps.agents.models import Agent

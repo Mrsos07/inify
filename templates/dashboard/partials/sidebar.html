@@ -36,6 +36,19 @@
             </a>
         </div>
 
+        {% if subscription_plan == 'enterprise' or subscription_plan == 'pro' %}
+        <div class="nav-section">
+            <div class="nav-section-title">المؤسسات</div>
+            <a href="/dashboard/api-docs/" class="nav-item {% if active_page == 'api_docs' %}active{% endif %}" style="color: #FFD700;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                </svg>
+                API للمؤسسات
+                <span style="font-size:10px;background:#FFD70030;color:#FFD700;padding:2px 6px;border-radius:10px;margin-right:auto;">جديد</span>
+            </a>
+        </div>
+        {% endif %}
+
         <div class="nav-section">
             <div class="nav-section-title">الاشتراك</div>
             <a href="/subscription/" class="nav-item {% if active_page == 'subscription' %}active{% endif %}">

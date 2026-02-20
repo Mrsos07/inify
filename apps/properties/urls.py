@@ -14,6 +14,10 @@ from .views import (
     manage_viewing_slots, get_property_appointments,
     download_excel_template, import_excel_properties
 )
+from .api_views import (
+    api_properties_list, api_property_detail,
+    api_keys_manage, api_key_delete,
+)
 
 router = DefaultRouter()
 router.register(r'list', PropertyViewSet, basename='property')
@@ -45,4 +49,10 @@ urlpatterns = [
     
     # REST API
     path('', include(router.urls)),
+
+    # External API (للمؤسسات - API Key authentication)
+    path('ext/properties/', api_properties_list, name='ext-properties-list'),
+    path('ext/properties/<uuid:property_id>/', api_property_detail, name='ext-property-detail'),
+    path('ext/keys/', api_keys_manage, name='ext-api-keys'),
+    path('ext/keys/<uuid:key_id>/delete/', api_key_delete, name='ext-api-key-delete'),
 ]
