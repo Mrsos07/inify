@@ -373,6 +373,24 @@ class WhatsAppWebhookView(View):
                 )
                 return wa_instance.welcome_message
         
+        # جلب العقارات
+        properties = Property.objects.filter(agent=agent, is_active=True)
+        
+        # بناء سياق العقارات
+        properties_context = self._build_properties_context(properties)
+        
+        # استخدام OpenAI دائماً
+        from services.openai_service import OpenAIService
+        ai_service = OpenAIService(agent=agent)
+        
+        if not ai_service.is_available:
+            logger.error("AI service not available for WhatsApp")
+            return "عذراً، الخدمة غير متاحة حالياً. يرجى المحاولة لاحقاً."
+        
+        # جلب تاريخ المحادثة قبل حفظ رسالة المستخدم الحالية
+        # (لمنع ظهور الرسالة الحالية مرتين في السياق المرسل لـ AI)
+        chat_history = conversation.get_messages_for_ai(limit=10)
+        
         # حفظ رسالة المستخدم
         Message.objects.create(
             conversation=conversation,
@@ -400,23 +418,6 @@ class WhatsAppWebhookView(View):
             )
             if lead:
                 logger.info(f"✅ Lead created/updated: {lead.id} - {lead.name} ({lead.phone}) status={lead.status}")
-        
-        # جلب العقارات
-        properties = Property.objects.filter(agent=agent, is_active=True)
-        
-        # بناء سياق العقارات
-        properties_context = self._build_properties_context(properties)
-        
-        # استخدام OpenAI دائماً
-        from services.openai_service import OpenAIService
-        ai_service = OpenAIService(agent=agent)
-        
-        if not ai_service.is_available:
-            logger.error("AI service not available for WhatsApp")
-            return "عذراً، الخدمة غير متاحة حالياً. يرجى المحاولة لاحقاً."
-        
-        # جلب تاريخ المحادثة
-        chat_history = conversation.get_messages_for_ai(limit=10)
         
         # توليد الرد
         try:
