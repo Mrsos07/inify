@@ -14,6 +14,16 @@ from .models import SupportTicket
 from .forms import SupportTicketForm, AdminResponseForm
 
 
+def _get_subscription_plan(user):
+    """جلب خطة الاشتراك للمستخدم"""
+    try:
+        from apps.agents.models import Agent
+        agent = Agent.objects.get(user=user)
+        return agent.subscription_plan or 'free'
+    except Exception:
+        return 'free'
+
+
 # ═══════════════════════════════════════════════════════════
 # واجهات المستخدم
 # ═══════════════════════════════════════════════════════════
@@ -37,6 +47,8 @@ def ticket_list(request):
         'tickets': tickets,
         'status_filter': status_filter,
         'status_choices': SupportTicket.STATUS_CHOICES,
+        'subscription_plan': _get_subscription_plan(request.user),
+        'active_page': 'support',
     }
     return render(request, 'support/ticket_list.html', context)
 
@@ -55,14 +67,22 @@ def ticket_create(request):
     else:
         form = SupportTicketForm()
     
-    return render(request, 'support/ticket_create.html', {'form': form})
+    return render(request, 'support/ticket_create.html', {
+        'form': form,
+        'subscription_plan': _get_subscription_plan(request.user),
+        'active_page': 'support',
+    })
 
 
 @login_required
 def ticket_detail(request, ticket_id):
     """عرض تفاصيل التذكرة"""
     ticket = get_object_or_404(SupportTicket, id=ticket_id, user=request.user)
-    return render(request, 'support/ticket_detail.html', {'ticket': ticket})
+    return render(request, 'support/ticket_detail.html', {
+        'ticket': ticket,
+        'subscription_plan': _get_subscription_plan(request.user),
+        'active_page': 'support',
+    })
 
 
 # ═══════════════════════════════════════════════════════════
