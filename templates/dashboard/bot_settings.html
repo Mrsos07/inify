@@ -1898,31 +1898,17 @@
 
                         <!-- قسم الربط -->
                         <div id="waConnectSection" style="text-align: center; padding: 30px; background: rgba(10,22,40,0.4); border-radius: 16px; border: 1px solid var(--border);">
-                            <div id="waConnectBtn">
+                            <div id="waConnectBtn" style="display: none;">
                                 <p style="color: var(--text-muted); margin-bottom: 20px;">اربط رقم واتساب الخاص بك ليتمكن الوكيل الذكي من الرد على عملائك تلقائياً</p>
-                                <button onclick="startWAConnect()" class="btn btn-primary" style="padding: 14px 30px; font-size: 16px;">
+                                <button onclick="openWAModal()" class="btn btn-primary" style="padding: 14px 30px; font-size: 16px;">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-left: 8px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
                                     ربط الواتساب الآن
                                 </button>
                             </div>
-                            <div id="waLoadingSection" style="display: none;">
-                                <div style="width: 50px; height: 50px; border: 3px solid rgba(107,184,201,0.2); border-top-color: var(--cyan); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
-                                <p>جاري تجهيز الباركود...</p>
-                            </div>
-                            <div id="waQRSection" style="display: none;">
-                                <div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 20px;">
-                                    <img id="waQRImg" src="" alt="QR Code" style="width: 220px; height: 220px;">
-                                </div>
-                                <p style="color: var(--cyan); font-weight: 600; margin-bottom: 10px;">امسح الباركود من واتساب</p>
-                                <p style="font-size: 13px; color: var(--text-muted);">الإعدادات ← الأجهزة المرتبطة ← ربط جهاز</p>
-                                <button onclick="startWAConnect()" class="btn btn-secondary" style="margin-top: 15px;">تحديث الباركود</button>
-                            </div>
-                            <div id="waConnectedSection">
+                            <div id="waConnectedSection" style="display: none;">
                                 <div style="font-size: 60px; margin-bottom: 15px;">✅</div>
                                 <h4 style="color: #22c55e; margin-bottom: 10px;">الواتساب متصل ويعمل!</h4>
                                 <p style="color: var(--text-muted); margin-bottom: 8px;">الوكيل الذكي جاهز للرد على عملائك</p>
-                                
-                                <!-- إحصائيات -->
                                 <div id="waStats" style="display: flex; gap: 20px; justify-content: center; margin: 20px 0; padding: 15px; background: rgba(34,197,94,0.1); border-radius: 12px; border: 1px solid rgba(34,197,94,0.2);">
                                     <div style="text-align: center;">
                                         <div style="font-size: 24px; font-weight: bold; color: #22c55e;" id="waMsgReceived">{{ whatsapp_messages_received|default:0 }}</div>
@@ -1934,15 +1920,14 @@
                                         <div style="font-size: 12px; color: var(--text-muted);">ردود مرسلة</div>
                                     </div>
                                 </div>
-                                
                                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                                    <button onclick="startWAConnect()" class="btn btn-secondary" style="padding: 10px 20px;">
-                                        🔄 تغيير الرقم
-                                    </button>
-                                    <button onclick="disconnectWA()" class="btn btn-secondary" style="background: rgba(239,68,68,0.2); color: #f87171; padding: 10px 20px;">
-                                        🗑️ حذف الربط
-                                    </button>
+                                    <button onclick="openWAModal()" class="btn btn-secondary" style="padding: 10px 20px;">🔄 تغيير الرقم</button>
+                                    <button onclick="disconnectWA()" class="btn btn-secondary" style="background: rgba(239,68,68,0.2); color: #f87171; padding: 10px 20px;">🗑️ حذف الربط</button>
                                 </div>
+                            </div>
+                            <div id="waLoadingInit" style="padding: 20px;">
+                                <div style="width: 40px; height: 40px; border: 3px solid rgba(107,184,201,0.2); border-top-color: var(--cyan); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div>
+                                <p style="color: var(--text-muted); font-size: 14px;">جاري التحقق من الحالة...</p>
                             </div>
                         </div>
                     </div>
@@ -1969,6 +1954,42 @@
                                 <span class="feature-icon">📅</span>
                                 <strong>جدولة المواعيد</strong>
                                 <p>حجز مواعيد المعاينة</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WhatsApp QR Modal -->
+                <div id="waModal" class="modal-overlay" style="display: none;" onclick="closeWAModal(event)">
+                    <div class="modal-container" onclick="event.stopPropagation()" style="max-width: 450px;">
+                        <div class="modal-header">
+                            <h3 style="display: flex; align-items: center; gap: 10px;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
+                                ربط الواتساب
+                            </h3>
+                            <button class="modal-close" onclick="closeWAModal()">&times;</button>
+                        </div>
+                        <div class="modal-body" id="waModalBody" style="text-align: center; padding: 30px;">
+                            <div id="waModalLoading">
+                                <div class="spinner" style="width: 50px; height: 50px; border: 3px solid rgba(107,184,201,0.2); border-top-color: var(--cyan); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                                <p>جاري تجهيز الباركود...</p>
+                            </div>
+                            <div id="waModalQR" style="display: none;">
+                                <div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 20px;">
+                                    <img id="waModalQRImage" src="" alt="QR Code" style="width: 220px; height: 220px;">
+                                </div>
+                                <p style="color: var(--cyan); font-weight: 600; margin-bottom: 10px;">امسح الباركود من واتساب</p>
+                                <p style="font-size: 13px; color: var(--text-muted);">الإعدادات ← الأجهزة المرتبطة ← ربط جهاز</p>
+                            </div>
+                            <div id="waModalConnected" style="display: none;">
+                                <div style="font-size: 60px; margin-bottom: 15px;">✅</div>
+                                <h4 style="color: #22c55e; margin-bottom: 10px;">تم ربط الواتساب بنجاح!</h4>
+                                <p style="color: var(--text-muted);">الوكيل الذكي جاهز للرد على عملائك</p>
+                            </div>
+                            <div id="waModalError" style="display: none;">
+                                <div style="font-size: 60px; margin-bottom: 15px;">❌</div>
+                                <p id="waModalErrorMsg" style="color: #ef4444;"></p>
+                                <button onclick="retryWAModal()" class="btn btn-primary" style="margin-top: 15px; padding: 10px 25px;">إعادة المحاولة</button>
                             </div>
                         </div>
                     </div>
@@ -2890,110 +2911,80 @@
             }, 100);
         }
 
-        // ============ WhatsApp Functions ============
-        let waPolling = null;
-        
-        // Set initial display state from Django context
-        (function() {
-            const waStatusCard = document.getElementById('waStatusCard');
-            const waInitiallyConnected = waStatusCard && waStatusCard.classList.contains('connected');
-            
-            if (waInitiallyConnected) {
-                document.getElementById('waConnectBtn').style.display = 'none';
-                document.getElementById('waConnectedSection').style.display = 'block';
-            } else {
-                document.getElementById('waConnectBtn').style.display = 'block';
-                document.getElementById('waConnectedSection').style.display = 'none';
-            }
+        // ============ WhatsApp Modal Functions ============
+        let waModalPolling = null;
+        let waQRPolling = null;
+
+        // تحديد الحالة الأولية عند تحميل الصفحة
+        (function initWADisplay() {
+            const loadingEl = document.getElementById('waLoadingInit');
+            const connectedEl = document.getElementById('waConnectedSection');
+            const connectBtnEl = document.getElementById('waConnectBtn');
+            checkWAStatusInit();
         })();
 
-        async function checkWAStatus() {
+        async function checkWAStatusInit() {
             try {
-                console.log('🔍 Checking WhatsApp status...');
                 const resp = await fetch('/api/whatsapp/status/', { credentials: 'include' });
-                
-                console.log('Response status:', resp.status);
-                console.log('Response ok:', resp.ok);
-                
-                if (!resp.ok) {
-                    console.error('❌ Response not OK:', resp.status, resp.statusText);
-                    throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-                }
-                
                 const data = await resp.json();
-                console.log('📦 WhatsApp Status Data:', data);
-                
-                const statusText = document.getElementById('waStatusText');
-                const statusBadge = document.getElementById('waStatusBadge');
-                const statusCard = document.getElementById('waStatusCard');
-                
-                if (!statusText || !statusBadge || !statusCard) {
-                    console.error('❌ DOM elements not found');
-                    return;
-                }
-                
-                // التحقق من الاتصال
+                const loadingEl = document.getElementById('waLoadingInit');
+                if (loadingEl) loadingEl.style.display = 'none';
                 if (data.success && data.connected) {
-                    console.log('✅ WhatsApp Connected!');
-                    statusText.textContent = 'الوكيل يرد على الرسائل تلقائياً';
-                    statusBadge.textContent = '✓ متصل';
-                    statusBadge.classList.add('connected');
-                    statusCard.classList.add('connected');
-                    showWAConnected();
-                    
-                    // تحديث الإحصائيات
-                    if (data.messages_received !== undefined) {
+                    showWAConnectedInline();
+                    if (data.messages_received !== undefined)
                         document.getElementById('waMsgReceived').textContent = data.messages_received || 0;
-                    }
-                    if (data.messages_sent !== undefined) {
+                    if (data.messages_sent !== undefined)
                         document.getElementById('waMsgSent').textContent = data.messages_sent || 0;
-                    }
                 } else {
-                    console.log('❌ WhatsApp Not Connected. Data:', {
-                        success: data.success,
-                        connected: data.connected,
-                        status: data.status
-                    });
-                    statusText.textContent = 'غير متصل - اربط رقمك للبدء';
-                    statusBadge.textContent = 'غير متصل';
-                    statusBadge.classList.remove('connected');
-                    statusCard.classList.remove('connected');
-                    showWAConnect();
+                    showWAConnectBtnInline();
                 }
-            } catch (e) {
-                console.error('❌ WA status check failed:', e);
-                const statusText = document.getElementById('waStatusText');
-                if (statusText) {
-                    statusText.textContent = 'خطأ في التحقق - حاول تحديث الصفحة';
-                }
-                showWAConnect();
+            } catch(e) {
+                const loadingEl = document.getElementById('waLoadingInit');
+                if (loadingEl) loadingEl.style.display = 'none';
+                showWAConnectBtnInline();
             }
         }
 
-        function showWAConnect() {
-            document.getElementById('waConnectBtn').style.display = 'block';
-            document.getElementById('waLoadingSection').style.display = 'none';
-            document.getElementById('waQRSection').style.display = 'none';
-            document.getElementById('waConnectedSection').style.display = 'none';
-        }
-
-        function showWAConnected() {
+        function showWAConnectedInline() {
             document.getElementById('waConnectBtn').style.display = 'none';
-            document.getElementById('waLoadingSection').style.display = 'none';
-            document.getElementById('waQRSection').style.display = 'none';
             document.getElementById('waConnectedSection').style.display = 'block';
-            if (waPolling) { clearInterval(waPolling); waPolling = null; }
+            const statusText = document.getElementById('waStatusText');
+            const statusBadge = document.getElementById('waStatusBadge');
+            const statusCard = document.getElementById('waStatusCard');
+            if (statusText) statusText.textContent = 'الوكيل يرد على الرسائل تلقائياً';
+            if (statusBadge) { statusBadge.textContent = '✓ متصل'; statusBadge.classList.add('connected'); }
+            if (statusCard) statusCard.classList.add('connected');
         }
 
-        let qrPollingInt = null;
-        
-        async function startWAConnect() {
-            // إخفاء جميع الأقسام وإظهار التحميل
-            document.getElementById('waConnectBtn').style.display = 'none';
-            document.getElementById('waQRSection').style.display = 'none';
+        function showWAConnectBtnInline() {
+            document.getElementById('waConnectBtn').style.display = 'block';
             document.getElementById('waConnectedSection').style.display = 'none';
-            document.getElementById('waLoadingSection').style.display = 'block';
-            
+            const statusText = document.getElementById('waStatusText');
+            const statusBadge = document.getElementById('waStatusBadge');
+            const statusCard = document.getElementById('waStatusCard');
+            if (statusText) statusText.textContent = 'غير متصل - اربط رقمك للبدء';
+            if (statusBadge) { statusBadge.textContent = 'غير متصل'; statusBadge.classList.remove('connected'); }
+            if (statusCard) statusCard.classList.remove('connected');
+        }
+
+        // ============ WhatsApp Modal Logic ============
+        function openWAModal() {
+            document.getElementById('waModal').style.display = 'flex';
+            document.getElementById('waModalLoading').style.display = 'block';
+            document.getElementById('waModalQR').style.display = 'none';
+            document.getElementById('waModalConnected').style.display = 'none';
+            document.getElementById('waModalError').style.display = 'none';
+            connectWAModal();
+        }
+
+        function closeWAModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('waModal').style.display = 'none';
+            if (waModalPolling) { clearInterval(waModalPolling); waModalPolling = null; }
+            if (waQRPolling) { clearInterval(waQRPolling); waQRPolling = null; }
+        }
+
+        async function connectWAModal() {
             try {
                 const resp = await fetch('/api/whatsapp/connect/', {
                     method: 'POST',
@@ -3001,154 +2992,102 @@
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }
                 });
                 const data = await resp.json();
-                console.log('✅ WhatsApp connect response:', data);
-                
-                // إخفاء التحميل
-                document.getElementById('waLoadingSection').style.display = 'none';
-                
+                console.log('WA connect:', data);
+
+                document.getElementById('waModalLoading').style.display = 'none';
+
                 if (data.success) {
                     if (data.connected) {
-                        showWAConnected();
-                        showCopyToast('✓ الواتساب متصل!');
+                        showWAModalConnected();
                     } else if (data.qr_code) {
-                        // عرض QR Code
-                        console.log('✅ QR Code received');
-                        console.log('QR length:', data.qr_code.length);
-                        console.log('QR starts with:', data.qr_code.substring(0, 50));
-                        
-                        const img = document.getElementById('waQRImg');
-                        
-                        // التأكد من وجود data URI prefix
+                        const img = document.getElementById('waModalQRImage');
                         let qrSrc = data.qr_code;
-                        if (!qrSrc.startsWith('data:image')) {
-                            console.log('Adding data URI prefix...');
-                            qrSrc = 'data:image/png;base64,' + qrSrc;
-                        }
-                        
-                        img.onload = function() {
-                            console.log('✅ QR Image loaded successfully');
-                            document.getElementById('waQRSection').style.display = 'block';
-                        };
-                        
-                        img.onerror = function(e) {
-                            console.error('❌ QR Image failed to load:', e);
-                            alert('فشل تحميل الباركود، حاول مرة أخرى');
-                            showWAConnect();
-                        };
-                        
+                        if (!qrSrc.startsWith('data:image')) qrSrc = 'data:image/png;base64,' + qrSrc;
+                        img.onload = () => { document.getElementById('waModalQR').style.display = 'block'; };
+                        img.onerror = () => showWAModalError('فشل تحميل الباركود، حاول مرة أخرى');
                         img.src = qrSrc;
-                        startWAPolling();
+                        startWAModalPolling();
                     } else if (data.status === 'waiting') {
-                        console.log('⏳ Waiting for QR Code...');
-                        document.getElementById('waLoadingSection').style.display = 'block';
-                        startQRPoll();
+                        document.getElementById('waModalLoading').style.display = 'block';
+                        startWAQRPolling();
                     } else {
-                        console.warn('⚠️ Unexpected response:', data);
-                        alert('استجابة غير متوقعة من الخادم');
-                        showWAConnect();
+                        showWAModalError('استجابة غير متوقعة من الخادم');
                     }
                 } else {
-                    console.error('❌ Connection failed:', data.error);
-                    alert('خطأ: ' + (data.error || 'فشل الاتصال'));
-                    showWAConnect();
+                    showWAModalError(data.error || 'فشل الاتصال');
                 }
-            } catch (e) {
-                console.error('❌ Error:', e);
-                document.getElementById('waLoadingSection').style.display = 'none';
-                alert('حدث خطأ في الاتصال');
-                showWAConnect();
+            } catch(e) {
+                console.error('WA connect error:', e);
+                document.getElementById('waModalLoading').style.display = 'none';
+                showWAModalError('حدث خطأ في الاتصال');
             }
         }
-        
-        function startQRPoll() {
-            if (qrPollingInt) clearInterval(qrPollingInt);
-            
-            console.log('🔄 Starting QR polling...');
-            
-            qrPollingInt = setInterval(async () => {
+
+        function startWAQRPolling() {
+            if (waQRPolling) clearInterval(waQRPolling);
+            waQRPolling = setInterval(async () => {
                 try {
                     const resp = await fetch('/api/whatsapp/qr/', { credentials: 'include' });
                     const data = await resp.json();
-                    
-                    console.log('QR Poll response:', data);
-                    
                     if (data.connected) {
-                        console.log('✅ Connected!');
-                        clearInterval(qrPollingInt);
-                        qrPollingInt = null;
-                        document.getElementById('waLoadingSection').style.display = 'none';
-                        showWAConnected();
-                        showCopyToast('✓ تم ربط الواتساب!');
+                        clearInterval(waQRPolling); waQRPolling = null;
+                        document.getElementById('waModalLoading').style.display = 'none';
+                        showWAModalConnected();
                     } else if (data.qr_code) {
-                        console.log('✅ QR Code received in polling');
-                        clearInterval(qrPollingInt);
-                        qrPollingInt = null;
-                        document.getElementById('waLoadingSection').style.display = 'none';
-                        
-                        const img = document.getElementById('waQRImg');
+                        clearInterval(waQRPolling); waQRPolling = null;
+                        document.getElementById('waModalLoading').style.display = 'none';
+                        const img = document.getElementById('waModalQRImage');
                         let qrSrc = data.qr_code;
-                        if (!qrSrc.startsWith('data:image')) {
-                            qrSrc = 'data:image/png;base64,' + qrSrc;
-                        }
+                        if (!qrSrc.startsWith('data:image')) qrSrc = 'data:image/png;base64,' + qrSrc;
                         img.src = qrSrc;
-                        document.getElementById('waQRSection').style.display = 'block';
-                        startWAPolling();
+                        document.getElementById('waModalQR').style.display = 'block';
+                        startWAModalPolling();
                     }
-                } catch (e) {
-                    console.error('QR polling error:', e);
-                }
+                } catch(e) { console.error('QR poll error:', e); }
             }, 2000);
-            
             setTimeout(() => {
-                if (qrPollingInt) {
-                    console.log('⏱️ QR polling timeout');
-                    clearInterval(qrPollingInt);
-                    qrPollingInt = null;
-                    document.getElementById('waLoadingSection').style.display = 'none';
-                    alert('انتهى الوقت، حاول مرة أخرى');
-                    showWAConnect();
+                if (waQRPolling) {
+                    clearInterval(waQRPolling); waQRPolling = null;
+                    document.getElementById('waModalLoading').style.display = 'none';
+                    showWAModalError('انتهى الوقت، حاول مرة أخرى');
                 }
             }, 60000);
         }
 
-        function startWAPolling() {
-            if (waPolling) clearInterval(waPolling);
-            
-            console.log('🔄 Starting connection polling...');
-            let pollCount = 0;
-            
-            waPolling = setInterval(async () => {
+        function startWAModalPolling() {
+            if (waModalPolling) clearInterval(waModalPolling);
+            waModalPolling = setInterval(async () => {
                 try {
-                    pollCount++;
-                    console.log(`Polling attempt ${pollCount}...`);
-                    
                     const resp = await fetch('/api/whatsapp/status/', { credentials: 'include' });
                     const data = await resp.json();
-                    
-                    console.log('Status response:', data);
-                    
                     if (data.connected) {
-                        console.log('✅ Connected detected!');
-                        clearInterval(waPolling);
-                        waPolling = null;
-                        showWAConnected();
-                        showCopyToast('✓ تم ربط الواتساب بنجاح!');
-                        checkWAStatus();
+                        clearInterval(waModalPolling); waModalPolling = null;
+                        showWAModalConnected();
                     }
-                } catch (e) {
-                    console.error('Polling error:', e);
-                }
+                } catch(e) { console.error('WA poll error:', e); }
             }, 2000);
-            
-            // إيقاف polling بعد دقيقتين
             setTimeout(() => {
-                if (waPolling) {
-                    console.log('⏱️ Polling timeout');
-                    clearInterval(waPolling);
-                    waPolling = null;
-                    alert('انتهى وقت الانتظار. تحقق من حالة الاتصال يدوياً.');
-                }
+                if (waModalPolling) { clearInterval(waModalPolling); waModalPolling = null; }
             }, 120000);
+        }
+
+        function showWAModalConnected() {
+            document.getElementById('waModalQR').style.display = 'none';
+            document.getElementById('waModalLoading').style.display = 'none';
+            document.getElementById('waModalConnected').style.display = 'block';
+            showWAConnectedInline();
+            setTimeout(() => closeWAModal(), 2000);
+        }
+
+        function showWAModalError(msg) {
+            document.getElementById('waModalErrorMsg').textContent = msg;
+            document.getElementById('waModalError').style.display = 'block';
+        }
+
+        function retryWAModal() {
+            document.getElementById('waModalError').style.display = 'none';
+            document.getElementById('waModalLoading').style.display = 'block';
+            connectWAModal();
         }
 
         async function disconnectWA() {
@@ -3171,18 +3110,15 @@
                 
                 if (data.success) {
                     showCopyToast('✓ تم حذف الربط بنجاح');
-                    // إعادة تحميل الصفحة لتحديث الحالة
-                    setTimeout(() => {
-                        checkWAStatus();
-                    }, 500);
+                    setTimeout(() => checkWAStatusInit(), 500);
                 } else {
                     alert('حدث خطأ: ' + (data.error || 'فشل الحذف'));
-                    checkWAStatus();
+                    checkWAStatusInit();
                 }
             } catch (e) {
                 console.error('Disconnect error:', e);
                 alert('حدث خطأ في الاتصال');
-                checkWAStatus();
+                checkWAStatusInit();
             }
         }
         
