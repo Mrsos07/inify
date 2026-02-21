@@ -611,44 +611,43 @@ class WhatsAppWebhookView(View):
         
         for prop in properties:
             try:
-                # جلب الصورة الرئيسية للعقار
-                primary_image = PropertyImage.objects.filter(
-                    property=prop,
-                    is_primary=True
-                ).first()
-                
-                if not primary_image:
-                    primary_image = PropertyImage.objects.filter(
-                        property=prop
-                    ).first()
-                
-                # إعداد caption مشترك
-                listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
-                caption = f"🏠 {prop.title}\n"
-                caption += f"📍 {prop.city}"
-                if prop.neighborhood:
-                    caption += f" - {prop.neighborhood}"
-                caption += f"\n💰 {prop.price:,.0f} ريال ({listing_type})"
-                if prop.bedrooms:
-                    caption += f"\n🛏️ {prop.bedrooms} غرف نوم"
-                if prop.size:
-                    caption += f" | 📐 {prop.size} م²"
-                caption += f"\n🔖 الرقم المرجعي: {prop.reference_number}"
+                # جلب جميع صور العقار مرتبة (الرئيسية أولاً)
+                all_images = list(PropertyImage.objects.filter(
+                    property=prop
+                ).order_by('-is_primary', 'order', 'created_at'))
 
-                # ─── إرسال الصورة ───
-                if primary_image and primary_image.image:
-                    image_url = primary_image.image.url
+                # إعداد caption للصورة الأولى (يحتوي على تفاصيل العقار)
+                listing_type = 'للبيع' if prop.status == 'for_sale' else 'للإيجار'
+                main_caption = f"🏠 {prop.title}\n"
+                main_caption += f"📍 {prop.city}"
+                if prop.neighborhood:
+                    main_caption += f" - {prop.neighborhood}"
+                main_caption += f"\n💰 {prop.price:,.0f} ريال ({listing_type})"
+                if prop.bedrooms:
+                    main_caption += f"\n🛏️ {prop.bedrooms} غرف نوم"
+                if prop.size:
+                    main_caption += f" | 📐 {prop.size} م²"
+                main_caption += f"\n🔖 الرقم المرجعي: {prop.reference_number}"
+
+                # ─── إرسال جميع الصور ───
+                for idx, img in enumerate(all_images):
+                    if not img.image:
+                        continue
+                    image_url = img.image.url
                     if image_url.startswith('/'):
                         full_image_url = f"{site_url}{image_url}"
                     elif image_url.startswith('http'):
                         full_image_url = image_url
                     else:
                         full_image_url = f"{site_url}/media/{image_url}"
-                    
+
+                    # caption فقط مع الصورة الأولى
+                    caption = main_caption if idx == 0 else ""
+
                     time.sleep(0.5)
-                    logger.info(f"📷 Sending property image: {prop.reference_number} to {phone}")
-                    print(f"[IMAGE] Sending image for {prop.reference_number}: {full_image_url}")
-                    
+                    logger.info(f"📷 Sending image {idx+1}/{len(all_images)} for {prop.reference_number}")
+                    print(f"[IMAGE] Sending image {idx+1}/{len(all_images)} for {prop.reference_number}: {full_image_url}")
+
                     result = whatsapp_service.send_media_message(
                         instance_name=instance_name,
                         phone_number=phone,
@@ -656,20 +655,21 @@ class WhatsAppWebhookView(View):
                         media_type='image',
                         caption=caption
                     )
-                    
+
                     if result.get('success'):
                         wa_instance.increment_sent()
-                        logger.info(f"✅ Image sent successfully for {prop.reference_number}")
-                        print(f"[IMAGE] ✅ Success: {prop.reference_number}")
+                        logger.info(f"✅ Image {idx+1} sent for {prop.reference_number}")
                     else:
-                        logger.error(f"❌ Failed to send image: {result.get('error')}")
-                        print(f"[IMAGE] ❌ Failed: {result.get('error')}")
-                else:
-                    logger.info(f"No image found for property: {prop.reference_number}")
+                        logger.error(f"❌ Failed to send image {idx+1}: {result.get('error')}")
 
-                # ─── إرسال الفيديو إن وُجد ───
-                property_video = PropertyVideo.objects.filter(property=prop).order_by('order').first()
-                if property_video and property_video.video:
+                if not all_images:
+                    logger.info(f"No images found for property: {prop.reference_number}")
+
+                # ─── إرسال جميع الفيديوهات ───
+                all_videos = list(PropertyVideo.objects.filter(property=prop).order_by('order'))
+                for vidx, property_video in enumerate(all_videos):
+                    if not property_video.video:
+                        continue
                     video_url = property_video.video.url
                     if video_url.startswith('/'):
                         full_video_url = f"{site_url}{video_url}"
@@ -677,15 +677,13 @@ class WhatsAppWebhookView(View):
                         full_video_url = video_url
                     else:
                         full_video_url = f"{site_url}/media/{video_url}"
-                    
+
                     time.sleep(1)
-                    logger.info(f"🎬 Sending property video: {prop.reference_number} to {phone}")
-                    print(f"[VIDEO] Sending video for {prop.reference_number}: {full_video_url}")
-                    
-                    video_caption = f"🎬 جولة فيديو - {prop.title}"
-                    if property_video.title:
-                        video_caption = f"🎬 {property_video.title}"
-                    
+                    logger.info(f"🎬 Sending video {vidx+1}/{len(all_videos)} for {prop.reference_number}")
+                    print(f"[VIDEO] Sending video {vidx+1}/{len(all_videos)} for {prop.reference_number}")
+
+                    video_caption = f"🎬 {property_video.title}" if property_video.title else f"🎬 جولة فيديو - {prop.title}"
+
                     result = whatsapp_service.send_media_message(
                         instance_name=instance_name,
                         phone_number=phone,
@@ -693,15 +691,13 @@ class WhatsAppWebhookView(View):
                         media_type='video',
                         caption=video_caption
                     )
-                    
+
                     if result.get('success'):
                         wa_instance.increment_sent()
-                        logger.info(f"✅ Video sent successfully for {prop.reference_number}")
-                        print(f"[VIDEO] ✅ Success: {prop.reference_number}")
+                        logger.info(f"✅ Video {vidx+1} sent for {prop.reference_number}")
                     else:
-                        logger.error(f"❌ Failed to send video: {result.get('error')}")
-                        print(f"[VIDEO] ❌ Failed: {result.get('error')}")
-                    
+                        logger.error(f"❌ Failed to send video {vidx+1}: {result.get('error')}")
+
             except Exception as e:
                 logger.error(f"Error sending property media: {e}")
                 print(f"[MEDIA] Error: {e}")
