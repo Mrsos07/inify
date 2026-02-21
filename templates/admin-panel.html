@@ -941,6 +941,7 @@
                 <button class="admin-tab" onclick="switchAdminTab('tokens')">🔢 استهلاك التوكنات</button>
                 <button class="admin-tab" onclick="switchAdminTab('apikeys')">🔑 مفاتيح API</button>
                 <button class="admin-tab" onclick="switchAdminTab('ai')">🤖 إعدادات Inify</button>
+                <button class="admin-tab" onclick="switchAdminTab('support')">🎫 الدعم الفني <span id="supportBadge" style="display:none;background:#ef4444;color:white;border-radius:50%;width:20px;height:20px;font-size:11px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;">0</span></button>
             </div>
 
             <!-- Users Tab -->
@@ -1352,7 +1353,113 @@
                     </div>
                 </div>
             </div>
+            <!-- Support Tickets Tab -->
+            <div class="admin-tab-content" id="supportTab">
+                <!-- Stats -->
+                <div class="stats-grid" style="margin-bottom:24px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#6bb8c9,#4a90a4);">🎫</div>
+                        <div class="stat-info"><h3 id="supportTotal">0</h3><p>إجمالي التذاكر</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#fbbf24,#d97706);">🔓</div>
+                        <div class="stat-info"><h3 id="supportOpen">0</h3><p>مفتوحة</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#60a5fa,#2563eb);">⏳</div>
+                        <div class="stat-info"><h3 id="supportInProgress">0</h3><p>قيد المراجعة</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#4ade80,#16a34a);">✅</div>
+                        <div class="stat-info"><h3 id="supportResolved">0</h3><p>تم الحل</p></div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;">
+                    <input type="text" id="supportSearch" placeholder="🔍 بحث برقم التذكرة أو العنوان أو المستخدم..." oninput="filterSupportTickets()" style="flex:1;min-width:220px;padding:10px 15px;background:var(--card-bg);border:1px solid var(--border);color:var(--pearl);border-radius:10px;font-family:inherit;font-size:14px;">
+                    <select id="supportStatusFilter" onchange="filterSupportTickets()" style="padding:10px 15px;background:var(--card-bg);border:1px solid var(--border);color:var(--pearl);border-radius:10px;font-family:inherit;">
+                        <option value="">جميع الحالات</option>
+                        <option value="open">مفتوحة</option>
+                        <option value="in_progress">قيد المراجعة</option>
+                        <option value="resolved">تم الحل</option>
+                        <option value="closed">مغلقة</option>
+                    </select>
+                    <select id="supportPriorityFilter" onchange="filterSupportTickets()" style="padding:10px 15px;background:var(--card-bg);border:1px solid var(--border);color:var(--pearl);border-radius:10px;font-family:inherit;">
+                        <option value="">جميع الأولويات</option>
+                        <option value="urgent">عاجلة</option>
+                        <option value="high">عالية</option>
+                        <option value="medium">متوسطة</option>
+                        <option value="low">منخفضة</option>
+                    </select>
+                    <button onclick="loadSupportTickets()" style="padding:10px 18px;background:rgba(107,184,201,.15);color:var(--cyan);border:1px solid rgba(107,184,201,.3);border-radius:10px;cursor:pointer;font-family:inherit;">🔄 تحديث</button>
+                </div>
+
+                <!-- Table -->
+                <div class="users-table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>رقم التذكرة</th>
+                                <th>المستخدم</th>
+                                <th>العنوان</th>
+                                <th>التصنيف</th>
+                                <th>الأولوية</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supportTableBody">
+                            <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </main>
+    </div>
+
+    <!-- Support Ticket Reply Modal -->
+    <div class="modal-overlay" id="supportReplyModal" style="display:none;">
+        <div class="modal" style="max-width:600px;">
+            <div class="modal-header">
+                <h3>🎫 الرد على التذكرة <span id="replyTicketNumber" style="color:var(--cyan);"></span></h3>
+                <button class="close-btn" onclick="closeSupportReplyModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Ticket Info -->
+                <div style="background:rgba(10,22,40,.4);border-radius:12px;padding:16px;margin-bottom:20px;">
+                    <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">العنوان</div>
+                    <div id="replyTicketTitle" style="font-weight:700;margin-bottom:12px;"></div>
+                    <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">وصف المشكلة</div>
+                    <div id="replyTicketDesc" style="font-size:14px;line-height:1.7;color:var(--pearl);white-space:pre-wrap;"></div>
+                </div>
+                <!-- Previous Response -->
+                <div id="replyPrevResponse" style="display:none;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px;margin-bottom:20px;">
+                    <div style="font-size:12px;color:#4ade80;margin-bottom:6px;font-weight:600;">الرد السابق:</div>
+                    <div id="replyPrevResponseText" style="font-size:13px;color:var(--text-muted);line-height:1.6;"></div>
+                </div>
+                <!-- Reply Form -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">تحديث الحالة</label>
+                    <select id="replyStatus" style="width:100%;padding:12px;background:rgba(10,22,40,.6);border:1px solid var(--border);color:var(--pearl);border-radius:10px;font-family:inherit;font-size:14px;">
+                        <option value="open">مفتوحة</option>
+                        <option value="in_progress">قيد المراجعة</option>
+                        <option value="resolved">تم الحل</option>
+                        <option value="closed">مغلقة</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">الرد على المستخدم</label>
+                    <textarea id="replyText" rows="5" placeholder="اكتب ردك هنا..." style="width:100%;padding:12px;background:rgba(10,22,40,.6);border:1px solid var(--border);color:var(--pearl);border-radius:10px;font-family:inherit;font-size:14px;resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSupportReplyModal()">إلغاء</button>
+                <button class="btn btn-primary" onclick="submitSupportReply()">💾 حفظ وإرسال الرد</button>
+            </div>
+        </div>
     </div>
 
     <!-- Subscription Modal -->
@@ -2362,6 +2469,152 @@
                 loadTokens();
             } else if (tab === 'apikeys') {
                 loadApiKeys();
+            } else if (tab === 'support') {
+                loadSupportTickets();
+            }
+        }
+
+        // ============ Support Tickets Functions ============
+        let allSupportTickets = [];
+        let currentReplyTicketId = null;
+
+        async function loadSupportTickets() {
+            document.getElementById('supportTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">⏳ جاري التحميل...</td></tr>';
+            try {
+                const resp = await fetch('/api/admin/support-tickets/', { credentials: 'same-origin' });
+                const data = await resp.json();
+                if (data.success) {
+                    allSupportTickets = data.tickets;
+                    // Update stats
+                    document.getElementById('supportTotal').textContent = data.stats.total;
+                    document.getElementById('supportOpen').textContent = data.stats.open;
+                    document.getElementById('supportInProgress').textContent = data.stats.in_progress;
+                    document.getElementById('supportResolved').textContent = data.stats.resolved;
+                    // Update badge
+                    const openCount = data.stats.open + data.stats.in_progress;
+                    const badge = document.getElementById('supportBadge');
+                    if (openCount > 0) {
+                        badge.textContent = openCount;
+                        badge.style.display = 'inline-flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                    renderSupportTickets(allSupportTickets);
+                } else {
+                    document.getElementById('supportTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#ef4444;">فشل تحميل التذاكر</td></tr>';
+                }
+            } catch(e) {
+                console.error('Support tickets error:', e);
+                document.getElementById('supportTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#ef4444;">خطأ في الاتصال</td></tr>';
+            }
+        }
+
+        function renderSupportTickets(tickets) {
+            const tbody = document.getElementById('supportTableBody');
+            if (!tickets.length) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">لا توجد تذاكر</td></tr>';
+                return;
+            }
+            const priorityColors = { urgent: '#ef4444', high: '#f59e0b', medium: '#60a5fa', low: '#9ca3af' };
+            const statusColors = { open: '#fbbf24', in_progress: '#60a5fa', resolved: '#4ade80', closed: '#9ca3af' };
+            const statusBg = { open: 'rgba(234,179,8,.15)', in_progress: 'rgba(59,130,246,.15)', resolved: 'rgba(34,197,94,.15)', closed: 'rgba(107,114,128,.15)' };
+            tbody.innerHTML = tickets.map(t => `
+                <tr>
+                    <td><span style="color:var(--cyan);font-size:12px;font-weight:600;">#${t.ticket_number}</span></td>
+                    <td>
+                        <div style="font-weight:600;font-size:13px;">${t.user_name}</div>
+                        <div style="font-size:11px;color:var(--text-muted);direction:ltr;">${t.user_email}</div>
+                    </td>
+                    <td style="max-width:200px;"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${t.title}">${t.title}</div></td>
+                    <td style="font-size:13px;">${t.category_display}</td>
+                    <td><span style="color:${priorityColors[t.priority] || '#9ca3af'};font-weight:600;">${t.priority_display}</span></td>
+                    <td><span style="padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;background:${statusBg[t.status]};color:${statusColors[t.status]};">${t.status_display}</span></td>
+                    <td style="font-size:12px;color:var(--text-muted);">${t.created_at}</td>
+                    <td>
+                        <button onclick="openSupportReply('${t.id}')" style="padding:7px 14px;background:linear-gradient(135deg,var(--cyan),var(--blue-mid));color:white;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;">
+                            ${t.admin_response ? '✏️ تعديل الرد' : '💬 رد'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterSupportTickets() {
+            const search = document.getElementById('supportSearch').value.toLowerCase();
+            const status = document.getElementById('supportStatusFilter').value;
+            const priority = document.getElementById('supportPriorityFilter').value;
+            const filtered = allSupportTickets.filter(t => {
+                const matchSearch = !search || t.ticket_number.toLowerCase().includes(search) ||
+                    t.title.toLowerCase().includes(search) ||
+                    t.user_name.toLowerCase().includes(search) ||
+                    t.user_email.toLowerCase().includes(search);
+                const matchStatus = !status || t.status === status;
+                const matchPriority = !priority || t.priority === priority;
+                return matchSearch && matchStatus && matchPriority;
+            });
+            renderSupportTickets(filtered);
+        }
+
+        function openSupportReply(ticketId) {
+            const ticket = allSupportTickets.find(t => t.id === ticketId);
+            if (!ticket) return;
+            currentReplyTicketId = ticketId;
+            document.getElementById('replyTicketNumber').textContent = '#' + ticket.ticket_number;
+            document.getElementById('replyTicketTitle').textContent = ticket.title;
+            document.getElementById('replyTicketDesc').textContent = ticket.description;
+            document.getElementById('replyStatus').value = ticket.status;
+            document.getElementById('replyText').value = ticket.admin_response || '';
+            const prevDiv = document.getElementById('replyPrevResponse');
+            if (ticket.admin_response) {
+                document.getElementById('replyPrevResponseText').textContent = ticket.admin_response;
+                prevDiv.style.display = 'block';
+            } else {
+                prevDiv.style.display = 'none';
+            }
+            document.getElementById('supportReplyModal').style.display = 'flex';
+        }
+
+        function closeSupportReplyModal() {
+            document.getElementById('supportReplyModal').style.display = 'none';
+            currentReplyTicketId = null;
+        }
+
+        async function submitSupportReply() {
+            if (!currentReplyTicketId) return;
+            const status = document.getElementById('replyStatus').value;
+            const admin_response = document.getElementById('replyText').value.trim();
+            if (!admin_response) {
+                alert('يرجى كتابة رد قبل الحفظ');
+                return;
+            }
+            const btn = document.querySelector('#supportReplyModal .btn-primary');
+            btn.textContent = '⏳ جاري الحفظ...';
+            btn.disabled = true;
+            try {
+                const resp = await fetch(`/api/admin/support-tickets/${currentReplyTicketId}/reply/`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, admin_response })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    closeSupportReplyModal();
+                    await loadSupportTickets();
+                    // Show success toast
+                    const toast = document.createElement('div');
+                    toast.textContent = '✅ تم حفظ الرد بنجاح';
+                    toast.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#22c55e;color:white;padding:12px 24px;border-radius:10px;z-index:9999;font-size:15px;';
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+                } else {
+                    alert('خطأ: ' + (data.error || 'فشل الحفظ'));
+                }
+            } catch(e) {
+                alert('خطأ في الاتصال');
+            } finally {
+                btn.textContent = '💾 حفظ وإرسال الرد';
+                btn.disabled = false;
             }
         }
 

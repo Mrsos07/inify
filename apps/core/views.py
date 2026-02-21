@@ -2347,3 +2347,98 @@ def admin_delete_api_key(request, key_id):
         return JsonResponse({'success': True, 'message': 'تم حذف المفتاح'})
     except APIKey.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'المفتاح غير موجود'}, status=404)
+
+
+# ═══════════════════════════════════════════════════════════
+# Admin Support Tickets API
+# ═══════════════════════════════════════════════════════════
+
+@csrf_exempt
+def admin_support_tickets(request):
+    """GET /api/admin/support-tickets/ - جلب جميع التذاكر"""
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+
+    from apps.support.models import SupportTicket
+
+    status_filter = request.GET.get('status', '')
+    priority_filter = request.GET.get('priority', '')
+    search = request.GET.get('search', '')
+
+    tickets = SupportTicket.objects.select_related('user', 'responded_by').all()
+
+    if status_filter:
+        tickets = tickets.filter(status=status_filter)
+    if priority_filter:
+        tickets = tickets.filter(priority=priority_filter)
+    if search:
+        from django.db.models import Q
+        tickets = tickets.filter(
+            Q(ticket_number__icontains=search) |
+            Q(title__icontains=search) |
+            Q(user__username__icontains=search) |
+            Q(user__email__icontains=search)
+        )
+
+    stats = {
+        'total': SupportTicket.objects.count(),
+        'open': SupportTicket.objects.filter(status='open').count(),
+        'in_progress': SupportTicket.objects.filter(status='in_progress').count(),
+        'resolved': SupportTicket.objects.filter(status='resolved').count(),
+        'closed': SupportTicket.objects.filter(status='closed').count(),
+    }
+
+    tickets_data = []
+    for t in tickets.order_by('-created_at')[:200]:
+        tickets_data.append({
+            'id': str(t.id),
+            'ticket_number': t.ticket_number,
+            'title': t.title,
+            'description': t.description,
+            'category': t.category,
+            'category_display': t.get_category_display(),
+            'priority': t.priority,
+            'priority_display': t.get_priority_display(),
+            'status': t.status,
+            'status_display': t.get_status_display(),
+            'admin_response': t.admin_response or '',
+            'user_name': t.user.get_full_name() or t.user.username,
+            'user_email': t.user.email,
+            'responded_by': t.responded_by.get_full_name() if t.responded_by else '',
+            'responded_at': t.responded_at.strftime('%Y/%m/%d %H:%M') if t.responded_at else '',
+            'created_at': t.created_at.strftime('%Y/%m/%d %H:%M'),
+            'updated_at': t.updated_at.strftime('%Y/%m/%d %H:%M'),
+        })
+
+    return JsonResponse({'success': True, 'tickets': tickets_data, 'stats': stats})
+
+
+@csrf_exempt
+def admin_support_ticket_reply(request, ticket_id):
+    """POST /api/admin/support-tickets/<id>/reply/ - الرد على تذكرة"""
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    from apps.support.models import SupportTicket
+    from django.utils import timezone
+
+    try:
+        data = json.loads(request.body)
+        ticket = SupportTicket.objects.get(id=ticket_id)
+        ticket.admin_response = data.get('admin_response', '').strip()
+        ticket.status = data.get('status', ticket.status)
+        ticket.responded_by = request.user if request.user.is_authenticated else None
+        ticket.responded_at = timezone.now()
+        ticket.save()
+        return JsonResponse({
+            'success': True,
+            'message': 'تم حفظ الرد بنجاح',
+            'status': ticket.status,
+            'status_display': ticket.get_status_display(),
+        })
+    except SupportTicket.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'التذكرة غير موجودة'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
