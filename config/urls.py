@@ -15,6 +15,15 @@ import os
 def health_check(request):
     return JsonResponse({'status': 'ok', 'service': 'inify'})
 
+# Favicon
+def favicon_svg(request):
+    favicon_path = os.path.join(settings.BASE_DIR, 'favicon.svg')
+    try:
+        with open(favicon_path, 'r', encoding='utf-8') as f:
+            return HttpResponse(f.read(), content_type='image/svg+xml')
+    except FileNotFoundError:
+        return HttpResponse('', status=404)
+
 # SEO: robots.txt
 def robots_txt(request):
     robots_path = os.path.join(settings.BASE_DIR, 'static', 'robots.txt')
@@ -34,6 +43,9 @@ def sitemap_xml(request):
         return HttpResponse('<?xml version="1.0" encoding="UTF-8"?><urlset></urlset>', content_type='application/xml')
 
 urlpatterns = [
+    # Favicon
+    path('favicon.svg', favicon_svg, name='favicon_svg'),
+
     # SEO files (must be accessible at root)
     path('robots.txt', robots_txt, name='robots_txt'),
     path('sitemap.xml', sitemap_xml, name='sitemap_xml'),

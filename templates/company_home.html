@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -42,8 +42,8 @@
     <meta name="apple-mobile-web-app-title" content="Inify">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="apple-touch-icon" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="apple-touch-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/css/theme.css">
     
     <!-- Structured Data - Organization -->
@@ -2166,6 +2166,195 @@
             .reveal, .reveal-scale { opacity: 1; transform: none; transition: none; }
             .hero-content, .hero-badge, .hero h1, .hero-subtitle, .hero-buttons { animation: none; }
         }
+
+        /* ═══════════════════════ Team Section ═══════════════════════ */
+        .team-section {
+            background: linear-gradient(180deg, var(--midnight) 0%, rgba(30, 58, 95, 0.15) 50%, var(--midnight) 100%);
+        }
+
+        .team-grid {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 32px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .team-card {
+            background: rgba(30, 58, 95, 0.35);
+            border: 1px solid rgba(107, 184, 201, 0.15);
+            border-radius: 24px;
+            padding: 40px 36px 32px;
+            text-align: center;
+            width: 320px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .team-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyan), var(--blue-mid));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .team-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(107, 184, 201, 0.35);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25), 0 0 40px rgba(107, 184, 201, 0.08);
+        }
+
+        .team-card:hover::before { opacity: 1; }
+
+        .team-photo-wrapper {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 24px;
+        }
+
+        .team-photo {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center top;
+            border: 3px solid rgba(107, 184, 201, 0.3);
+            display: block;
+        }
+
+        .team-photo-ring {
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-mid)) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+
+        .team-card:hover .team-photo-ring { opacity: 1; }
+
+        .team-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            background: linear-gradient(135deg, rgba(107, 184, 201, 0.15), rgba(74, 144, 164, 0.1));
+            border: 1px solid rgba(107, 184, 201, 0.25);
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--cyan);
+            margin-bottom: 14px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .team-badge-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(107, 184, 201, 0.8);
+        }
+
+        .team-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--pearl);
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .team-title {
+            font-size: 13px;
+            color: var(--cyan);
+            font-weight: 500;
+            margin-bottom: 16px;
+            line-height: 1.5;
+            font-family: 'Chillax', sans-serif;
+        }
+
+        .team-divider {
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--cyan), var(--blue-mid));
+            border-radius: 2px;
+            margin: 0 auto 16px;
+        }
+
+        .team-bio {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .team-social {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .team-social a {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(107, 184, 201, 0.1);
+            border: 1px solid rgba(107, 184, 201, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--cyan);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .team-social a:hover {
+            background: rgba(107, 184, 201, 0.2);
+            border-color: var(--cyan);
+            transform: translateY(-2px);
+        }
+
+        .team-social a svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        body.light-mode .team-card {
+            background: #FFFFFF;
+            border-color: rgba(58, 125, 150, 0.15);
+            box-shadow: 0 4px 24px rgba(28, 43, 58, 0.08);
+        }
+
+        body.light-mode .team-name { color: #1C2B3A; }
+        body.light-mode .team-bio { color: rgba(28, 43, 58, 0.65); }
+        body.light-mode .team-badge {
+            background: rgba(58, 125, 150, 0.08);
+            border-color: rgba(58, 125, 150, 0.2);
+            color: #3A7D96;
+        }
+        body.light-mode .team-badge-dot { background: #3A7D96; box-shadow: none; }
+        body.light-mode .team-title { color: #3A7D96; }
+        body.light-mode .team-social a {
+            background: rgba(58, 125, 150, 0.08);
+            border-color: rgba(58, 125, 150, 0.2);
+            color: #3A7D96;
+        }
+
+        @media (max-width: 768px) {
+            .team-card { width: 100%; max-width: 340px; padding: 32px 24px 28px; }
+        }
     </style>
 </head>
 <body>
@@ -2182,10 +2371,11 @@
         </div>
         
         <nav class="header-center">
-            <a href="#about">من نحن</a>
             <a href="#services">حلول الأعمال</a>
             <a href="#projects">مشاريعنا</a>
             <a href="#solutions">القطاعات</a>
+            <a href="#team">فريق العمل</a>
+            <a href="#about">من نحن</a>
             <a href="#contact">تواصل معنا</a>
         </nav>
         
@@ -2204,10 +2394,11 @@
     <div class="mobile-menu" id="mobileMenu">
         <button class="mobile-menu-close" onclick="closeMobileMenu()">✕</button>
         <div class="mobile-menu-links">
-            <a href="#about">من نحن</a>
             <a href="#services">حلول الأعمال</a>
             <a href="#projects">مشاريعنا</a>
             <a href="#solutions">القطاعات</a>
+            <a href="#team">فريق العمل</a>
+            <a href="#about">من نحن</a>
             <a href="#contact">تواصل معنا</a>
             <a href="/estate/">المنتج العقاري</a>
             <a href="/auth/register/" class="btn-primary-mobile">ابدأ الآن</a>
@@ -2575,6 +2766,79 @@
                 </div>
             </div>
 
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="section team-section reveal" id="team">
+        <div class="section-header">
+            <div class="section-badge">فريق العمل</div>
+            <h2 class="section-title">تعرّف على المؤسسين</h2>
+            <p class="section-desc">فريق من المهندسين والمبتكرين السعوديين يقودون مستقبل الذكاء الاصطناعي في المملكة</p>
+        </div>
+        <div class="team-grid">
+            <!-- CEO Card -->
+            <div class="team-card">
+                <div class="team-photo-wrapper">
+                    <img src="/static/images/team/abd.png" alt="عبدالعزيز الحارثي" class="team-photo">
+                    <div class="team-photo-ring"></div>
+                </div>
+                <div class="team-badge">
+                    <span class="team-badge-dot"></span>
+                    CEO &amp; Co-Founder
+                </div>
+                <h3 class="team-name">م. عبدالعزيز الحارثي</h3>
+                <p class="team-title">AI Agent Engineer | Software Engineer</p>
+                <div class="team-divider"></div>
+                <p class="team-bio">مهندس برمجيات متخصص في بناء وكلاء الذكاء الاصطناعي وتطوير الأنظمة الذكية. يقود رؤية Inify نحو تمكين الشركات السعودية بأحدث تقنيات AI.</p>
+                <div class="team-social">
+                    <a href="mailto:info@inify.ai" title="البريد الإلكتروني">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- CBMO Card -->
+            <div class="team-card">
+                <div class="team-photo-wrapper">
+                    <img src="/static/images/team/abdr.jpg" alt="عبدالرحمن الصالح" class="team-photo">
+                    <div class="team-photo-ring"></div>
+                </div>
+                <div class="team-badge">
+                    <span class="team-badge-dot"></span>
+                    CBMO &amp; Co-Founder
+                </div>
+                <h3 class="team-name">م. عبدالرحمن الصالح</h3>
+                <p class="team-title">Market Positioning | Brand Strategy | Growth</p>
+                <div class="team-divider"></div>
+                <p class="team-bio">متخصص في تحديد موقع العلامة التجارية واستراتيجيات النمو. يقود مبادرات التوسع في Inify ويبني حضوراً قوياً في السوق السعودي والخليجي.</p>
+                <div class="team-social">
+                    <a href="mailto:info@inify.ai" title="البريد الإلكتروني">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- CTO Card -->
+            <div class="team-card">
+                <div class="team-photo-wrapper">
+                    <img src="/static/images/team/sa.jpg" alt="سعود الغامدي" class="team-photo">
+                    <div class="team-photo-ring"></div>
+                </div>
+                <div class="team-badge">
+                    <span class="team-badge-dot"></span>
+                    CTO &amp; Co-Founder
+                </div>
+                <h3 class="team-name">م. سعود الغامدي</h3>
+                <p class="team-title">Computer Engineer | Cyber Security</p>
+                <div class="team-divider"></div>
+                <p class="team-bio">يقود البنية التقنية لمنتجات Inify بخبرة عميقة في هندسة الأنظمة والأمن السيبراني. مسؤول عن تصميم بنية وكلاء الذكاء الاصطناعي وضمان أعلى معايير الأمان والموثوقية في كل ما نبنيه.</p>
+                <div class="team-social">
+                    <a href="mailto:info@inify.ai" title="البريد الإلكتروني">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </a>
+                </div>
+            </div>
         </div>
     </section>
 
