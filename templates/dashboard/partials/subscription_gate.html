@@ -5,7 +5,7 @@
 <!-- ═══════════════════════════════════════════════════════════ -->
 
 <!-- Expired Subscription Popup (cannot be dismissed) -->
-<div id="expiredPopup" class="exp-popup-overlay" style="display: none;">
+<div id="expiredPopup" class="exp-popup-overlay" style="display: none;" data-expired="{% if subscription_expired %}true{% else %}false{% endif %}">
     <div class="exp-popup-container">
         <div class="exp-popup-glow"></div>
 
@@ -319,7 +319,7 @@
     // ═══════════════════════════════════════════════════════════
     // Subscription Gate — shows expired popup & intercepts fetch
     // ═══════════════════════════════════════════════════════════
-    var _subExpired = {% if subscription_expired %}true{% else %}false{% endif %};
+    var _subExpired = document.getElementById('expiredPopup').dataset.expired === 'true';
 
     function _showExpiredPopup() {
         var el = document.getElementById('expiredPopup');
