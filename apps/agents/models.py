@@ -357,6 +357,43 @@ class GlobalSettings(models.Model):
         return settings
 
 
+class EmailVerificationToken(models.Model):
+    """توكنات تفعيل البريد الإلكتروني - محفوظة في قاعدة البيانات"""
+    
+    email = models.EmailField(verbose_name='البريد الإلكتروني')
+    token = models.CharField(max_length=100, unique=True, verbose_name='التوكن')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    expires_at = models.DateTimeField(verbose_name='تاريخ الانتهاء')
+    used = models.BooleanField(default=False, verbose_name='مستخدم')
+    
+    class Meta:
+        verbose_name = 'توكن تفعيل البريد'
+        verbose_name_plural = 'توكنات تفعيل البريد'
+    
+    def is_valid(self):
+        return not self.used and timezone.now() < self.expires_at
+    
+    @classmethod
+    def create_token(cls, email):
+        import secrets
+        token = secrets.token_urlsafe(32)
+        expires_at = timezone.now() + timedelta(hours=24)
+        cls.objects.filter(email=email).delete()
+        return cls.objects.create(email=email, token=token, expires_at=expires_at)
+    
+    @classmethod
+    def verify_token(cls, token):
+        try:
+            obj = cls.objects.get(token=token, used=False)
+            if obj.is_valid():
+                obj.used = True
+                obj.save()
+                return obj.email
+        except cls.DoesNotExist:
+            pass
+        return None
+
+
 class PasswordResetToken(models.Model):
     """توكنات إعادة تعيين كلمة المرور"""
     
