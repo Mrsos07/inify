@@ -382,9 +382,18 @@ class WhatsAppWebhookView(View):
                 )
                 return wa_instance.welcome_message
         
-        # جلب العقارات
+        # جلب تاريخ المحادثة لاستخراج الحي/المدينة
+        chat_history_for_location = conversation.get_messages_for_ai(limit=10)
+        all_text_context = ' '.join([m.get('content', '') for m in chat_history_for_location]) + ' ' + message_text
+
+        # استخراج الحي والمدينة من السياق وفلترة العقارات
+        neighborhood_filter, city_filter = _extract_location_from_context(all_text_context, agent)
         properties = Property.objects.filter(agent=agent, is_active=True)
-        
+        if neighborhood_filter:
+            properties = properties.filter(neighborhood__icontains=neighborhood_filter)
+        elif city_filter:
+            properties = properties.filter(city__icontains=city_filter)
+
         # بناء سياق العقارات
         properties_context = self._build_properties_context(properties)
         
@@ -799,6 +808,62 @@ class WhatsAppWebhookView(View):
                 logger.error(f"Error sending extracted image: {e}")
                 print(f"[MEDIA] Error: {e}")
                 continue
+
+
+def _extract_location_from_context(text: str, agent=None):
+    """
+    استخراج الحي والمدينة من نص المحادثة لفلترة العقارات.
+    يفحص الأحياء المتاحة في قاعدة البيانات أولاً للمطابقة الدقيقة.
+    Returns: (neighborhood, city) - أي منهما قد يكون None
+    """
+    from apps.properties.models import Property
+
+    if not text:
+        return None, None
+
+    text_lower = text.lower()
+
+    # الأحياء المتاحة في قاعدة البيانات للوكيل
+    if agent:
+        db_neighborhoods = list(
+            Property.objects.filter(agent=agent, is_active=True)
+            .exclude(neighborhood='').exclude(neighborhood__isnull=True)
+            .values_list('neighborhood', flat=True)
+            .distinct()
+        )
+        for nbh in db_neighborhoods:
+            if nbh and nbh.strip().lower() in text_lower:
+                return nbh.strip(), None
+
+    # قائمة أحياء شائعة
+    common_neighborhoods = [
+        'القيروان', 'النرجس', 'الملقا', 'العليا', 'الروضة', 'الربوة',
+        'حطين', 'الياسمين', 'الصحافة', 'الورود', 'السليمانية', 'المروج',
+        'الرحمانية', 'الوادي', 'الغدير', 'العارض', 'الشفا', 'النخيل',
+        'الحمراء', 'الزهراء', 'الريان', 'الفيصلية', 'المطار', 'المنار',
+        'الشرفية', 'السامر', 'الخليج', 'الريان', 'الأندلس', 'البوادي',
+        'الجوهرة', 'الكوثر', 'المنتزه', 'البساتين', 'المرجان', 'النزهة',
+        'الزيتون', 'العزيزية', 'النهضة', 'الوزارات', 'الرفيعة', 'الدرعية',
+        'المصيف', 'الشميسي', 'البديعة', 'الدحو', 'المعذر', 'الجزيرة',
+        'الشهداء', 'الاتفاقية', 'السفارات', 'الضباط', 'العقيق', 'ام الحمام',
+        'أم الحمام', 'المشاعل', 'القادسية', 'الملز', 'البطحاء', 'طويق',
+        'ظهرة لبن', 'الدرعية', 'الخزامى', 'لبن', 'العوالي',
+    ]
+    for nbh in common_neighborhoods:
+        if nbh in text:
+            return nbh, None
+
+    # المدن الرئيسية
+    cities = [
+        'الرياض', 'جدة', 'مكة', 'المدينة', 'الدمام', 'الخبر', 'الظهران',
+        'الطائف', 'تبوك', 'أبها', 'خميس مشيط', 'القصيم', 'بريدة', 'عنيزة',
+        'حائل', 'نجران', 'جازان', 'ينبع', 'الجبيل', 'الأحساء',
+    ]
+    for city in cities:
+        if city in text:
+            return None, city
+
+    return None, None
 
 
 def _auto_reconnect_instance(instance_name: str):

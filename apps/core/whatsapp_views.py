@@ -467,9 +467,15 @@ def _process_whatsapp_message(instance, message_data):
         _save_whatsapp_message(lead, instance, 'user', text)
         
         # ═══════════════════════════════════════════════════════════
-        # 2️⃣ جلب العقارات وبناء السياق
+        # 2️⃣ جلب العقارات وبناء السياق (مع فلترة الحي/المدينة)
         # ═══════════════════════════════════════════════════════════
+        all_text_context = ' '.join([m.get('content', '') for m in conversation_history]) + ' ' + text
+        neighborhood_filter, city_filter = _extract_location_from_context(all_text_context, agent)
         properties = Property.objects.filter(agent=agent, is_active=True)
+        if neighborhood_filter:
+            properties = properties.filter(neighborhood__icontains=neighborhood_filter)
+        elif city_filter:
+            properties = properties.filter(city__icontains=city_filter)
         properties_context = _build_properties_context(properties)
         
         # ═══════════════════════════════════════════════════════════
@@ -827,6 +833,62 @@ def _extract_mentioned_properties(response_text: str, properties):
     except Exception as e:
         logger.error(f"Error extracting mentioned properties: {e}")
         return []
+
+
+def _extract_location_from_context(text: str, agent=None):
+    """
+    استخراج الحي والمدينة من نص المحادثة لفلترة العقارات.
+    يفحص الأحياء المتاحة في قاعدة البيانات أولاً للمطابقة الدقيقة.
+    Returns: (neighborhood, city) - أي منهما قد يكون None
+    """
+    from apps.properties.models import Property
+
+    if not text:
+        return None, None
+
+    text_lower = text.lower()
+
+    # الأحياء المتاحة في قاعدة البيانات للوكيل (أولوية قصوى)
+    if agent:
+        db_neighborhoods = list(
+            Property.objects.filter(agent=agent, is_active=True)
+            .exclude(neighborhood='').exclude(neighborhood__isnull=True)
+            .values_list('neighborhood', flat=True)
+            .distinct()
+        )
+        for nbh in db_neighborhoods:
+            if nbh and nbh.strip().lower() in text_lower:
+                return nbh.strip(), None
+
+    # قائمة أحياء شائعة
+    common_neighborhoods = [
+        'القيروان', 'النرجس', 'الملقا', 'العليا', 'الروضة', 'الربوة',
+        'حطين', 'الياسمين', 'الصحافة', 'الورود', 'السليمانية', 'المروج',
+        'الرحمانية', 'الوادي', 'الغدير', 'العارض', 'الشفا', 'النخيل',
+        'الحمراء', 'الزهراء', 'الريان', 'الفيصلية', 'المطار', 'المنار',
+        'الشرفية', 'السامر', 'الخليج', 'الأندلس', 'البوادي',
+        'الجوهرة', 'الكوثر', 'المنتزه', 'البساتين', 'المرجان', 'النزهة',
+        'الزيتون', 'العزيزية', 'النهضة', 'الوزارات', 'الرفيعة',
+        'المصيف', 'الشميسي', 'البديعة', 'الدحو', 'المعذر', 'الجزيرة',
+        'الشهداء', 'الاتفاقية', 'السفارات', 'الضباط', 'العقيق',
+        'أم الحمام', 'ام الحمام', 'المشاعل', 'القادسية', 'الملز', 'البطحاء', 'طويق',
+        'ظهرة لبن', 'الدرعية', 'الخزامى', 'لبن', 'العوالي',
+    ]
+    for nbh in common_neighborhoods:
+        if nbh in text:
+            return nbh, None
+
+    # المدن الرئيسية
+    cities = [
+        'الرياض', 'جدة', 'مكة', 'المدينة', 'الدمام', 'الخبر', 'الظهران',
+        'الطائف', 'تبوك', 'أبها', 'خميس مشيط', 'القصيم', 'بريدة', 'عنيزة',
+        'حائل', 'نجران', 'جازان', 'ينبع', 'الجبيل', 'الأحساء',
+    ]
+    for city in cities:
+        if city in text:
+            return None, city
+
+    return None, None
 
 
 def _auto_reconnect_whatsapp(instance_name: str):
