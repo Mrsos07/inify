@@ -155,6 +155,37 @@ class WhatsAppService:
         """إعادة تشغيل الـ instance"""
         return self._make_request('POST', f'instance/restart/{instance_name}')
     
+    def reconnect_instance(self, instance_name: str) -> dict:
+        """
+        إعادة الاتصال التلقائي بعد انقطاع مؤقت (إعادة تشغيل الجوال)
+        يستخدم بيانات الجلسة المحفوظة دون الحاجة لـ QR جديد
+        """
+        import time
+        
+        logger.info(f"🔄 Attempting auto-reconnect for instance: {instance_name}")
+        
+        # انتظار 5 ثوانٍ ليستعيد الجوال الاتصال بالإنترنت
+        time.sleep(5)
+        
+        # أولاً: التحقق من الحالة الحالية
+        status_result = self.get_instance_status(instance_name)
+        if status_result.get('success'):
+            state = status_result.get('data', {}).get('instance', {}).get('state', '') or \
+                    status_result.get('data', {}).get('state', '')
+            if state == 'open':
+                logger.info(f"✅ Instance {instance_name} already reconnected automatically")
+                return {'success': True, 'already_connected': True}
+        
+        # إعادة تشغيل الـ instance لإعادة الاتصال باستخدام الجلسة المحفوظة
+        result = self.restart_instance(instance_name)
+        
+        if result.get('success'):
+            logger.info(f"✅ Auto-reconnect restart triggered for: {instance_name}")
+        else:
+            logger.warning(f"⚠️ Auto-reconnect restart failed for: {instance_name}, error: {result.get('error')}")
+        
+        return result
+    
     def set_webhook(self, instance_name: str, webhook_url: str) -> dict:
         """
         تسجيل Webhook لاستقبال الرسائل - Evolution API v2.3.7

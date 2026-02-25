@@ -99,13 +99,22 @@ class WhatsAppWebhookView(View):
                     wa_instance.connected_at = timezone.now()
                     logger.info(f"✅ WhatsApp connected successfully: {instance_name}")
                 elif state == 'close':
-                    # التحقق من سبب الإغلاق
+                    # statusReason=401 يعني تسجيل خروج حقيقي من الجوال → يحتاج QR جديد
+                    # أي سبب آخر (503، undefined) = انقطاع مؤقت → إعادة الاتصال تلقائياً
                     if status_reason == 401:
-                        logger.warning(f"⚠️ Connection closed with 401 - Auth issue: {instance_name}")
+                        logger.warning(f"⚠️ Connection closed with 401 - Auth issue (logout): {instance_name}")
                         wa_instance.status = 'qr_ready'  # يحتاج QR جديد
                     else:
-                        wa_instance.status = 'disconnected'
-                        logger.info(f"❌ WhatsApp disconnected: {instance_name}, reason: {status_reason}")
+                        logger.info(f"📵 Temporary disconnect for {instance_name}, reason: {status_reason} - scheduling auto-reconnect")
+                        wa_instance.status = 'connecting'
+                        # إطلاق إعادة الاتصال في خيط خلفي حتى لا يتأخر الرد على الـ webhook
+                        import threading
+                        reconnect_thread = threading.Thread(
+                            target=_auto_reconnect_instance,
+                            args=(instance_name,),
+                            daemon=True
+                        )
+                        reconnect_thread.start()
                 elif state == 'connecting':
                     wa_instance.status = 'connecting'
                     logger.info(f"🔄 WhatsApp connecting: {instance_name}")
@@ -781,6 +790,64 @@ class WhatsAppWebhookView(View):
                 logger.error(f"Error sending extracted image: {e}")
                 print(f"[MEDIA] Error: {e}")
                 continue
+
+
+def _auto_reconnect_instance(instance_name: str):
+    """
+    إعادة الاتصال التلقائي بعد انقطاع مؤقت (إعادة تشغيل الجوال)
+    تعمل في خيط خلفي - تنتظر ثم تعيد الاتصال باستخدام الجلسة المحفوظة
+    لا تحتاج QR جديد إلا في حال statusReason=401 (تسجيل خروج حقيقي)
+    """
+    import time
+    from apps.agents.models import WhatsAppInstance
+    
+    try:
+        logger.info(f"[AUTO-RECONNECT] Starting reconnect for: {instance_name}")
+        
+        # انتظار 8 ثوانٍ ليستعيد الجوال الاتصال بالإنترنت
+        time.sleep(8)
+        
+        # التحقق من الحالة الحالية — ربما تمت إعادة الاتصال تلقائياً
+        status_result = whatsapp_service.get_instance_status(instance_name)
+        if status_result.get('success'):
+            state = (
+                status_result.get('data', {}).get('instance', {}).get('state') or
+                status_result.get('data', {}).get('state', '')
+            )
+            if state == 'open':
+                logger.info(f"[AUTO-RECONNECT] ✅ {instance_name} already reconnected on its own")
+                WhatsAppInstance.objects.filter(instance_name=instance_name).update(
+                    status='connected'
+                )
+                return
+        
+        # إعادة تشغيل الـ instance لإجبار Baileys على إعادة الاتصال بالجلسة المحفوظة
+        logger.info(f"[AUTO-RECONNECT] Calling restart for: {instance_name}")
+        result = whatsapp_service.restart_instance(instance_name)
+        
+        if result.get('success'):
+            logger.info(f"[AUTO-RECONNECT] ✅ Restart triggered for: {instance_name}")
+            # تحديث الحالة في قاعدة البيانات
+            WhatsAppInstance.objects.filter(instance_name=instance_name).update(
+                status='connecting'
+            )
+        else:
+            logger.warning(f"[AUTO-RECONNECT] ⚠️ Restart failed for: {instance_name}, error: {result.get('error')}")
+            # انتظار أكثر ثم محاولة مرة ثانية
+            time.sleep(15)
+            retry_result = whatsapp_service.restart_instance(instance_name)
+            if retry_result.get('success'):
+                logger.info(f"[AUTO-RECONNECT] ✅ Retry restart succeeded for: {instance_name}")
+                WhatsAppInstance.objects.filter(instance_name=instance_name).update(
+                    status='connecting'
+                )
+            else:
+                logger.error(f"[AUTO-RECONNECT] ❌ All reconnect attempts failed for: {instance_name}")
+                WhatsAppInstance.objects.filter(instance_name=instance_name).update(
+                    status='disconnected'
+                )
+    except Exception as e:
+        logger.error(f"[AUTO-RECONNECT] Error reconnecting {instance_name}: {e}", exc_info=True)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
