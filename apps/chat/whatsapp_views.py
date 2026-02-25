@@ -700,6 +700,18 @@ class WhatsAppWebhookView(View):
                     )
 
                     if result.get('success'):
+                        wa_instance.increment_sent()
+                        logger.info(f"✅ Image {idx+1} sent for {prop.reference_number}")
+                    else:
+                        logger.error(f"❌ Failed to send image {idx+1}: {result.get('error')}")
+
+                if not all_images:
+                    logger.info(f"No images found for property: {prop.reference_number}")
+
+                # ─── إرسال جميع الفيديوهات ───
+                all_videos = list(PropertyVideo.objects.filter(property=prop).order_by('order'))
+                for vidx, property_video in enumerate(all_videos):
+                    if not property_video.video:
                         continue
                     video_url = property_video.video.url
                     if video_url.startswith('/'):
