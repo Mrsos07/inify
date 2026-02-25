@@ -1527,8 +1527,8 @@ class EmbedChatAPI(View):
                 'model': (global_settings.openai_model if global_settings else 'gpt-4.1-mini') if ai_provider == 'openai' else (global_settings.ai_model if global_settings else 'unknown')
             }
             
-            # استخراج الصور والفيديوهات للعقارات المذكورة في الرد فقط
-            properties_media = self._get_properties_media(properties, response_text)
+            # استخراج الصور والفيديوهات لإرسالها في الـ response
+            properties_media = self._get_properties_media(properties)
 
             response_data = {
                 'success': True,
@@ -1675,20 +1675,10 @@ ID: {prop.id}
 
         return context
 
-    def _get_properties_media(self, properties, response_text: str = ''):
-        """
-        استخراج الصور والفيديوهات للعقارات المذكورة في رد الوكيل فقط.
-        إذا لم يُذكر أي رقم مرجعي، يُرجع قاموساً فارغاً لمنع عرض كروت مكررة.
-        """
-        import re
+    def _get_properties_media(self, properties):
+        """استخراج الصور والفيديوهات لجميع العقارات لإرسالها في الـ response"""
         media_map = {}
         for prop in properties[:15]:
-            # فقط إذا ذُكر الرقم المرجعي صراحةً في رد الوكيل (word-boundary match)
-            if response_text and prop.reference_number:
-                pattern = r'(?<![A-Za-z0-9\-])' + re.escape(prop.reference_number) + r'(?![A-Za-z0-9\-])'
-                if not re.search(pattern, response_text):
-                    continue
-
             images = []
             for img in prop.images.all().order_by('-is_primary', 'order', 'created_at'):
                 if img.image:
