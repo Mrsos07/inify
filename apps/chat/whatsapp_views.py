@@ -386,16 +386,19 @@ class WhatsAppWebhookView(View):
         chat_history_for_location = conversation.get_messages_for_ai(limit=10)
         all_text_context = ' '.join([m.get('content', '') for m in chat_history_for_location]) + ' ' + message_text
 
-        # استخراج الحي والمدينة من السياق وفلترة العقارات
+        # استخراج الحي والمدينة من السياق (للتوجيه فقط - دائماً يرى AI جميع العقارات)
         neighborhood_filter, city_filter = _extract_location_from_context(all_text_context, agent)
         properties = Property.objects.filter(agent=agent, is_active=True)
+        location_note = ''
         if neighborhood_filter:
-            properties = properties.filter(neighborhood__icontains=neighborhood_filter)
+            location_note = f'\n⚠️ توجيه: العميل طلب حي "{neighborhood_filter}" - إذا وجد عقار في هذا الحي فاعرضه، وإذا لم يوجد فأخبره بذلك ولا تعرض عقارات من أحياء أخرى إلا بطلب صريح.'
         elif city_filter:
-            properties = properties.filter(city__icontains=city_filter)
+            location_note = f'\n⚠️ توجيه: العميل طلب مدينة "{city_filter}" - إذا وجد عقار فيها فاعرضه، وإذا لم يوجد فأخبره بذلك.'
 
         # بناء سياق العقارات
         properties_context = self._build_properties_context(properties)
+        if location_note:
+            properties_context = location_note + '\n' + properties_context
         
         # استخدام OpenAI دائماً
         from services.openai_service import OpenAIService

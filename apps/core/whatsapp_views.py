@@ -472,11 +472,14 @@ def _process_whatsapp_message(instance, message_data):
         all_text_context = ' '.join([m.get('content', '') for m in conversation_history]) + ' ' + text
         neighborhood_filter, city_filter = _extract_location_from_context(all_text_context, agent)
         properties = Property.objects.filter(agent=agent, is_active=True)
+        location_note = ''
         if neighborhood_filter:
-            properties = properties.filter(neighborhood__icontains=neighborhood_filter)
+            location_note = f'\n⚠️ توجيه: العميل طلب حي "{neighborhood_filter}" - إذا وجد عقار في هذا الحي فاعرضه، وإذا لم يوجد فأخبره بذلك ولا تعرض عقارات من أحياء أخرى إلا بطلب صريح.'
         elif city_filter:
-            properties = properties.filter(city__icontains=city_filter)
+            location_note = f'\n⚠️ توجيه: العميل طلب مدينة "{city_filter}" - إذا وجد عقار فيها فاعرضه، وإذا لم يوجد فأخبره بذلك.'
         properties_context = _build_properties_context(properties)
+        if location_note:
+            properties_context = location_note + '\n' + properties_context
         
         # ═══════════════════════════════════════════════════════════
         # 3️⃣ تحديد مزود AI وإنشاء الخدمة
