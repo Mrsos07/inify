@@ -450,10 +450,27 @@ class WhatsAppWebhookView(View):
             conversation.save()
             
             # استخراج العقارات المذكورة في الرد لإرسال صورها
-            properties_to_show = self._extract_mentioned_properties(
+            all_mentioned = self._extract_mentioned_properties(
                 response_text=response_text,
                 properties=properties
             )
+            
+            # تتبع العقارات المرسلة مسبقاً لهذا الرقم لمنع التكرار
+            from django.core.cache import cache as _cache
+            _sent_key = f"wa_sent_props:{wa_instance.instance_name}:{phone}"
+            _sent_ids = _cache.get(_sent_key) or set()
+            
+            properties_to_show = []
+            for _prop in all_mentioned:
+                _pid = str(_prop.id)
+                if _pid not in _sent_ids:
+                    properties_to_show.append(_prop)
+                    _sent_ids.add(_pid)
+                else:
+                    logger.info(f"[DEDUP] Property already sent to {phone}: {_prop.reference_number}")
+            
+            if properties_to_show:
+                _cache.set(_sent_key, _sent_ids, 60 * 60)  # 60 دقيقة
             
             return {
                 'text': response_text,
@@ -586,18 +603,22 @@ class WhatsAppWebhookView(View):
     def _extract_mentioned_properties(self, response_text: str, properties):
         """
         استخراج العقارات المذكورة في رد الذكاء الاصطناعي
+        يستخدم مطابقة كلمة كاملة للرقم المرجعي لمنع التطابق الجزئي
         """
+        import re as _re
         mentioned_properties = []
         
         try:
             for prop in properties[:10]:
-                # البحث عن الرقم المرجعي في النص
-                if prop.reference_number and prop.reference_number in response_text:
-                    if prop not in mentioned_properties:
-                        mentioned_properties.append(prop)
-                        continue
+                # البحث عن الرقم المرجعي بـ word-boundary (منع REF-001 من مطابقة REF-0010)
+                if prop.reference_number:
+                    pattern = r'(?<![A-Za-z0-9])' + _re.escape(prop.reference_number) + r'(?![A-Za-z0-9\-])'
+                    if _re.search(pattern, response_text):
+                        if prop not in mentioned_properties:
+                            mentioned_properties.append(prop)
+                            continue
                 
-                # البحث عن عنوان العقار في النص
+                # البحث عن عنوان العقار في النص (fallback)
                 if prop.title and prop.title in response_text:
                     if prop not in mentioned_properties:
                         mentioned_properties.append(prop)
@@ -667,18 +688,6 @@ class WhatsAppWebhookView(View):
                     )
 
                     if result.get('success'):
-                        wa_instance.increment_sent()
-                        logger.info(f"✅ Image {idx+1} sent for {prop.reference_number}")
-                    else:
-                        logger.error(f"❌ Failed to send image {idx+1}: {result.get('error')}")
-
-                if not all_images:
-                    logger.info(f"No images found for property: {prop.reference_number}")
-
-                # ─── إرسال جميع الفيديوهات ───
-                all_videos = list(PropertyVideo.objects.filter(property=prop).order_by('order'))
-                for vidx, property_video in enumerate(all_videos):
-                    if not property_video.video:
                         continue
                     video_url = property_video.video.url
                     if video_url.startswith('/'):

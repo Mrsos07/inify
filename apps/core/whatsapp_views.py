@@ -532,8 +532,8 @@ def _process_whatsapp_message(instance, message_data):
                     property=property_obj,
                     lead=lead,
                     agent=agent,
-                    date=date_obj,
-                    time=time_obj,
+                    scheduled_date=date_obj,
+                    scheduled_time=time_obj,
                     duration_minutes=30,
                     status='pending',
                     notes=f'حجز من واتساب - {phone}'
@@ -569,9 +569,23 @@ def _process_whatsapp_message(instance, message_data):
                 _save_whatsapp_message(lead, instance, 'assistant', response_text)
                 logger.info(f"✅ WhatsApp reply sent to {phone}")
                 
-                # إرسال صور العقارات المذكورة في الرد
-                properties_to_show = _extract_mentioned_properties(response_text, properties)
+                # إرسال صور العقارات المذكورة في الرد (مرة واحدة فقط لكل عقار)
+                all_mentioned = _extract_mentioned_properties(response_text, properties)
+                from django.core.cache import cache as _cache
+                _sent_key = f"wa_sent_props:{instance.instance_name}:{phone}"
+                _sent_ids = _cache.get(_sent_key) or set()
+                
+                properties_to_show = []
+                for _prop in all_mentioned:
+                    _pid = str(_prop.id)
+                    if _pid not in _sent_ids:
+                        properties_to_show.append(_prop)
+                        _sent_ids.add(_pid)
+                    else:
+                        logger.info(f"[DEDUP] Property already sent to {phone}: {_prop.reference_number}")
+                
                 if properties_to_show:
+                    _cache.set(_sent_key, _sent_ids, 60 * 60)  # 60 دقيقة
                     _send_property_images(instance, phone, properties_to_show)
             else:
                 logger.error(f"❌ Failed to send WhatsApp reply: {send_result.get('error')}")
@@ -791,14 +805,17 @@ def whatsapp_check_connection(request):
 
 def _extract_mentioned_properties(response_text: str, properties):
     """استخراج العقارات المذكورة في رد الذكاء الاصطناعي"""
+    import re
     mentioned_properties = []
     
     try:
         for prop in properties[:10]:
-            if prop.reference_number and prop.reference_number in response_text:
-                if prop not in mentioned_properties:
-                    mentioned_properties.append(prop)
-                    continue
+            if prop.reference_number:
+                pattern = r'(?<![A-Za-z0-9])' + re.escape(prop.reference_number) + r'(?![A-Za-z0-9\-])'
+                if re.search(pattern, response_text):
+                    if prop not in mentioned_properties:
+                        mentioned_properties.append(prop)
+                        continue
             
             if prop.title and prop.title in response_text:
                 if prop not in mentioned_properties:
