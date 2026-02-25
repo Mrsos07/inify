@@ -3123,6 +3123,7 @@
         const imageInput = document.getElementById('imageInput');
         const imagePreviewGrid = document.getElementById('imagePreviewGrid');
         let uploadedImages = [];
+        let deletedImageIds = [];
 
         imageUploadArea.addEventListener('click', () => imageInput.click());
 
@@ -3174,7 +3175,10 @@
         }
 
         function removeImage(index) {
-            uploadedImages.splice(index, 1);
+            const removed = uploadedImages.splice(index, 1)[0];
+            if (removed && removed.imageId) {
+                deletedImageIds.push(removed.imageId);
+            }
             if (uploadedImages.length > 0 && !uploadedImages.some(img => img.isMain)) {
                 uploadedImages[0].isMain = true;
             }
@@ -3556,15 +3560,14 @@
             
             // Load images
             uploadedImages = [];
-            if (property.mainImage) {
-                uploadedImages.push({ url: property.mainImage, isMain: true });
-            }
+            deletedImageIds = [];
             if (property.images) {
                 property.images.forEach(img => {
-                    if (img !== property.mainImage) {
-                        uploadedImages.push({ url: img, isMain: false });
-                    }
+                    uploadedImages.push({ url: img.url, imageId: img.id, isMain: img.is_primary });
                 });
+            }
+            if (uploadedImages.length > 0 && !uploadedImages.some(img => img.isMain)) {
+                uploadedImages[0].isMain = true;
             }
             renderImagePreviews();
             
@@ -3594,11 +3597,16 @@
                 formData.set('property_id', editingPropertyId);
             }
             
-            // Add images
+            // Add new images
             uploadedImages.forEach((img, index) => {
                 if (img.file) {
                     formData.append('images', img.file);
                 }
+            });
+            
+            // Send deleted image IDs
+            deletedImageIds.forEach(id => {
+                formData.append('deleted_images', id);
             });
             
             try {
@@ -3638,6 +3646,7 @@
         function resetForm() {
             document.getElementById('propertyForm').reset();
             uploadedImages = [];
+            deletedImageIds = [];
             renderImagePreviews();
             document.querySelectorAll('.amenity-item.selected, .amenity-label.selected').forEach(item => {
                 item.classList.remove('selected');

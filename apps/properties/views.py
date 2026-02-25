@@ -260,6 +260,14 @@ def save_property(request):
                 )
         print(f"Amenities saved: {property_obj.amenities.count()}")
         
+        # حذف الصور المحذوفة
+        deleted_image_ids = request.POST.getlist('deleted_images')
+        if deleted_image_ids:
+            PropertyImage.objects.filter(
+                id__in=deleted_image_ids,
+                property=property_obj
+            ).delete()
+        
         # رفع الصور
         images = request.FILES.getlist('images')
         for i, image in enumerate(images):
@@ -430,7 +438,8 @@ def list_properties(request):
                 'bedrooms': prop.bedrooms,
                 'bathrooms': prop.bathrooms,
                 'mainImage': primary_image.image.url if primary_image else None,
-                'images': [img.image.url for img in prop.images.all()],
+                'mainImageId': str(primary_image.id) if primary_image else None,
+                'images': [{'id': str(img.id), 'url': img.image.url, 'is_primary': img.is_primary} for img in prop.images.all()],
                 'createdAt': prop.created_at.isoformat(),
                 'views_count': prop.views_count,
                 'interested_count': prop.interested_count,
