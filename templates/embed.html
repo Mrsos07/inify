@@ -1624,16 +1624,23 @@
                     if (mediaKeys.length > 0) {
                         const mediaTouse = [];
                         for (const propId of mediaKeys) {
-                            if (displayedPropertyIds.has(propId)) continue;
+                            // منع عرض نفس البطاقة مرتين (بالـ ID أو الرقم المرجعي)
                             const media = backendPropertiesMedia[propId];
                             const ref = media.reference || '';
-                            // فقط إذا ذُكر الرقم المرجعي صراحةً في رد الوكيل
-                            if (ref && responseText.includes(ref)) {
-                                mediaTouse.push(media);
+                            if (displayedPropertyIds.has(String(propId))) continue;
+                            if (ref && displayedPropertyIds.has(ref)) continue;
+                            // مطابقة الرقم المرجعي كلمة كاملة (لمنع REF-001 من مطابقة REF-0010)
+                            if (ref) {
+                                const refPattern = new RegExp('(?<![A-Za-z0-9\\-])' + ref.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&') + '(?![A-Za-z0-9\\-])');
+                                if (!refPattern.test(responseText)) continue;
+                            } else {
+                                continue;
                             }
+                            mediaTouse.push(media);
                         }
 
                         if (mediaTouse.length > 0) {
+                            // تسجيل العقارات كمعروضة فوراً قبل الـ setTimeout لمنع التكرار
                             mediaTouse.forEach(m => {
                                 if (m.property_id) displayedPropertyIds.add(String(m.property_id));
                                 if (m.reference) displayedPropertyIds.add(m.reference);

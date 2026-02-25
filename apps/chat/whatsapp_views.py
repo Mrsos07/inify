@@ -450,10 +450,29 @@ class WhatsAppWebhookView(View):
             conversation.save()
             
             # استخراج العقارات المذكورة في الرد لإرسال صورها
-            properties_to_show = self._extract_mentioned_properties(
+            # مع تصفية العقارات التي تم إرسالها مسبقاً في نفس المحادثة
+            all_mentioned = self._extract_mentioned_properties(
                 response_text=response_text,
                 properties=properties
             )
+            
+            # جلب قائمة العقارات المرسلة مسبقاً من الجلسة
+            sent_key = f"wa_sent_props:{instance_name}:{phone}"
+            from django.core.cache import cache
+            sent_ids = cache.get(sent_key) or set()
+            
+            properties_to_show = []
+            for prop in all_mentioned:
+                prop_id = str(prop.id)
+                if prop_id not in sent_ids:
+                    properties_to_show.append(prop)
+                    sent_ids.add(prop_id)
+                else:
+                    logger.info(f"[DEDUP] Skipping already-sent property: {prop.reference_number}")
+            
+            # حفظ القائمة المحدثة في الكاش (30 دقيقة)
+            if properties_to_show:
+                cache.set(sent_key, sent_ids, 30 * 60)
             
             return {
                 'text': response_text,
@@ -586,18 +605,22 @@ class WhatsAppWebhookView(View):
     def _extract_mentioned_properties(self, response_text: str, properties):
         """
         استخراج العقارات المذكورة في رد الذكاء الاصطناعي
+        يستخدم مطابقة كلمة كاملة للرقم المرجعي لمنع التطابق الجزئي
         """
+        import re
         mentioned_properties = []
         
         try:
             for prop in properties[:10]:
-                # البحث عن الرقم المرجعي في النص
-                if prop.reference_number and prop.reference_number in response_text:
-                    if prop not in mentioned_properties:
-                        mentioned_properties.append(prop)
-                        continue
+                # البحث عن الرقم المرجعي كـ كلمة كاملة (word-boundary)
+                if prop.reference_number:
+                    pattern = r'(?<![A-Za-z0-9\-])' + re.escape(prop.reference_number) + r'(?![A-Za-z0-9\-])'
+                    if re.search(pattern, response_text):
+                        if prop not in mentioned_properties:
+                            mentioned_properties.append(prop)
+                            continue
                 
-                # البحث عن عنوان العقار في النص
+                # البحث عن عنوان العقار في النص (fallback)
                 if prop.title and prop.title in response_text:
                     if prop not in mentioned_properties:
                         mentioned_properties.append(prop)
