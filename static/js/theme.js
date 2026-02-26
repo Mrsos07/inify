@@ -9,9 +9,11 @@ function getTheme() {
 function setTheme(theme) {
     localStorage.setItem('inify_theme', theme);
     if (theme === 'light') {
-        document.body.classList.add('light-mode');
+        document.documentElement.classList.add('light-mode');
+        if (document.body) document.body.classList.add('light-mode');
     } else {
-        document.body.classList.remove('light-mode');
+        document.documentElement.classList.remove('light-mode');
+        if (document.body) document.body.classList.remove('light-mode');
     }
     updateThemeButton();
 }
@@ -28,7 +30,6 @@ function updateThemeButton() {
     const mobileThemeLinks = document.querySelectorAll('.mobile-menu-links a[onclick*="toggleTheme"]');
     
     if (btn) {
-        // Check if it's a sidebar button (has full text) or header button (icon only)
         const isSidebarBtn = btn.closest('.sidebar-footer') || btn.closest('.sidebar');
         if (isSidebarBtn) {
             btn.innerHTML = theme === 'dark' ? '☀️ الوضع الفاتح' : '🌙 الوضع الداكن';
@@ -48,16 +49,20 @@ function updateThemeButton() {
 }
 
 // Initialize theme on page load - run immediately
+// Apply to <html> first (always available), then <body> when ready
 (function initTheme() {
     const theme = getTheme();
-    // Apply theme class immediately to prevent flash
     if (theme === 'light') {
-        document.body.classList.add('light-mode');
+        document.documentElement.classList.add('light-mode');
     }
-    // Update button after DOM is ready
+    // Also apply to body once DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', updateThemeButton);
+        document.addEventListener('DOMContentLoaded', function() {
+            if (theme === 'light') document.body.classList.add('light-mode');
+            updateThemeButton();
+        });
     } else {
+        if (theme === 'light' && document.body) document.body.classList.add('light-mode');
         updateThemeButton();
     }
 })();

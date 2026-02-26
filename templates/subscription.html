@@ -6,6 +6,7 @@
     <title>إدارة الاشتراك - Inify</title>
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/theme.js"></script>
     <style>
         @font-face { font-family: 'BalooBhaijaan2'; src: url('/static/BalooBhaijaan2-Regular.ttf') format('truetype'); font-weight: 400; }
         @font-face { font-family: 'BalooBhaijaan2'; src: url('/static/BalooBhaijaan2-SemiBold.ttf') format('truetype'); font-weight: 600; }
@@ -21,7 +22,7 @@
         }
         body {
             font-family: 'BalooBhaijaan2', 'Chillax', sans-serif;
-            background: var(--midnight); color: var(--pearl); min-height: 100vh;
+            color: var(--pearl); min-height: 100vh; background: var(--midnight);
         }
         .en { font-family: 'Chillax', sans-serif; }
 
@@ -127,8 +128,10 @@
 <body>
     <header class="header">
         <div class="header-right">
-            <img src="/static/images/inify-icon.png" alt="Inify">
-            <a href="/" class="logo-text en">inify</a>
+            <a href="/dashboard/" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+                <img src="/static/images/newra-logo.png" alt="Newra" style="height:28px;filter:brightness(0) invert(1);">
+                <img src="/static/images/inify-logo.png" alt="Inify" style="height:28px;">
+            </a>
         </div>
         <a href="/dashboard/" class="back-btn">← لوحة التحكم</a>
     </header>

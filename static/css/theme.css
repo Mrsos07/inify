@@ -18,10 +18,20 @@ html {
     -ms-text-size-adjust: 100%;
 }
 
+/* Light mode on <html> - overrides CSS variables immediately when script runs in <head> */
+html.light-mode {
+    --midnight: #FAFBFC !important;
+    --dark-blue: #F0F2F5 !important;
+    --pearl: #1F2937 !important;
+    --text-muted: rgba(31, 41, 55, 0.7) !important;
+    background: #FAFBFC !important;
+}
+
 /* ═══════════════════════════════════════════════════════════ */
 /* Light Mode Styles - Professional & Corporate Theme */
 /* ═══════════════════════════════════════════════════════════ */
-body.light-mode {
+body.light-mode,
+html.light-mode body {
     /* Professional Color Palette */
     --midnight: #FAFBFC;
     --dark-blue: #F0F2F5;
@@ -246,7 +256,9 @@ body.light-mode .side-nav {
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05) !important;
 }
 
-body.light-mode .sidebar-logo img {
+body.light-mode .sidebar-logo img,
+html.light-mode body .sidebar-logo img,
+html.light-mode body .header-right a img[alt="Newra"] {
     filter: brightness(0.2) !important;
 }
 
@@ -2244,6 +2256,661 @@ body.light-mode .form-section-title {
 
 body.light-mode .form-section-title span[style*="color: var(--text-muted)"] {
     color: #6B7280 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Webhooks Page Light Mode                                    */
+/* ═══════════════════════════════════════════════════════════ */
+body.light-mode .stat-mini {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+
+body.light-mode .stat-mini .num {
+    color: #1F2937 !important;
+}
+
+body.light-mode .stat-mini .txt {
+    color: #6B7280 !important;
+}
+
+body.light-mode .section-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+
+body.light-mode .section-card h2 {
+    color: #2563EB !important;
+}
+
+body.light-mode .wh-card {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+}
+
+body.light-mode .wh-name {
+    color: #1F2937 !important;
+}
+
+body.light-mode .wh-url {
+    color: #2563EB !important;
+}
+
+body.light-mode .wh-stat .val {
+    color: #1F2937 !important;
+}
+
+body.light-mode .wh-stat .lbl {
+    color: #6B7280 !important;
+}
+
+body.light-mode .wh-secret {
+    background: #F3F4F6 !important;
+    color: #6B7280 !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .ev-tag {
+    background: rgba(37,99,235,0.08) !important;
+    color: #2563EB !important;
+    border-color: rgba(37,99,235,0.2) !important;
+}
+
+body.light-mode .ev-item {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .ev-item .ev-code {
+    color: #D97706 !important;
+}
+
+body.light-mode .ev-item .ev-desc {
+    color: #6B7280 !important;
+}
+
+body.light-mode .ev-check {
+    background: #F9FAFB !important;
+    border-color: #E5E7EB !important;
+}
+
+body.light-mode .ev-check span {
+    color: #374151 !important;
+}
+
+body.light-mode .btn-outline {
+    background: rgba(37,99,235,0.08) !important;
+    color: #2563EB !important;
+    border-color: rgba(37,99,235,0.2) !important;
+}
+
+body.light-mode .modal-box {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .modal-box h3 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .fg label {
+    color: #374151 !important;
+}
+
+body.light-mode .fg input {
+    background: #F9FAFB !important;
+    border-color: #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .log-table th {
+    background: #F9FAFB !important;
+    color: #374151 !important;
+    border-bottom-color: #E5E7EB !important;
+}
+
+body.light-mode .log-table td {
+    color: #1F2937 !important;
+    border-bottom-color: #F3F4F6 !important;
+}
+
+body.light-mode .toast {
+    background: #FFFFFF !important;
+    border-color: #E5E7EB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .code-block {
+    background: #F3F4F6 !important;
+    border-color: #E5E7EB !important;
+    color: #065F46 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Analytics Page Light Mode                                   */
+/* ═══════════════════════════════════════════════════════════ */
+body.light-mode .kpi-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+
+body.light-mode .kpi-val {
+    color: #1F2937 !important;
+}
+
+body.light-mode .kpi-label {
+    color: #6B7280 !important;
+}
+
+body.light-mode .kpi-sub {
+    color: #9CA3AF !important;
+}
+
+body.light-mode .chart-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+
+body.light-mode .chart-title {
+    color: #2563EB !important;
+}
+
+body.light-mode .prop-table th {
+    background: #F9FAFB !important;
+    color: #374151 !important;
+    border-bottom-color: #E5E7EB !important;
+}
+
+body.light-mode .prop-table td {
+    color: #1F2937 !important;
+    border-bottom-color: #F3F4F6 !important;
+}
+
+body.light-mode .prop-table tr:hover td {
+    background: #EEF2FF !important;
+}
+
+body.light-mode .period-btn {
+    background: #F3F4F6 !important;
+    color: #374151 !important;
+    border-color: #E5E7EB !important;
+}
+
+body.light-mode .period-btn.active,
+body.light-mode .period-btn:hover {
+    background: rgba(37,99,235,0.1) !important;
+    color: #2563EB !important;
+    border-color: rgba(37,99,235,0.3) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* API Docs Page Light Mode                                    */
+/* ═══════════════════════════════════════════════════════════ */
+body.light-mode .key-row,
+html.light-mode body .key-row {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .key-name,
+html.light-mode body .key-name {
+    color: #1F2937 !important;
+}
+
+body.light-mode .key-date,
+html.light-mode body .key-date {
+    color: #6B7280 !important;
+}
+
+body.light-mode .key-stats,
+html.light-mode body .key-stats {
+    color: #6B7280 !important;
+}
+
+body.light-mode .ep-card,
+html.light-mode body .ep-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+}
+
+body.light-mode .ep-head:hover,
+html.light-mode body .ep-head:hover {
+    background: #F9FAFB !important;
+}
+
+body.light-mode .ep-path,
+html.light-mode body .ep-path {
+    color: #1F2937 !important;
+}
+
+body.light-mode .ep-desc,
+html.light-mode body .ep-desc {
+    color: #6B7280 !important;
+}
+
+body.light-mode .ep-arr,
+html.light-mode body .ep-arr {
+    color: #9CA3AF !important;
+}
+
+body.light-mode .ep-body,
+html.light-mode body .ep-body {
+    border-top: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .cb,
+html.light-mode body .cb {
+    background: #F3F4F6 !important;
+    border: 1px solid #E5E7EB !important;
+    color: #065F46 !important;
+}
+
+body.light-mode .cpb,
+html.light-mode body .cpb {
+    background: rgba(37,99,235,0.08) !important;
+    color: #2563EB !important;
+    border: 1px solid rgba(37,99,235,0.2) !important;
+}
+
+body.light-mode .cpb:hover,
+html.light-mode body .cpb:hover {
+    background: rgba(37,99,235,0.15) !important;
+}
+
+body.light-mode .rb,
+html.light-mode body .rb {
+    color: #1D4ED8 !important;
+}
+
+body.light-mode .pt th,
+html.light-mode body .pt th {
+    background: #F9FAFB !important;
+    color: #374151 !important;
+    border-bottom: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .pt td,
+html.light-mode body .pt td {
+    color: #1F2937 !important;
+    border-bottom: 1px solid #F3F4F6 !important;
+}
+
+body.light-mode .lsm,
+html.light-mode body .lsm {
+    color: #6B7280 !important;
+}
+
+body.light-mode .gt,
+html.light-mode body .gt {
+    color: #1F2937 !important;
+    border-bottom: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .mb2,
+html.light-mode body .mb2 {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
+}
+
+body.light-mode .mb2 h3,
+html.light-mode body .mb2 h3 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .mi,
+html.light-mode body .mi {
+    background: #F9FAFB !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .mi::placeholder,
+html.light-mode body .mi::placeholder {
+    color: #9CA3AF !important;
+}
+
+body.light-mode .bc,
+html.light-mode body .bc {
+    background: rgba(37,99,235,0.08) !important;
+    color: #2563EB !important;
+    border: 1px solid rgba(37,99,235,0.2) !important;
+}
+
+body.light-mode .page-header h1,
+html.light-mode body .page-header h1 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .page-header p,
+html.light-mode body .page-header p {
+    color: #6B7280 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Subscription Page Light Mode                                */
+/* ═══════════════════════════════════════════════════════════ */
+body.light-mode .header,
+html.light-mode body .header {
+    background: #FFFFFF !important;
+    border-bottom: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .back-btn,
+html.light-mode body .back-btn {
+    background: #F3F4F6 !important;
+    border: 1px solid #E5E7EB !important;
+    color: #374151 !important;
+}
+
+body.light-mode .back-btn:hover,
+html.light-mode body .back-btn:hover {
+    background: #E5E7EB !important;
+    border-color: #4A90A4 !important;
+}
+
+body.light-mode .page-title,
+html.light-mode body .page-title {
+    color: #1F2937 !important;
+}
+
+body.light-mode .page-desc,
+html.light-mode body .page-desc {
+    color: #6B7280 !important;
+}
+
+body.light-mode .status-card,
+html.light-mode body .status-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+}
+
+body.light-mode .status-card h2,
+html.light-mode body .status-card h2 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .info-item,
+html.light-mode body .info-item {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .info-label,
+html.light-mode body .info-label {
+    color: #6B7280 !important;
+}
+
+body.light-mode .info-value,
+html.light-mode body .info-value {
+    color: #1F2937 !important;
+}
+
+body.light-mode .plans-title,
+html.light-mode body .plans-title {
+    color: #1F2937 !important;
+}
+
+body.light-mode .plan-card,
+html.light-mode body .plan-card {
+    background: #FFFFFF !important;
+    border: 2px solid #E5E7EB !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
+body.light-mode .plan-card:hover,
+html.light-mode body .plan-card:hover {
+    border-color: #4A90A4 !important;
+    box-shadow: 0 4px 16px rgba(74,144,164,0.15) !important;
+}
+
+body.light-mode .plan-card.selected,
+html.light-mode body .plan-card.selected {
+    border-color: #4A90A4 !important;
+    background: rgba(74,144,164,0.06) !important;
+}
+
+body.light-mode .plan-name,
+html.light-mode body .plan-name {
+    color: #1F2937 !important;
+}
+
+body.light-mode .plan-permonth,
+html.light-mode body .plan-permonth {
+    color: #6B7280 !important;
+}
+
+body.light-mode .loading,
+html.light-mode body .loading {
+    color: #6B7280 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Support / Tickets Pages Light Mode                          */
+/* ═══════════════════════════════════════════════════════════ */
+body.light-mode .ticket-card,
+html.light-mode body .ticket-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .ticket-card:hover,
+html.light-mode body .ticket-card:hover {
+    border-color: #4A90A4 !important;
+    box-shadow: 0 4px 16px rgba(74,144,164,0.15) !important;
+}
+
+body.light-mode .ticket-title,
+html.light-mode body .ticket-title {
+    color: #1F2937 !important;
+}
+
+body.light-mode .ticket-meta,
+html.light-mode body .ticket-meta {
+    color: #6B7280 !important;
+}
+
+body.light-mode .filter-select,
+html.light-mode body .filter-select {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .ticket-detail-card,
+body.light-mode .detail-card,
+body.light-mode .reply-card,
+body.light-mode .ticket-info-card,
+html.light-mode body .ticket-detail-card,
+html.light-mode body .detail-card,
+html.light-mode body .reply-card,
+html.light-mode body .ticket-info-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
+body.light-mode .reply-box,
+body.light-mode .message-box,
+html.light-mode body .reply-box,
+html.light-mode body .message-box {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .reply-form textarea,
+body.light-mode .form-textarea,
+html.light-mode body .reply-form textarea,
+html.light-mode body .form-textarea {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .reply-form input,
+body.light-mode .form-input,
+html.light-mode body .reply-form input,
+html.light-mode body .form-input {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .form-group label,
+html.light-mode body .form-group label {
+    color: #374151 !important;
+}
+
+body.light-mode .form-group select,
+html.light-mode body .form-group select {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .message-author,
+body.light-mode .reply-author,
+html.light-mode body .message-author,
+html.light-mode body .reply-author {
+    color: #1F2937 !important;
+}
+
+body.light-mode .message-date,
+body.light-mode .reply-date,
+html.light-mode body .message-date,
+html.light-mode body .reply-date {
+    color: #6B7280 !important;
+}
+
+body.light-mode .message-content,
+body.light-mode .reply-content,
+html.light-mode body .message-content,
+html.light-mode body .reply-content {
+    color: #374151 !important;
+}
+
+body.light-mode .ticket-info-label,
+html.light-mode body .ticket-info-label {
+    color: #6B7280 !important;
+}
+
+body.light-mode .ticket-info-value,
+html.light-mode body .ticket-info-value {
+    color: #1F2937 !important;
+}
+
+body.light-mode .section-title,
+html.light-mode body .section-title {
+    color: #1F2937 !important;
+    border-bottom-color: #E5E7EB !important;
+}
+
+body.light-mode .divider,
+html.light-mode body .divider {
+    border-color: #E5E7EB !important;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Register Page - Agreement Checkboxes Light Mode             */
+/* ═══════════════════════════════════════════════════════════ */
+body.light-mode .auth-card,
+html.light-mode body .auth-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+}
+
+body.light-mode .auth-header h1,
+html.light-mode body .auth-header h1 {
+    color: #1F2937 !important;
+}
+
+body.light-mode .auth-header p,
+html.light-mode body .auth-header p {
+    color: #6B7280 !important;
+}
+
+body.light-mode .form-group label,
+html.light-mode body .form-group label {
+    color: #374151 !important;
+}
+
+body.light-mode .form-group input,
+html.light-mode body .form-group input {
+    background: #F9FAFB !important;
+    border: 1px solid #D1D5DB !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .form-group input::placeholder,
+html.light-mode body .form-group input::placeholder {
+    color: #9CA3AF !important;
+}
+
+body.light-mode .agreement-item,
+html.light-mode body .agreement-item {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .agreement-item:hover,
+html.light-mode body .agreement-item:hover {
+    background: #F3F4F6 !important;
+    border-color: #D1D5DB !important;
+}
+
+body.light-mode .agreement-item.checked,
+html.light-mode body .agreement-item.checked {
+    background: rgba(34, 197, 94, 0.06) !important;
+    border-color: rgba(34, 197, 94, 0.35) !important;
+}
+
+body.light-mode .agreement-text,
+html.light-mode body .agreement-text {
+    color: #374151 !important;
+}
+
+body.light-mode .terms,
+html.light-mode body .terms {
+    color: #6B7280 !important;
+}
+
+body.light-mode .auth-footer,
+html.light-mode body .auth-footer {
+    color: #6B7280 !important;
+}
+
+body.light-mode .back-home,
+html.light-mode body .back-home {
+    color: #6B7280 !important;
+}
+
+body.light-mode .divider,
+html.light-mode body .divider {
+    color: #9CA3AF !important;
+}
+
+body.light-mode .social-btn,
+html.light-mode body .social-btn {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+    color: #374151 !important;
+}
+
+body.light-mode .social-btn:hover,
+html.light-mode body .social-btn:hover {
+    background: #F3F4F6 !important;
+    border-color: #4A90A4 !important;
 }
 
 /* Smooth Transition */

@@ -1487,11 +1487,33 @@ def update_user_plan(request):
         role_to_plan = {
             'free': 'free',
             'marketer': 'pro',
-            'agency': 'enterprise'
+            'agency': 'enterprise',
+            'trial': 'pro',
         }
         subscription_plan = role_to_plan.get(new_plan, 'free')
         
-        if subscription_plan == 'free' or new_plan == 'free':
+        if new_plan == 'trial':
+            # تفعيل تجربة مجانية من الأدمن
+            Subscription.objects.filter(
+                agent=agent
+            ).exclude(status__in=['expired', 'cancelled']).update(status='cancelled')
+            
+            trial_end = now + timedelta(days=5)
+            Subscription.objects.create(
+                agent=agent,
+                plan_key='monthly',
+                status='trial',
+                amount=0,
+                trial_start=now,
+                trial_end=trial_end,
+            )
+            
+            agent.subscription_plan = 'pro'
+            agent.subscription_start = now
+            agent.subscription_expires = trial_end
+            agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
+        
+        elif subscription_plan == 'free' or new_plan == 'free':
             # إلغاء الاشتراك - تحويل لمجاني
             active_subs = Subscription.objects.filter(
                 agent=agent
@@ -1530,7 +1552,8 @@ def update_user_plan(request):
         plan_names = {
             'free': 'مجاني',
             'marketer': 'مسوق عقاري',
-            'agency': 'مؤسسة عقارية'
+            'agency': 'مؤسسة عقارية',
+            'trial': 'تجربة مجانية (5 أيام)',
         }
         
         return JsonResponse({

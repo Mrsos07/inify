@@ -1927,6 +1927,7 @@
                 <div class="form-group">
                     <label>مدة الاشتراك</label>
                     <select class="duration-select" id="durationSelect">
+                        <option value="trial">🎁 تجربة مجانية (5 أيام)</option>
                         <option value="30">شهر واحد (30 يوم)</option>
                         <option value="90">3 أشهر (90 يوم)</option>
                         <option value="180">6 أشهر (180 يوم)</option>
@@ -1994,11 +1995,13 @@
             const userIndex = allUsers.findIndex(u => String(u.id) === String(selectedSubUserId));
             if (userIndex < 0) return;
             
-            const duration = parseInt(document.getElementById('durationSelect').value);
+            const durationVal = document.getElementById('durationSelect').value;
+            const isTrial = durationVal === 'trial';
+            const duration = isTrial ? 5 : parseInt(durationVal);
             const now = new Date();
             
             if (selectedSubAction === 'activate') {
-                const newPlan = document.getElementById('newPlanSelect').value;
+                const newPlan = isTrial ? 'marketer' : document.getElementById('newPlanSelect').value;
                 const plan = SUBSCRIPTION_PLANS[newPlan];
                 
                 // استخدام API لتحديث الباقة
@@ -2011,7 +2014,7 @@
                         credentials: 'same-origin',
                         body: JSON.stringify({
                             userId: selectedSubUserId,
-                            plan: newPlan,
+                            plan: isTrial ? 'trial' : newPlan,
                             duration: duration
                         })
                     });
@@ -2025,7 +2028,10 @@
                         const expiry = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
                         allUsers[userIndex].subscriptionExpires = expiry.toISOString();
                         
-                        alert(`✅ تم تفعيل اشتراك ${plan.name} بنجاح!\n\nينتهي في: ${expiry.toLocaleDateString('ar-SA')}`);
+                        const msg = isTrial
+                            ? `✅ تم تفعيل التجربة المجانية بنجاح!\n\nتنتهي في: ${expiry.toLocaleDateString('ar-SA')}`
+                            : `✅ تم تفعيل اشتراك ${plan.name} بنجاح!\n\nينتهي في: ${expiry.toLocaleDateString('ar-SA')}`;
+                        alert(msg);
                         
                         // إعادة تحميل المستخدمين
                         await loadUsers();
