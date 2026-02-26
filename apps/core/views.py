@@ -13,8 +13,57 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.conf import settings
 import json
 import logging
+import urllib.request
+import urllib.parse
 
 logger = logging.getLogger(__name__)
+
+
+def verify_recaptcha(token, remote_ip=None):
+    """التحقق من reCAPTCHA v3 token مع Google API"""
+    secret_key = getattr(settings, 'RECAPTCHA_SECRET_KEY', '')
+    threshold = getattr(settings, 'RECAPTCHA_SCORE_THRESHOLD', 0.5)
+
+    if not secret_key or not token:
+        logger.warning('[reCAPTCHA] Missing secret key or token')
+        return False
+
+    try:
+        params = {
+            'secret': secret_key,
+            'response': token,
+        }
+        if remote_ip:
+            params['remoteip'] = remote_ip
+
+        data = urllib.parse.urlencode(params).encode('utf-8')
+        req = urllib.request.Request(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data=data,
+            method='POST'
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            result = json.loads(response.read().decode('utf-8'))
+
+        success = result.get('success', False)
+        score = result.get('score', 0)
+        action = result.get('action', '')
+
+        logger.info(f'[reCAPTCHA] success={success} score={score} action={action}')
+
+        if not success:
+            logger.warning(f'[reCAPTCHA] Verification failed: {result.get("error-codes", [])}')
+            return False
+
+        if score < threshold:
+            logger.warning(f'[reCAPTCHA] Score too low: {score} < {threshold}')
+            return False
+
+        return True
+
+    except Exception as e:
+        logger.error(f'[reCAPTCHA] Exception during verification: {e}')
+        return False
 
 def home(request):
     """الصفحة الرئيسية - واجهة الشركة"""
@@ -175,7 +224,17 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
-        
+        recaptcha_token = request.POST.get('recaptcha_token', '')
+
+        # التحقق من reCAPTCHA v3
+        remote_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
+        if remote_ip:
+            remote_ip = remote_ip.split(',')[0].strip()
+
+        if not verify_recaptcha(recaptcha_token, remote_ip):
+            logger.warning(f'[LOGIN] reCAPTCHA failed for IP: {remote_ip}')
+            return JsonResponse({'success': False, 'error': 'فشل التحقق الأمني. يرجى تحديث الصفحة والمحاولة مجدداً.'})
+
         print(f"[LOGIN] Attempting login for: {username}")
         
         # Try to authenticate with username or email

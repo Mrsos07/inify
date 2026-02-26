@@ -10,6 +10,9 @@
     <!-- Theme CSS -->
     <link rel="stylesheet" href="/static/css/theme.css">
     
+    <!-- Google reCAPTCHA v3 -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LfoNHgsAAAAAH1ITbv95abFZb3QYwjFyOHUUBo4"></script>
+    
     <style>
         @font-face {
             font-family: 'BalooBhaijaan2';
@@ -392,7 +395,8 @@
                     <a href="/auth/forgot-password/" class="forgot-link">نسيت كلمة المرور؟</a>
                 </div>
 
-                <button type="submit" class="submit-btn">تسجيل الدخول</button>
+                <input type="hidden" name="recaptcha_token" id="recaptchaToken">
+                <button type="submit" class="submit-btn" id="submitBtn">تسجيل الدخول</button>
             </form>
 
             <!-- Google Sign-In -->
@@ -434,6 +438,7 @@
             const password = form.querySelector('input[name="password"]').value;
             const errorDiv = document.getElementById('errorMessage');
             const verificationDiv = document.getElementById('verificationNotice');
+            const submitBtn = document.getElementById('submitBtn');
             
             // Hide previous messages
             errorDiv.classList.remove('show');
@@ -441,10 +446,22 @@
             
             currentEmail = email;
             
+            // Disable button during processing
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'جاري التحقق...';
+            
             try {
+                // Generate reCAPTCHA v3 token
+                const token = await grecaptcha.execute(
+                    '6LfoNHgsAAAAAH1ITbv95abFZb3QYwjFyOHUUBo4',
+                    { action: 'login' }
+                );
+                document.getElementById('recaptchaToken').value = token;
+                
                 const formData = new FormData();
                 formData.append('username', email);
                 formData.append('password', password);
+                formData.append('recaptcha_token', token);
                 
                 const response = await fetch('/auth/login/', {
                     method: 'POST',
@@ -457,17 +474,23 @@
                 const data = await response.json();
                 
                 if (data.success) {
+                    submitBtn.textContent = 'جاري التحويل...';
                     window.location.href = '/dashboard/';
                 } else if (data.email_not_verified) {
-                    // Show verification notice
                     verificationDiv.classList.add('show');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'تسجيل الدخول';
                 } else {
                     errorDiv.textContent = data.error || 'بيانات الدخول غير صحيحة';
                     errorDiv.classList.add('show');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'تسجيل الدخول';
                 }
             } catch (error) {
                 errorDiv.textContent = 'حدث خطأ في الاتصال';
                 errorDiv.classList.add('show');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'تسجيل الدخول';
             }
         });
 

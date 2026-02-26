@@ -50,6 +50,11 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 # Encryption Key for sensitive data (should be in .env)
 FIELD_ENCRYPTION_KEY = os.getenv('FIELD_ENCRYPTION_KEY', '')
 
+# Google reCAPTCHA v3
+RECAPTCHA_SITE_KEY = os.getenv('RECAPTCHA_SITE_KEY', '')
+RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_SECRET_KEY', '')
+RECAPTCHA_SCORE_THRESHOLD = 0.5  # رفض أي طلب أقل من هذه القيمة
+
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', ','.join([
     'http://localhost:8000',
