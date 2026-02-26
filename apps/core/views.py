@@ -308,6 +308,15 @@ def register_view(request):
     
     if request.method == 'POST':
         try:
+            # التحقق من reCAPTCHA v3
+            recaptcha_token = request.POST.get('recaptcha_token', '')
+            remote_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
+            if remote_ip:
+                remote_ip = remote_ip.split(',')[0].strip()
+            if not verify_recaptcha(recaptcha_token, remote_ip):
+                logger.warning(f'[REGISTER] reCAPTCHA failed for IP: {remote_ip}')
+                return JsonResponse({'success': False, 'field': 'general', 'error': 'فشل التحقق الأمني. يرجى تحديث الصفحة والمحاولة مجدداً.'})
+
             first_name = request.POST.get('first_name', '')
             last_name = request.POST.get('last_name', '')
             email = request.POST.get('email', '')

@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="/static/css/theme.css">
     <script src="/static/js/theme.js"></script>
     
+    <!-- Google reCAPTCHA v3 -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LfoNHgsAAAAAH1ITbv95abFZb3QYwjFyOHUUBo4"></script>
+    
     <style>
         @font-face {
             font-family: 'BalooBhaijaan2';
@@ -495,6 +498,7 @@
                     </label>
                 </div>
 
+                <input type="hidden" name="recaptcha_token" id="recaptchaToken">
                 <button type="submit" class="submit-btn" id="submitBtn" disabled>إنشاء الحساب</button>
 
                 <!-- Google Sign-Up -->
@@ -590,10 +594,19 @@
 
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.textContent = 'جاري إنشاء الحساب...';
+            submitBtn.textContent = 'جاري التحقق...';
 
             try {
+                // Generate reCAPTCHA v3 token
+                const token = await grecaptcha.execute(
+                    '6LfoNHgsAAAAAH1ITbv95abFZb3QYwjFyOHUUBo4',
+                    { action: 'register' }
+                );
+                document.getElementById('recaptchaToken').value = token;
+
+                submitBtn.textContent = 'جاري إنشاء الحساب...';
                 const formData = new FormData(form);
+                formData.set('recaptcha_token', token);
                 const response = await fetch('/auth/register/', {
                     method: 'POST',
                     body: formData,
