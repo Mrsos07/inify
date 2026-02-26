@@ -1970,6 +1970,7 @@
                 <div class="form-group">
                     <label>مدة التجديد</label>
                     <select class="duration-select" id="durationSelect">
+                        <option value="trial">🎁 تجربة مجانية (5 أيام)</option>
                         <option value="30">شهر واحد (30 يوم) - ${plan.price} ريال</option>
                         <option value="90">3 أشهر (90 يوم) - ${plan.price * 3} ريال</option>
                         <option value="180">6 أشهر (180 يوم) - ${plan.price * 6} ريال</option>
@@ -2054,7 +2055,7 @@
                         credentials: 'same-origin',
                         body: JSON.stringify({
                             userId: selectedSubUserId,
-                            plan: role,
+                            plan: isTrial ? 'trial' : role,
                             duration: duration
                         })
                     });
@@ -2065,7 +2066,10 @@
                         const newExpiry = data.subscriptionExpires ? new Date(data.subscriptionExpires) : null;
                         allUsers[userIndex].subscriptionExpires = data.subscriptionExpires;
                         const expiryStr = newExpiry ? newExpiry.toLocaleDateString('ar-SA') : '-';
-                        alert(`✅ تم تجديد الاشتراك بنجاح!\n\nينتهي في: ${expiryStr}`);
+                        const msg = isTrial
+                            ? `✅ تم تفعيل التجربة المجانية بنجاح!\n\nتنتهي في: ${expiryStr}`
+                            : `✅ تم تجديد الاشتراك بنجاح!\n\nينتهي في: ${expiryStr}`;
+                        alert(msg);
                         await loadUsers();
                     } else {
                         alert('❌ خطأ: ' + data.error);
