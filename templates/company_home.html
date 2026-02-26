@@ -1755,8 +1755,9 @@
         body.light-mode .contact-wrapper > p { color: rgba(28, 43, 58, 0.62); }
 
         body.light-mode .contact-cta {
-            background: linear-gradient(135deg, rgba(58, 125, 150, 0.06), rgba(234, 240, 246, 0.5));
-            border-color: rgba(58, 125, 150, 0.15);
+            background: #ffffff;
+            border-color: rgba(58, 125, 150, 0.18);
+            box-shadow: 0 4px 20px rgba(28, 43, 58, 0.07);
         }
 
         body.light-mode .contact-cta p { color: #1C2B3A; }
@@ -1790,22 +1791,47 @@
 
         /* Footer */
         body.light-mode .footer {
-            background: #E4EBF3;
-            border-top-color: rgba(58, 125, 150, 0.12);
+            background: #1A2B45;
+            border-top-color: rgba(107, 184, 201, 0.15);
         }
 
-        body.light-mode .footer-brand { border-bottom-color: rgba(58, 125, 150, 0.12); }
-        body.light-mode .footer-brand .logo-text { color: #1C2B3A; }
-        body.light-mode .footer-brand .tagline { color: #3A7D96; }
-        body.light-mode .footer-links { border-bottom-color: rgba(58, 125, 150, 0.12); }
-        body.light-mode .footer-col { border-left-color: rgba(58, 125, 150, 0.12); }
-        body.light-mode .footer-col h4 { color: #3A7D96; }
-        body.light-mode .footer-col a { color: rgba(28, 43, 58, 0.6); }
-        body.light-mode .footer-col a:hover { color: #1C2B3A; }
+        body.light-mode .footer-brand { border-bottom-color: rgba(255, 255, 255, 0.08); }
+        body.light-mode .footer-brand .logo-text { color: #F8F8F8; }
+        body.light-mode .footer-brand .tagline { color: #6BB8C9; }
+        body.light-mode .footer-links { border-bottom-color: rgba(255, 255, 255, 0.08); }
+        body.light-mode .footer-col { border-left-color: rgba(255, 255, 255, 0.07); }
+        body.light-mode .footer-col h4 { color: #6BB8C9; }
+        body.light-mode .footer-col a { color: rgba(248, 248, 248, 0.55); }
+        body.light-mode .footer-col a:hover { color: #F8F8F8; }
         body.light-mode .footer-bottom .company,
-        body.light-mode .footer-bottom .copyright { color: rgba(28, 43, 58, 0.45); }
-        body.light-mode .footer-bottom .sep { color: rgba(58, 125, 150, 0.35); }
-        body.light-mode .footer-bottom .copyright span { color: #3A7D96; }
+        body.light-mode .footer-bottom .copyright { color: rgba(248, 248, 248, 0.35); }
+        body.light-mode .footer-bottom .sep { color: rgba(107, 184, 201, 0.3); }
+        body.light-mode .footer-bottom .copyright span { color: #6BB8C9; }
+
+        /* Buttons with colored background - keep white text in light mode */
+        body.light-mode .project-btn {
+            color: #ffffff !important;
+        }
+
+        body.light-mode .project-btn svg {
+            color: #ffffff !important;
+        }
+
+        /* Contact CTA Buttons */
+        body.light-mode .whatsapp-btn {
+            color: #ffffff !important;
+        }
+
+        body.light-mode .call-btn {
+            color: #1C2B3A;
+            border-color: rgba(28, 43, 58, 0.35);
+        }
+
+        body.light-mode .call-btn:hover {
+            border-color: #1C2B3A;
+            background: rgba(28, 43, 58, 0.06);
+            color: #1C2B3A;
+        }
 
         /* Theme toggle */
         body.light-mode .theme-toggle-btn {
