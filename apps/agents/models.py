@@ -27,6 +27,7 @@ class Agent(models.Model):
     license_number = EncryptedCharField(max_length=50, blank=True, verbose_name='رقم الترخيص')
     fal_license = models.CharField(max_length=50, blank=True, verbose_name='رخصة فال')
     phone = EncryptedCharField(max_length=100, verbose_name='رقم الجوال')
+    phone_hash = models.CharField(max_length=64, blank=True, db_index=True, verbose_name='هاش رقم الجوال')
     whatsapp = EncryptedCharField(max_length=100, blank=True, verbose_name='واتساب')
     email = EncryptedEmailField(verbose_name='البريد الإلكتروني')
     

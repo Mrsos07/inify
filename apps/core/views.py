@@ -346,6 +346,7 @@ def register_view(request):
 
             # Normalize phone: strip non-digits, handle 966/+966 prefix → 05xxxxxxxx
             import re as _re
+            import hashlib as _hashlib
             def _normalize_phone(p):
                 digits = _re.sub(r'\D', '', p)
                 if digits.startswith('966') and len(digits) >= 12:
@@ -357,14 +358,11 @@ def register_view(request):
                 return digits
 
             normalized_phone = _normalize_phone(phone)
+            phone_hash = _hashlib.sha256(normalized_phone.encode()).hexdigest()
 
-            # Validate phone not exists (check all common formats)
+            # Validate phone not exists using hash (works with encrypted fields)
             from apps.agents.models import Agent
-            phone_variants = {normalized_phone, phone}
-            if len(normalized_phone) == 10 and normalized_phone.startswith('05'):
-                phone_variants.add('966' + normalized_phone[1:])
-                phone_variants.add('+966' + normalized_phone[1:])
-            if Agent.objects.filter(phone__in=phone_variants).exists():
+            if Agent.objects.filter(phone_hash=phone_hash).exists():
                 return JsonResponse({'success': False, 'error': 'رقم الجوال مستخدم بالفعل، يرجى استخدام رقم آخر أو تسجيل الدخول', 'field': 'phone'})
             
             # Create username from email
@@ -389,7 +387,8 @@ def register_view(request):
             agent = Agent.objects.create(
                 user=user,
                 company_name=company_name or '',
-                phone=phone or '',
+                phone=normalized_phone or phone or '',
+                phone_hash=phone_hash,
                 city=city or '',
                 email=email,
                 is_email_verified=False
