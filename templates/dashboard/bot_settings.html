@@ -1143,6 +1143,14 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
+        @keyframes linksIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes linksOut {
+            from { opacity: 1; transform: translateY(0); }
+            to   { opacity: 0; transform: translateY(-8px); }
+        }
         
         .chat-popup-close {
             width: 36px;
@@ -2012,56 +2020,78 @@
                     </div>
                 </div>
 
-                <div class="embed-section">
-                    <h4 class="embed-title">🔗 رابط الشات بوت المستقل</h4>
-                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">شارك هذا الرابط مع عملائك أو ضمّنه في موقعك</p>
-                    <div class="embed-code" id="chatbotLink" style="font-size: 13px; word-break: break-all;"></div>
-                    <div style="display: flex; gap: 10px; margin-top: 12px;">
-                        <button class="btn btn-primary copy-btn" onclick="copyChatbotLink()" style="flex: 1;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                            </svg>
-                            نسخ الرابط
-                        </button>
-                        <button class="btn btn-secondary" onclick="openChatbotLink()" style="flex: 1;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                                <polyline points="15 3 21 3 21 9"/>
-                                <line x1="10" y1="14" x2="21" y2="3"/>
-                            </svg>
-                            فتح
-                        </button>
-                    </div>
-                </div>
-
-                <div class="embed-section" style="margin-top: 20px;">
-                    <h4 class="embed-title">📋 كود التضمين (iframe)</h4>
-                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">أضف هذا الكود في موقعك لتضمين الشات بوت</p>
-                    <div class="embed-code" id="iframeCode" style="font-size: 12px;"></div>
-                    <button class="btn btn-primary copy-btn" onclick="copyIframeCode()" style="margin-top: 12px;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                <!-- زر روابط الوكيل -->
+                <div style="position:relative;" id="agentLinksWrapper">
+                    <button onclick="toggleAgentLinks()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#6bb8c9,#4a9fb5);color:#fff;border:none;border-radius:12px;padding:14px 20px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .25s;" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
                         </svg>
-                        نسخ الكود
+                        روابط الوكيل
+                        <svg id="agentLinksChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .3s;">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
                     </button>
-                </div>
 
-                <div class="embed-section" style="margin-top: 20px;">
-                    <h4 class="embed-title">📱 كود Widget</h4>
-                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">أضف زر شات عائم في موقعك</p>
-                    <div class="embed-code" id="embedCode">&lt;script src="https://inify.ai/widget.js" 
+                    <!-- القائمة المنسدلة -->
+                    <div id="agentLinksPanel" style="display:none;margin-top:12px;background:rgba(10,22,40,0.95);border:1px solid rgba(107,184,201,0.2);border-radius:14px;padding:20px;backdrop-filter:blur(10px);">
+
+                        <!-- 1. رابط الشات بوت -->
+                        <div style="margin-bottom:20px;">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6bb8c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                <span style="color:#f8f8f8;font-size:14px;font-weight:700;">رابط الشات بوت المستقل</span>
+                            </div>
+                            <p style="font-size:12px;color:rgba(248,248,248,0.45);margin:0 0 10px;">شارك هذا الرابط مع عملائك أو ضمّنه في موقعك</p>
+                            <div class="embed-code" id="chatbotLink" style="font-size:12px;word-break:break-all;margin-bottom:10px;"></div>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-primary copy-btn" onclick="copyChatbotLink()" style="flex:1;padding:10px;font-size:13px;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    نسخ الرابط
+                                </button>
+                                <button class="btn btn-secondary" onclick="openChatbotLink()" style="flex:1;padding:10px;font-size:13px;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                    فتح
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="height:1px;background:rgba(107,184,201,0.12);margin-bottom:20px;"></div>
+
+                        <!-- 2. كود iframe -->
+                        <div style="margin-bottom:20px;">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6bb8c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                                <span style="color:#f8f8f8;font-size:14px;font-weight:700;">كود التضمين (iframe)</span>
+                            </div>
+                            <p style="font-size:12px;color:rgba(248,248,248,0.45);margin:0 0 10px;">أضف هذا الكود في موقعك لتضمين الشات بوت</p>
+                            <div class="embed-code" id="iframeCode" style="font-size:11px;margin-bottom:10px;"></div>
+                            <button class="btn btn-primary copy-btn" onclick="copyIframeCode()" style="width:100%;padding:10px;font-size:13px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                نسخ الكود
+                            </button>
+                        </div>
+
+                        <div style="height:1px;background:rgba(107,184,201,0.12);margin-bottom:20px;"></div>
+
+                        <!-- 3. كود Widget -->
+                        <div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6bb8c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                                <span style="color:#f8f8f8;font-size:14px;font-weight:700;">كود Widget</span>
+                            </div>
+                            <p style="font-size:12px;color:rgba(248,248,248,0.45);margin:0 0 10px;">أضف زر شات عائم في موقعك</p>
+                            <div class="embed-code" id="embedCode" style="font-size:11px;margin-bottom:10px;">&lt;script src="https://inify.ai/widget.js" 
   data-agent-id="YOUR_AGENT_ID"
   data-position="bottom-left"&gt;
 &lt;/script&gt;</div>
-                    <button class="btn btn-primary copy-btn" onclick="copyEmbedCode()" style="margin-top: 12px;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                        </svg>
-                        نسخ الكود
-                    </button>
+                            <button class="btn btn-primary copy-btn" onclick="copyEmbedCode()" style="width:100%;padding:10px;font-size:13px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                نسخ الكود
+                            </button>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
@@ -2744,6 +2774,22 @@
   data-bg-color="${settings.bgColor}">
 <\/script>`;
             document.getElementById('embedCode').textContent = widgetCode;
+        }
+
+        // Toggle agent links panel
+        function toggleAgentLinks() {
+            const panel = document.getElementById('agentLinksPanel');
+            const chevron = document.getElementById('agentLinksChevron');
+            const isOpen = panel.style.display !== 'none';
+            if (isOpen) {
+                panel.style.animation = 'linksOut .2s ease forwards';
+                setTimeout(() => { panel.style.display = 'none'; panel.style.animation = ''; }, 200);
+                chevron.style.transform = 'rotate(0deg)';
+            } else {
+                panel.style.display = 'block';
+                panel.style.animation = 'linksIn .25s ease forwards';
+                chevron.style.transform = 'rotate(180deg)';
+            }
         }
 
         // Copy chatbot link
