@@ -1,24 +1,23 @@
 /**
- * Inify Onboarding Tour — Spotlight Edition
- * تور احترافي بتظليل العناصر على الصفحة
+ * Inify Onboarding Tour — Professional Edition v2
+ * جولة احترافية بتصميم عصري وواضح بدون ضبابية
  */
 (function () {
     var LS_KEY  = 'inify_tour_step';
     var LS_DONE = 'inify_tour_done';
 
-    /* ─── تعريف خطوات التور ─── */
+    /* ─── خطوات التور ─── */
     var STEPS = [
         null,
         {
-            /* خطوة الترحيب — بدون spotlight */
             target  : null,
             position: 'center',
-            badge   : '👋 أهلاً بك في Inify',
-            icon    : '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#6bb8c9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M17 11l2 2 4-4" stroke="#25d366"/></svg>',
-            title   : 'مرحباً! سنرشدك خلال 3 خطوات',
-            desc    : 'في هذه الجولة ستتعرف على أهم خصائص النظام لتبدأ تحقيق أول صفقة مع وكيلك الذكي.',
-            progress: 0,
-            step    : '1 / 4',
+            stepNum : 0,
+            total   : 3,
+            color   : '#6bb8c9',
+            icon    : 'wave',
+            title   : 'أهلاً بك في Inify! 👋',
+            desc    : 'سنرشدك خلال <strong>3 خطوات سريعة</strong> لتبدأ تحقيق أول صفقة مع وكيلك الذكي.',
             btnLabel: 'ابدأ الجولة',
             btnNext : 2,
             isLast  : false,
@@ -26,12 +25,12 @@
         {
             target  : 'tour-quickactions',
             position: 'auto',
-            badge   : 'الخطوة 1 من 3',
-            icon    : '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#6bb8c9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
+            stepNum : 1,
+            total   : 3,
+            color   : '#6bb8c9',
+            icon    : 'home',
             title   : 'الخطوات الرئيسية',
-            desc    : 'هنا تجد الخطوات الأساسية للبدء: <strong>إضافة عقار</strong> لتغذية الوكيل بمعلومات العقارات، ثم <strong>إعدادات الوكيل</strong> لتخصيص طريقة الرد، ثم <strong>ربط الواتساب</strong> لاستقبال العملاء تلقائياً.',
-            progress: 25,
-            step    : '2 / 4',
+            desc    : 'ابدأ بـ<strong>إضافة عقار</strong> لتغذية الوكيل، ثم <strong>إعدادات الوكيل</strong> لتخصيص الردود، ثم <strong>ربط الواتساب</strong> لاستقبال العملاء تلقائياً.',
             btnLabel: 'التالي',
             btnNext : 3,
             isLast  : false,
@@ -39,12 +38,12 @@
         {
             target  : 'tour-stats',
             position: 'auto',
-            badge   : 'الخطوة 2 من 3',
-            icon    : '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#6bb8c9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+            stepNum : 2,
+            total   : 3,
+            color   : '#6bb8c9',
+            icon    : 'chart',
             title   : 'إحصائيات نشاطك',
-            desc    : 'تتبّع نمو أعمالك في الوقت الفعلي — عدد العقارات المُضافة، العملاء المحتملين، المحادثات النشطة، والمهتمين بعقاراتك.',
-            progress: 58,
-            step    : '3 / 4',
+            desc    : 'تابع نمو أعمالك لحظة بلحظة — <strong>عقاراتك</strong>، <strong>العملاء المحتملين</strong>، <strong>المحادثات النشطة</strong>، والمهتمين بعقاراتك.',
             btnLabel: 'التالي',
             btnNext : 4,
             isLast  : false,
@@ -52,96 +51,220 @@
         {
             target  : null,
             position: 'center',
-            badge   : '🎯 جاهز للانطلاق!',
-            icon    : '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#25d366" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
-            title   : 'أنت جاهز للانطلاق!',
-            desc    : 'ابدأ الآن بربط واتساب شركتك ليستقبل وكيلك الذكي رسائل العملاء ويرد عليهم تلقائياً على مدار الساعة.',
-            progress: 100,
-            step    : '4 / 4',
-            btnLabel: 'اذهب لربط الواتساب ←',
+            stepNum : 3,
+            total   : 3,
+            color   : '#25d366',
+            icon    : 'check',
+            title   : 'أنت جاهز للانطلاق! 🎯',
+            desc    : 'ابدأ الآن بربط <strong>واتساب شركتك</strong> ليستقبل وكيلك الذكي رسائل العملاء ويرد عليهم تلقائياً على مدار الساعة.',
+            btnLabel: 'ربط الواتساب الآن',
             btnNext : null,
             isLast  : true,
         },
     ];
 
+    /* ─── SVG icons ─── */
+    var ICONS = {
+        wave : '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+        home : '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
+        chart: '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>',
+        check: '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    };
+
     /* ─── CSS ─── */
-    var CSS = [
-        /* ── Dark mode (default) ── */
-        '#itCard{position:fixed;z-index:99999;width:360px;max-width:92vw;direction:rtl;',
-        'background:linear-gradient(145deg,#0d1b2e,#0a1525);',
-        'border:1px solid rgba(107,184,201,.3);border-radius:20px;',
-        'padding:28px 26px 22px;',
-        'box-shadow:0 24px 64px rgba(0,0,0,.7),0 0 0 1px rgba(107,184,201,.08);',
-        'font-family:inherit;',
-        'transition:top .4s cubic-bezier(.4,0,.2,1),left .4s cubic-bezier(.4,0,.2,1);}',
+    var CSS = '\
+/* ====== Tour Overlay ====== */\
+#itSvgOverlay{position:fixed;inset:0;z-index:99990;pointer-events:all;}\
+\
+/* ====== Tour Card ====== */\
+#itCard{\
+  position:fixed;\
+  z-index:99999;\
+  width:380px;\
+  max-width:calc(100vw - 32px);\
+  direction:rtl;\
+  background:#0f1f35;\
+  border:1px solid rgba(107,184,201,.25);\
+  border-radius:20px;\
+  padding:0;\
+  box-shadow:0 32px 80px rgba(0,0,0,.85),0 0 0 1px rgba(107,184,201,.06);\
+  font-family:inherit;\
+  overflow:hidden;\
+}\
+\
+/* top accent bar */\
+.it-accent-bar{\
+  height:3px;\
+  background:linear-gradient(90deg,#6bb8c9 0%,#4a9fb5 50%,transparent 100%);\
+  width:100%;\
+}\
+.it-accent-bar.green{background:linear-gradient(90deg,#25d366 0%,#1aab52 50%,transparent 100%);}\
+\
+/* card inner */\
+.it-inner{padding:26px 24px 20px;}\
+\
+/* header row: icon + step dots */\
+.it-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}\
+\
+/* icon circle */\
+.it-icon-wrap{\
+  width:56px;height:56px;border-radius:16px;\
+  display:flex;align-items:center;justify-content:center;\
+  background:rgba(107,184,201,.1);\
+  border:1px solid rgba(107,184,201,.2);\
+  color:#6bb8c9;\
+  flex-shrink:0;\
+}\
+.it-icon-wrap.green{background:rgba(37,211,102,.1);border-color:rgba(37,211,102,.2);color:#25d366;}\
+\
+/* step dots */\
+.it-dots{display:flex;gap:6px;align-items:center;padding-top:4px;}\
+.it-dot{\
+  width:8px;height:8px;border-radius:50%;\
+  background:rgba(107,184,201,.2);\
+  transition:all .3s ease;\
+}\
+.it-dot.active{\
+  background:#6bb8c9;\
+  width:20px;\
+  border-radius:4px;\
+}\
+.it-dot.done{background:rgba(107,184,201,.5);}\
+.it-dot.green-active{background:#25d366;width:20px;border-radius:4px;}\
+\
+/* title */\
+#itCard h2{\
+  color:#f0f4f8;\
+  font-size:17px;\
+  font-weight:800;\
+  margin:0 0 10px;\
+  line-height:1.4;\
+}\
+\
+/* description */\
+#itCard p{\
+  color:rgba(224,232,240,.6);\
+  font-size:13.5px;\
+  line-height:1.8;\
+  margin:0 0 22px;\
+}\
+#itCard p strong{color:#6bb8c9;font-weight:700;}\
+#itCard p strong.green{color:#25d366;}\
+\
+/* progress bar */\
+.it-prog-wrap{margin-bottom:20px;}\
+.it-prog-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}\
+.it-prog-text{font-size:11px;font-weight:600;color:rgba(107,184,201,.6);letter-spacing:.5px;}\
+.it-prog-bar{height:4px;background:rgba(107,184,201,.12);border-radius:4px;overflow:hidden;}\
+.it-prog-fill{\
+  height:100%;\
+  border-radius:4px;\
+  background:linear-gradient(90deg,#6bb8c9,#4a9fb5);\
+  transition:width .5s cubic-bezier(.4,0,.2,1);\
+}\
+.it-prog-fill.green{background:linear-gradient(90deg,#25d366,#1aab52);}\
+\
+/* buttons */\
+.it-btn{\
+  display:flex;align-items:center;justify-content:center;gap:8px;\
+  width:100%;\
+  background:linear-gradient(135deg,#6bb8c9 0%,#4a9fb5 100%);\
+  color:#fff;\
+  border:none;\
+  border-radius:12px;\
+  padding:14px 20px;\
+  font-size:14px;\
+  font-weight:700;\
+  cursor:pointer;\
+  font-family:inherit;\
+  transition:transform .15s ease,opacity .15s ease;\
+  box-sizing:border-box;\
+  margin-bottom:10px;\
+  letter-spacing:.3px;\
+}\
+.it-btn:hover{opacity:.9;transform:translateY(-1px);}\
+.it-btn:active{transform:translateY(0);}\
+.it-btn.green{background:linear-gradient(135deg,#25d366 0%,#1aab52 100%);}\
+\
+.it-skip{\
+  background:none;border:none;\
+  color:rgba(224,232,240,.25);\
+  font-size:12px;\
+  cursor:pointer;\
+  width:100%;\
+  font-family:inherit;\
+  transition:color .2s;\
+  padding:6px;\
+  display:block;\
+  text-align:center;\
+}\
+.it-skip:hover{color:rgba(224,232,240,.55);}\
+\
+/* close button */\
+.it-close{\
+  position:absolute;top:14px;left:14px;\
+  width:28px;height:28px;\
+  border-radius:8px;\
+  background:rgba(255,255,255,.06);\
+  border:1px solid rgba(255,255,255,.08);\
+  color:rgba(255,255,255,.4);\
+  cursor:pointer;\
+  display:flex;align-items:center;justify-content:center;\
+  transition:all .2s;\
+  font-family:inherit;\
+  font-size:14px;\
+  line-height:1;\
+}\
+.it-close:hover{background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);}\
+\
+/* spotlight ring */\
+#itRing{\
+  position:fixed;\
+  z-index:99995;\
+  pointer-events:none;\
+  border-radius:16px;\
+  border:2px solid rgba(107,184,201,.9);\
+  box-shadow:0 0 0 4px rgba(107,184,201,.15),0 0 24px rgba(107,184,201,.3);\
+  transition:all .38s cubic-bezier(.4,0,.2,1);\
+  animation:itPulseRing 2.4s ease-in-out infinite;\
+}\
+@keyframes itPulseRing{\
+  0%,100%{box-shadow:0 0 0 4px rgba(107,184,201,.15),0 0 24px rgba(107,184,201,.25);}\
+  50%{box-shadow:0 0 0 8px rgba(107,184,201,.08),0 0 40px rgba(107,184,201,.35);}\
+}\
+\
+/* animations */\
+@keyframes itIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}\
+@keyframes itOut{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.94) translateY(6px)}}\
+#itCard.it-entering{animation:itIn .3s cubic-bezier(.34,1.26,.64,1) forwards;}\
+#itCard.it-leaving{animation:itOut .2s ease forwards;}\
+\
+/* ── Light mode ── */\
+body.light-mode #itCard{\
+  background:#ffffff;\
+  border-color:rgba(37,99,235,.15);\
+  box-shadow:0 20px 60px rgba(0,0,0,.12),0 0 0 1px rgba(37,99,235,.06);\
+}\
+body.light-mode .it-accent-bar{background:linear-gradient(90deg,#2563EB,#3B82F6,transparent);}\
+body.light-mode .it-icon-wrap{background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.15);color:#2563EB;}\
+body.light-mode .it-dot{background:rgba(37,99,235,.15);}\
+body.light-mode .it-dot.active{background:#2563EB;}\
+body.light-mode .it-dot.done{background:rgba(37,99,235,.4);}\
+body.light-mode #itCard h2{color:#111827;}\
+body.light-mode #itCard p{color:#4B5563;}\
+body.light-mode #itCard p strong{color:#2563EB;}\
+body.light-mode .it-prog-text{color:rgba(37,99,235,.55);}\
+body.light-mode .it-prog-bar{background:rgba(37,99,235,.1);}\
+body.light-mode .it-prog-fill{background:linear-gradient(90deg,#2563EB,#3B82F6);}\
+body.light-mode .it-btn{background:linear-gradient(135deg,#2563EB,#3B82F6);}\
+body.light-mode .it-skip{color:rgba(31,41,55,.25);}\
+body.light-mode .it-skip:hover{color:rgba(31,41,55,.55);}\
+body.light-mode .it-close{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.08);color:rgba(0,0,0,.3);}\
+body.light-mode .it-close:hover{background:rgba(0,0,0,.08);color:rgba(0,0,0,.6);}\
+body.light-mode #itRing{border-color:rgba(37,99,235,.8);box-shadow:0 0 0 4px rgba(37,99,235,.12),0 0 24px rgba(37,99,235,.2);}\
+';
 
-        '#itCard h2{color:#f8f8f8;font-size:18px;font-weight:800;margin:0 0 10px;line-height:1.4;}',
-        '#itCard p{color:rgba(248,248,248,.65);font-size:13.5px;line-height:1.75;margin:0 0 18px;}',
-        '#itCard strong{color:#6bb8c9;}',
-
-        '.it-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(107,184,201,.12);',
-        'border:1px solid rgba(107,184,201,.3);color:#6bb8c9;font-size:12px;font-weight:700;',
-        'padding:4px 12px;border-radius:20px;margin-bottom:14px;}',
-
-        '.it-icon{display:flex;justify-content:center;margin-bottom:14px;}',
-
-        '.it-progress{height:3px;background:rgba(107,184,201,.12);border-radius:2px;margin-bottom:0;overflow:hidden;}',
-        '.it-progress-fill{height:100%;background:linear-gradient(90deg,#6bb8c9,#4a9fb5);border-radius:2px;transition:width .5s ease;}',
-
-        '.it-meta{display:flex;align-items:center;gap:12px;margin-bottom:16px;}',
-        '.it-step{color:rgba(107,184,201,.7);font-size:12px;font-weight:700;white-space:nowrap;}',
-
-        '.it-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;',
-        'background:linear-gradient(135deg,#6bb8c9,#4a9fb5);color:#fff;border:none;border-radius:11px;',
-        'padding:13px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;',
-        'transition:all .2s;box-sizing:border-box;margin-bottom:10px;}',
-        '.it-btn:hover{opacity:.88;transform:translateY(-1px);}',
-
-        '.it-skip{background:none;border:none;color:rgba(248,248,248,.3);font-size:12px;',
-        'cursor:pointer;width:100%;font-family:inherit;transition:color .2s;padding:4px;display:block;text-align:center;}',
-        '.it-skip:hover{color:rgba(248,248,248,.6);}',
-
-        /* pulse ring */
-        '#itRing{position:fixed;z-index:99991;pointer-events:none;',
-        'box-shadow:0 0 0 3px rgba(107,184,201,.8),0 0 0 7px rgba(107,184,201,.2),0 0 28px rgba(107,184,201,.15);',
-        'transition:all .4s cubic-bezier(.4,0,.2,1);animation:itPulse 2.2s ease-in-out infinite;}',
-        '@keyframes itPulse{0%,100%{box-shadow:0 0 0 3px rgba(107,184,201,.8),0 0 0 7px rgba(107,184,201,.2),0 0 28px rgba(107,184,201,.12);}',
-        '50%{box-shadow:0 0 0 4px rgba(107,184,201,1),0 0 0 12px rgba(107,184,201,.15),0 0 44px rgba(107,184,201,.18);}}',
-
-        /* animations */
-        '@keyframes itIn{from{opacity:0;transform:scale(.93) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}',
-        '@keyframes itOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.93)}}',
-        '#itCard.it-entering{animation:itIn .32s cubic-bezier(.4,0,.2,1) forwards;}',
-        '#itCard.it-leaving{animation:itOut .22s ease forwards;}',
-
-        /* ── Light mode overrides ── */
-        'body.light-mode #itCard{',
-        'background:#FFFFFF !important;',
-        'border:1px solid #E5E7EB !important;',
-        'box-shadow:0 20px 60px rgba(0,0,0,.12),0 0 0 1px rgba(74,144,164,.1) !important;}',
-
-        'body.light-mode #itCard h2{color:#1F2937 !important;}',
-        'body.light-mode #itCard p{color:#6B7280 !important;}',
-        'body.light-mode #itCard strong{color:#2563EB !important;}',
-
-        'body.light-mode .it-badge{background:rgba(37,99,235,.08) !important;',
-        'border-color:rgba(37,99,235,.2) !important;color:#2563EB !important;}',
-
-        'body.light-mode .it-step{color:rgba(37,99,235,.7) !important;}',
-
-        'body.light-mode .it-progress{background:rgba(37,99,235,.1) !important;}',
-        'body.light-mode .it-progress-fill{background:linear-gradient(90deg,#2563EB,#3B82F6) !important;}',
-
-        'body.light-mode .it-btn{background:linear-gradient(135deg,#2563EB,#3B82F6) !important;}',
-
-        'body.light-mode .it-skip{color:rgba(31,41,55,.3) !important;}',
-        'body.light-mode .it-skip:hover{color:rgba(31,41,55,.65) !important;}',
-
-        'body.light-mode #itRing{',
-        'box-shadow:0 0 0 3px rgba(37,99,235,.7),0 0 0 7px rgba(37,99,235,.15),0 0 24px rgba(37,99,235,.1) !important;}',
-    ].join('');
-
-    /* ─── inject CSS once ─── */
+    /* ─── inject CSS ─── */
     function injectCSS() {
         if (document.getElementById('it-css')) return;
         var s = document.createElement('style');
@@ -150,21 +273,78 @@
         document.head.appendChild(s);
     }
 
-    /* ─── build DOM elements ─── */
+    /* ─── SVG overlay (crisp cutout — no blur) ─── */
+    var _svgNS = 'http://www.w3.org/2000/svg';
+    function buildSvgOverlay() {
+        var existing = document.getElementById('itSvgOverlay');
+        if (existing) return existing;
+        var svg = document.createElementNS(_svgNS, 'svg');
+        svg.setAttribute('id', 'itSvgOverlay');
+        svg.setAttribute('xmlns', _svgNS);
+        /* defs: clip path with hole */
+        var defs = document.createElementNS(_svgNS, 'defs');
+        var mask = document.createElementNS(_svgNS, 'mask');
+        mask.setAttribute('id', 'itMask');
+        /* white full rect = visible (dark) */
+        var bg = document.createElementNS(_svgNS, 'rect');
+        bg.setAttribute('id', 'itMaskBg');
+        bg.setAttribute('fill', 'white');
+        /* black hole = transparent (spotlight) */
+        var hole = document.createElementNS(_svgNS, 'rect');
+        hole.setAttribute('id', 'itMaskHole');
+        hole.setAttribute('fill', 'black');
+        hole.setAttribute('rx', '16');
+        mask.appendChild(bg);
+        mask.appendChild(hole);
+        defs.appendChild(mask);
+        /* dark rect with mask */
+        var darkRect = document.createElementNS(_svgNS, 'rect');
+        darkRect.setAttribute('id', 'itDarkRect');
+        darkRect.setAttribute('fill', 'rgba(0,0,0,0.72)');
+        darkRect.setAttribute('mask', 'url(#itMask)');
+        svg.appendChild(defs);
+        svg.appendChild(darkRect);
+        document.body.appendChild(svg);
+        return svg;
+    }
+
+    function updateSvgSize() {
+        var svg = document.getElementById('itSvgOverlay');
+        if (!svg) return;
+        var W = window.innerWidth, H = window.innerHeight;
+        svg.setAttribute('width', W);
+        svg.setAttribute('height', H);
+        svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+        document.getElementById('itMaskBg').setAttribute('width', W);
+        document.getElementById('itMaskBg').setAttribute('height', H);
+        document.getElementById('itDarkRect').setAttribute('width', W);
+        document.getElementById('itDarkRect').setAttribute('height', H);
+    }
+
+    function setSpotlightHole(x, y, w, h, rx) {
+        var hole = document.getElementById('itMaskHole');
+        if (!hole) return;
+        hole.setAttribute('x', x);
+        hole.setAttribute('y', y);
+        hole.setAttribute('width', w);
+        hole.setAttribute('height', h);
+        hole.setAttribute('rx', rx);
+    }
+
+    function clearSpotlightHole() {
+        /* hole at 0,0 size 0 = full dark */
+        setSpotlightHole(0, 0, 0, 0, 0);
+        var ring = document.getElementById('itRing');
+        if (ring) ring.style.display = 'none';
+    }
+
+    /* ─── build DOM ─── */
     function buildDOM() {
         if (document.getElementById('itCard')) return;
         injectCSS();
 
-        /* full-screen dark backdrop */
-        var ov = document.createElement('div');
-        ov.id = 'itOverlay';
-        document.body.appendChild(ov);
-
-        /* highlight box — sits ON TOP of overlay, transparent itself, box-shadow creates dark surround */
-        var hl = document.createElement('div');
-        hl.id = 'itHighlight';
-        hl.style.cssText = 'display:none;position:fixed;z-index:99992;pointer-events:none;border-radius:16px;transition:all .35s cubic-bezier(.4,0,.2,1);';
-        document.body.appendChild(hl);
+        buildSvgOverlay();
+        updateSvgSize();
 
         /* pulse ring */
         var ring = document.createElement('div');
@@ -179,128 +359,124 @@
         document.body.appendChild(card);
     }
 
-    /* ─── spotlight on element ─── */
+    /* ─── spotlight element ─── */
     function spotlight(el, padding) {
-        padding = padding || 16;
+        padding = padding || 14;
         var r = el.getBoundingClientRect();
-
-        /* scroll element into view smoothly */
         var elCenter = r.top + r.height / 2;
         var winH = window.innerHeight;
-        if (elCenter < 100 || elCenter > winH - 100) {
+
+        if (elCenter < 80 || elCenter > winH - 80) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            /* wait for scroll then recalculate */
-            setTimeout(function () { spotlight(el, padding); }, 380);
+            setTimeout(function () { spotlight(el, padding); }, 400);
             return null;
         }
 
+        updateSvgSize();
         var x = r.left - padding;
         var y = r.top  - padding;
         var w = r.width  + padding * 2;
         var h = r.height + padding * 2;
-        var borderR = Math.min(parseFloat(getComputedStyle(el).borderRadius) || 16, 24) + 4;
+        var rx = Math.min(parseFloat(getComputedStyle(el).borderRadius) || 12, 20) + 4;
 
-        /* overlay: full screen dark */
-        var ov = document.getElementById('itOverlay');
-        ov.style.cssText = 'position:fixed;inset:0;z-index:99991;background:rgba(0,0,0,0.75);backdrop-filter:blur(2px);pointer-events:all;';
+        setSpotlightHole(x, y, w, h, rx);
 
-        /* highlight: punches out the element — uses massive box-shadow to darken outside */
-        var hl = document.getElementById('itHighlight');
-        hl.style.display  = 'block';
-        hl.style.left     = x + 'px';
-        hl.style.top      = y + 'px';
-        hl.style.width    = w + 'px';
-        hl.style.height   = h + 'px';
-        hl.style.borderRadius = borderR + 'px';
-        /* huge inset-like shadow to cut through overlay */
-        hl.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.75)';
-        hl.style.background = 'transparent';
-
-        /* ring */
         var ring = document.getElementById('itRing');
-        ring.style.display = 'block';
-        ring.style.left    = x + 'px';
-        ring.style.top     = y + 'px';
-        ring.style.width   = w + 'px';
-        ring.style.height  = h + 'px';
-        ring.style.borderRadius = borderR + 'px';
+        ring.style.display    = 'block';
+        ring.style.left       = x + 'px';
+        ring.style.top        = y + 'px';
+        ring.style.width      = w + 'px';
+        ring.style.height     = h + 'px';
+        ring.style.borderRadius = rx + 'px';
 
         return { x: x, y: y, w: w, h: h };
     }
 
-    /* ─── remove spotlight ─── */
-    function clearSpotlight() {
-        var ov = document.getElementById('itOverlay');
-        var hl = document.getElementById('itHighlight');
-        var ring = document.getElementById('itRing');
-
-        if (hl)   hl.style.display  = 'none';
-        if (ring) ring.style.display = 'none';
-
-        /* solid dark backdrop for center steps */
-        if (ov) {
-            ov.style.cssText = 'position:fixed;inset:0;z-index:99991;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);pointer-events:all;';
-        }
-    }
-
-    /* ─── position card near spotlight ─── */
+    /* ─── position card smart ─── */
     function positionCard(rect) {
         var card = document.getElementById('itCard');
-        var cW = card.offsetWidth  || 360;
-        var cH = card.offsetHeight || 300;
+        var cW = card.offsetWidth  || 380;
+        var cH = card.offsetHeight || 320;
         var vW = window.innerWidth;
         var vH = window.innerHeight;
         var margin = 20;
         var top, left;
 
         if (!rect) {
-            /* center of screen */
             top  = (vH - cH) / 2;
             left = (vW - cW) / 2;
         } else {
-            /* try below */
+            /* prefer below */
             if (rect.y + rect.h + cH + margin < vH) {
                 top = rect.y + rect.h + margin;
             } else if (rect.y - cH - margin > 0) {
-                /* above */
                 top = rect.y - cH - margin;
             } else {
                 top = margin;
             }
-            /* horizontal: prefer right side if room, else left */
-            if (rect.x + rect.w / 2 + cW / 2 + margin < vW) {
-                left = Math.max(margin, rect.x + rect.w / 2 - cW / 2);
-            } else {
-                left = Math.max(margin, vW - cW - margin);
-            }
+            /* horizontal center on element, clamp to screen */
+            left = rect.x + rect.w / 2 - cW / 2;
+            left = Math.max(margin, Math.min(vW - cW - margin, left));
         }
-        card.style.top  = top  + 'px';
-        card.style.left = left + 'px';
+
+        card.style.top  = Math.round(top)  + 'px';
+        card.style.left = Math.round(left) + 'px';
     }
 
-    /* ─── render step card content ─── */
+    /* ─── render card content ─── */
     function renderCard(step) {
         var d = STEPS[step];
         if (!d) return;
         var card = document.getElementById('itCard');
+        var isGreen = d.color === '#25d366';
+        var iconSvg = ICONS[d.icon] || ICONS.home;
+        var pct = Math.round((d.stepNum / d.total) * 100);
+
+        /* dots */
+        var dotsHtml = '';
+        for (var i = 0; i < d.total; i++) {
+            if (i < d.stepNum) {
+                dotsHtml += '<span class="it-dot done"></span>';
+            } else if (i === d.stepNum) {
+                dotsHtml += '<span class="it-dot ' + (isGreen ? 'green-active' : 'active') + '"></span>';
+            } else {
+                dotsHtml += '<span class="it-dot"></span>';
+            }
+        }
 
         var skipHtml = d.isLast
-            ? '<button class="it-skip" id="itSkip">إنهاء الجولة ✓</button>'
+            ? '<button class="it-skip" id="itSkip">إنهاء الجولة</button>'
             : '<button class="it-skip" id="itSkip">تخطي الجولة</button>';
 
+        var btnArrow = d.isLast
+            ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
+            : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>';
+
         card.innerHTML = [
-            '<div class="it-badge">' + d.badge + '</div>',
-            '<div class="it-icon">' + d.icon + '</div>',
-            '<h2>' + d.title + '</h2>',
-            '<p>' + d.desc + '</p>',
-            '<div class="it-meta">',
-              '<div class="it-progress" style="flex:1;margin-left:12px;"><div class="it-progress-fill" style="width:' + d.progress + '%"></div></div>',
-              '<span class="it-step">' + d.step + '</span>',
+            '<div class="it-accent-bar' + (isGreen ? ' green' : '') + '"></div>',
+            '<button class="it-close" id="itClose" title="إغلاق">✕</button>',
+            '<div class="it-inner">',
+              '<div class="it-header">',
+                '<div class="it-icon-wrap' + (isGreen ? ' green' : '') + '">' + iconSvg + '</div>',
+                '<div class="it-dots">' + dotsHtml + '</div>',
+              '</div>',
+              '<h2>' + d.title + '</h2>',
+              '<p>' + d.desc + '</p>',
+              '<div class="it-prog-wrap">',
+                '<div class="it-prog-label">',
+                  '<span class="it-prog-text">التقدم</span>',
+                  '<span class="it-prog-text">' + pct + '%</span>',
+                '</div>',
+                '<div class="it-prog-bar">',
+                  '<div class="it-prog-fill' + (isGreen ? ' green' : '') + '" style="width:' + pct + '%"></div>',
+                '</div>',
+              '</div>',
+              '<button class="it-btn' + (isGreen ? ' green' : '') + '" id="itNext">',
+                d.btnLabel,
+                btnArrow,
+              '</button>',
+              skipHtml,
             '</div>',
-            '<button class="it-btn" id="itNext">' + d.btnLabel,
-            d.isLast ? '' : ' <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>',
-            '</button>',
-            skipHtml,
         ].join('');
 
         document.getElementById('itNext').onclick = function () {
@@ -311,8 +487,10 @@
             }
         };
         document.getElementById('itSkip').onclick = function () {
-            if (d.isLast) TOUR.finish(null);
-            else TOUR.skip();
+            TOUR.skip();
+        };
+        document.getElementById('itClose').onclick = function () {
+            TOUR.skip();
         };
     }
 
@@ -328,7 +506,7 @@
         },
 
         _destroyDOM: function () {
-            ['itOverlay','itHighlight','itRing','itCard'].forEach(function (id) {
+            ['itSvgOverlay','itRing','itCard'].forEach(function (id) {
                 var el = document.getElementById(id);
                 if (el) el.remove();
             });
@@ -355,7 +533,7 @@
             if (!d) return;
 
             var card = document.getElementById('itCard');
-            card.classList.remove('it-leaving','it-entering');
+            card.classList.remove('it-leaving', 'it-entering');
 
             var rect = null;
             if (d.target) {
@@ -363,21 +541,20 @@
                 if (el) {
                     rect = spotlight(el);
                 } else {
-                    clearSpotlight();
+                    clearSpotlightHole();
                 }
             } else {
-                clearSpotlight();
+                clearSpotlightHole();
             }
 
             renderCard(step);
             card.style.display = 'block';
 
-            /* position then animate */
             setTimeout(function () {
                 positionCard(rect);
                 card.classList.add('it-entering');
-                setTimeout(function () { card.classList.remove('it-entering'); }, 320);
-            }, 30);
+                setTimeout(function () { card.classList.remove('it-entering'); }, 350);
+            }, 20);
         },
 
         finish: function (redirectUrl) {
@@ -407,17 +584,22 @@
             if (localStorage.getItem(LS_DONE) === '1') return;
             var step = parseInt(localStorage.getItem(LS_KEY) || '1');
             if (step < 1 || step > 4) step = 1;
-            setTimeout(function () { TOUR.goStep(step); }, 500);
+            setTimeout(function () { TOUR.goStep(step); }, 600);
         },
 
         resumeIfPending: function () {
             if (localStorage.getItem(LS_DONE) === '1') return;
             var step = parseInt(localStorage.getItem(LS_KEY) || '0');
             if (step >= 1 && step <= 4) {
-                setTimeout(function () { TOUR.goStep(step); }, 500);
+                setTimeout(function () { TOUR.goStep(step); }, 600);
             }
         }
     };
+
+    /* resize: update SVG dimensions */
+    window.addEventListener('resize', function () {
+        if (document.getElementById('itSvgOverlay')) updateSvgSize();
+    });
 
     window.startTourFromSidebar = function () { TOUR.restart(); };
 
