@@ -481,7 +481,7 @@ body.light-mode #itRing{border-color:rgba(37,99,235,.8);box-shadow:0 0 0 4px rgb
 
         document.getElementById('itNext').onclick = function () {
             if (d.isLast) {
-                TOUR.finish('/dashboard/bot-settings/?tab=whatsapp');
+                TOUR.finish('/dashboard/bot-settings/#whatsapp');
             } else {
                 TOUR.goStep(d.btnNext);
             }

@@ -2850,17 +2850,23 @@
         }
 
         // Tab switching
-        function switchTab(tab) {
+        function switchTab(tab, triggerEl) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             
-            event.target.classList.add('active');
+            const activeBtn = triggerEl || document.querySelector(`.tab[onclick*="'${tab}'"]`);
+            if (activeBtn) activeBtn.classList.add('active');
             document.getElementById(tab + 'Tab').classList.add('active');
             
-            // Load platforms status when switching to platforms tab
             if (tab === 'platforms') {
                 loadPlatformsStatus();
             }
+        }
+
+        function openTab(tab) {
+            switchTab(tab, null);
+            const el = document.getElementById(tab + 'Tab');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         // ============ Platforms Connection ============
@@ -3243,6 +3249,16 @@
     <!-- Theme Toggle Script -->
     <script src="/static/js/theme.js"></script>
     <script src="/static/js/tour.js"></script>
+    <script>
+        // Auto-open tab from URL hash (e.g. #whatsapp)
+        (function() {
+            var hash = window.location.hash.replace('#', '');
+            if (hash) {
+                var tabEl = document.getElementById(hash + 'Tab');
+                if (tabEl) openTab(hash);
+            }
+        })();
+    </script>
 </body>
 </html>
 
