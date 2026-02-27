@@ -76,146 +76,191 @@
 /* ====== Tour Overlay ====== */\
 #itSvgOverlay{position:fixed;inset:0;z-index:99990;pointer-events:all;}\
 \
-/* ====== Tour Card ====== */\
+/* ====== Tour Card — Dark Mode (default) ====== */\
 #itCard{\
   position:fixed;\
   z-index:99999;\
-  width:380px;\
+  width:390px;\
   max-width:calc(100vw - 32px);\
   direction:rtl;\
-  background:#0f1f35;\
-  border:1px solid rgba(107,184,201,.25);\
-  border-radius:20px;\
+  background:linear-gradient(160deg,#1a2f4a 0%,#142238 100%);\
+  border:1px solid rgba(107,184,201,.35);\
+  border-radius:22px;\
   padding:0;\
-  box-shadow:0 32px 80px rgba(0,0,0,.85),0 0 0 1px rgba(107,184,201,.06);\
+  box-shadow:\
+    0 0 0 1px rgba(107,184,201,.12),\
+    0 24px 60px rgba(0,0,0,.7),\
+    inset 0 1px 0 rgba(107,184,201,.08);\
   font-family:inherit;\
   overflow:hidden;\
 }\
 \
 /* top accent bar */\
 .it-accent-bar{\
-  height:3px;\
-  background:linear-gradient(90deg,#6bb8c9 0%,#4a9fb5 50%,transparent 100%);\
+  height:4px;\
+  background:linear-gradient(90deg,#6bb8c9 0%,#4a9fb5 60%,rgba(107,184,201,0) 100%);\
   width:100%;\
 }\
-.it-accent-bar.green{background:linear-gradient(90deg,#25d366 0%,#1aab52 50%,transparent 100%);}\
+.it-accent-bar.green{\
+  background:linear-gradient(90deg,#25d366 0%,#1aab52 60%,rgba(37,211,102,0) 100%);\
+}\
 \
 /* card inner */\
-.it-inner{padding:26px 24px 20px;}\
+.it-inner{padding:28px 26px 22px;}\
 \
 /* header row: icon + step dots */\
-.it-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}\
+.it-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;}\
 \
-/* icon circle */\
+/* icon box */\
 .it-icon-wrap{\
-  width:56px;height:56px;border-radius:16px;\
+  width:58px;height:58px;border-radius:16px;\
   display:flex;align-items:center;justify-content:center;\
-  background:rgba(107,184,201,.1);\
-  border:1px solid rgba(107,184,201,.2);\
-  color:#6bb8c9;\
+  background:rgba(107,184,201,.14);\
+  border:1px solid rgba(107,184,201,.3);\
+  color:#7ecfdf;\
   flex-shrink:0;\
+  box-shadow:0 0 20px rgba(107,184,201,.08);\
 }\
-.it-icon-wrap.green{background:rgba(37,211,102,.1);border-color:rgba(37,211,102,.2);color:#25d366;}\
+.it-icon-wrap.green{\
+  background:rgba(37,211,102,.12);\
+  border-color:rgba(37,211,102,.3);\
+  color:#2edb6f;\
+  box-shadow:0 0 20px rgba(37,211,102,.08);\
+}\
 \
 /* step dots */\
-.it-dots{display:flex;gap:6px;align-items:center;padding-top:4px;}\
+.it-dots{display:flex;gap:6px;align-items:center;padding-top:6px;}\
 .it-dot{\
   width:8px;height:8px;border-radius:50%;\
-  background:rgba(107,184,201,.2);\
-  transition:all .3s ease;\
+  background:rgba(107,184,201,.18);\
+  transition:all .35s cubic-bezier(.4,0,.2,1);\
 }\
 .it-dot.active{\
   background:#6bb8c9;\
-  width:20px;\
+  width:22px;\
   border-radius:4px;\
+  box-shadow:0 0 8px rgba(107,184,201,.5);\
 }\
-.it-dot.done{background:rgba(107,184,201,.5);}\
-.it-dot.green-active{background:#25d366;width:20px;border-radius:4px;}\
+.it-dot.done{background:rgba(107,184,201,.45);}\
+.it-dot.green-active{\
+  background:#25d366;\
+  width:22px;\
+  border-radius:4px;\
+  box-shadow:0 0 8px rgba(37,211,102,.5);\
+}\
 \
 /* title */\
 #itCard h2{\
-  color:#f0f4f8;\
+  color:#e8f4f8;\
   font-size:17px;\
   font-weight:800;\
   margin:0 0 10px;\
-  line-height:1.4;\
+  line-height:1.45;\
+  letter-spacing:-.2px;\
 }\
 \
 /* description */\
 #itCard p{\
-  color:rgba(224,232,240,.6);\
+  color:rgba(200,220,232,.75);\
   font-size:13.5px;\
-  line-height:1.8;\
+  line-height:1.85;\
   margin:0 0 22px;\
 }\
-#itCard p strong{color:#6bb8c9;font-weight:700;}\
-#itCard p strong.green{color:#25d366;}\
+#itCard p strong{color:#7ecfdf;font-weight:700;}\
 \
-/* progress bar */\
-.it-prog-wrap{margin-bottom:20px;}\
-.it-prog-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}\
-.it-prog-text{font-size:11px;font-weight:600;color:rgba(107,184,201,.6);letter-spacing:.5px;}\
-.it-prog-bar{height:4px;background:rgba(107,184,201,.12);border-radius:4px;overflow:hidden;}\
-.it-prog-fill{\
-  height:100%;\
-  border-radius:4px;\
-  background:linear-gradient(90deg,#6bb8c9,#4a9fb5);\
-  transition:width .5s cubic-bezier(.4,0,.2,1);\
+/* divider */\
+.it-divider{\
+  height:1px;\
+  background:rgba(107,184,201,.1);\
+  margin:0 0 18px;\
 }\
-.it-prog-fill.green{background:linear-gradient(90deg,#25d366,#1aab52);}\
 \
-/* buttons */\
+/* progress */\
+.it-prog-wrap{margin-bottom:20px;}\
+.it-prog-label{\
+  display:flex;justify-content:space-between;\
+  align-items:center;margin-bottom:7px;\
+}\
+.it-prog-text{\
+  font-size:11px;font-weight:700;\
+  color:rgba(107,184,201,.65);\
+  letter-spacing:.6px;text-transform:uppercase;\
+}\
+.it-prog-bar{\
+  height:5px;\
+  background:rgba(107,184,201,.1);\
+  border-radius:6px;overflow:hidden;\
+}\
+.it-prog-fill{\
+  height:100%;border-radius:6px;\
+  background:linear-gradient(90deg,#4a9fb5,#6bb8c9);\
+  transition:width .55s cubic-bezier(.4,0,.2,1);\
+  box-shadow:0 0 8px rgba(107,184,201,.4);\
+}\
+.it-prog-fill.green{\
+  background:linear-gradient(90deg,#1aab52,#25d366);\
+  box-shadow:0 0 8px rgba(37,211,102,.4);\
+}\
+\
+/* main button */\
 .it-btn{\
   display:flex;align-items:center;justify-content:center;gap:8px;\
   width:100%;\
-  background:linear-gradient(135deg,#6bb8c9 0%,#4a9fb5 100%);\
+  background:linear-gradient(135deg,#4a9fb5 0%,#6bb8c9 100%);\
   color:#fff;\
   border:none;\
-  border-radius:12px;\
+  border-radius:13px;\
   padding:14px 20px;\
-  font-size:14px;\
-  font-weight:700;\
-  cursor:pointer;\
-  font-family:inherit;\
-  transition:transform .15s ease,opacity .15s ease;\
+  font-size:14px;font-weight:800;\
+  cursor:pointer;font-family:inherit;\
+  transition:all .2s ease;\
   box-sizing:border-box;\
   margin-bottom:10px;\
   letter-spacing:.3px;\
+  box-shadow:0 4px 20px rgba(107,184,201,.3);\
 }\
-.it-btn:hover{opacity:.9;transform:translateY(-1px);}\
-.it-btn:active{transform:translateY(0);}\
-.it-btn.green{background:linear-gradient(135deg,#25d366 0%,#1aab52 100%);}\
+.it-btn:hover{\
+  opacity:.92;\
+  transform:translateY(-2px);\
+  box-shadow:0 8px 28px rgba(107,184,201,.4);\
+}\
+.it-btn:active{transform:translateY(0);box-shadow:0 2px 10px rgba(107,184,201,.25);}\
+.it-btn.green{\
+  background:linear-gradient(135deg,#1aab52 0%,#25d366 100%);\
+  box-shadow:0 4px 20px rgba(37,211,102,.3);\
+}\
+.it-btn.green:hover{box-shadow:0 8px 28px rgba(37,211,102,.4);}\
 \
+/* skip link */\
 .it-skip{\
   background:none;border:none;\
-  color:rgba(224,232,240,.25);\
+  color:rgba(200,220,232,.28);\
   font-size:12px;\
   cursor:pointer;\
-  width:100%;\
-  font-family:inherit;\
+  width:100%;font-family:inherit;\
   transition:color .2s;\
-  padding:6px;\
-  display:block;\
-  text-align:center;\
+  padding:6px;display:block;text-align:center;\
 }\
-.it-skip:hover{color:rgba(224,232,240,.55);}\
+.it-skip:hover{color:rgba(200,220,232,.6);}\
 \
-/* close button */\
+/* close ✕ button */\
 .it-close{\
-  position:absolute;top:14px;left:14px;\
-  width:28px;height:28px;\
-  border-radius:8px;\
-  background:rgba(255,255,255,.06);\
-  border:1px solid rgba(255,255,255,.08);\
-  color:rgba(255,255,255,.4);\
+  position:absolute;top:15px;left:15px;\
+  width:30px;height:30px;\
+  border-radius:9px;\
+  background:rgba(255,255,255,.05);\
+  border:1px solid rgba(255,255,255,.1);\
+  color:rgba(200,220,232,.4);\
   cursor:pointer;\
   display:flex;align-items:center;justify-content:center;\
   transition:all .2s;\
-  font-family:inherit;\
-  font-size:14px;\
-  line-height:1;\
+  font-family:inherit;font-size:14px;line-height:1;\
 }\
-.it-close:hover{background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);}\
+.it-close:hover{\
+  background:rgba(255,255,255,.1);\
+  border-color:rgba(107,184,201,.3);\
+  color:rgba(200,220,232,.8);\
+}\
 \
 /* spotlight ring */\
 #itRing{\
@@ -223,45 +268,108 @@
   z-index:99995;\
   pointer-events:none;\
   border-radius:16px;\
-  border:2px solid rgba(107,184,201,.9);\
-  box-shadow:0 0 0 4px rgba(107,184,201,.15),0 0 24px rgba(107,184,201,.3);\
+  border:2px solid rgba(107,184,201,.95);\
+  box-shadow:\
+    0 0 0 4px rgba(107,184,201,.12),\
+    0 0 28px rgba(107,184,201,.35);\
   transition:all .38s cubic-bezier(.4,0,.2,1);\
   animation:itPulseRing 2.4s ease-in-out infinite;\
 }\
 @keyframes itPulseRing{\
-  0%,100%{box-shadow:0 0 0 4px rgba(107,184,201,.15),0 0 24px rgba(107,184,201,.25);}\
-  50%{box-shadow:0 0 0 8px rgba(107,184,201,.08),0 0 40px rgba(107,184,201,.35);}\
+  0%,100%{\
+    box-shadow:0 0 0 4px rgba(107,184,201,.12),0 0 24px rgba(107,184,201,.28);\
+  }\
+  50%{\
+    box-shadow:0 0 0 8px rgba(107,184,201,.06),0 0 44px rgba(107,184,201,.4);\
+  }\
 }\
 \
-/* animations */\
-@keyframes itIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}\
-@keyframes itOut{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.94) translateY(6px)}}\
-#itCard.it-entering{animation:itIn .3s cubic-bezier(.34,1.26,.64,1) forwards;}\
-#itCard.it-leaving{animation:itOut .2s ease forwards;}\
+/* entry / exit animations */\
+@keyframes itIn{\
+  from{opacity:0;transform:scale(.93) translateY(12px)}\
+  to{opacity:1;transform:scale(1) translateY(0)}\
+}\
+@keyframes itOut{\
+  from{opacity:1;transform:scale(1) translateY(0)}\
+  to{opacity:0;transform:scale(.95) translateY(6px)}\
+}\
+#itCard.it-entering{animation:itIn .32s cubic-bezier(.34,1.26,.64,1) forwards;}\
+#itCard.it-leaving{animation:itOut .22s ease forwards;}\
 \
-/* ── Light mode ── */\
+/* ══════════════════════════════════════\
+   Light mode overrides\
+══════════════════════════════════════ */\
 body.light-mode #itCard{\
   background:#ffffff;\
-  border-color:rgba(37,99,235,.15);\
-  box-shadow:0 20px 60px rgba(0,0,0,.12),0 0 0 1px rgba(37,99,235,.06);\
+  border-color:rgba(37,99,235,.2);\
+  box-shadow:\
+    0 0 0 1px rgba(37,99,235,.06),\
+    0 20px 60px rgba(0,0,0,.1),\
+    inset 0 1px 0 rgba(255,255,255,.8);\
 }\
-body.light-mode .it-accent-bar{background:linear-gradient(90deg,#2563EB,#3B82F6,transparent);}\
-body.light-mode .it-icon-wrap{background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.15);color:#2563EB;}\
+body.light-mode .it-accent-bar{\
+  background:linear-gradient(90deg,#2563EB,#3B82F6,rgba(59,130,246,0));\
+}\
+body.light-mode .it-accent-bar.green{\
+  background:linear-gradient(90deg,#16A34A,#22C55E,rgba(34,197,94,0));\
+}\
+body.light-mode .it-icon-wrap{\
+  background:rgba(37,99,235,.07);\
+  border-color:rgba(37,99,235,.18);\
+  color:#2563EB;\
+  box-shadow:none;\
+}\
+body.light-mode .it-icon-wrap.green{\
+  background:rgba(22,163,74,.07);\
+  border-color:rgba(22,163,74,.18);\
+  color:#16A34A;\
+  box-shadow:none;\
+}\
 body.light-mode .it-dot{background:rgba(37,99,235,.15);}\
-body.light-mode .it-dot.active{background:#2563EB;}\
-body.light-mode .it-dot.done{background:rgba(37,99,235,.4);}\
+body.light-mode .it-dot.active{background:#2563EB;box-shadow:none;}\
+body.light-mode .it-dot.done{background:rgba(37,99,235,.35);}\
+body.light-mode .it-dot.green-active{background:#16A34A;box-shadow:none;}\
+body.light-mode .it-divider{background:rgba(37,99,235,.08);}\
 body.light-mode #itCard h2{color:#111827;}\
 body.light-mode #itCard p{color:#4B5563;}\
 body.light-mode #itCard p strong{color:#2563EB;}\
-body.light-mode .it-prog-text{color:rgba(37,99,235,.55);}\
-body.light-mode .it-prog-bar{background:rgba(37,99,235,.1);}\
-body.light-mode .it-prog-fill{background:linear-gradient(90deg,#2563EB,#3B82F6);}\
-body.light-mode .it-btn{background:linear-gradient(135deg,#2563EB,#3B82F6);}\
-body.light-mode .it-skip{color:rgba(31,41,55,.25);}\
-body.light-mode .it-skip:hover{color:rgba(31,41,55,.55);}\
-body.light-mode .it-close{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.08);color:rgba(0,0,0,.3);}\
-body.light-mode .it-close:hover{background:rgba(0,0,0,.08);color:rgba(0,0,0,.6);}\
-body.light-mode #itRing{border-color:rgba(37,99,235,.8);box-shadow:0 0 0 4px rgba(37,99,235,.12),0 0 24px rgba(37,99,235,.2);}\
+body.light-mode .it-prog-text{color:rgba(37,99,235,.6);}\
+body.light-mode .it-prog-bar{background:rgba(37,99,235,.08);}\
+body.light-mode .it-prog-fill{\
+  background:linear-gradient(90deg,#2563EB,#3B82F6);\
+  box-shadow:none;\
+}\
+body.light-mode .it-prog-fill.green{\
+  background:linear-gradient(90deg,#16A34A,#22C55E);\
+  box-shadow:none;\
+}\
+body.light-mode .it-btn{\
+  background:linear-gradient(135deg,#2563EB,#3B82F6);\
+  box-shadow:0 4px 16px rgba(37,99,235,.25);\
+}\
+body.light-mode .it-btn:hover{box-shadow:0 8px 24px rgba(37,99,235,.35);}\
+body.light-mode .it-btn.green{\
+  background:linear-gradient(135deg,#16A34A,#22C55E);\
+  box-shadow:0 4px 16px rgba(22,163,74,.25);\
+}\
+body.light-mode .it-skip{color:rgba(31,41,55,.28);}\
+body.light-mode .it-skip:hover{color:rgba(31,41,55,.6);}\
+body.light-mode .it-close{\
+  background:rgba(0,0,0,.04);\
+  border-color:rgba(0,0,0,.1);\
+  color:rgba(0,0,0,.35);\
+}\
+body.light-mode .it-close:hover{\
+  background:rgba(0,0,0,.08);\
+  border-color:rgba(37,99,235,.25);\
+  color:rgba(0,0,0,.65);\
+}\
+body.light-mode #itRing{\
+  border-color:rgba(37,99,235,.85);\
+  box-shadow:\
+    0 0 0 4px rgba(37,99,235,.1),\
+    0 0 24px rgba(37,99,235,.2);\
+}\
 ';
 
     /* ─── inject CSS ─── */
