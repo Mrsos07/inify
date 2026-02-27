@@ -208,6 +208,15 @@
             var step = parseInt(localStorage.getItem(LS_KEY) || '1');
             if (step < 1 || step > 4) step = 1;
             setTimeout(function () { TOUR._open(step); }, 450);
+        },
+
+        /* يُستدعى تلقائياً في كل صفحات الداشبورد لاستئناف التور */
+        resumeIfPending: function () {
+            if (localStorage.getItem(LS_DONE) === '1') return;
+            var step = parseInt(localStorage.getItem(LS_KEY) || '0');
+            if (step >= 1 && step <= 4) {
+                setTimeout(function () { TOUR._open(step); }, 500);
+            }
         }
     };
 
@@ -215,5 +224,10 @@
     window.startTourFromSidebar = function () {
         TOUR.restart();
     };
+
+    /* استئناف تلقائي في أي صفحة داشبورد */
+    document.addEventListener('DOMContentLoaded', function () {
+        TOUR.resumeIfPending();
+    });
 
 })();
