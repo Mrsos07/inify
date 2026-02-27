@@ -801,7 +801,25 @@ def dashboard_view(request):
         'subscription_expiring_soon': expiring_soon,
     }
     
+    context['show_tour'] = not agent.tour_completed
+
     return render(request, 'dashboard/index.html', context)
+
+
+@login_required(login_url='/auth/login/')
+@csrf_exempt
+def tour_complete_api(request):
+    """تعليم التور كمكتمل"""
+    if request.method == 'POST':
+        from apps.agents.models import Agent
+        try:
+            agent = Agent.objects.get(user=request.user)
+            agent.tour_completed = True
+            agent.save(update_fields=['tour_completed'])
+            return JsonResponse({'success': True})
+        except Agent.DoesNotExist:
+            return JsonResponse({'success': False})
+    return JsonResponse({'success': False})
 
 
 @login_required(login_url='/auth/login/')

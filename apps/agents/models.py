@@ -28,6 +28,7 @@ class Agent(models.Model):
     fal_license = models.CharField(max_length=50, blank=True, verbose_name='رخصة فال')
     phone = EncryptedCharField(max_length=100, verbose_name='رقم الجوال')
     phone_hash = models.CharField(max_length=64, blank=True, db_index=True, verbose_name='هاش رقم الجوال')
+    tour_completed = models.BooleanField(default=False, verbose_name='أكمل جولة التعريف')
     whatsapp = EncryptedCharField(max_length=100, blank=True, verbose_name='واتساب')
     email = EncryptedEmailField(verbose_name='البريد الإلكتروني')
     

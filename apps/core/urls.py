@@ -82,6 +82,9 @@ urlpatterns = [
     path('api/agent/<uuid:agent_id>/stats/', views.get_agent_stats, name='get-agent-stats'),
     path('api/agent/<uuid:agent_id>/conversation/', views.increment_conversation, name='increment-conversation'),
     
+    # Tour API
+    path('api/tour/complete/', views.tour_complete_api, name='tour-complete'),
+
     # Profile API
     path('api/profile/update/', views.profile_update_api, name='profile-update'),
     path('api/profile/change-password/', views.change_password_api, name='change-password'),
