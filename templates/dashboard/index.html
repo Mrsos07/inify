@@ -352,6 +352,76 @@
             </div>
         </div>
 
+        {% if team_stats %}
+        <div style="margin-bottom:24px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="font-size:20px;">👥</div>
+                    <div>
+                        <h3 style="margin:0;font-size:17px;font-weight:700;">إحصائيات فريق العمل</h3>
+                        <p style="margin:0;font-size:12px;color:rgba(248,248,248,.5);">{{ team_stats.count }} أعضاء نشطين في مؤسستك</p>
+                    </div>
+                </div>
+                <a href="/dashboard/team/" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:linear-gradient(135deg,#FFD700,#FFA500);color:#0A1628;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none;">إدارة الفريق ←</a>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px;">
+                <div style="background:rgba(30,58,95,.4);border:1px solid rgba(107,184,201,.15);border-radius:12px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#FFD700;">{{ team_stats.count }}</div>
+                    <div style="font-size:11px;color:rgba(248,248,248,.5);margin-top:4px;">أعضاء نشطين</div>
+                </div>
+                <div style="background:rgba(30,58,95,.4);border:1px solid rgba(107,184,201,.15);border-radius:12px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#6BB8C9;">{{ team_stats.total_properties }}</div>
+                    <div style="font-size:11px;color:rgba(248,248,248,.5);margin-top:4px;">عقارات الفريق</div>
+                </div>
+                <div style="background:rgba(30,58,95,.4);border:1px solid rgba(107,184,201,.15);border-radius:12px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#a78bfa;">{{ team_stats.total_leads }}</div>
+                    <div style="font-size:11px;color:rgba(248,248,248,.5);margin-top:4px;">عملاء الفريق</div>
+                </div>
+                <div style="background:rgba(30,58,95,.4);border:1px solid rgba(107,184,201,.15);border-radius:12px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#22c55e;">{{ team_stats.total_conversations }}</div>
+                    <div style="font-size:11px;color:rgba(248,248,248,.5);margin-top:4px;">محادثات الفريق</div>
+                </div>
+                <div style="background:rgba(30,58,95,.4);border:1px solid rgba(107,184,201,.15);border-radius:12px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#25d366;">{{ team_stats.whatsapp_connected }}</div>
+                    <div style="font-size:11px;color:rgba(248,248,248,.5);margin-top:4px;">واتساب متصل</div>
+                </div>
+            </div>
+            <div style="background:rgba(30,58,95,.4);border:1px solid rgba(107,184,201,.15);border-radius:14px;overflow:hidden;">
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead>
+                        <tr style="background:rgba(107,184,201,.08);">
+                            <th style="text-align:right;padding:12px 16px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">العضو</th>
+                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">الدور</th>
+                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">🏠</th>
+                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">👥</th>
+                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">💬</th>
+                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">📱</th>
+                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in team_stats.members %}
+                        <tr style="border-top:1px solid rgba(107,184,201,.08);">
+                            <td style="padding:12px 16px;">
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4A90A4,#6BB8C9);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">{{ m.initials }}</div>
+                                    <span style="font-weight:600;">{{ m.name }}</span>
+                                </div>
+                            </td>
+                            <td style="text-align:center;padding:12px 8px;"><span style="font-size:11px;color:#FFD700;background:rgba(255,215,0,.1);padding:2px 8px;border-radius:10px;">{{ m.role }}</span></td>
+                            <td style="text-align:center;padding:12px 8px;font-weight:700;color:#6BB8C9;">{{ m.properties }}</td>
+                            <td style="text-align:center;padding:12px 8px;font-weight:700;color:#a78bfa;">{{ m.leads }}</td>
+                            <td style="text-align:center;padding:12px 8px;font-weight:700;color:#22c55e;">{{ m.conversations }}</td>
+                            <td style="text-align:center;padding:12px 8px;">{% if m.whatsapp %}<span style="color:#25d366;">●</span>{% else %}<span style="color:#ef4444;">○</span>{% endif %}</td>
+                            <td style="text-align:center;padding:12px 8px;">{% if m.is_active %}<span style="font-size:11px;color:#22c55e;background:rgba(34,197,94,.1);padding:2px 8px;border-radius:10px;">نشط</span>{% else %}<span style="font-size:11px;color:#ef4444;background:rgba(239,68,68,.1);padding:2px 8px;border-radius:10px;">معطّل</span>{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="content-grid">
             <div class="card">
                 <div class="card-header">

@@ -93,6 +93,32 @@ body{font-family:BalooBhaijaan2,sans-serif;color:var(--pearl);min-height:100vh;b
     </div>
   </div>
 
+  <!-- Date Range + Export -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:16px 20px;">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span style="font-size:13px;color:var(--text-muted);">📅 نطاق التاريخ:</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label style="font-size:12px;color:var(--text-muted);">من</label>
+        <input type="date" id="dateFrom" style="padding:7px 12px;background:rgba(10,22,40,.6);border:1px solid rgba(107,184,201,.2);border-radius:8px;color:var(--pearl);font-family:inherit;font-size:12px;">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label style="font-size:12px;color:var(--text-muted);">إلى</label>
+        <input type="date" id="dateTo" style="padding:7px 12px;background:rgba(10,22,40,.6);border:1px solid rgba(107,184,201,.2);border-radius:8px;color:var(--pearl);font-family:inherit;font-size:12px;">
+      </div>
+      <button onclick="loadDataByRange()" style="padding:7px 16px;background:rgba(107,184,201,.15);color:var(--cyan);border:1px solid rgba(107,184,201,.25);border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit;transition:all .2s;" onmouseover="this.style.background='rgba(107,184,201,.3)'" onmouseout="this.style.background='rgba(107,184,201,.15)'">🔍 عرض</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="exportExcel()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3);border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;transition:all .2s;" onmouseover="this.style.background='rgba(34,197,94,.25)'" onmouseout="this.style.background='rgba(34,197,94,.12)'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        تصدير Excel
+      </button>
+      <button onclick="exportPDF()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;transition:all .2s;" onmouseover="this.style.background='rgba(239,68,68,.25)'" onmouseout="this.style.background='rgba(239,68,68,.12)'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+        تصدير PDF
+      </button>
+    </div>
+  </div>
+
   <!-- KPIs -->
   <div class="kpi-grid" id="kpiGrid">
     <div class="loading"><div class="spinner"></div> جاري التحميل...</div>
@@ -331,6 +357,80 @@ async function loadData(days, btn) {
     document.getElementById('kpiGrid').innerHTML = '<div class="loading" style="color:#ef4444;">خطأ في تحميل البيانات</div>';
   }
 }
+
+// ─── Date Range + Export ───
+function getDateParams() {
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  let params = '';
+  if (from) params += '&date_from=' + from;
+  if (to) params += '&date_to=' + to;
+  return params;
+}
+
+function loadDataByRange() {
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  if (!from && !to) {
+    alert('حدد تاريخ البداية أو النهاية');
+    return;
+  }
+  // Deactivate period buttons
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+
+  const diffMs = (new Date(to || new Date()) - new Date(from || '2020-01-01'));
+  const diffDays = Math.max(1, Math.ceil(diffMs / 86400000));
+
+  document.getElementById('kpiGrid').innerHTML = '<div class="loading"><div class="spinner"></div> جاري التحميل...</div>';
+
+  fetch('/dashboard/analytics/data/?period=' + diffDays, { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(d => {
+      if (!d.success) return;
+      const c = d.charts;
+      renderKPIs(d.kpis);
+      makeLineChart('convChart', c.conversations_daily.labels, c.conversations_daily.data, 'محادثات', '#6BB8C9');
+      makeLineChart('leadsChart', c.leads_daily.labels, c.leads_daily.data, 'عملاء', '#22c55e');
+      makeDoughnut('statusChart', c.lead_status.labels, c.lead_status.data);
+      makeDoughnut('sourceChart', c.lead_source.labels, c.lead_source.data);
+      makeDoughnut('convSourceChart', c.conv_source.labels, c.conv_source.data);
+      makeDoughnut('viewingChart', c.viewing_status.labels, c.viewing_status.data);
+      makeBar('cityChart', c.city_demand.labels, c.city_demand.data, '#6BB8C9');
+      makeBar('typeChart', c.type_demand.labels, c.type_demand.data, '#FFD700');
+      makeBar('keywordsChart', c.keywords.labels, c.keywords.data, COLORS, true);
+      makeBar('scoreChart', c.score_distribution.labels, c.score_distribution.data, '#a78bfa');
+      renderTopProperties(c.top_properties);
+    })
+    .catch(() => {
+      document.getElementById('kpiGrid').innerHTML = '<div class="loading" style="color:#ef4444;">خطأ في تحميل البيانات</div>';
+    });
+}
+
+function exportExcel() {
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  let url = '/dashboard/analytics/export/excel/?';
+  if (from) url += 'date_from=' + from + '&';
+  if (to) url += 'date_to=' + to;
+  window.location.href = url;
+}
+
+function exportPDF() {
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  let url = '/dashboard/analytics/export/pdf/?';
+  if (from) url += 'date_from=' + from + '&';
+  if (to) url += 'date_to=' + to;
+  window.location.href = url;
+}
+
+// Set default dates (last 30 days)
+(function() {
+  const now = new Date();
+  const ago = new Date(now - 30 * 86400000);
+  document.getElementById('dateTo').value = now.toISOString().split('T')[0];
+  document.getElementById('dateFrom').value = ago.toISOString().split('T')[0];
+})();
 
 // Load on page ready
 loadData(30, document.querySelector('.period-btn.active'));

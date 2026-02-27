@@ -689,6 +689,16 @@ class Subscription(models.Model):
         verbose_name='المسوق'
     )
     
+    # ربط اشتراك العضو بالاشتراك الرئيسي للمؤسسة
+    parent_subscription = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='child_subscriptions',
+        verbose_name='الاشتراك الرئيسي (المؤسسة)'
+    )
+    
     plan_key = models.CharField(max_length=20, choices=PLAN_CHOICES, default='monthly', verbose_name='الخطة')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='trial', verbose_name='الحالة')
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='المبلغ')
@@ -735,6 +745,11 @@ class Subscription(models.Model):
         return False
     
     @property
+    def is_child_subscription(self):
+        """هل هذا اشتراك عضو فريق مرتبط بالمؤسسة"""
+        return self.parent_subscription is not None
+
+    @property
     def days_remaining(self):
         """عدد الأيام المتبقية (يُقرّب للأعلى لتجنب عرض 0 قبل انتهاء المدة)"""
         import math
@@ -751,6 +766,105 @@ class Subscription(models.Model):
                 return 0
             return max(1, math.ceil(seconds / 86400))
         return 0
+
+    def sync_team_subscriptions(self):
+        """
+        مزامنة اشتراكات أعضاء الفريق مع هذا الاشتراك الرئيسي.
+        يُستدعى عند كل تغيير في اشتراك المؤسسة (تفعيل، تجديد، إلغاء، انتهاء).
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        owner_agent = self.agent
+        team_members = TeamMember.objects.filter(
+            owner_agent=owner_agent, is_active=True
+        ).select_related('user')
+        
+        if not team_members.exists():
+            return 0
+        
+        synced = 0
+        for member in team_members:
+            try:
+                member_agent = member.user.agent_profile
+            except Agent.DoesNotExist:
+                continue
+            
+            if self.status in ('active', 'trial'):
+                # الاشتراك نشط — أنشئ أو حدّث اشتراك العضو
+                member_sub = Subscription.objects.filter(
+                    agent=member_agent,
+                    parent_subscription=self,
+                ).first()
+                
+                if member_sub:
+                    # حدّث الاشتراك الموجود
+                    member_sub.plan_key = self.plan_key
+                    member_sub.status = self.status
+                    member_sub.start_date = self.start_date
+                    member_sub.end_date = self.end_date
+                    member_sub.trial_start = self.trial_start
+                    member_sub.trial_end = self.trial_end
+                    member_sub.save(update_fields=[
+                        'plan_key', 'status', 'start_date', 'end_date',
+                        'trial_start', 'trial_end', 'updated_at',
+                    ])
+                else:
+                    # أنهِ أي اشتراك قديم للعضو
+                    Subscription.objects.filter(
+                        agent=member_agent,
+                        status__in=['active', 'trial', 'pending'],
+                    ).update(status='expired')
+                    
+                    # أنشئ اشتراك جديد مرتبط
+                    member_sub = Subscription.objects.create(
+                        agent=member_agent,
+                        parent_subscription=self,
+                        plan_key=self.plan_key,
+                        status=self.status,
+                        amount=0,  # الأعضاء لا يدفعون
+                        start_date=self.start_date,
+                        end_date=self.end_date,
+                        trial_start=self.trial_start,
+                        trial_end=self.trial_end,
+                    )
+                
+                # حدّث بيانات Agent
+                member_agent.subscription_plan = owner_agent.subscription_plan
+                member_agent.subscription_start = self.start_date or self.trial_start
+                member_agent.subscription_expires = self.end_date or self.trial_end
+                member_agent.save(update_fields=[
+                    'subscription_plan', 'subscription_start', 'subscription_expires',
+                ])
+                synced += 1
+                
+            elif self.status in ('expired', 'cancelled'):
+                # الاشتراك انتهى أو أُلغي — أنهِ اشتراكات الأعضاء
+                expired_count = Subscription.objects.filter(
+                    agent=member_agent,
+                    parent_subscription=self,
+                    status__in=['active', 'trial'],
+                ).update(status='expired')
+                
+                # أيضاً أنهِ أي اشتراك نشط آخر مرتبط بنفس المؤسسة
+                if not expired_count:
+                    Subscription.objects.filter(
+                        agent=member_agent,
+                        status__in=['active', 'trial'],
+                    ).update(status='expired')
+                
+                member_agent.subscription_plan = 'free'
+                member_agent.subscription_expires = None
+                member_agent.save(update_fields=[
+                    'subscription_plan', 'subscription_expires',
+                ])
+                synced += 1
+        
+        logger.info(
+            f"sync_team_subscriptions: owner={owner_agent.id}, "
+            f"status={self.status}, synced={synced}/{team_members.count()}"
+        )
+        return synced
 
 
 class Webhook(models.Model):
@@ -840,3 +954,92 @@ class WebhookLog(models.Model):
 
     def __str__(self):
         return f"{self.webhook.name} — {self.event} — {self.status}"
+
+
+class TeamMember(models.Model):
+    """عضو فريق مرتبط بمؤسسة عقارية - حد أقصى 5 أعضاء لكل مؤسسة"""
+    
+    ROLE_CHOICES = [
+        ('marketer', 'مسوق عقاري'),
+        ('viewer', 'مشاهد فقط'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    owner_agent = models.ForeignKey(
+        Agent,
+        on_delete=models.CASCADE,
+        related_name='team_members',
+        verbose_name='المؤسسة الرئيسية'
+    )
+    
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='team_membership',
+        verbose_name='حساب العضو'
+    )
+    
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default='marketer',
+        verbose_name='الدور'
+    )
+    
+    is_active = models.BooleanField(default=True, verbose_name='نشط')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإضافة')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'عضو فريق'
+        verbose_name_plural = 'أعضاء الفريق'
+        ordering = ['-created_at']
+        unique_together = ['owner_agent', 'user']
+    
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} - {self.owner_agent.company_name}"
+    
+    @classmethod
+    def get_team_count(cls, owner_agent):
+        """عدد أعضاء الفريق الحاليين"""
+        return cls.objects.filter(owner_agent=owner_agent, is_active=True).count()
+    
+    @classmethod
+    def can_add_member(cls, owner_agent, max_members=5):
+        """هل يمكن إضافة عضو جديد"""
+        return cls.get_team_count(owner_agent) < max_members
+    
+    def get_properties_count(self):
+        """عدد العقارات المرتبطة بهذا العضو"""
+        try:
+            member_agent = self.user.agent_profile
+            return member_agent.properties.filter(is_active=True).count()
+        except Agent.DoesNotExist:
+            return 0
+    
+    def get_leads_count(self):
+        """عدد العملاء المرتبطين بهذا العضو"""
+        try:
+            member_agent = self.user.agent_profile
+            from apps.leads.models import Lead
+            return Lead.objects.filter(agent=member_agent).count()
+        except Agent.DoesNotExist:
+            return 0
+    
+    def get_conversations_count(self):
+        """عدد المحادثات المرتبطة بهذا العضو"""
+        try:
+            member_agent = self.user.agent_profile
+            from apps.chat.models import Conversation
+            return Conversation.objects.filter(agent=member_agent).count()
+        except Agent.DoesNotExist:
+            return 0
+    
+    def is_whatsapp_connected(self):
+        """هل الواتساب مرتبط لهذا العضو"""
+        try:
+            member_agent = self.user.agent_profile
+            return hasattr(member_agent, 'whatsapp_instance') and member_agent.whatsapp_instance.status == 'connected'
+        except (Agent.DoesNotExist, WhatsAppInstance.DoesNotExist):
+            return False

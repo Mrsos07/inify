@@ -21,6 +21,10 @@ logger = logging.getLogger(__name__)
 
 def verify_recaptcha(token, remote_ip=None):
     """التحقق من reCAPTCHA v3 token مع Google API"""
+    if getattr(settings, 'RECAPTCHA_DISABLED', False):
+        logger.warning('[reCAPTCHA] Verification DISABLED (dev mode)')
+        return True
+
     secret_key = getattr(settings, 'RECAPTCHA_SECRET_KEY', '')
     threshold = getattr(settings, 'RECAPTCHA_SCORE_THRESHOLD', 0.5)
 
@@ -802,6 +806,50 @@ def dashboard_view(request):
     }
     
     context['show_tour'] = not agent.tour_completed
+
+    # إحصائيات فريق العمل (للمؤسسات فقط)
+    if agent.subscription_plan == 'enterprise':
+        from apps.agents.models import TeamMember
+        team_members = TeamMember.objects.filter(owner_agent=agent).select_related('user')
+        team_count = team_members.filter(is_active=True).count()
+        
+        if team_count > 0:
+            team_stats = {
+                'count': team_count,
+                'total_properties': 0,
+                'total_leads': 0,
+                'total_conversations': 0,
+                'active_count': 0,
+                'whatsapp_connected': 0,
+                'members': [],
+            }
+            
+            for member in team_members:
+                m_props = member.get_properties_count()
+                m_leads = member.get_leads_count()
+                m_convs = member.get_conversations_count()
+                m_wa = member.is_whatsapp_connected()
+                
+                team_stats['total_properties'] += m_props
+                team_stats['total_leads'] += m_leads
+                team_stats['total_conversations'] += m_convs
+                if member.is_active:
+                    team_stats['active_count'] += 1
+                if m_wa:
+                    team_stats['whatsapp_connected'] += 1
+                
+                team_stats['members'].append({
+                    'name': member.user.get_full_name() or member.user.username,
+                    'role': member.get_role_display(),
+                    'is_active': member.is_active,
+                    'properties': m_props,
+                    'leads': m_leads,
+                    'conversations': m_convs,
+                    'whatsapp': m_wa,
+                    'initials': ''.join([n[0] for n in (member.user.get_full_name() or member.user.username).split()[:2]]).upper(),
+                })
+            
+            context['team_stats'] = team_stats
 
     return render(request, 'dashboard/index.html', context)
 
@@ -1991,6 +2039,12 @@ def start_trial_api(request):
         agent.subscription_expires = sub.trial_end
         agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
 
+        # مزامنة اشتراكات أعضاء الفريق
+        try:
+            sub.sync_team_subscriptions()
+        except Exception as sync_err:
+            logger.error(f"Team sync error on trial start: {sync_err}")
+
         return JsonResponse({
             'success': True,
             'message': 'تم بدء الفترة التجريبية! استمتع بـ 5 أيام مجانية.',
@@ -2123,6 +2177,12 @@ def payment_success_view(request):
                     agent.subscription_expires = sub.end_date
                     agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
 
+                    # مزامنة اشتراكات أعضاء الفريق
+                    try:
+                        sub.sync_team_subscriptions()
+                    except Exception as sync_err:
+                        logger.error(f"Team sync error on payment success: {sync_err}")
+
                     logger.info(f"Payment success (redirect) for agent {agent.id}: plan={sub.plan_key}")
     except Exception as e:
         logger.error(f"Payment success handler error: {e}")
@@ -2206,6 +2266,13 @@ def streampay_webhook(request):
                         agent.subscription_start = now
                         agent.subscription_expires = sub.end_date
                         agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
+
+                        # مزامنة اشتراكات أعضاء الفريق
+                        try:
+                            sub.sync_team_subscriptions()
+                        except Exception as sync_err:
+                            logger.error(f"Team sync error on PAYMENT_SUCCEEDED: {sync_err}")
+
                         logger.info(f"Webhook PAYMENT_SUCCEEDED: Activated subscription for agent {agent_id}, plan={plan_key}")
                     else:
                         logger.warning(f"Webhook PAYMENT_SUCCEEDED: No pending/trial sub found for agent {agent_id}")
@@ -2258,6 +2325,13 @@ def streampay_webhook(request):
                         agent = sub.agent
                         agent.subscription_expires = sub.end_date
                         agent.save(update_fields=['subscription_expires'])
+
+                        # مزامنة اشتراكات أعضاء الفريق عند التجديد
+                        try:
+                            sub.sync_team_subscriptions()
+                        except Exception as sync_err:
+                            logger.error(f"Team sync error on INVOICE_COMPLETED: {sync_err}")
+
                         logger.info(f"Webhook INVOICE_COMPLETED: Renewed subscription for agent {agent.id}, new end_date={sub.end_date}")
                     else:
                         logger.warning(f"Webhook INVOICE_COMPLETED: No active sub found with subscription_id={sp_subscription_id}")
@@ -2297,6 +2371,17 @@ def streampay_webhook(request):
                     if agent:
                         agent.subscription_plan = 'free'
                         agent.save(update_fields=['subscription_plan'])
+
+                        # إنهاء اشتراكات أعضاء الفريق عند إلغاء المؤسسة
+                        try:
+                            cancelled_sub = Subscription.objects.filter(
+                                agent=agent, status='cancelled'
+                            ).order_by('-created_at').first()
+                            if cancelled_sub:
+                                cancelled_sub.sync_team_subscriptions()
+                        except Exception as sync_err:
+                            logger.error(f"Team sync error on SUBSCRIPTION_CANCELED: {sync_err}")
+
                 except Exception as e:
                     logger.error(f"Webhook SUBSCRIPTION_CANCELED agent update error: {e}")
 
@@ -2550,3 +2635,310 @@ def admin_support_ticket_reply(request, ticket_id):
         return JsonResponse({'success': False, 'error': 'التذكرة غير موجودة'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# ═══════════════════════════════════════════════════════════
+# Team Management - إدارة فريق العمل
+# ═══════════════════════════════════════════════════════════
+
+@login_required(login_url='/auth/login/')
+def team_view(request):
+    """صفحة إدارة فريق العمل"""
+    from apps.agents.models import Agent, TeamMember
+
+    try:
+        agent = request.user.agent_profile
+    except Agent.DoesNotExist:
+        return redirect('dashboard')
+
+    if agent.subscription_plan != 'enterprise':
+        return redirect('dashboard')
+
+    team_members = TeamMember.objects.filter(owner_agent=agent).select_related('user')
+    
+    # اشتراك المؤسسة الرئيسي
+    from apps.agents.models import Subscription
+    owner_sub = Subscription.objects.filter(
+        agent=agent
+    ).exclude(status__in=['expired', 'cancelled']).order_by('-created_at').first()
+    
+    members_data = []
+    for member in team_members:
+        # اشتراك العضو
+        member_sub = None
+        member_sub_status = 'غير مشترك'
+        member_sub_end = None
+        member_sub_days = 0
+        member_sub_linked = False
+        try:
+            member_agent = member.user.agent_profile
+            member_sub = Subscription.objects.filter(
+                agent=member_agent
+            ).exclude(status__in=['expired', 'cancelled']).order_by('-created_at').first()
+            if member_sub:
+                member_sub_status = member_sub.get_status_display()
+                member_sub_end = member_sub.end_date or member_sub.trial_end
+                member_sub_days = member_sub.days_remaining
+                member_sub_linked = member_sub.parent_subscription is not None
+        except Exception:
+            pass
+
+        members_data.append({
+            'id': str(member.id),
+            'username': member.user.username,
+            'full_name': member.user.get_full_name() or member.user.username,
+            'email': member.user.email,
+            'role': member.role,
+            'role_display': member.get_role_display(),
+            'is_active': member.is_active,
+            'properties_count': member.get_properties_count(),
+            'leads_count': member.get_leads_count(),
+            'conversations_count': member.get_conversations_count(),
+            'whatsapp_connected': member.is_whatsapp_connected(),
+            'created_at': member.created_at,
+            'sub_status': member_sub_status,
+            'sub_end': member_sub_end,
+            'sub_days': member_sub_days,
+            'sub_linked': member_sub_linked,
+        })
+
+    # بيانات اشتراك المؤسسة
+    owner_sub_data = {}
+    if owner_sub:
+        owner_sub_data = {
+            'status': owner_sub.get_status_display(),
+            'plan': owner_sub.get_plan_key_display(),
+            'end_date': owner_sub.end_date or owner_sub.trial_end,
+            'days_remaining': owner_sub.days_remaining,
+            'is_active': owner_sub.is_active,
+        }
+
+    context = {
+        'active_page': 'team',
+        'subscription_plan': agent.subscription_plan,
+        'team_members': members_data,
+        'team_count': TeamMember.get_team_count(agent),
+        'max_team_members': 5,
+        'can_add_member': TeamMember.can_add_member(agent),
+        'owner_sub': owner_sub_data,
+    }
+    return render(request, 'dashboard/team.html', context)
+
+
+@login_required(login_url='/auth/login/')
+@csrf_exempt
+def team_add_member(request):
+    """إضافة عضو جديد للفريق"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    from apps.agents.models import Agent, TeamMember
+
+    try:
+        agent = request.user.agent_profile
+    except Agent.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'لا يوجد ملف مسوق'}, status=404)
+
+    if agent.subscription_plan != 'enterprise':
+        return JsonResponse({'success': False, 'error': 'هذه الميزة متاحة فقط لباقة المؤسسات'}, status=403)
+
+    if not TeamMember.can_add_member(agent):
+        return JsonResponse({'success': False, 'error': 'تم الوصول للحد الأقصى (5 أعضاء)'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'بيانات غير صالحة'}, status=400)
+
+    first_name = data.get('first_name', '').strip()
+    last_name = data.get('last_name', '').strip()
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '').strip()
+    role = data.get('role', 'marketer')
+
+    if not all([first_name, email, password]):
+        return JsonResponse({'success': False, 'error': 'الاسم والبريد وكلمة المرور مطلوبة'}, status=400)
+
+    if len(password) < 6:
+        return JsonResponse({'success': False, 'error': 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'}, status=400)
+
+    if User.objects.filter(email=email).exists():
+        return JsonResponse({'success': False, 'error': 'هذا البريد الإلكتروني مسجل مسبقاً'}, status=400)
+
+    try:
+        username = email.split('@')[0]
+        base_username = username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        new_user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+        member_agent = Agent.objects.create(
+            user=new_user,
+            email=email,
+            phone='',
+            city=agent.city,
+            company_name=agent.company_name,
+            subscription_plan='enterprise',
+        )
+
+        from apps.agents.models import Subscription
+        from django.utils import timezone
+        owner_sub = Subscription.objects.filter(
+            agent=agent
+        ).exclude(status__in=['expired', 'cancelled']).order_by('-created_at').first()
+
+        if owner_sub and owner_sub.is_active:
+            Subscription.objects.create(
+                agent=member_agent,
+                parent_subscription=owner_sub,
+                plan_key=owner_sub.plan_key,
+                status=owner_sub.status,
+                amount=0,
+                start_date=owner_sub.start_date,
+                end_date=owner_sub.end_date,
+                trial_start=owner_sub.trial_start,
+                trial_end=owner_sub.trial_end,
+            )
+            member_agent.subscription_start = owner_sub.start_date or owner_sub.trial_start
+            member_agent.subscription_expires = owner_sub.end_date or owner_sub.trial_end
+            member_agent.save(update_fields=['subscription_start', 'subscription_expires'])
+
+        team_member = TeamMember.objects.create(
+            owner_agent=agent,
+            user=new_user,
+            role=role,
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'تم إضافة {first_name} {last_name} بنجاح',
+            'member': {
+                'id': str(team_member.id),
+                'username': new_user.username,
+                'full_name': new_user.get_full_name(),
+                'email': new_user.email,
+                'role': team_member.role,
+                'role_display': team_member.get_role_display(),
+            }
+        })
+    except Exception as e:
+        logger.error(f'Error adding team member: {e}')
+        return JsonResponse({'success': False, 'error': f'حدث خطأ: {str(e)}'}, status=500)
+
+
+@login_required(login_url='/auth/login/')
+@csrf_exempt
+def team_toggle_member(request, member_id):
+    """تفعيل/تعطيل عضو في الفريق"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    from apps.agents.models import Agent, TeamMember
+
+    try:
+        agent = request.user.agent_profile
+    except Agent.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+
+    try:
+        member = TeamMember.objects.get(id=member_id, owner_agent=agent)
+        member.is_active = not member.is_active
+        member.save(update_fields=['is_active'])
+
+        member.user.is_active = member.is_active
+        member.user.save(update_fields=['is_active'])
+
+        status_text = 'تم تفعيل' if member.is_active else 'تم تعطيل'
+        return JsonResponse({
+            'success': True,
+            'message': f'{status_text} العضو بنجاح',
+            'is_active': member.is_active,
+        })
+    except TeamMember.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'العضو غير موجود'}, status=404)
+
+
+@login_required(login_url='/auth/login/')
+@csrf_exempt
+def team_delete_member(request, member_id):
+    """حذف عضو من الفريق"""
+    if request.method != 'DELETE':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    from apps.agents.models import Agent, TeamMember
+
+    try:
+        agent = request.user.agent_profile
+    except Agent.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+
+    try:
+        member = TeamMember.objects.get(id=member_id, owner_agent=agent)
+        member_user = member.user
+        member_name = member_user.get_full_name() or member_user.username
+        member.delete()
+        member_user.is_active = False
+        member_user.save(update_fields=['is_active'])
+
+        return JsonResponse({
+            'success': True,
+            'message': f'تم حذف {member_name} من الفريق',
+        })
+    except TeamMember.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'العضو غير موجود'}, status=404)
+
+
+@login_required(login_url='/auth/login/')
+@csrf_exempt
+def team_update_member(request, member_id):
+    """تحديث بيانات عضو في الفريق"""
+    if request.method != 'PUT':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    from apps.agents.models import Agent, TeamMember
+
+    try:
+        agent = request.user.agent_profile
+    except Agent.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'بيانات غير صالحة'}, status=400)
+
+    try:
+        member = TeamMember.objects.get(id=member_id, owner_agent=agent)
+        
+        if 'role' in data:
+            member.role = data['role']
+            member.save(update_fields=['role'])
+        
+        if 'first_name' in data or 'last_name' in data:
+            if 'first_name' in data:
+                member.user.first_name = data['first_name']
+            if 'last_name' in data:
+                member.user.last_name = data['last_name']
+            member.user.save()
+
+        if 'password' in data and data['password'].strip():
+            if len(data['password']) < 6:
+                return JsonResponse({'success': False, 'error': 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'}, status=400)
+            member.user.set_password(data['password'])
+            member.user.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'تم تحديث بيانات العضو بنجاح',
+        })
+    except TeamMember.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'العضو غير موجود'}, status=404)

@@ -24,12 +24,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         now = timezone.now()
         expired_count = 0
+        team_synced = 0
         warning_count = 0
 
-        # 1. انتهاء الفترات التجريبية
+        # 1. انتهاء الفترات التجريبية (الرئيسية فقط — parent_subscription=NULL)
         expired_trials = Subscription.objects.filter(
             status='trial',
-            trial_end__lt=now
+            trial_end__lt=now,
+            parent_subscription__isnull=True,
         )
         for sub in expired_trials:
             sub.status = 'expired'
@@ -41,13 +43,20 @@ class Command(BaseCommand):
             agent.subscription_expires = None
             agent.save(update_fields=['subscription_plan', 'subscription_expires'])
             
+            # مزامنة أعضاء الفريق
+            try:
+                team_synced += sub.sync_team_subscriptions()
+            except Exception as e:
+                logger.error(f"Team sync error on trial expiry for agent {agent.id}: {e}")
+            
             expired_count += 1
             logger.info(f"Trial expired for agent {agent.id} ({agent.user.email})")
 
-        # 2. انتهاء الاشتراكات المدفوعة
+        # 2. انتهاء الاشتراكات المدفوعة (الرئيسية فقط)
         expired_active = Subscription.objects.filter(
             status='active',
-            end_date__lt=now
+            end_date__lt=now,
+            parent_subscription__isnull=True,
         )
         for sub in expired_active:
             sub.status = 'expired'
@@ -59,10 +68,33 @@ class Command(BaseCommand):
             agent.subscription_expires = None
             agent.save(update_fields=['subscription_plan', 'subscription_expires'])
             
+            # مزامنة أعضاء الفريق
+            try:
+                team_synced += sub.sync_team_subscriptions()
+            except Exception as e:
+                logger.error(f"Team sync error on sub expiry for agent {agent.id}: {e}")
+            
             expired_count += 1
             logger.info(f"Subscription expired for agent {agent.id} ({agent.user.email})")
 
-        # 3. تسجيل التحذيرات (اشتراكات تنتهي خلال يومين)
+        # 3. تنظيف: اشتراكات أعضاء يتيمة (parent انتهى لكن child لا يزال نشطاً)
+        orphaned = Subscription.objects.filter(
+            parent_subscription__isnull=False,
+            status__in=['active', 'trial'],
+            parent_subscription__status__in=['expired', 'cancelled'],
+        )
+        orphaned_count = orphaned.count()
+        if orphaned_count:
+            for orphan_sub in orphaned:
+                orphan_sub.status = 'expired'
+                orphan_sub.save(update_fields=['status', 'updated_at'])
+                orphan_agent = orphan_sub.agent
+                orphan_agent.subscription_plan = 'free'
+                orphan_agent.subscription_expires = None
+                orphan_agent.save(update_fields=['subscription_plan', 'subscription_expires'])
+            logger.info(f"Cleaned {orphaned_count} orphaned team member subscriptions")
+
+        # 4. تسجيل التحذيرات (اشتراكات تنتهي خلال يومين)
         from datetime import timedelta
         warning_threshold = now + timedelta(days=2)
         
@@ -82,6 +114,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'Done: {expired_count} expired, {warning_count} expiring soon'
+                f'Done: {expired_count} expired, {team_synced} team members synced, '
+                f'{orphaned_count} orphaned cleaned, {warning_count} expiring soon'
             )
         )

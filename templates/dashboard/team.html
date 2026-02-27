@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فريق العمل - Inify</title>
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<link rel="stylesheet" href="/static/css/theme.css">
+<script src="/static/js/theme.js"></script>
+<style>
+@font-face{font-family:BalooBhaijaan2;src:url(/static/BalooBhaijaan2-Regular.ttf) format(truetype);font-weight:400}
+@font-face{font-family:BalooBhaijaan2;src:url(/static/BalooBhaijaan2-Bold.ttf) format(truetype);font-weight:700}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--midnight:#0A1628;--dark-blue:#1E3A5F;--cyan:#6BB8C9;--pearl:#F8F8F8;--text-muted:rgba(248,248,248,.6);--card-bg:rgba(30,58,95,.4);--border:rgba(107,184,201,.15)}
+body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(--pearl);min-height:100vh}
+.premium-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:linear-gradient(135deg,#0A1628,#122a45)}
+.grid-pattern{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background-image:linear-gradient(rgba(107,184,201,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(107,184,201,.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+.layout{display:flex;min-height:100vh}
+.main-content{flex:1;padding:28px;overflow-y:auto;margin-right:240px}
+@media(max-width:768px){.main-content{margin-right:0;padding:16px}}
+.page-header{margin-bottom:28px}
+.page-header h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.page-header p{color:var(--text-muted);font-size:13px}
+.section-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px}
+.section-card h2{font-size:16px;color:var(--cyan);margin-bottom:16px}
+.btn-gold{background:linear-gradient(135deg,#FFD700,#FFA500);color:#0A1628;border:none;padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit;transition:all .3s}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(255,215,0,.3)}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-outline{background:rgba(107,184,201,.1);color:var(--cyan);border:1px solid rgba(107,184,201,.2);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit;transition:all .2s}
+.btn-outline:hover{background:rgba(107,184,201,.2)}
+.btn-danger{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit;transition:all .2s}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.btn-warn{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit;transition:all .2s}
+.btn-warn:hover{background:rgba(245,158,11,.25)}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px}
+.stat-mini{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.stat-mini .num{font-size:26px;font-weight:700}
+.stat-mini .txt{font-size:12px;color:var(--text-muted);margin-top:4px}
+
+/* Team Member Card */
+.member-card{background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;transition:all .3s}
+.member-card:hover{border-color:rgba(107,184,201,.3)}
+.member-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.member-info{display:flex;align-items:center;gap:14px}
+.member-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4A90A4,#6BB8C9);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0}
+.member-name{font-size:15px;font-weight:700}
+.member-email{font-size:12px;color:var(--text-muted);margin-top:2px;direction:ltr;text-align:right}
+.member-role{font-size:11px;color:#FFD700;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.2);padding:2px 10px;border-radius:20px;margin-top:4px;display:inline-block}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.b-on{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.b-off{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+
+/* Member Stats */
+.member-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.m-stat{background:rgba(10,22,40,.4);border:1px solid rgba(107,184,201,.1);border-radius:10px;padding:12px;text-align:center}
+.m-stat .val{font-size:20px;font-weight:700}
+.m-stat .lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
+.m-stat .icon{font-size:16px;margin-bottom:4px}
+
+/* WhatsApp Status */
+.wa-status{display:flex;align-items:center;gap:6px;font-size:12px}
+.wa-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.wa-dot.connected{background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,.5)}
+.wa-dot.disconnected{background:#ef4444}
+
+.member-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Quota Bar */
+.quota-bar{background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.quota-info{display:flex;align-items:center;gap:12px}
+.quota-progress{width:200px;height:8px;background:rgba(107,184,201,.15);border-radius:10px;overflow:hidden}
+.quota-fill{height:100%;background:linear-gradient(90deg,#22c55e,#4ade80);border-radius:10px;transition:width .5s}
+.quota-fill.warning{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.quota-fill.full{background:linear-gradient(90deg,#ef4444,#f87171)}
+.quota-text{font-size:13px;color:var(--text-muted)}
+.quota-text span{color:var(--pearl);font-weight:700}
+
+/* Modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.modal.show{display:flex}
+.modal-box{background:#1E3A5F;border:1px solid rgba(107,184,201,.25);border-radius:16px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-box h3{font-size:17px;margin-bottom:20px}
+.fg{margin-bottom:16px}
+.fg label{display:block;font-size:13px;color:var(--text-muted);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:11px 14px;background:rgba(10,22,40,.6);border:1px solid rgba(107,184,201,.2);border-radius:10px;color:var(--pearl);font-family:inherit;font-size:14px;box-sizing:border-box}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--cyan)}
+.fg select option{background:#1E3A5F;color:var(--pearl)}
+.fg .hint{font-size:11px;color:var(--text-muted);margin-top:4px}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.empty-state{text-align:center;padding:48px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:14px;margin-bottom:20px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1E3A5F;border:1px solid rgba(107,184,201,.3);border-radius:12px;padding:12px 24px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.toast.ok{border-color:rgba(34,197,94,.4);color:#22c55e}
+.toast.err{border-color:rgba(239,68,68,.4);color:#ef4444}
+</style>
+</head>
+<body>
+<div class="premium-bg"></div>
+<div class="grid-pattern"></div>
+<div class="layout">
+{% include 'dashboard/partials/sidebar.html' %}
+<div class="main-content">
+  <div class="page-header">
+    <h1>👥 فريق العمل</h1>
+    <p>إدارة حسابات المسوقين العقاريين المرتبطين بمؤسستك — حد أقصى 5 أعضاء</p>
+  </div>
+
+  <!-- Quota Bar -->
+  <div class="quota-bar">
+    <div class="quota-info">
+      <div>
+        <div class="quota-text"><span>{{ team_count }}</span> / <span>{{ max_team_members }}</span> أعضاء</div>
+        <div class="quota-progress">
+          <div class="quota-fill" id="quotaFill"></div>
+        </div>
+      </div>
+    </div>
+    {% if can_add_member %}
+    <button class="btn-gold" onclick="openAddModal()">+ إضافة عضو جديد</button>
+    {% else %}
+    <button class="btn-gold" disabled>تم الوصول للحد الأقصى</button>
+    {% endif %}
+  </div>
+
+  <!-- Owner Subscription Info -->
+  {% if owner_sub %}
+  <div class="section-card" style="margin-bottom:20px;border-color:rgba(255,215,0,.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h2 style="margin-bottom:6px;">📋 اشتراك المؤسسة الرئيسي</h2>
+        <p style="font-size:12px;color:var(--text-muted);margin:0;">اشتراكات الأعضاء مرتبطة تلقائياً بهذا الاشتراك — تنتهي وتتجدد معه</p>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);">الخطة</div>
+          <div style="font-size:14px;font-weight:700;color:#FFD700;">{{ owner_sub.plan }}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);">الحالة</div>
+          <div style="font-size:14px;font-weight:700;color:{% if owner_sub.is_active %}#22c55e{% else %}#ef4444{% endif %};">{{ owner_sub.status }}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);">الأيام المتبقية</div>
+          <div style="font-size:14px;font-weight:700;color:{% if owner_sub.days_remaining > 5 %}#22c55e{% elif owner_sub.days_remaining > 2 %}#f59e0b{% else %}#ef4444{% endif %};">{{ owner_sub.days_remaining }} يوم</div>
+        </div>
+        {% if owner_sub.end_date %}
+        <div style="text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);">ينتهي في</div>
+          <div style="font-size:13px;font-weight:700;color:var(--pearl);">{{ owner_sub.end_date|date:"d/m/Y" }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-mini"><div class="num" style="color:#FFD700;">{{ team_count }}</div><div class="txt">أعضاء الفريق</div></div>
+    <div class="stat-mini"><div class="num" style="color:#22c55e;" id="sActive">0</div><div class="txt">أعضاء نشطين</div></div>
+    <div class="stat-mini"><div class="num" style="color:var(--cyan);" id="sProps">0</div><div class="txt">إجمالي العقارات</div></div>
+    <div class="stat-mini"><div class="num" style="color:#a78bfa;" id="sLeads">0</div><div class="txt">إجمالي العملاء</div></div>
+  </div>
+
+  <!-- Team Members List -->
+  <div class="section-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+      <h2 style="margin-bottom:0;">🏢 أعضاء الفريق</h2>
+      {% if can_add_member %}
+      <button class="btn-gold" onclick="openAddModal()">+ إضافة عضو</button>
+      {% endif %}
+    </div>
+    <div id="teamList">
+      {% if team_members %}
+        {% for member in team_members %}
+        <div class="member-card" id="mc-{{ member.id }}" data-active="{{ member.is_active|yesno:'true,false' }}" data-props="{{ member.properties_count }}" data-leads="{{ member.leads_count }}">
+          <div class="member-header">
+            <div class="member-info">
+              <div class="member-avatar">{{ member.full_name|make_list|first|upper }}</div>
+              <div>
+                <div class="member-name">{{ member.full_name }}</div>
+                <div class="member-email">{{ member.email }}</div>
+                <div class="member-role">{{ member.role_display }}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div class="wa-status">
+                <span class="wa-dot {% if member.whatsapp_connected %}connected{% else %}disconnected{% endif %}"></span>
+                {% if member.whatsapp_connected %}واتساب متصل{% else %}واتساب غير متصل{% endif %}
+              </div>
+              <span class="badge {% if member.is_active %}b-on{% else %}b-off{% endif %}">{% if member.is_active %}● نشط{% else %}○ معطّل{% endif %}</span>
+            </div>
+          </div>
+          <div class="member-stats">
+            <div class="m-stat">
+              <div class="icon">🏠</div>
+              <div class="val" style="color:var(--cyan);">{{ member.properties_count }}</div>
+              <div class="lbl">العقارات</div>
+            </div>
+            <div class="m-stat">
+              <div class="icon">👥</div>
+              <div class="val" style="color:#a78bfa;">{{ member.leads_count }}</div>
+              <div class="lbl">العملاء</div>
+            </div>
+            <div class="m-stat">
+              <div class="icon">💬</div>
+              <div class="val" style="color:#22c55e;">{{ member.conversations_count }}</div>
+              <div class="lbl">المحادثات</div>
+            </div>
+            <div class="m-stat">
+              <div class="icon">📱</div>
+              <div class="val" style="font-size:13px;color:{% if member.whatsapp_connected %}#22c55e{% else %}#ef4444{% endif %};">{% if member.whatsapp_connected %}متصل{% else %}غير متصل{% endif %}</div>
+              <div class="lbl">واتساب</div>
+            </div>
+          </div>
+          <!-- Subscription Info -->
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 14px;background:rgba(10,22,40,.4);border:1px solid rgba(107,184,201,.1);border-radius:10px;margin-bottom:16px;font-size:12px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span>📋</span>
+              <span style="color:var(--text-muted);">الاشتراك:</span>
+              <span style="font-weight:700;color:{% if member.sub_days > 0 %}#22c55e{% else %}#ef4444{% endif %};">{{ member.sub_status }}</span>
+            </div>
+            {% if member.sub_days > 0 %}
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="color:var(--text-muted);">متبقي:</span>
+              <span style="font-weight:700;color:{% if member.sub_days > 5 %}#22c55e{% elif member.sub_days > 2 %}#f59e0b{% else %}#ef4444{% endif %};">{{ member.sub_days }} يوم</span>
+            </div>
+            {% endif %}
+            {% if member.sub_end %}
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="color:var(--text-muted);">ينتهي:</span>
+              <span style="font-weight:700;">{{ member.sub_end|date:"d/m/Y" }}</span>
+            </div>
+            {% endif %}
+            {% if member.sub_linked %}
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="color:#FFD700;">🔗</span>
+              <span style="color:#FFD700;font-size:11px;">مرتبط بالمؤسسة</span>
+            </div>
+            {% endif %}
+          </div>
+          <div class="member-actions">
+            <button class="btn-outline" onclick="openEditModal('{{ member.id }}','{{ member.full_name }}','{{ member.email }}','{{ member.role }}')">✏️ تعديل</button>
+            <button class="btn-warn" onclick="toggleMember('{{ member.id }}',{{ member.is_active|yesno:'true,false' }})">{% if member.is_active %}⏸ تعطيل{% else %}▶ تفعيل{% endif %}</button>
+            <button class="btn-danger" onclick="deleteMember('{{ member.id }}','{{ member.full_name }}')">🗑 حذف</button>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <div class="icon">👥</div>
+          <p>لا يوجد أعضاء في الفريق بعد — أضف أول مسوق عقاري لمؤسستك</p>
+          <button class="btn-gold" onclick="openAddModal()">+ إضافة أول عضو</button>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Info Section -->
+  <div class="section-card">
+    <h2>ℹ️ كيف يعمل نظام الفريق؟</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
+      <div style="background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <div style="font-size:24px;margin-bottom:8px;">➕</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">إضافة أعضاء</div>
+        <div style="font-size:12px;color:var(--text-muted);">أضف حتى 5 مسوقين عقاريين لمؤسستك مع بريد وكلمة مرور خاصة بكل عضو</div>
+      </div>
+      <div style="background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <div style="font-size:24px;margin-bottom:8px;">🏠</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">إدارة مستقلة</div>
+        <div style="font-size:12px;color:var(--text-muted);">كل عضو يدير عقاراته وعملاءه ومحادثاته بشكل مستقل تحت مظلة المؤسسة</div>
+      </div>
+      <div style="background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <div style="font-size:24px;margin-bottom:8px;">📊</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">إحصائيات شاملة</div>
+        <div style="font-size:12px;color:var(--text-muted);">تابع أداء كل عضو من خلال إحصائيات العقارات والعملاء والمحادثات</div>
+      </div>
+      <div style="background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <div style="font-size:24px;margin-bottom:8px;">🔒</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">تحكم كامل</div>
+        <div style="font-size:12px;color:var(--text-muted);">فعّل أو عطّل أي عضو في أي وقت — مع إمكانية تغيير كلمة المرور والدور</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Add Member Modal -->
+<div class="modal" id="addModal">
+  <div class="modal-box">
+    <h3>➕ إضافة عضو جديد للفريق</h3>
+    <div class="fg-row">
+      <div class="fg"><label>الاسم الأول *</label><input type="text" id="addFirstName" placeholder="أحمد"></div>
+      <div class="fg"><label>الاسم الأخير</label><input type="text" id="addLastName" placeholder="محمد"></div>
+    </div>
+    <div class="fg">
+      <label>البريد الإلكتروني *</label>
+      <input type="email" id="addEmail" placeholder="member@company.com" dir="ltr">
+      <div class="hint">سيستخدم العضو هذا البريد لتسجيل الدخول</div>
+    </div>
+    <div class="fg">
+      <label>كلمة المرور *</label>
+      <input type="password" id="addPassword" placeholder="6 أحرف على الأقل" dir="ltr">
+    </div>
+    <div class="fg">
+      <label>الدور</label>
+      <select id="addRole">
+        <option value="marketer">مسوق عقاري</option>
+        <option value="viewer">مشاهد فقط</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeAddModal()">إلغاء</button>
+      <button class="btn-gold" onclick="addMember()" id="addBtn">إضافة العضو</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Member Modal -->
+<div class="modal" id="editModal">
+  <div class="modal-box">
+    <h3>✏️ تعديل بيانات العضو</h3>
+    <input type="hidden" id="editId">
+    <div class="fg-row">
+      <div class="fg"><label>الاسم الأول</label><input type="text" id="editFirstName"></div>
+      <div class="fg"><label>الاسم الأخير</label><input type="text" id="editLastName"></div>
+    </div>
+    <div class="fg">
+      <label>البريد الإلكتروني</label>
+      <input type="email" id="editEmail" disabled dir="ltr" style="opacity:.6;cursor:not-allowed;">
+      <div class="hint">لا يمكن تغيير البريد الإلكتروني</div>
+    </div>
+    <div class="fg">
+      <label>كلمة مرور جديدة (اتركها فارغة إذا لا تريد التغيير)</label>
+      <input type="password" id="editPassword" placeholder="كلمة مرور جديدة" dir="ltr">
+    </div>
+    <div class="fg">
+      <label>الدور</label>
+      <select id="editRole">
+        <option value="marketer">مسوق عقاري</option>
+        <option value="viewer">مشاهد فقط</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeEditModal()">إلغاء</button>
+      <button class="btn-gold" onclick="updateMember()" id="editBtn">حفظ التغييرات</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function csrf(){let v='';document.cookie.split(';').forEach(c=>{const p=c.trim().split('=');if(p[0]==='csrftoken')v=decodeURIComponent(p[1]);});return v;}
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+type;setTimeout(()=>el.className='toast',3500);}
+
+// Add Modal
+function openAddModal(){
+  document.getElementById('addFirstName').value='';
+  document.getElementById('addLastName').value='';
+  document.getElementById('addEmail').value='';
+  document.getElementById('addPassword').value='';
+  document.getElementById('addRole').value='marketer';
+  document.getElementById('addModal').classList.add('show');
+  setTimeout(()=>document.getElementById('addFirstName').focus(),100);
+}
+function closeAddModal(){document.getElementById('addModal').classList.remove('show');}
+
+// Edit Modal
+function openEditModal(id,name,email,role){
+  document.getElementById('editId').value=id;
+  const parts=name.split(' ');
+  document.getElementById('editFirstName').value=parts[0]||'';
+  document.getElementById('editLastName').value=parts.slice(1).join(' ')||'';
+  document.getElementById('editEmail').value=email;
+  document.getElementById('editPassword').value='';
+  document.getElementById('editRole').value=role;
+  document.getElementById('editModal').classList.add('show');
+}
+function closeEditModal(){document.getElementById('editModal').classList.remove('show');}
+
+// Add Member
+async function addMember(){
+  const btn=document.getElementById('addBtn');
+  const first_name=document.getElementById('addFirstName').value.trim();
+  const last_name=document.getElementById('addLastName').value.trim();
+  const email=document.getElementById('addEmail').value.trim();
+  const password=document.getElementById('addPassword').value;
+  const role=document.getElementById('addRole').value;
+
+  if(!first_name){toast('أدخل الاسم الأول','err');return;}
+  if(!email){toast('أدخل البريد الإلكتروني','err');return;}
+  if(!password||password.length<6){toast('كلمة المرور يجب أن تكون 6 أحرف على الأقل','err');return;}
+
+  btn.disabled=true;btn.textContent='⏳ جاري الإضافة...';
+  try{
+    const res=await fetch('/api/team/add/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+      credentials:'same-origin',
+      body:JSON.stringify({first_name,last_name,email,password,role})
+    });
+    const data=await res.json();
+    if(data.success){
+      toast('✅ '+data.message);
+      closeAddModal();
+      setTimeout(()=>location.reload(),800);
+    } else {
+      toast(data.error||'حدث خطأ','err');
+    }
+  }catch(e){toast('خطأ في الاتصال','err');}
+  btn.disabled=false;btn.textContent='إضافة العضو';
+}
+
+// Update Member
+async function updateMember(){
+  const btn=document.getElementById('editBtn');
+  const id=document.getElementById('editId').value;
+  const first_name=document.getElementById('editFirstName').value.trim();
+  const last_name=document.getElementById('editLastName').value.trim();
+  const password=document.getElementById('editPassword').value;
+  const role=document.getElementById('editRole').value;
+
+  const body={first_name,last_name,role};
+  if(password)body.password=password;
+
+  btn.disabled=true;btn.textContent='⏳ جاري الحفظ...';
+  try{
+    const res=await fetch('/api/team/'+id+'/update/',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+      credentials:'same-origin',
+      body:JSON.stringify(body)
+    });
+    const data=await res.json();
+    if(data.success){
+      toast('✅ '+data.message);
+      closeEditModal();
+      setTimeout(()=>location.reload(),800);
+    } else {
+      toast(data.error||'حدث خطأ','err');
+    }
+  }catch(e){toast('خطأ في الاتصال','err');}
+  btn.disabled=false;btn.textContent='حفظ التغييرات';
+}
+
+// Toggle Member
+async function toggleMember(id,active){
+  try{
+    const res=await fetch('/api/team/'+id+'/toggle/',{
+      method:'POST',
+      headers:{'X-CSRFToken':csrf()},
+      credentials:'same-origin'
+    });
+    const data=await res.json();
+    if(data.success){
+      toast(active?'تم تعطيل العضو':'✅ تم تفعيل العضو');
+      setTimeout(()=>location.reload(),600);
+    } else {
+      toast(data.error||'حدث خطأ','err');
+    }
+  }catch(e){toast('خطأ في الاتصال','err');}
+}
+
+// Delete Member
+async function deleteMember(id,name){
+  if(!confirm('هل تريد حذف "'+name+'" من الفريق نهائياً؟ سيتم تعطيل حسابه.'))return;
+  try{
+    const res=await fetch('/api/team/'+id+'/delete/',{
+      method:'DELETE',
+      headers:{'X-CSRFToken':csrf()},
+      credentials:'same-origin'
+    });
+    const data=await res.json();
+    if(data.success){
+      toast('✅ '+data.message);
+      const card=document.getElementById('mc-'+id);
+      if(card){card.style.opacity='0';card.style.transform='translateX(20px)';setTimeout(()=>card.remove(),300);}
+      setTimeout(()=>location.reload(),1000);
+    } else {
+      toast(data.error||'حدث خطأ','err');
+    }
+  }catch(e){toast('خطأ في الاتصال','err');}
+}
+
+// Update Stats
+function updateStats(){
+  const cards=document.querySelectorAll('.member-card');
+  let active=0,props=0,leads=0;
+  cards.forEach(c=>{
+    if(c.dataset.active==='true')active++;
+    props+=parseInt(c.dataset.props)||0;
+    leads+=parseInt(c.dataset.leads)||0;
+  });
+  document.getElementById('sActive').textContent=active;
+  document.getElementById('sProps').textContent=props;
+  document.getElementById('sLeads').textContent=leads;
+}
+
+// Close modals on backdrop click
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
+
+// Fix quota bar width
+(function(){
+  const count={{ team_count }};
+  const max={{ max_team_members }};
+  const pct=Math.round((count/max)*100);
+  const fill=document.querySelector('.quota-fill');
+  if(fill)fill.style.width=pct+'%';
+})();
+
+updateStats();
+</script>
+<script src="/static/js/tour.js"></script>
+</body>
+</html>

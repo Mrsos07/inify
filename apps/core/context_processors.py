@@ -12,6 +12,8 @@ def subscription_context(request):
         'subscription_expiring_soon': False,
         'subscription_days_remaining': 0,
         'subscription_expired': False,
+        'is_team_member': False,
+        'team_owner_name': '',
     }
 
     if not request.user.is_authenticated:
@@ -20,6 +22,17 @@ def subscription_context(request):
     if request.user.is_superuser or request.user.is_staff:
         context['subscription_plan'] = 'enterprise'
         return context
+
+    try:
+        from apps.agents.models import TeamMember
+        membership = TeamMember.objects.select_related('owner_agent', 'owner_agent__user').filter(
+            user=request.user, is_active=True
+        ).first()
+        if membership:
+            context['is_team_member'] = True
+            context['team_owner_name'] = membership.owner_agent.company_name or membership.owner_agent.user.get_full_name()
+    except Exception:
+        pass
 
     try:
         agent = request.user.agent_profile

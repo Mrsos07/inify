@@ -47,6 +47,11 @@ cloudinary>=1.36.0
 # Excel Processing
 openpyxl>=3.1.0
 
+# PDF Export (Arabic support)
+reportlab>=4.0.4
+arabic-reshaper>=3.0.0
+python-bidi>=0.6.0
+
 # Email
 resend>=0.7.0
 

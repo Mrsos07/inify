@@ -54,6 +54,7 @@ FIELD_ENCRYPTION_KEY = os.getenv('FIELD_ENCRYPTION_KEY', '')
 RECAPTCHA_SITE_KEY = os.getenv('RECAPTCHA_SITE_KEY', '')
 RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_SECRET_KEY', '')
 RECAPTCHA_SCORE_THRESHOLD = 0.5  # رفض أي طلب أقل من هذه القيمة
+RECAPTCHA_DISABLED = os.getenv('RECAPTCHA_DISABLED', 'False') == 'True'
 
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', ','.join([

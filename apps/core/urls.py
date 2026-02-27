@@ -6,6 +6,7 @@ Core URLs
 from django.urls import path
 from . import views
 from . import whatsapp_views
+from . import analytics_views
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -35,6 +36,15 @@ urlpatterns = [
     path('dashboard/webhooks/', views.webhooks_view, name='webhooks'),
     path('dashboard/analytics/', views.analytics_view, name='analytics'),
     path('dashboard/analytics/data/', views.analytics_data, name='analytics-data'),
+    path('dashboard/analytics/export/excel/', analytics_views.analytics_export_excel, name='analytics-export-excel'),
+    path('dashboard/analytics/export/pdf/', analytics_views.analytics_export_pdf, name='analytics-export-pdf'),
+    
+    # Team Management
+    path('dashboard/team/', views.team_view, name='team'),
+    path('api/team/add/', views.team_add_member, name='team-add-member'),
+    path('api/team/<uuid:member_id>/toggle/', views.team_toggle_member, name='team-toggle-member'),
+    path('api/team/<uuid:member_id>/delete/', views.team_delete_member, name='team-delete-member'),
+    path('api/team/<uuid:member_id>/update/', views.team_update_member, name='team-update-member'),
     
     # Pricing
     path('pricing/', views.pricing_view, name='pricing'),
