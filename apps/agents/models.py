@@ -98,18 +98,6 @@ class Agent(models.Model):
         help_text='مثال: واتساب: 05xxxxxxxx، الموقع: www.example.com'
     )
     
-    # نظام المؤسسة - Sub Agents
-    parent_agency = models.ForeignKey(
-        'self',
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name='sub_agents',
-        verbose_name='المؤسسة الأم'
-    )
-    is_sub_agent = models.BooleanField(default=False, verbose_name='مسوق تابع لمؤسسة')
-    max_sub_agents = models.PositiveSmallIntegerField(default=0, verbose_name='الحد الأقصى للمسوقين')
-
     # التحقق من الإيميل
     is_email_verified = models.BooleanField(default=False, verbose_name='تم التحقق من الإيميل')
     
