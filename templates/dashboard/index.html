@@ -483,11 +483,11 @@
                     <p>جاري تجهيز الباركود...</p>
                 </div>
                 <div id="waQRCode" style="display: none;">
-                    <div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 20px;">
-                        <img id="waQRImage" src="" alt="QR Code" style="width: 220px; height: 220px;">
+                    <div style="background: #ffffff; padding: 20px; border-radius: 16px; display: inline-block; margin-bottom: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.18); border: 1px solid rgba(0,0,0,0.06);">
+                        <img id="waQRImage" src="" alt="QR Code" style="width: 220px; height: 220px; display: block;">
                     </div>
-                    <p style="color: var(--cyan); font-weight: 600; margin-bottom: 10px;">امسح الباركود من واتساب</p>
-                    <p style="font-size: 13px; color: var(--text-muted);">الإعدادات ← الأجهزة المرتبطة ← ربط جهاز</p>
+                    <p style="color: #25D366; font-weight: 700; margin-bottom: 8px; font-size: 15px;">امسح الباركود من واتساب</p>
+                    <p style="font-size: 12px; color: var(--text-muted); background: rgba(37,211,102,0.07); border-radius: 8px; padding: 8px 14px; display: inline-block;">الإعدادات ← الأجهزة المرتبطة ← ربط جهاز</p>
                 </div>
                 <div id="waConnected" style="display: none;">
                     <div style="font-size: 60px; margin-bottom: 15px;">✅</div>
@@ -1055,34 +1055,69 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.72);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 9999;
+            backdrop-filter: blur(4px);
         }
         .modal-container {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
             width: 90%;
-            backdrop-filter: blur(20px);
+            overflow: hidden;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5);
         }
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(107,184,201,0.04);
         }
+        .modal-header h3 { color: var(--text-primary); font-size: 16px; font-weight: 700; }
         .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 24px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+            font-size: 20px;
             cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
-        .modal-close:hover { color: var(--pearl); }
+        .modal-close:hover {
+            background: rgba(255,255,255,0.12);
+            color: var(--text-primary);
+        }
+
+        /* ── Light mode modal overrides ── */
+        body.light-mode .modal-overlay { background: rgba(0,0,0,0.5); }
+        body.light-mode .modal-container {
+            background: #ffffff;
+            border-color: rgba(37,99,235,0.12);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.15);
+        }
+        body.light-mode .modal-header {
+            background: rgba(37,99,235,0.03);
+            border-bottom-color: rgba(37,99,235,0.1);
+        }
+        body.light-mode .modal-header h3 { color: #111827; }
+        body.light-mode .modal-close {
+            background: rgba(0,0,0,0.04);
+            border-color: rgba(0,0,0,0.08);
+            color: #6B7280;
+        }
+        body.light-mode .modal-close:hover { background: rgba(0,0,0,0.08); color: #111827; }
+        body.light-mode #waLoading p { color: #4B5563; }
+        body.light-mode .modal-body { background: #ffffff; }
         
         .whatsapp-badge {
             position: absolute;
