@@ -293,7 +293,7 @@
         {% if subscription_expiring_soon %}
         <div class="subscription-warning">
             <div class="subscription-warning-text">
-                <span class="warn-icon">⚠️</span>
+                <span class="warn-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
                 <span>اشتراكك سينتهي خلال {{ subscription_days_remaining }} يوم. جدد الآن لتجنب توقف الخدمة.</span>
             </div>
             <a href="/subscription/" class="btn-renew">تجديد الاشتراك</a>
@@ -301,7 +301,7 @@
         {% endif %}
         <div class="page-header">
             <div>
-                <h1 id="welcomeMsg">مرحباً بك 👋</h1>
+                <h1 id="welcomeMsg">مرحباً بك</h1>
                 <p>إليك نظرة عامة على نشاطك</p>
             </div>
             <div class="header-actions">
@@ -317,35 +317,35 @@
         <div class="stats-grid" id="tour-stats">
             <div class="stat-card">
                 <div class="stat-card-header">
-                    <div class="stat-icon">🏠</div>
+                    <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
                 </div>
                 <div class="stat-value" id="propertiesCount">{{ properties_count|default:0 }}</div>
                 <div class="stat-label">إجمالي العقارات</div>
             </div>
             <div class="stat-card">
                 <div class="stat-card-header">
-                    <div class="stat-icon">👥</div>
+                    <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
                 </div>
                 <div class="stat-value" id="leadsCount">{{ leads_count|default:0 }}</div>
                 <div class="stat-label">العملاء المحتملين</div>
             </div>
             <div class="stat-card">
                 <div class="stat-card-header">
-                    <div class="stat-icon">💬</div>
+                    <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
                 </div>
                 <div class="stat-value" id="conversationsCount">{{ conversations_count|default:0 }}</div>
                 <div class="stat-label">المحادثات</div>
             </div>
             <div class="stat-card">
                 <div class="stat-card-header">
-                    <div class="stat-icon">❤️</div>
+                    <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
                 </div>
                 <div class="stat-value" id="interestedCount">{{ interested_count|default:0 }}</div>
                 <div class="stat-label">إجمالي المهتمين</div>
             </div>
             <div class="stat-card">
                 <div class="stat-card-header">
-                    <div class="stat-icon">📅</div>
+                    <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
                 </div>
                 <div class="stat-value" id="appointmentsCount">{{ appointments_count|default:0 }}</div>
                 <div class="stat-label">مواعيد المعاينة</div>
@@ -356,7 +356,7 @@
         <div style="margin-bottom:24px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
                 <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="font-size:20px;">👥</div>
+                    <div><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
                     <div>
                         <h3 style="margin:0;font-size:17px;font-weight:700;">إحصائيات فريق العمل</h3>
                         <p style="margin:0;font-size:12px;color:rgba(248,248,248,.5);">{{ team_stats.count }} أعضاء نشطين في مؤسستك</p>
@@ -392,10 +392,10 @@
                         <tr style="background:rgba(107,184,201,.08);">
                             <th style="text-align:right;padding:12px 16px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">العضو</th>
                             <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">الدور</th>
-                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">🏠</th>
-                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">👥</th>
-                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">💬</th>
-                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">📱</th>
+                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">عقارات</th>
+                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">عملاء</th>
+                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">محادثات</th>
+                            <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">واتساب</th>
                             <th style="text-align:center;padding:12px 8px;color:rgba(248,248,248,.5);font-weight:600;font-size:11px;">الحالة</th>
                         </tr>
                     </thead>

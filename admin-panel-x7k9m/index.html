@@ -1553,10 +1553,10 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({
                         userId: userId,
-                        plan: newPlan,
-                        adminKey: 'inify_admin_2025'
+                        plan: newPlan
                     })
                 });
                 
@@ -2317,7 +2317,6 @@
         // Save AI settings to database
         async function saveAISettings() {
             const settings = {
-                adminKey: 'inify_admin_2025',
                 aiModel: document.getElementById('aiModel').value,
                 systemPrompt: document.getElementById('globalSystemPrompt').value,
                 responseStyle: document.getElementById('responseStyle').value,

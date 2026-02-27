@@ -96,6 +96,101 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
 .toast.show{opacity:1}
 .toast.ok{border-color:rgba(34,197,94,.4);color:#22c55e}
 .toast.err{border-color:rgba(239,68,68,.4);color:#ef4444}
+
+/* ═══ Light Mode — Team Page ═══ */
+body.light-mode .section-card,
+html.light-mode body .section-card{
+  background:#FFFFFF!important;
+  border:1px solid #E5E7EB!important;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)!important;
+}
+body.light-mode .section-card h2{
+  color:#1E3A5F!important;
+}
+body.light-mode .stat-mini{
+  background:#FFFFFF!important;
+  border:1px solid #E5E7EB!important;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)!important;
+}
+body.light-mode .stat-mini .txt{
+  color:#6B7280!important;
+}
+body.light-mode .member-card{
+  background:#FFFFFF!important;
+  border:1px solid #E5E7EB!important;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)!important;
+}
+body.light-mode .member-card:hover{
+  border-color:#C7D2FE!important;
+  box-shadow:0 4px 12px rgba(37,99,235,.08)!important;
+}
+body.light-mode .member-name{color:#1F2937!important}
+body.light-mode .member-email{color:#6B7280!important}
+body.light-mode .member-role{
+  color:#4A90A4!important;
+  background:rgba(74,144,164,.08)!important;
+  border-color:rgba(74,144,164,.2)!important;
+}
+body.light-mode .m-stat{
+  background:#F9FAFB!important;
+  border:1px solid #E5E7EB!important;
+}
+body.light-mode .m-stat .lbl{color:#6B7280!important}
+body.light-mode .wa-status{color:#374151!important}
+body.light-mode .quota-bar{
+  background:#FFFFFF!important;
+  border:1px solid #E5E7EB!important;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)!important;
+}
+body.light-mode .quota-text{color:#6B7280!important}
+body.light-mode .quota-text span{color:#1F2937!important}
+body.light-mode .quota-progress{background:#E5E7EB!important}
+body.light-mode .empty-state{color:#6B7280!important}
+body.light-mode .empty-state .empty-icon svg{color:#9CA3AF!important;stroke:#9CA3AF!important}
+/* Subscription Info Row in Light */
+body.light-mode .member-card [style*="background:rgba(10,22,40"]{
+  background:#F9FAFB!important;
+  border-color:#E5E7EB!important;
+}
+/* Info Section Cards */
+body.light-mode .section-card [style*="background:rgba(10,22,40"]{
+  background:#F9FAFB!important;
+  border-color:#E5E7EB!important;
+}
+/* Modal */
+body.light-mode .modal-box{
+  background:#FFFFFF!important;
+  border:1px solid #E5E7EB!important;
+  box-shadow:0 20px 60px rgba(0,0,0,.15)!important;
+}
+body.light-mode .modal-box h3{color:#1F2937!important}
+body.light-mode .fg label{color:#374151!important}
+body.light-mode .fg input,
+body.light-mode .fg select{
+  background:#FFFFFF!important;
+  border:1px solid #D1D5DB!important;
+  color:#1F2937!important;
+}
+body.light-mode .fg input:focus,
+body.light-mode .fg select:focus{
+  border-color:#4A90A4!important;
+  box-shadow:0 0 0 3px rgba(74,144,164,.12)!important;
+}
+body.light-mode .fg .hint{color:#9CA3AF!important}
+body.light-mode .fg select option{
+  background:#FFFFFF!important;
+  color:#1F2937!important;
+}
+body.light-mode .toast{
+  background:#FFFFFF!important;
+  border:1px solid #E5E7EB!important;
+  box-shadow:0 4px 20px rgba(0,0,0,.1)!important;
+}
+/* Owner sub card */
+body.light-mode .section-card[style*="border-color:rgba(255,215,0"]{
+  border-color:#E5E7EB!important;
+  background:#FFFEF5!important;
+}
 </style>
 </head>
 <body>
@@ -105,7 +200,7 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
 {% include 'dashboard/partials/sidebar.html' %}
 <div class="main-content">
   <div class="page-header">
-    <h1>👥 فريق العمل</h1>
+    <h1><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:8px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> فريق العمل</h1>
     <p>إدارة حسابات المسوقين العقاريين المرتبطين بمؤسستك — حد أقصى 5 أعضاء</p>
   </div>
 
@@ -131,7 +226,7 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
   <div class="section-card" style="margin-bottom:20px;border-color:rgba(255,215,0,.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
       <div>
-        <h2 style="margin-bottom:6px;">📋 اشتراك المؤسسة الرئيسي</h2>
+        <h2 style="margin-bottom:6px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> اشتراك المؤسسة الرئيسي</h2>
         <p style="font-size:12px;color:var(--text-muted);margin:0;">اشتراكات الأعضاء مرتبطة تلقائياً بهذا الاشتراك — تنتهي وتتجدد معه</p>
       </div>
       <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
@@ -169,7 +264,7 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
   <!-- Team Members List -->
   <div class="section-card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
-      <h2 style="margin-bottom:0;">🏢 أعضاء الفريق</h2>
+      <h2 style="margin-bottom:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> أعضاء الفريق</h2>
       {% if can_add_member %}
       <button class="btn-gold" onclick="openAddModal()">+ إضافة عضو</button>
       {% endif %}
@@ -197,22 +292,22 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
           </div>
           <div class="member-stats">
             <div class="m-stat">
-              <div class="icon">🏠</div>
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
               <div class="val" style="color:var(--cyan);">{{ member.properties_count }}</div>
               <div class="lbl">العقارات</div>
             </div>
             <div class="m-stat">
-              <div class="icon">👥</div>
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
               <div class="val" style="color:#a78bfa;">{{ member.leads_count }}</div>
               <div class="lbl">العملاء</div>
             </div>
             <div class="m-stat">
-              <div class="icon">💬</div>
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
               <div class="val" style="color:#22c55e;">{{ member.conversations_count }}</div>
               <div class="lbl">المحادثات</div>
             </div>
             <div class="m-stat">
-              <div class="icon">📱</div>
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
               <div class="val" style="font-size:13px;color:{% if member.whatsapp_connected %}#22c55e{% else %}#ef4444{% endif %};">{% if member.whatsapp_connected %}متصل{% else %}غير متصل{% endif %}</div>
               <div class="lbl">واتساب</div>
             </div>
@@ -220,7 +315,7 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
           <!-- Subscription Info -->
           <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 14px;background:rgba(10,22,40,.4);border:1px solid rgba(107,184,201,.1);border-radius:10px;margin-bottom:16px;font-size:12px;">
             <div style="display:flex;align-items:center;gap:6px;">
-              <span>📋</span>
+              <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
               <span style="color:var(--text-muted);">الاشتراك:</span>
               <span style="font-weight:700;color:{% if member.sub_days > 0 %}#22c55e{% else %}#ef4444{% endif %};">{{ member.sub_status }}</span>
             </div>
@@ -238,21 +333,21 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
             {% endif %}
             {% if member.sub_linked %}
             <div style="display:flex;align-items:center;gap:4px;">
-              <span style="color:#FFD700;">🔗</span>
+              <span style="color:#FFD700;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
               <span style="color:#FFD700;font-size:11px;">مرتبط بالمؤسسة</span>
             </div>
             {% endif %}
           </div>
           <div class="member-actions">
-            <button class="btn-outline" onclick="openEditModal('{{ member.id }}','{{ member.full_name }}','{{ member.email }}','{{ member.role }}')">✏️ تعديل</button>
+            <button class="btn-outline" onclick="openEditModal('{{ member.id }}','{{ member.full_name }}','{{ member.email }}','{{ member.role }}')">تعديل</button>
             <button class="btn-warn" onclick="toggleMember('{{ member.id }}',{{ member.is_active|yesno:'true,false' }})">{% if member.is_active %}⏸ تعطيل{% else %}▶ تفعيل{% endif %}</button>
-            <button class="btn-danger" onclick="deleteMember('{{ member.id }}','{{ member.full_name }}')">🗑 حذف</button>
+            <button class="btn-danger" onclick="deleteMember('{{ member.id }}','{{ member.full_name }}')">حذف</button>
           </div>
         </div>
         {% endfor %}
       {% else %}
         <div class="empty-state">
-          <div class="icon">👥</div>
+          <div style="margin-bottom:16px;"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
           <p>لا يوجد أعضاء في الفريق بعد — أضف أول مسوق عقاري لمؤسستك</p>
           <button class="btn-gold" onclick="openAddModal()">+ إضافة أول عضو</button>
         </div>
@@ -262,25 +357,25 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
 
   <!-- Info Section -->
   <div class="section-card">
-    <h2>ℹ️ كيف يعمل نظام الفريق؟</h2>
+    <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> كيف يعمل نظام الفريق؟</h2>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
       <div style="background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:10px;padding:16px;">
-        <div style="font-size:24px;margin-bottom:8px;">➕</div>
+        <div style="margin-bottom:10px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4A90A4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div>
         <div style="font-size:13px;font-weight:700;margin-bottom:4px;">إضافة أعضاء</div>
         <div style="font-size:12px;color:var(--text-muted);">أضف حتى 5 مسوقين عقاريين لمؤسستك مع بريد وكلمة مرور خاصة بكل عضو</div>
       </div>
       <div style="background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:10px;padding:16px;">
-        <div style="font-size:24px;margin-bottom:8px;">🏠</div>
+        <div style="margin-bottom:10px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4A90A4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
         <div style="font-size:13px;font-weight:700;margin-bottom:4px;">إدارة مستقلة</div>
         <div style="font-size:12px;color:var(--text-muted);">كل عضو يدير عقاراته وعملاءه ومحادثاته بشكل مستقل تحت مظلة المؤسسة</div>
       </div>
       <div style="background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:10px;padding:16px;">
-        <div style="font-size:24px;margin-bottom:8px;">📊</div>
+        <div style="margin-bottom:10px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4A90A4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
         <div style="font-size:13px;font-weight:700;margin-bottom:4px;">إحصائيات شاملة</div>
         <div style="font-size:12px;color:var(--text-muted);">تابع أداء كل عضو من خلال إحصائيات العقارات والعملاء والمحادثات</div>
       </div>
       <div style="background:rgba(10,22,40,.5);border:1px solid var(--border);border-radius:10px;padding:16px;">
-        <div style="font-size:24px;margin-bottom:8px;">🔒</div>
+        <div style="margin-bottom:10px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4A90A4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
         <div style="font-size:13px;font-weight:700;margin-bottom:4px;">تحكم كامل</div>
         <div style="font-size:12px;color:var(--text-muted);">فعّل أو عطّل أي عضو في أي وقت — مع إمكانية تغيير كلمة المرور والدور</div>
       </div>
@@ -292,7 +387,7 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
 <!-- Add Member Modal -->
 <div class="modal" id="addModal">
   <div class="modal-box">
-    <h3>➕ إضافة عضو جديد للفريق</h3>
+    <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg> إضافة عضو جديد للفريق</h3>
     <div class="fg-row">
       <div class="fg"><label>الاسم الأول *</label><input type="text" id="addFirstName" placeholder="أحمد"></div>
       <div class="fg"><label>الاسم الأخير</label><input type="text" id="addLastName" placeholder="محمد"></div>
@@ -323,7 +418,7 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
 <!-- Edit Member Modal -->
 <div class="modal" id="editModal">
   <div class="modal-box">
-    <h3>✏️ تعديل بيانات العضو</h3>
+    <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> تعديل بيانات العضو</h3>
     <input type="hidden" id="editId">
     <div class="fg-row">
       <div class="fg"><label>الاسم الأول</label><input type="text" id="editFirstName"></div>

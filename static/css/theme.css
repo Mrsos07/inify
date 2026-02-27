@@ -690,23 +690,64 @@ body.light-mode .alert-info {
     color: #1E40AF !important;
 }
 
-/* Buttons - Professional Corporate Style */
+/* Buttons - Premium World-Class Style */
 body.light-mode .btn,
 body.light-mode button {
-    border-radius: 6px !important;
     font-weight: 500 !important;
-    transition: all 0.2s ease !important;
+    transition: all 0.3s cubic-bezier(.4,0,.2,1) !important;
 }
 
 body.light-mode .btn-primary {
-    background: #2563EB !important;
-    border: 1px solid #2563EB !important;
+    background: linear-gradient(145deg, #111827, #1F2937 50%, #374151) !important;
+    border: none !important;
     color: #FFFFFF !important;
+    border-radius: 12px !important;
+    padding: 11px 24px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    letter-spacing: 0.02em !important;
+    box-shadow:
+        0 1px 2px rgba(0,0,0,.12),
+        0 4px 8px rgba(0,0,0,.08),
+        inset 0 1px 0 rgba(255,255,255,.06) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+body.light-mode .btn-primary::after {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    border-radius: 12px !important;
+    padding: 1px !important;
+    background: linear-gradient(145deg, rgba(255,255,255,.15), rgba(255,255,255,.02)) !important;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+    -webkit-mask-composite: xor !important;
+    mask-composite: exclude !important;
+    pointer-events: none !important;
 }
 
 body.light-mode .btn-primary:hover {
-    background: #1D4ED8 !important;
-    border-color: #1D4ED8 !important;
+    background: linear-gradient(145deg, #000000, #111827 50%, #1F2937) !important;
+    box-shadow:
+        0 2px 4px rgba(0,0,0,.12),
+        0 8px 24px rgba(0,0,0,.16),
+        inset 0 1px 0 rgba(255,255,255,.08) !important;
+    transform: translateY(-2px) !important;
+}
+
+body.light-mode .btn-primary:active {
+    transform: translateY(0) !important;
+    box-shadow:
+        0 1px 2px rgba(0,0,0,.12),
+        0 2px 4px rgba(0,0,0,.06),
+        inset 0 1px 3px rgba(0,0,0,.15) !important;
+}
+
+body.light-mode .btn-primary svg {
+    stroke: #FFFFFF !important;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,.15)) !important;
 }
 
 body.light-mode .btn-secondary,

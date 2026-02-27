@@ -239,24 +239,20 @@ def login_view(request):
             logger.warning(f'[LOGIN] reCAPTCHA failed for IP: {remote_ip}')
             return JsonResponse({'success': False, 'error': 'فشل التحقق الأمني. يرجى تحديث الصفحة والمحاولة مجدداً.'})
 
-        print(f"[LOGIN] Attempting login for: {username}")
+        logger.info(f'[LOGIN] Login attempt for: {username}')
         
         # Try to authenticate with username or email
         user = authenticate(request, username=username, password=password)
-        print(f"[LOGIN] First auth attempt result: {user}")
         
         if user is None:
             # Try with email
             try:
                 user_obj = User.objects.get(email__iexact=username)
-                print(f"[LOGIN] Found user by email: {user_obj.username}")
-                print(f"[LOGIN] User is_active: {user_obj.is_active}")
-                print(f"[LOGIN] User has_usable_password: {user_obj.has_usable_password()}")
-                print(f"[LOGIN] User password hash: {user_obj.password[:50]}...")
+                logger.debug(f'[LOGIN] Found user by email: {user_obj.username}')
                 
                 # تحقق إذا كان الحساب مسجل عبر Google (بدون كلمة مرور)
                 if not user_obj.has_usable_password():
-                    print(f"[LOGIN] User has no usable password (Google account): {user_obj.username}")
+                    logger.info(f'[LOGIN] Google-only account: {user_obj.username}')
                     return JsonResponse({
                         'success': False, 
                         'error': 'هذا الحساب مسجل عبر Google. يرجى تسجيل الدخول باستخدام زر Google.'
@@ -264,16 +260,13 @@ def login_view(request):
                 
                 # تحقق من كلمة المرور يدوياً أولاً
                 password_check = user_obj.check_password(password)
-                print(f"[LOGIN] Manual password check: {password_check}")
                 
                 if password_check:
-                    # كلمة المرور صحيحة، سجل الدخول مباشرة
-                    print(f"[LOGIN] Password correct, logging in directly")
                     user = user_obj
                 else:
-                    print(f"[LOGIN] Password incorrect for user: {user_obj.username}")
+                    logger.info(f'[LOGIN] Failed login for: {user_obj.username}')
             except User.DoesNotExist:
-                print(f"[LOGIN] User not found by email: {username}")
+                logger.debug(f'[LOGIN] User not found: {username}')
         
         if user is not None:
             if user.is_active:
@@ -282,7 +275,7 @@ def login_view(request):
                 try:
                     agent = Agent.objects.get(user=user)
                     if not agent.is_email_verified:
-                        print(f"[LOGIN] Email not verified for: {user.username}")
+                        logger.info(f'[LOGIN] Email not verified: {user.username}')
                         return JsonResponse({
                             'success': False, 
                             'error': 'يرجى تفعيل حسابك عبر الرابط المرسل إلى بريدك الإلكتروني',
@@ -292,13 +285,13 @@ def login_view(request):
                     pass  # المستخدم ليس وكيل (ربما أدمن)
                 
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                print(f"[LOGIN] Login successful for: {user.username}")
+                logger.info(f'[LOGIN] Successful login: {user.username}')
                 return JsonResponse({'success': True})
             else:
-                print(f"[LOGIN] User is inactive: {user.username}")
+                logger.warning(f'[LOGIN] Inactive user attempt: {user.username}')
                 return JsonResponse({'success': False, 'error': 'الحساب غير مفعل'})
         else:
-            print(f"[LOGIN] Login failed for: {username}")
+            logger.info(f'[LOGIN] Failed login attempt for: {username}')
             return JsonResponse({'success': False, 'error': 'بيانات الدخول غير صحيحة'})
     
     return render(request, 'auth/login.html')
@@ -437,10 +430,8 @@ def register_view(request):
                     'require_verification': True
                 })
         except Exception as e:
-            import traceback
-            print(f"Registration error: {e}")
-            print(traceback.format_exc())
-            return JsonResponse({'success': False, 'error': f'حدث خطأ: {str(e)}'})
+            logger.error(f'[REGISTER] Registration error: {e}', exc_info=True)
+            return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء إنشاء الحساب. يرجى المحاولة لاحقاً.'})
     
     return render(request, 'auth/register.html')
 
@@ -553,12 +544,11 @@ def google_auth_callback(request):
         })
         
     except ValueError as e:
-        # Token غير صالح
-        return JsonResponse({'success': False, 'error': f'Invalid token: {str(e)}'}, status=401)
+        logger.warning(f'[GOOGLE_AUTH] Invalid token: {e}')
+        return JsonResponse({'success': False, 'error': 'رمز التحقق غير صالح'}, status=401)
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.error(f'[GOOGLE_AUTH] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في تسجيل الدخول'}, status=500)
 
 
 @csrf_exempt
@@ -595,7 +585,8 @@ def resend_verification_email(request):
     except User.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'البريد الإلكتروني غير مسجل'})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        logger.error(f'[RESEND_VERIFY] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ. يرجى المحاولة لاحقاً.'})
 
 
 def verify_email_view(request):
@@ -1132,12 +1123,10 @@ def bot_settings_view(request):
                 'bot_name': agent.bot_name
             })
         except Exception as e:
-            logger.error(f"❌ Error saving agent settings: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
+            logger.error(f'[BOT_SETTINGS] Error: {e}', exc_info=True)
             return JsonResponse({
                 'status': 'error',
-                'error': str(e),
+                'error': 'حدث خطأ في حفظ الإعدادات',
                 'message': 'حدث خطأ في حفظ الإعدادات'
             }, status=500)
     
@@ -1264,7 +1253,8 @@ def test_add_property(request):
             return JsonResponse({'success': True, 'property_id': str(prop.id), 'message': 'تم إنشاء العقار بنجاح'})
         except Exception as e:
             import traceback
-            return JsonResponse({'success': False, 'error': str(e), 'traceback': traceback.format_exc()})
+            logger.error(f'[CREATE_PROPERTY] Error: {e}', exc_info=True)
+            return JsonResponse({'success': False, 'error': 'حدث خطأ في إنشاء العقار'})
     
     # عرض صفحة اختبار بسيطة
     from django.middleware.csrf import get_token
@@ -1373,7 +1363,8 @@ def get_global_settings(request):
             }
         })
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.error(f'[SETTINGS] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 @csrf_exempt
@@ -1423,27 +1414,25 @@ def save_global_settings(request):
         })
         
     except Exception as e:
-        import traceback
-        print(f"Save settings error: {e}")
-        print(traceback.format_exc())
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.error(f'[SETTINGS] Save error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء حفظ الإعدادات'}, status=500)
 
 
 def check_admin_access(request):
     """التحقق من صلاحية الأدمن"""
     # التحقق من session الأدمن أولاً
     if request.session.get('is_admin_authenticated'):
-        print(f"✅ Admin authenticated via session")
         return True
     
     from django.conf import settings as django_settings
-    expected_key = getattr(django_settings, 'ADMIN_SECRET_KEY', 'inify_admin_2025')
+    expected_key = getattr(django_settings, 'ADMIN_SECRET_KEY', '')
     
-    # التحقق من المفتاح في: query params, headers
-    admin_key = request.GET.get('key', '') or request.META.get('HTTP_X_ADMIN_KEY', '')
+    if not expected_key:
+        logger.error('[ADMIN] ADMIN_SECRET_KEY not configured')
+        return False
     
-    print(f"🔑 Session auth: {request.session.get('is_admin_authenticated')}")
-    print(f"🔑 Admin key: {admin_key}")
+    # التحقق من المفتاح في Headers فقط (لا query params لأسباب أمنية)
+    admin_key = request.META.get('HTTP_X_ADMIN_KEY', '')
     
     return admin_key == expected_key
 
@@ -1472,7 +1461,8 @@ def admin_login(request):
         else:
             return JsonResponse({'success': False, 'error': 'بيانات الدخول غير صحيحة'}, status=401)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.error(f'[ADMIN_LOGIN] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في تسجيل الدخول'}, status=500)
 
 
 def get_all_users(request):
@@ -1586,10 +1576,8 @@ def get_all_users(request):
         })
         
     except Exception as e:
-        import traceback
-        print(f"Get users error: {e}")
-        print(traceback.format_exc())
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.error(f'[GET_USERS] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في جلب البيانات'}, status=500)
 
 
 @csrf_exempt
@@ -1698,10 +1686,8 @@ def update_user_plan(request):
     except Agent.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'المستخدم غير موجود'}, status=404)
     except Exception as e:
-        import traceback
-        print(f"Update plan error: {e}")
-        print(traceback.format_exc())
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.error(f'[UPDATE_PLAN] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في تحديث الباقة'}, status=500)
 
 
 @csrf_exempt
@@ -1746,7 +1732,8 @@ def admin_expire_subscriptions(request):
             'message': f'تم إلغاء {expired_count} اشتراك منتهي' if expired_count > 0 else 'جميع الاشتراكات سارية'
         })
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.error(f'[EXPIRE_SUBS] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 @csrf_exempt
@@ -1800,10 +1787,8 @@ def delete_user(request, user_id):
     except Agent.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'المستخدم غير موجود'}, status=404)
     except Exception as e:
-        import traceback
-        print(f"Delete user error: {e}")
-        print(traceback.format_exc())
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.error(f'[DELETE_USER] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في حذف المستخدم'}, status=500)
 
 
 @csrf_exempt
@@ -1827,7 +1812,8 @@ def increment_conversation(request, agent_id):
     except Agent.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.error(f'[INCREMENT_CONV] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 @login_required(login_url='/auth/login/')
@@ -1861,7 +1847,8 @@ def get_agent_stats(request, agent_id):
     except Agent.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.error(f'[TOUR] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -1894,7 +1881,8 @@ def profile_update_api(request):
 
         return JsonResponse({'success': True, 'message': 'تم حفظ التغييرات بنجاح'})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        logger.error(f'[PROFILE_UPDATE] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في تحديث الملف الشخصي'})
 
 
 @login_required
@@ -1926,7 +1914,8 @@ def change_password_api(request):
 
         return JsonResponse({'success': True, 'message': 'تم تغيير كلمة المرور بنجاح'})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        logger.error(f'[CHANGE_PASSWORD] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في تغيير كلمة المرور'})
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -2004,8 +1993,8 @@ def subscription_status_api(request):
             'amount': str(sub.amount),
         })
     except Exception as e:
-        logger.error(f"Subscription status error: {e}")
-        return JsonResponse({'success': False, 'error': str(e)})
+        logger.error(f'[SUB_STATUS] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في جلب حالة الاشتراك'})
 
 
 @login_required
@@ -2052,8 +2041,8 @@ def start_trial_api(request):
             'days_remaining': sub.days_remaining,
         })
     except Exception as e:
-        logger.error(f"Start trial error: {e}")
-        return JsonResponse({'success': False, 'error': str(e)})
+        logger.error(f'[START_TRIAL] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في بدء الفترة التجريبية'})
 
 
 @login_required
@@ -2121,8 +2110,8 @@ def subscribe_api(request):
             return JsonResponse({'success': False, 'error': result['error']})
 
     except Exception as e:
-        logger.error(f"Subscribe error: {e}")
-        return JsonResponse({'success': False, 'error': str(e)})
+        logger.error(f'[SUBSCRIBE] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في عملية الاشتراك'})
 
 
 @login_required
@@ -2429,8 +2418,8 @@ def streampay_webhook(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         import traceback
-        logger.error(f"Webhook error: {e}\n{traceback.format_exc()}")
-        return JsonResponse({'error': str(e)}, status=500)
+        logger.error(f'[WEBHOOK] Error: {e}', exc_info=True)
+        return JsonResponse({'error': 'Internal server error'}, status=500)
 
 
 # ============================================================
@@ -2634,7 +2623,8 @@ def admin_support_ticket_reply(request, ticket_id):
     except SupportTicket.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'التذكرة غير موجودة'}, status=404)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.error(f'[SUPPORT_REPLY] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في الرد على التذكرة'}, status=500)
 
 
 # ═══════════════════════════════════════════════════════════

@@ -75,6 +75,43 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
 .toast.ok{border-color:rgba(34,197,94,.4);color:#22c55e}
 .toast.err{border-color:rgba(239,68,68,.4);color:#ef4444}
 .code-block{background:rgba(0,0,0,.4);border:1px solid rgba(107,184,201,.15);border-radius:10px;padding:16px;font-family:monospace;font-size:12px;color:#4ade80;white-space:pre-wrap;overflow-x:auto}
+
+/* ═══ Light Mode ═══ */
+body.light-mode,
+html.light-mode body{background:#F5F7FA!important;color:#1F2937!important}
+body.light-mode .premium-bg{background:#F5F7FA!important}
+body.light-mode .grid-pattern{opacity:0!important}
+body.light-mode .main-content{background:#F5F7FA!important}
+body.light-mode .page-header h1{color:#1E293B!important}
+body.light-mode .page-header p{color:#6B7280!important}
+body.light-mode .section-card{background:#FFFFFF!important;border-color:#E5E7EB!important;box-shadow:0 1px 3px rgba(0,0,0,.06)!important}
+body.light-mode .section-card h2{color:#1E293B!important}
+body.light-mode .stat-mini{background:#FFFFFF!important;border-color:#E5E7EB!important;box-shadow:0 1px 3px rgba(0,0,0,.06)!important}
+body.light-mode .stat-mini .txt{color:#6B7280!important}
+body.light-mode .wh-card{background:#FFFFFF!important;border-color:#E5E7EB!important;box-shadow:0 1px 3px rgba(0,0,0,.06)!important}
+body.light-mode .wh-name{color:#1E293B!important}
+body.light-mode .wh-url{color:#4A90A4!important}
+body.light-mode .wh-stat .val{color:#1E293B!important}
+body.light-mode .wh-stat .lbl{color:#6B7280!important}
+body.light-mode .wh-secret{background:#F3F4F6!important;color:#6B7280!important}
+body.light-mode .ev-item{background:#F9FAFB!important;border-color:#E5E7EB!important}
+body.light-mode .ev-item .ev-code{color:#B45309!important}
+body.light-mode .ev-item .ev-desc{color:#6B7280!important}
+body.light-mode .ev-tag{background:rgba(74,144,164,.08)!important;color:#4A90A4!important;border-color:rgba(74,144,164,.2)!important}
+body.light-mode .code-block{background:#1E293B!important;border-color:#334155!important}
+body.light-mode .empty-state{color:#6B7280!important}
+body.light-mode .modal-box{background:#FFFFFF!important;border-color:#E5E7EB!important;box-shadow:0 20px 60px rgba(0,0,0,.15)!important}
+body.light-mode .modal-box h3{color:#1E293B!important}
+body.light-mode .fg label{color:#374151!important}
+body.light-mode .fg input{background:#FFFFFF!important;border-color:#D1D5DB!important;color:#1F2937!important}
+body.light-mode .fg input:focus{border-color:#4A90A4!important;box-shadow:0 0 0 3px rgba(74,144,164,.12)!important}
+body.light-mode .ev-check{background:#F9FAFB!important;border-color:#E5E7EB!important}
+body.light-mode .ev-check span{color:#374151!important}
+body.light-mode .toast{background:#FFFFFF!important;border-color:#E5E7EB!important;box-shadow:0 4px 20px rgba(0,0,0,.1)!important}
+body.light-mode .log-table th{background:#F9FAFB!important;color:#6B7280!important;border-color:#E5E7EB!important}
+body.light-mode .log-table td{color:#374151!important;border-color:#F3F4F6!important}
+body.light-mode .btn-outline{background:#FFFFFF!important;color:#4A90A4!important;border-color:#E5E7EB!important}
+body.light-mode .btn-outline:hover{background:rgba(74,144,164,.08)!important;border-color:#4A90A4!important}
 </style>
 </head>
 <body>
@@ -84,7 +121,7 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
 {% include 'dashboard/partials/sidebar.html' %}
 <div class="main-content">
   <div class="page-header">
-    <h1>🔔 Webhooks</h1>
+    <h1><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:8px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Webhooks</h1>
     <p>استقبل إشعارات فورية في أنظمة CRM الخارجية عند حدوث أي نشاط على حسابك</p>
   </div>
   <div class="stats-row">
@@ -95,7 +132,7 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
   </div>
   <div class="section-card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
-      <h2 style="margin-bottom:0;">🔗 Webhooks المُعدَّة</h2>
+      <h2 style="margin-bottom:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Webhooks المُعدَّة</h2>
       <button class="btn-gold" onclick="openCreate()">+ إنشاء Webhook جديد</button>
     </div>
     <div id="whList">
@@ -115,19 +152,19 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
             <div class="wh-stat"><div class="val" style="color:{% if wh.total_failed > 0 %}#ef4444{% else %}#22c55e{% endif %}">{{ wh.total_failed }}</div><div class="lbl">فاشل</div></div>
             <div class="wh-stat"><div class="val" style="font-size:12px;color:var(--text-muted);">{% if wh.last_success_at %}{{ wh.last_success_at|date:"d/m H:i" }}{% else %}—{% endif %}</div><div class="lbl">آخر نجاح</div></div>
           </div>
-          <div class="wh-secret">🔑 Secret: ••••••••{{ wh.secret|slice:"-4:" }}</div>
+          <div class="wh-secret"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Secret: ••••••••{{ wh.secret|slice:"-4:" }}</div>
           <div class="wh-actions">
-            <button class="btn-outline" onclick="testWH('{{ wh.id }}',this)">⚡ اختبار</button>
-            <button class="btn-outline" onclick="showLogs('{{ wh.id }}','{{ wh.name }}')">📋 السجل</button>
-            <button class="btn-outline" onclick="editWH('{{ wh.id }}')">✏️ تعديل</button>
+            <button class="btn-outline" onclick="testWH('{{ wh.id }}',this)">اختبار</button>
+            <button class="btn-outline" onclick="showLogs('{{ wh.id }}','{{ wh.name }}')">السجل</button>
+            <button class="btn-outline" onclick="editWH('{{ wh.id }}')">تعديل</button>
             <button class="btn-warn" onclick="toggleWH('{{ wh.id }}',{{ wh.is_active|lower }})">{% if wh.is_active %}⏸ تعطيل{% else %}▶ تفعيل{% endif %}</button>
-            <button class="btn-danger" onclick="deleteWH('{{ wh.id }}','{{ wh.name }}')">🗑 حذف</button>
+            <button class="btn-danger" onclick="deleteWH('{{ wh.id }}','{{ wh.name }}')">حذف</button>
           </div>
         </div>
         {% endfor %}
       {% else %}
         <div class="empty-state">
-          <div class="icon">🔔</div>
+          <div class="icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
           <p>لا توجد Webhooks بعد — أنشئ أول Webhook لاستقبال الإشعارات في نظام CRM الخاص بك</p>
           <button class="btn-gold" onclick="openCreate()">+ إنشاء أول Webhook</button>
         </div>
@@ -135,7 +172,7 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
     </div>
   </div>
   <div class="section-card">
-    <h2>📡 الأحداث المتاحة</h2>
+    <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg> الأحداث المتاحة</h2>
     <div class="ev-guide">
       {% for val, label in available_events %}
       <div class="ev-item"><div class="ev-code">{{ val }}</div><div class="ev-desc">{{ label }}</div></div>
@@ -143,10 +180,10 @@ body{font-family:BalooBhaijaan2,sans-serif;background:var(--midnight);color:var(
     </div>
   </div>
   <div class="section-card">
-    <h2>📦 مثال على الـ Payload المُرسَل</h2>
+    <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> مثال على الـ Payload المُرسَل</h2>
     <p style="color:var(--text-muted);font-size:13px;margin-bottom:14px;">يُرسَل كـ HTTP POST — Content-Type: application/json</p>
     <div class="code-block">{"event":"lead.created","timestamp":"2026-02-20T14:30:00+03:00","data":{"id":"uuid","name":"أحمد محمد","phone":"0555123456","status":"new","source":"chatbot","urgency":"immediate","score":45,"city_preference":"الرياض","budget_min":500000,"budget_max":900000,"created_at":"2026-02-20T14:30:00+03:00"}}</div>
-    <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">🔐 التحقق: <code style="color:var(--cyan);font-family:monospace;">X-Inify-Signature: sha256=HMAC_SHA256(secret, body)</code></p>
+    <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">التحقق: <code style="color:var(--cyan);font-family:monospace;">X-Inify-Signature: sha256=HMAC_SHA256(secret, body)</code></p>
   </div>
 </div>
 </div>

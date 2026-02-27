@@ -2407,19 +2407,19 @@
         </nav>
         
         <div class="header-left">
-            <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="تبديل الوضع">🌙</button>
-            <button id="langToggleBtn" onclick="toggleLanguageAndReload()" style="padding: 8px 16px; background: rgba(107, 184, 201, 0.15); border: 1px solid rgba(107, 184, 201, 0.3); border-radius: 8px; color: var(--cyan); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-family: inherit;">🌐 EN</button>
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="تبديل الوضع"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+            <button id="langToggleBtn" onclick="toggleLanguageAndReload()" style="padding: 8px 16px; background: rgba(107, 184, 201, 0.15); border: 1px solid rgba(107, 184, 201, 0.3); border-radius: 8px; color: var(--cyan); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-family: inherit;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> EN</button>
             <a href="/estate/" class="nav-link-btn">المنتج العقاري</a>
             <a href="/auth/register/" class="header-btn">ابدأ الآن</a>
         </div>
         
-        <div class="menu-icon" onclick="openMobileMenu()">☰</div>
+        <div class="menu-icon" onclick="openMobileMenu()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div>
     </header>
 
     <!-- Mobile Menu -->
     <div class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
     <div class="mobile-menu" id="mobileMenu">
-        <button class="mobile-menu-close" onclick="closeMobileMenu()">✕</button>
+        <button class="mobile-menu-close" onclick="closeMobileMenu()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         <div class="mobile-menu-links">
             <a href="#services">حلول الأعمال</a>
             <a href="#projects">مشاريعنا</a>
@@ -2476,7 +2476,7 @@
                         <span class="stat-label">دعم متواصل</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-number">🇸🇦</span>
+                        <span class="stat-number"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
                         <span class="stat-label">صنع في السعودية</span>
                     </div>
                 </div>
@@ -3020,12 +3020,7 @@
             }
         });
 
-        // ═══════════════════════════════════════════════════════════
-        // Theme Toggle (Dark/Light Mode)
-        // ═══════════════════════════════════════════════════════════
-        function getTheme() {
-            return localStorage.getItem('inify_theme') || 'dark';
-        }
+        // Theme Toggle — handled by /static/js/theme.js (loaded in <head>)
 
         // ═══════════════════════════════════════════════════════════
         // FAQ Accordion
@@ -3038,36 +3033,6 @@
             // Open clicked if it was closed
             if (!isOpen) item.classList.add('open');
         }
-
-        function setTheme(theme) {
-            localStorage.setItem('inify_theme', theme);
-            if (theme === 'light') {
-                document.body.classList.add('light-mode');
-            } else {
-                document.body.classList.remove('light-mode');
-            }
-            updateThemeButton();
-        }
-
-        function toggleTheme() {
-            const currentTheme = getTheme();
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            setTheme(newTheme);
-        }
-
-        function updateThemeButton() {
-            const theme = getTheme();
-            const btn = document.getElementById('themeToggleBtn');
-            if (btn) {
-                btn.innerHTML = theme === 'dark' ? '☀️' : '🌙';
-                btn.title = theme === 'dark' ? 'التبديل للوضع الفاتح' : 'التبديل للوضع الداكن';
-            }
-        }
-
-        // Initialize theme
-        (function initTheme() {
-            setTheme(getTheme());
-        })();
 
         // ═══════════════════════════════════════════════════════════
         // Language Toggle
@@ -3202,10 +3167,10 @@
             if (lang === 'en') {
                 document.documentElement.dir = 'ltr';
                 document.documentElement.lang = 'en';
-                if (btn) btn.innerHTML = '🌐 عربي';
+                if (btn) btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> عربي';
                 translateToEnglish();
             } else {
-                if (btn) btn.innerHTML = '🌐 EN';
+                if (btn) btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> EN';
             }
         })();
     </script>

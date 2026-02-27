@@ -387,6 +387,31 @@
             box-shadow: 0 8px 25px rgba(107, 184, 201, 0.3);
         }
 
+        /* Light Mode - Premium Button */
+        body.light-mode .btn-primary {
+            background: linear-gradient(145deg, #111827, #1F2937 50%, #374151) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            border-radius: 12px !important;
+            padding: 11px 24px !important;
+            font-weight: 600 !important;
+            font-size: 13px !important;
+            letter-spacing: 0.02em !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.06) !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        body.light-mode .btn-primary:hover {
+            background: linear-gradient(145deg, #000000, #111827 50%, #1F2937) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.08) !important;
+            transform: translateY(-2px) !important;
+        }
+        body.light-mode .btn-primary:active {
+            transform: translateY(0) !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,.12), inset 0 1px 3px rgba(0,0,0,.15) !important;
+        }
+        body.light-mode .btn-primary svg { stroke: #FFFFFF !important; }
+
         .btn-secondary {
             background: rgba(107, 184, 201, 0.1);
             color: var(--pearl);
@@ -1436,7 +1461,7 @@
         {% endif %}
         {% csrf_token %}
         <div class="page-header">
-            <h1>⚙️ الإعدادات</h1>
+            <h1><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:8px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> الإعدادات</h1>
             <p>إدارة إعدادات حسابك والوكيل الذكي والمنصات المتصلة</p>
         </div>
 
@@ -1454,7 +1479,7 @@
                 <!-- General Settings -->
                 <div class="tab-content active" id="generalTab">
                     <div class="settings-section">
-                        <h3 class="section-title">🏢 معلومات الشركة</h3>
+                        <h3 class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> معلومات الشركة</h3>
                         
                         <div class="form-group">
                             <label>اسم الشركة</label>
@@ -1464,7 +1489,7 @@
                     </div>
                     
                     <div class="settings-section">
-                        <h3 class="section-title">🤖 معلومات الوكيل</h3>
+                        <h3 class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="9" cy="16" r="1"/><circle cx="15" cy="16" r="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> معلومات الوكيل</h3>
                         
                         <div class="form-group">
                             <label>اسم الوكيل</label>
@@ -1485,7 +1510,7 @@
                     </div>
                     
                     <div class="settings-section">
-                        <h3 class="section-title">🕐 أوقات المعاينة</h3>
+                        <h3 class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> أوقات المعاينة</h3>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div class="form-group">
@@ -1525,12 +1550,12 @@
                     </div>
 
                     <div class="settings-section">
-                        <h3 class="section-title">🤖 نموذج الذكاء الاصطناعي</h3>
+                        <h3 class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73v.27h1a7 7 0 0 1 7 7h.27c.34-.6.99-1 1.73-1a2 2 0 1 1 0 4c-.74 0-1.39-.4-1.73-1H20a7 7 0 0 1-7 7v.27c.6.34 1 .99 1 1.73a2 2 0 1 1-4 0c0-.74.4-1.39 1-1.73V20a7 7 0 0 1-7-7h-.27c-.34.6-.99 1-1.73 1a2 2 0 1 1 0-4c.74 0 1.39.4 1.73 1H4a7 7 0 0 1 7-7v-.27c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="12" cy="12" r="3"/></svg> نموذج الذكاء الاصطناعي</h3>
                         
                         <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(126, 232, 250, 0.05) 100%); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 16px; padding: 24px; margin-bottom: 20px;">
                             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
                                 <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #00D4FF 0%, #7EE8FA 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
-                                    <span style="font-size: 28px;">🏠</span>
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                                 </div>
                                 <div>
                                     <h4 style="font-size: 22px; font-weight: 700; color: #00D4FF; margin: 0 0 4px 0; font-family: 'Chillax', sans-serif;">Inify</h4>
@@ -1551,13 +1576,13 @@
                 <!-- Platforms Settings -->
                 <div class="tab-content" id="platformsTab">
                     <div class="settings-section">
-                        <h3 class="section-title">🔗 ربط حسابات المنصات</h3>
+                        <h3 class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> ربط حسابات المنصات</h3>
                         <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">اربط حساباتك على المنصات العقارية ومواقع التواصل لنشر عقاراتك تلقائياً</p>
                         
                         <div class="platforms-connect-list">
                             <!-- Bayut -->
                             <div class="platform-connect-item" id="bayutConnect">
-                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #00a651, #008f45);">🏠</div>
+                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #00a651, #008f45);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
                                 <div class="platform-connect-info">
                                     <div class="platform-connect-name">Bayut</div>
                                     <div class="platform-connect-desc">منصة عقارية رائدة في الخليج</div>
@@ -1568,7 +1593,7 @@
 
                             <!-- Haraj -->
                             <div class="platform-connect-item" id="harajConnect">
-                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #1da1f2, #0d8ecf);">🛒</div>
+                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #1da1f2, #0d8ecf);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
                                 <div class="platform-connect-info">
                                     <div class="platform-connect-name">حراج</div>
                                     <div class="platform-connect-desc">أكبر سوق إلكتروني سعودي</div>
@@ -1579,7 +1604,7 @@
 
                             <!-- Aqar -->
                             <div class="platform-connect-item" id="aqarConnect">
-                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">🏢</div>
+                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
                                 <div class="platform-connect-info">
                                     <div class="platform-connect-name">عقار</div>
                                     <div class="platform-connect-desc">منصة عقارية سعودية</div>
@@ -1601,7 +1626,7 @@
 
                             <!-- Instagram -->
                             <div class="platform-connect-item" id="instagramConnect">
-                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);">📷</div>
+                                <div class="platform-connect-logo" style="background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></div>
                                 <div class="platform-connect-info">
                                     <div class="platform-connect-name">انستقرام</div>
                                     <div class="platform-connect-desc">انشر صور عقاراتك</div>
@@ -1663,7 +1688,7 @@
                     </div>
 
                     <div class="settings-section">
-                        <h3 class="section-title">🏢 معلومات الشركة</h3>
+                        <h3 class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> معلومات الشركة</h3>
                         
                         <div class="form-group">
                             <label>نبذة عن الشركة</label>

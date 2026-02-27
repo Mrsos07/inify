@@ -607,6 +607,31 @@
             color: var(--midnight);
         }
 
+        /* Light Mode - Premium Button */
+        body.light-mode .btn-primary {
+            background: linear-gradient(145deg, #111827, #1F2937 50%, #374151) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            border-radius: 12px !important;
+            padding: 11px 24px !important;
+            font-weight: 600 !important;
+            font-size: 13px !important;
+            letter-spacing: 0.02em !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.06) !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        body.light-mode .btn-primary:hover {
+            background: linear-gradient(145deg, #000000, #111827 50%, #1F2937) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.08) !important;
+            transform: translateY(-2px) !important;
+        }
+        body.light-mode .btn-primary:active {
+            transform: translateY(0) !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,.12), inset 0 1px 3px rgba(0,0,0,.15) !important;
+        }
+        body.light-mode .btn-primary svg { stroke: #FFFFFF !important; }
+
         /* Property Links */
         .property-link {
             display: inline-block;
@@ -939,34 +964,34 @@
         {% endif %}
         <div class="page-header">
             <div>
-                <h1>👥 العملاء المحتملين</h1>
+                <h1><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:8px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> العملاء المحتملين</h1>
                 <p>قائمة العملاء الذين تواصلوا عبر الشات بوت</p>
             </div>
         </div>
 
         <div class="stats-row">
             <div class="stat-card new">
-                <div class="stat-icon">🆕</div>
+                <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div>
                 <div class="stat-value" id="newCount">0</div>
                 <div class="stat-label">عملاء جدد</div>
             </div>
             <div class="stat-card interested">
-                <div class="stat-icon">⭐</div>
+                <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
                 <div class="stat-value" id="interestedCount">0</div>
                 <div class="stat-label">مهتمين</div>
             </div>
             <div class="stat-card contacted">
-                <div class="stat-icon">📞</div>
+                <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
                 <div class="stat-value" id="contactedCount">0</div>
                 <div class="stat-label">تم التواصل</div>
             </div>
             <div class="stat-card converted">
-                <div class="stat-icon">✅</div>
+                <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
                 <div class="stat-value" id="convertedCount">0</div>
                 <div class="stat-label">تم التحويل</div>
             </div>
             <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                <div class="stat-icon">📅</div>
+                <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
                 <div class="stat-value" id="appointmentsCount">0</div>
                 <div class="stat-label">مواعيد المعاينة</div>
             </div>
@@ -1001,7 +1026,7 @@
             </div>
 
             <div class="empty-state" id="emptyState" style="display: none;">
-                <div class="icon">👥</div>
+                <div class="icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
                 <h3>لا يوجد عملاء بعد</h3>
                 <p>سيظهر العملاء هنا عندما يتواصلون عبر الشات بوت ويتركون بياناتهم</p>
                 <a href="/embed/" class="btn btn-primary">تجربة الشات بوت</a>
