@@ -419,6 +419,78 @@ body.light-mode .quick-action span {
     color: #374151 !important;
 }
 
+/* ─── Quick Actions / الخطوات الرئيسية ─── */
+body.light-mode #tour-quickactions {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode #tour-quickactions h3 {
+    color: #1F2937 !important;
+}
+
+body.light-mode #tour-quickactions span {
+    color: #6B7280 !important;
+}
+
+/* بطاقات الخطوات الأربع */
+body.light-mode #tour-quickactions a[style],
+body.light-mode #tour-quickactions button[style] {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+/* أيقونات الخطوات */
+body.light-mode #tour-quickactions a[style] > div:first-child,
+body.light-mode #tour-quickactions button[style] > div:first-child {
+    background: #EFF6FF !important;
+    border-color: #BFDBFE !important;
+}
+
+body.light-mode #tour-quickactions svg {
+    stroke: #2563EB !important;
+}
+
+/* عناوين الخطوات */
+body.light-mode #tour-quickactions a[style] > div:last-child > div:first-child,
+body.light-mode #tour-quickactions button[style] > div:last-child > div:first-child,
+body.light-mode #tour-quickactions a[style] > div:nth-child(2) > div:first-child,
+body.light-mode #tour-quickactions button[style] > div:nth-child(2) > div:first-child {
+    color: #1F2937 !important;
+}
+
+/* وصف الخطوات */
+body.light-mode #tour-quickactions a[style] > div:last-child > div:last-child,
+body.light-mode #tour-quickactions button[style] > div:last-child > div:last-child,
+body.light-mode #tour-quickactions a[style] > div:nth-child(2) > div:last-child,
+body.light-mode #tour-quickactions button[style] > div:nth-child(2) > div:last-child {
+    color: #6B7280 !important;
+}
+
+/* زر الواتساب في الوضع الفاتح */
+body.light-mode #tour-quickactions button#whatsappQuickAction {
+    background: #F0FDF4 !important;
+    border: 1px solid #BBF7D0 !important;
+}
+
+body.light-mode #tour-quickactions button#whatsappQuickAction > div:first-child {
+    background: #DCFCE7 !important;
+    border-color: #86EFAC !important;
+}
+
+body.light-mode #tour-quickactions button#whatsappQuickAction > div:first-child svg {
+    fill: #16A34A !important;
+    stroke: none !important;
+}
+
+body.light-mode #tour-quickactions button#whatsappQuickAction > div:nth-child(2) > div:first-child {
+    color: #15803D !important;
+}
+
+body.light-mode #tour-quickactions button#whatsappQuickAction > div:nth-child(2) > div:last-child {
+    color: #4B7A5E !important;
+}
+
 body.light-mode .empty-state p {
     color: #6B7280 !important;
 }

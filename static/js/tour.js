@@ -66,10 +66,6 @@
 
     /* ─── CSS ─── */
     var CSS = [
-        /* overlay شفاف يغطي الصفحة */
-        '#itOverlay{position:fixed;inset:0;z-index:99990;pointer-events:none;}',
-        /* SVG mask للتظليل */
-        '#itMask{position:absolute;inset:0;width:100%;height:100%;}',
         /* بطاقة التور */
         '#itCard{position:fixed;z-index:99999;width:360px;max-width:92vw;direction:rtl;',
         'background:linear-gradient(145deg,#0d1b2e,#0a1525);',
@@ -129,17 +125,16 @@
         if (document.getElementById('itCard')) return;
         injectCSS();
 
-        /* overlay + mask */
+        /* full-screen dark backdrop */
         var ov = document.createElement('div');
         ov.id = 'itOverlay';
-        ov.innerHTML =
-            '<svg id="itMask"><defs><mask id="itHoleMask">'
-            + '<rect width="100%" height="100%" fill="white"/>'
-            + '<rect id="itHoleRect" rx="14" fill="black"/>'
-            + '</mask></defs>'
-            + '<rect id="itDark" width="100%" height="100%" fill="rgba(0,0,0,0.72)" mask="url(#itHoleMask)"/>'
-            + '</svg>';
         document.body.appendChild(ov);
+
+        /* highlight box — sits ON TOP of overlay, transparent itself, box-shadow creates dark surround */
+        var hl = document.createElement('div');
+        hl.id = 'itHighlight';
+        hl.style.cssText = 'display:none;position:fixed;z-index:99992;pointer-events:none;border-radius:16px;transition:all .35s cubic-bezier(.4,0,.2,1);';
+        document.body.appendChild(hl);
 
         /* pulse ring */
         var ring = document.createElement('div');
@@ -156,65 +151,65 @@
 
     /* ─── spotlight on element ─── */
     function spotlight(el, padding) {
-        padding = padding || 14;
+        padding = padding || 16;
         var r = el.getBoundingClientRect();
-        var hole = document.getElementById('itHoleRect');
-        var ring = document.getElementById('itRing');
-        var ov   = document.getElementById('itOverlay');
-        var scrollTop = window.scrollY || document.documentElement.scrollTop;
 
-        /* scroll element into view */
+        /* scroll element into view smoothly */
         var elCenter = r.top + r.height / 2;
         var winH = window.innerHeight;
-        if (elCenter < 80 || elCenter > winH - 80) {
+        if (elCenter < 100 || elCenter > winH - 100) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            /* wait for scroll then recalculate */
+            setTimeout(function () { spotlight(el, padding); }, 380);
+            return null;
         }
 
-        /* update hole rect */
         var x = r.left - padding;
         var y = r.top  - padding;
         var w = r.width  + padding * 2;
         var h = r.height + padding * 2;
-        var borderR = parseFloat(getComputedStyle(el).borderRadius) || 14;
+        var borderR = Math.min(parseFloat(getComputedStyle(el).borderRadius) || 16, 24) + 4;
 
-        hole.setAttribute('x', x);
-        hole.setAttribute('y', y);
-        hole.setAttribute('width',  w);
-        hole.setAttribute('height', h);
-        hole.setAttribute('rx', borderR + padding);
+        /* overlay: full screen dark */
+        var ov = document.getElementById('itOverlay');
+        ov.style.cssText = 'position:fixed;inset:0;z-index:99991;background:rgba(0,0,0,0.75);backdrop-filter:blur(2px);pointer-events:all;';
+
+        /* highlight: punches out the element — uses massive box-shadow to darken outside */
+        var hl = document.getElementById('itHighlight');
+        hl.style.display  = 'block';
+        hl.style.left     = x + 'px';
+        hl.style.top      = y + 'px';
+        hl.style.width    = w + 'px';
+        hl.style.height   = h + 'px';
+        hl.style.borderRadius = borderR + 'px';
+        /* huge inset-like shadow to cut through overlay */
+        hl.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.75)';
+        hl.style.background = 'transparent';
 
         /* ring */
+        var ring = document.getElementById('itRing');
         ring.style.display = 'block';
         ring.style.left    = x + 'px';
         ring.style.top     = y + 'px';
         ring.style.width   = w + 'px';
         ring.style.height  = h + 'px';
-        ring.style.borderRadius = (borderR + padding) + 'px';
+        ring.style.borderRadius = borderR + 'px';
 
-        ov.style.display = 'block';
-        ov.style.pointerEvents = 'all';
         return { x: x, y: y, w: w, h: h };
     }
 
     /* ─── remove spotlight ─── */
     function clearSpotlight() {
         var ov = document.getElementById('itOverlay');
+        var hl = document.getElementById('itHighlight');
         var ring = document.getElementById('itRing');
-        if (ov) { ov.style.display = 'none'; ov.style.pointerEvents = 'none'; }
+
+        if (hl)   hl.style.display  = 'none';
         if (ring) ring.style.display = 'none';
 
-        /* full dark overlay for center steps */
-        var hole = document.getElementById('itHoleRect');
-        if (hole) {
-            hole.setAttribute('width', '0');
-            hole.setAttribute('height', '0');
-        }
-        /* show semi-dark backdrop for center card */
+        /* solid dark backdrop for center steps */
         if (ov) {
-            ov.style.display = 'block';
-            ov.style.pointerEvents = 'all';
-            ov.style.background = 'rgba(0,0,0,0.65)';
-            ov.style.backdropFilter = 'blur(4px)';
+            ov.style.cssText = 'position:fixed;inset:0;z-index:99991;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);pointer-events:all;';
         }
     }
 
@@ -303,7 +298,7 @@
         },
 
         _destroyDOM: function () {
-            ['itOverlay','itRing','itCard'].forEach(function (id) {
+            ['itOverlay','itHighlight','itRing','itCard'].forEach(function (id) {
                 var el = document.getElementById(id);
                 if (el) el.remove();
             });
