@@ -1,144 +1,297 @@
 /**
- * Inify Onboarding Tour
- * يعمل من أي صفحة في الداشبورد
+ * Inify Onboarding Tour — Spotlight Edition
+ * تور احترافي بتظليل العناصر على الصفحة
  */
 (function () {
     var LS_KEY  = 'inify_tour_step';
     var LS_DONE = 'inify_tour_done';
 
+    /* ─── تعريف خطوات التور ─── */
     var STEPS = [
-        null, // index 0 unused
+        null,
         {
-            badge : '🎉 مرحباً بك في Inify',
-            icon  : '🤖',
-            title : 'جولة تعريفية بنظام Inify',
-            desc  : 'سنرشدك خلال الخصائص الرئيسية لتشغيل وكيلك الذكي وتحقيق أول صفقة.',
+            /* خطوة الترحيب — بدون spotlight */
+            target  : null,
+            position: 'center',
+            badge   : '👋 أهلاً بك في Inify',
+            icon    : '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#6bb8c9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M17 11l2 2 4-4" stroke="#25d366"/></svg>',
+            title   : 'مرحباً! سنرشدك خلال 3 خطوات',
+            desc    : 'في هذه الجولة ستتعرف على أهم خصائص النظام لتبدأ تحقيق أول صفقة مع وكيلك الذكي.',
             progress: 0,
-            dots  : [false, false, false],
+            step    : '1 / 4',
             btnLabel: 'ابدأ الجولة',
-            btnAction: function () { TOUR.goStep(2); },
-            skipLabel: 'تخطي الجولة التعريفية',
-            hasLink: false,
+            btnNext : 2,
+            isLast  : false,
         },
         {
-            badge : 'الخطوة 1 من 3',
-            icon  : '🏠',
-            title : 'إضافة العقارات',
-            desc  : 'من صفحة <strong style="color:#6bb8c9">العقارات</strong> يمكنك إضافة عقاراتك بكافة تفاصيلها ليقترحها الوكيل الذكي على كل عميل تلقائياً.<br><br><a href="/dashboard/properties/" style="color:#6bb8c9;font-size:13px;text-decoration:underline;" onclick="localStorage.setItem(\'inify_tour_step\',3)">← اذهب لصفحة العقارات</a>',
-            progress: 33,
-            dots  : [true, false, false],
-            btnLabel: 'التالي ←',
-            btnAction: function () { TOUR.goStep(3); },
-            skipLabel: 'تخطي الجولة التعريفية',
-            hasLink: false,
+            target  : 'tour-quickactions',
+            position: 'auto',
+            badge   : 'الخطوة 1 من 3',
+            icon    : '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#6bb8c9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
+            title   : 'الخطوات الرئيسية',
+            desc    : 'هنا تجد الخطوات الأساسية للبدء: <strong>إضافة عقار</strong> لتغذية الوكيل بمعلومات العقارات، ثم <strong>إعدادات الوكيل</strong> لتخصيص طريقة الرد، ثم <strong>ربط الواتساب</strong> لاستقبال العملاء تلقائياً.',
+            progress: 25,
+            step    : '2 / 4',
+            btnLabel: 'التالي',
+            btnNext : 3,
+            isLast  : false,
         },
         {
-            badge : 'الخطوة 2 من 3',
-            icon  : '⚙️',
-            title : 'إعدادات الوكيل الذكي',
-            desc  : 'من <strong style="color:#6bb8c9">إعدادات الوكيل</strong> أضف اسم شركتك وسياقها وتعليمات الرد حتى يتحدث الوكيل باسمك باحترافية مع كل عميل.<br><br><a href="/dashboard/bot-settings/" style="color:#6bb8c9;font-size:13px;text-decoration:underline;" onclick="localStorage.setItem(\'inify_tour_step\',4)">← اذهب لإعدادات الوكيل</a>',
-            progress: 66,
-            dots  : [true, true, false],
-            btnLabel: 'التالي ←',
-            btnAction: function () { TOUR.goStep(4); },
-            skipLabel: 'تخطي الجولة التعريفية',
-            hasLink: false,
+            target  : 'tour-stats',
+            position: 'auto',
+            badge   : 'الخطوة 2 من 3',
+            icon    : '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#6bb8c9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+            title   : 'إحصائيات نشاطك',
+            desc    : 'تتبّع نمو أعمالك في الوقت الفعلي — عدد العقارات المُضافة، العملاء المحتملين، المحادثات النشطة، والمهتمين بعقاراتك.',
+            progress: 58,
+            step    : '3 / 4',
+            btnLabel: 'التالي',
+            btnNext : 4,
+            isLast  : false,
         },
         {
-            badge : 'الخطوة 3 من 3 🎯',
-            icon  : '📱',
-            title : 'ربط الواتساب',
-            desc  : 'اربط واتساب شركتك من <strong style="color:#6bb8c9">إعدادات الوكيل ← تبويب الواتساب</strong> ليبدأ وكيلك الذكي استقبال رسائل العملاء والرد عليهم تلقائياً على مدار الساعة.',
+            target  : null,
+            position: 'center',
+            badge   : '🎯 جاهز للانطلاق!',
+            icon    : '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#25d366" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+            title   : 'أنت جاهز للانطلاق!',
+            desc    : 'ابدأ الآن بربط واتساب شركتك ليستقبل وكيلك الذكي رسائل العملاء ويرد عليهم تلقائياً على مدار الساعة.',
             progress: 100,
-            dots  : [true, true, true],
+            step    : '4 / 4',
             btnLabel: 'اذهب لربط الواتساب ←',
-            btnAction: function () { TOUR.finish('/dashboard/bot-settings/?tab=whatsapp'); },
-            skipLabel: 'إنهاء الجولة ✓',
-            hasLink: false,
-        }
+            btnNext : null,
+            isLast  : true,
+        },
     ];
 
-    /* ── CSS ── */
+    /* ─── CSS ─── */
     var CSS = [
-        '.tour-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);',
-        'z-index:999999;display:none;align-items:center;justify-content:center;}',
-        '.tour-overlay.tour-visible{display:flex;animation:tourIn .35s ease forwards;}',
-        '.tour-overlay.tour-hiding{display:flex;animation:tourOut .28s ease forwards;}',
-        '@keyframes tourIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}',
-        '@keyframes tourOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.96)}}',
-        '.tour-card{background:linear-gradient(145deg,#0f1f35,#0a1628);border:1px solid rgba(107,184,201,.25);',
-        'border-radius:24px;width:520px;max-width:94vw;padding:44px 40px 36px;',
-        'box-shadow:0 30px 80px rgba(0,0,0,.6);text-align:center;font-family:inherit;direction:rtl;}',
-        '.t-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(107,184,201,.12);',
-        'border:1px solid rgba(107,184,201,.3);color:#6bb8c9;font-size:13px;font-weight:600;',
-        'padding:5px 14px;border-radius:20px;margin-bottom:20px;}',
-        '.t-icon{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;',
-        'font-size:36px;margin:0 auto 20px;background:linear-gradient(135deg,rgba(107,184,201,.15),rgba(107,184,201,.05));',
-        'border:2px solid rgba(107,184,201,.2);}',
-        '.tour-card h2{color:#f8f8f8;font-size:23px;font-weight:700;margin:0 0 12px;line-height:1.4;}',
-        '.tour-card p{color:rgba(248,248,248,.65);font-size:15px;line-height:1.7;margin:0 0 22px;}',
-        '.t-dots{display:flex;justify-content:center;gap:8px;margin-bottom:26px;}',
-        '.t-dot{width:8px;height:8px;border-radius:50%;background:rgba(107,184,201,.25);transition:all .3s;}',
-        '.t-dot.on{background:#6bb8c9;width:24px;border-radius:4px;}',
-        '.t-bar{height:3px;background:rgba(107,184,201,.1);border-radius:2px;margin-bottom:26px;overflow:hidden;}',
-        '.t-fill{height:100%;background:linear-gradient(90deg,#6bb8c9,#4a9fb5);border-radius:2px;transition:width .4s ease;}',
-        '.t-btn{display:flex;align-items:center;justify-content:center;gap:8px;',
-        'background:linear-gradient(135deg,#6bb8c9,#4a9fb5);color:#fff;border:none;border-radius:12px;',
-        'padding:14px 32px;font-size:16px;font-weight:700;cursor:pointer;width:100%;',
-        'font-family:inherit;transition:all .25s;box-sizing:border-box;}',
-        '.t-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(107,184,201,.35);}',
-        '.t-skip{background:none;border:none;color:rgba(248,248,248,.35);font-size:13px;',
-        'cursor:pointer;margin-top:14px;display:block;width:100%;font-family:inherit;',
-        'transition:color .2s;padding:4px;}',
-        '.t-skip:hover{color:rgba(248,248,248,.65);}'
+        /* overlay شفاف يغطي الصفحة */
+        '#itOverlay{position:fixed;inset:0;z-index:99990;pointer-events:none;}',
+        /* SVG mask للتظليل */
+        '#itMask{position:absolute;inset:0;width:100%;height:100%;}',
+        /* بطاقة التور */
+        '#itCard{position:fixed;z-index:99999;width:360px;max-width:92vw;direction:rtl;',
+        'background:linear-gradient(145deg,#0d1b2e,#0a1525);',
+        'border:1px solid rgba(107,184,201,.3);border-radius:20px;',
+        'padding:28px 26px 22px;box-shadow:0 24px 64px rgba(0,0,0,.7),0 0 0 1px rgba(107,184,201,.08);',
+        'font-family:inherit;transition:top .4s cubic-bezier(.4,0,.2,1),left .4s cubic-bezier(.4,0,.2,1);}',
+        /* pulse ring حول العنصر المضاء */
+        '#itRing{position:fixed;z-index:99991;border-radius:inherit;pointer-events:none;',
+        'box-shadow:0 0 0 3px rgba(107,184,201,.7),0 0 0 6px rgba(107,184,201,.25),0 0 30px rgba(107,184,201,.15);',
+        'transition:all .4s cubic-bezier(.4,0,.2,1);animation:itPulse 2s ease-in-out infinite;}',
+        '@keyframes itPulse{0%,100%{box-shadow:0 0 0 3px rgba(107,184,201,.7),0 0 0 6px rgba(107,184,201,.25),0 0 30px rgba(107,184,201,.15);}',
+        '50%{box-shadow:0 0 0 4px rgba(107,184,201,.9),0 0 0 10px rgba(107,184,201,.2),0 0 50px rgba(107,184,201,.2);}}',
+        /* arrow connector */
+        '#itArrow{position:fixed;z-index:99998;width:0;height:0;pointer-events:none;}',
+        /* badge */
+        '.it-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(107,184,201,.1);',
+        'border:1px solid rgba(107,184,201,.3);color:#6bb8c9;font-size:12px;font-weight:700;',
+        'padding:4px 12px;border-radius:20px;margin-bottom:14px;}',
+        /* icon */
+        '.it-icon{display:flex;justify-content:center;margin-bottom:14px;}',
+        /* texts */
+        '#itCard h2{color:#f8f8f8;font-size:18px;font-weight:800;margin:0 0 10px;line-height:1.4;}',
+        '#itCard p{color:rgba(248,248,248,.6);font-size:13.5px;line-height:1.75;margin:0 0 18px;}',
+        /* progress */
+        '.it-progress{height:3px;background:rgba(107,184,201,.12);border-radius:2px;margin-bottom:18px;overflow:hidden;}',
+        '.it-progress-fill{height:100%;background:linear-gradient(90deg,#6bb8c9,#4a9fb5);border-radius:2px;transition:width .5s ease;}',
+        /* step counter */
+        '.it-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}',
+        '.it-step{color:rgba(107,184,201,.6);font-size:12px;font-weight:600;}',
+        /* buttons */
+        '.it-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;',
+        'background:linear-gradient(135deg,#6bb8c9,#4a9fb5);color:#fff;border:none;border-radius:11px;',
+        'padding:13px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;',
+        'transition:all .2s;box-sizing:border-box;margin-bottom:10px;}',
+        '.it-btn:hover{opacity:.88;transform:translateY(-1px);}',
+        '.it-skip{background:none;border:none;color:rgba(248,248,248,.3);font-size:12px;',
+        'cursor:pointer;width:100%;font-family:inherit;transition:color .2s;padding:4px;}',
+        '.it-skip:hover{color:rgba(248,248,248,.6);}',
+        /* animations */
+        '@keyframes itIn{from{opacity:0;transform:scale(.94) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}',
+        '@keyframes itOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.94)}}',
+        '#itCard.it-entering{animation:itIn .3s ease forwards;}',
+        '#itCard.it-leaving{animation:itOut .2s ease forwards;}',
     ].join('');
 
+    /* ─── inject CSS once ─── */
     function injectCSS() {
-        if (document.getElementById('inify-tour-css')) return;
+        if (document.getElementById('it-css')) return;
         var s = document.createElement('style');
-        s.id = 'inify-tour-css';
+        s.id = 'it-css';
         s.textContent = CSS;
         document.head.appendChild(s);
     }
 
-    function buildOverlay() {
-        if (document.getElementById('inifyTourOverlay')) return;
+    /* ─── build DOM elements ─── */
+    function buildDOM() {
+        if (document.getElementById('itCard')) return;
         injectCSS();
-        var div = document.createElement('div');
-        div.id = 'inifyTourOverlay';
-        div.className = 'tour-overlay';
-        div.innerHTML = '<div class="tour-card" id="inifyTourCard"></div>';
-        document.body.appendChild(div);
+
+        /* overlay + mask */
+        var ov = document.createElement('div');
+        ov.id = 'itOverlay';
+        ov.innerHTML =
+            '<svg id="itMask"><defs><mask id="itHoleMask">'
+            + '<rect width="100%" height="100%" fill="white"/>'
+            + '<rect id="itHoleRect" rx="14" fill="black"/>'
+            + '</mask></defs>'
+            + '<rect id="itDark" width="100%" height="100%" fill="rgba(0,0,0,0.72)" mask="url(#itHoleMask)"/>'
+            + '</svg>';
+        document.body.appendChild(ov);
+
+        /* pulse ring */
+        var ring = document.createElement('div');
+        ring.id = 'itRing';
+        ring.style.display = 'none';
+        document.body.appendChild(ring);
+
+        /* card */
+        var card = document.createElement('div');
+        card.id = 'itCard';
+        card.style.display = 'none';
+        document.body.appendChild(card);
     }
 
-    function renderStep(step) {
-        var data = STEPS[step];
-        if (!data) return;
-        buildOverlay();
+    /* ─── spotlight on element ─── */
+    function spotlight(el, padding) {
+        padding = padding || 14;
+        var r = el.getBoundingClientRect();
+        var hole = document.getElementById('itHoleRect');
+        var ring = document.getElementById('itRing');
+        var ov   = document.getElementById('itOverlay');
+        var scrollTop = window.scrollY || document.documentElement.scrollTop;
 
-        var dots = data.dots.map(function (on) {
-            return '<div class="t-dot' + (on ? ' on' : '') + '"></div>';
-        }).join('');
+        /* scroll element into view */
+        var elCenter = r.top + r.height / 2;
+        var winH = window.innerHeight;
+        if (elCenter < 80 || elCenter > winH - 80) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
 
-        document.getElementById('inifyTourCard').innerHTML = [
-            '<div class="t-badge">' + data.badge + '</div>',
-            '<div class="t-icon">' + data.icon + '</div>',
-            '<h2>' + data.title + '</h2>',
-            '<p>' + data.desc + '</p>',
-            '<div class="t-bar"><div class="t-fill" style="width:' + data.progress + '%"></div></div>',
-            '<div class="t-dots">' + dots + '</div>',
-            '<button class="t-btn" id="inifyTourMainBtn">' + data.btnLabel +
-            ' <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>',
-            '<button class="t-skip" id="inifyTourSkipBtn">' + data.skipLabel + '</button>',
+        /* update hole rect */
+        var x = r.left - padding;
+        var y = r.top  - padding;
+        var w = r.width  + padding * 2;
+        var h = r.height + padding * 2;
+        var borderR = parseFloat(getComputedStyle(el).borderRadius) || 14;
+
+        hole.setAttribute('x', x);
+        hole.setAttribute('y', y);
+        hole.setAttribute('width',  w);
+        hole.setAttribute('height', h);
+        hole.setAttribute('rx', borderR + padding);
+
+        /* ring */
+        ring.style.display = 'block';
+        ring.style.left    = x + 'px';
+        ring.style.top     = y + 'px';
+        ring.style.width   = w + 'px';
+        ring.style.height  = h + 'px';
+        ring.style.borderRadius = (borderR + padding) + 'px';
+
+        ov.style.display = 'block';
+        ov.style.pointerEvents = 'all';
+        return { x: x, y: y, w: w, h: h };
+    }
+
+    /* ─── remove spotlight ─── */
+    function clearSpotlight() {
+        var ov = document.getElementById('itOverlay');
+        var ring = document.getElementById('itRing');
+        if (ov) { ov.style.display = 'none'; ov.style.pointerEvents = 'none'; }
+        if (ring) ring.style.display = 'none';
+
+        /* full dark overlay for center steps */
+        var hole = document.getElementById('itHoleRect');
+        if (hole) {
+            hole.setAttribute('width', '0');
+            hole.setAttribute('height', '0');
+        }
+        /* show semi-dark backdrop for center card */
+        if (ov) {
+            ov.style.display = 'block';
+            ov.style.pointerEvents = 'all';
+            ov.style.background = 'rgba(0,0,0,0.65)';
+            ov.style.backdropFilter = 'blur(4px)';
+        }
+    }
+
+    /* ─── position card near spotlight ─── */
+    function positionCard(rect) {
+        var card = document.getElementById('itCard');
+        var cW = card.offsetWidth  || 360;
+        var cH = card.offsetHeight || 300;
+        var vW = window.innerWidth;
+        var vH = window.innerHeight;
+        var margin = 20;
+        var top, left;
+
+        if (!rect) {
+            /* center of screen */
+            top  = (vH - cH) / 2;
+            left = (vW - cW) / 2;
+        } else {
+            /* try below */
+            if (rect.y + rect.h + cH + margin < vH) {
+                top = rect.y + rect.h + margin;
+            } else if (rect.y - cH - margin > 0) {
+                /* above */
+                top = rect.y - cH - margin;
+            } else {
+                top = margin;
+            }
+            /* horizontal: prefer right side if room, else left */
+            if (rect.x + rect.w / 2 + cW / 2 + margin < vW) {
+                left = Math.max(margin, rect.x + rect.w / 2 - cW / 2);
+            } else {
+                left = Math.max(margin, vW - cW - margin);
+            }
+        }
+        card.style.top  = top  + 'px';
+        card.style.left = left + 'px';
+    }
+
+    /* ─── render step card content ─── */
+    function renderCard(step) {
+        var d = STEPS[step];
+        if (!d) return;
+        var card = document.getElementById('itCard');
+
+        var skipHtml = d.isLast
+            ? '<button class="it-skip" id="itSkip">إنهاء الجولة ✓</button>'
+            : '<button class="it-skip" id="itSkip">تخطي الجولة</button>';
+
+        card.innerHTML = [
+            '<div class="it-badge">' + d.badge + '</div>',
+            '<div class="it-icon">' + d.icon + '</div>',
+            '<h2>' + d.title + '</h2>',
+            '<p>' + d.desc + '</p>',
+            '<div class="it-meta">',
+              '<div class="it-progress" style="flex:1;margin-left:12px;"><div class="it-progress-fill" style="width:' + d.progress + '%"></div></div>',
+              '<span class="it-step">' + d.step + '</span>',
+            '</div>',
+            '<button class="it-btn" id="itNext">' + d.btnLabel,
+            d.isLast ? '' : ' <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>',
+            '</button>',
+            skipHtml,
         ].join('');
 
-        document.getElementById('inifyTourMainBtn').onclick = data.btnAction;
-        document.getElementById('inifyTourSkipBtn').onclick = (step === 4)
-            ? function () { TOUR.finish(null); }
-            : function () { TOUR.skip(); };
+        document.getElementById('itNext').onclick = function () {
+            if (d.isLast) {
+                TOUR.finish('/dashboard/bot-settings/?tab=whatsapp');
+            } else {
+                TOUR.goStep(d.btnNext);
+            }
+        };
+        document.getElementById('itSkip').onclick = function () {
+            if (d.isLast) TOUR.finish(null);
+            else TOUR.skip();
+        };
     }
 
-    /* ── Public API ── */
+    /* ─── Public API ─── */
     var TOUR = window.TOUR = {
 
         _saveDB: function () {
@@ -149,87 +302,100 @@
             }).catch(function () {});
         },
 
-        _hide: function (cb) {
-            var el = document.getElementById('inifyTourOverlay');
-            if (!el) { if (cb) cb(); return; }
-            el.classList.add('tour-hiding');
-            el.classList.remove('tour-visible');
-            setTimeout(function () {
-                el.classList.remove('tour-hiding');
-                el.style.display = 'none';
-                if (cb) cb();
-            }, 300);
+        _destroyDOM: function () {
+            ['itOverlay','itRing','itCard'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.remove();
+            });
         },
 
-        _open: function (step) {
-            buildOverlay();
-            renderStep(step);
-            var el = document.getElementById('inifyTourOverlay');
-            el.style.display = 'flex';
-            requestAnimationFrame(function () {
-                el.classList.add('tour-visible');
-            });
-            localStorage.setItem(LS_KEY, step);
+        _hideAll: function (cb) {
+            var card = document.getElementById('itCard');
+            if (card) {
+                card.classList.add('it-leaving');
+                setTimeout(function () {
+                    TOUR._destroyDOM();
+                    if (cb) cb();
+                }, 220);
+            } else {
+                TOUR._destroyDOM();
+                if (cb) cb();
+            }
         },
 
         goStep: function (step) {
-            this._open(step);
-        },
+            localStorage.setItem(LS_KEY, step);
+            buildDOM();
+            var d = STEPS[step];
+            if (!d) return;
 
-        navigate: function (url, nextStep) {
-            localStorage.setItem(LS_KEY, nextStep);
-            window.location.href = url;
+            var card = document.getElementById('itCard');
+            card.classList.remove('it-leaving','it-entering');
+
+            var rect = null;
+            if (d.target) {
+                var el = document.getElementById(d.target);
+                if (el) {
+                    rect = spotlight(el);
+                } else {
+                    clearSpotlight();
+                }
+            } else {
+                clearSpotlight();
+            }
+
+            renderCard(step);
+            card.style.display = 'block';
+
+            /* position then animate */
+            setTimeout(function () {
+                positionCard(rect);
+                card.classList.add('it-entering');
+                setTimeout(function () { card.classList.remove('it-entering'); }, 320);
+            }, 30);
         },
 
         finish: function (redirectUrl) {
             localStorage.setItem(LS_DONE, '1');
             localStorage.removeItem(LS_KEY);
             this._saveDB();
-            if (redirectUrl) {
-                window.location.href = redirectUrl;
-            } else {
-                this._hide();
-            }
+            this._hideAll(function () {
+                if (redirectUrl) window.location.href = redirectUrl;
+            });
         },
 
         skip: function () {
             localStorage.setItem(LS_DONE, '1');
             localStorage.removeItem(LS_KEY);
             this._saveDB();
-            this._hide();
+            this._hideAll();
         },
 
-        /* يُستدعى من زر السايدبار — يعيد التور من البداية */
         restart: function () {
             localStorage.removeItem(LS_DONE);
             localStorage.setItem(LS_KEY, '1');
-            this._open(1);
+            this._destroyDOM();
+            setTimeout(function () { TOUR.goStep(1); }, 50);
         },
 
-        /* يُستدعى تلقائياً عند تحميل الداشبورد لأول مرة */
         autoStart: function () {
             if (localStorage.getItem(LS_DONE) === '1') return;
             var step = parseInt(localStorage.getItem(LS_KEY) || '1');
             if (step < 1 || step > 4) step = 1;
-            setTimeout(function () { TOUR._open(step); }, 450);
+            setTimeout(function () { TOUR.goStep(step); }, 500);
         },
 
-        /* يُستدعى تلقائياً في كل صفحات الداشبورد لاستئناف التور */
         resumeIfPending: function () {
             if (localStorage.getItem(LS_DONE) === '1') return;
             var step = parseInt(localStorage.getItem(LS_KEY) || '0');
             if (step >= 1 && step <= 4) {
-                setTimeout(function () { TOUR._open(step); }, 500);
+                setTimeout(function () { TOUR.goStep(step); }, 500);
             }
         }
     };
 
-    /* دالة عامة للسايدبار */
-    window.startTourFromSidebar = function () {
-        TOUR.restart();
-    };
+    window.startTourFromSidebar = function () { TOUR.restart(); };
 
-    /* استئناف تلقائي في أي صفحة داشبورد */
     document.addEventListener('DOMContentLoaded', function () {
         TOUR.resumeIfPending();
     });
