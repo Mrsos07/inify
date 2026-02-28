@@ -1960,44 +1960,44 @@
                     <div class="an-chart-grid-2">
                         <div class="an-chart-box">
                             <div class="an-chart-title"><span>📈</span> نمو المستخدمين — آخر 30 يوم</div>
-                            <canvas id="chartSignups" height="180"></canvas>
+                            <div style="position:relative;height:200px;"><canvas id="chartSignups"></canvas></div>
                         </div>
                         <div class="an-chart-box">
                             <div class="an-chart-title"><span>🥧</span> توزيع خطط الاشتراك</div>
-                            <canvas id="chartPlans" height="180"></canvas>
+                            <div style="position:relative;height:200px;"><canvas id="chartPlans"></canvas></div>
                         </div>
                     </div>
 
                     <div class="an-chart-grid-2">
                         <div class="an-chart-box">
                             <div class="an-chart-title"><span>⚡</span> استهلاك التوكنات — آخر 30 يوم</div>
-                            <canvas id="chartTokens" height="180"></canvas>
+                            <div style="position:relative;height:200px;"><canvas id="chartTokens"></canvas></div>
                         </div>
                         <div class="an-chart-box">
                             <div class="an-chart-title"><span>📊</span> حالة الاشتراكات</div>
-                            <canvas id="chartSubStatus" height="180"></canvas>
+                            <div style="position:relative;height:200px;"><canvas id="chartSubStatus"></canvas></div>
                         </div>
                     </div>
 
                     <div class="an-chart-grid-3">
                         <div class="an-chart-box">
                             <div class="an-chart-title"><span>📅</span> التسجيل الشهري — 12 شهر</div>
-                            <canvas id="chartMonthly" height="160"></canvas>
+                            <div style="position:relative;height:180px;"><canvas id="chartMonthly"></canvas></div>
                         </div>
                         <div class="an-chart-box">
                             <div class="an-chart-title"><span>📱</span> مصادر التوكنات</div>
-                            <canvas id="chartSources" height="160"></canvas>
+                            <div style="position:relative;height:180px;"><canvas id="chartSources"></canvas></div>
                         </div>
                         <div class="an-chart-box">
                             <div class="an-chart-title"><span>💬</span> استفسارات الواتساب</div>
-                            <canvas id="chartInquiries" height="160"></canvas>
+                            <div style="position:relative;height:180px;"><canvas id="chartInquiries"></canvas></div>
                         </div>
                     </div>
 
                     <div class="an-chart-full">
                         <div class="an-chart-box">
                             <div class="an-chart-title"><span>🏙️</span> أكثر المدن تسجيلاً</div>
-                            <canvas id="chartCities" height="120"></canvas>
+                            <div style="position:relative;height:160px;"><canvas id="chartCities"></canvas></div>
                         </div>
                     </div>
 
@@ -3785,6 +3785,7 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
                             x: { ticks: { color: 'rgba(248,248,248,0.5)', font: { size: 11 } }, grid: { color: 'rgba(107,184,201,0.08)' } },
@@ -3809,6 +3810,7 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         cutout: '60%',
                         plugins: { legend: { position: 'bottom', labels: { color: 'rgba(248,248,248,0.7)', padding: 12, font: { size: 12 } } } }
                     }
@@ -3832,6 +3834,7 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
                             x: { ticks: { color: 'rgba(248,248,248,0.5)', font: { size: 11 } }, grid: { display: false } },
@@ -3856,6 +3859,7 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         cutout: '60%',
                         plugins: { legend: { position: 'bottom', labels: { color: 'rgba(248,248,248,0.7)', padding: 12, font: { size: 12 } } } }
                     }
@@ -3879,6 +3883,7 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
                             x: { ticks: { color: 'rgba(248,248,248,0.5)', font: { size: 10 } }, grid: { display: false } },
@@ -3903,6 +3908,7 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: { legend: { position: 'bottom', labels: { color: 'rgba(248,248,248,0.7)', padding: 12, font: { size: 12 } } } }
                     }
                 });
@@ -3923,6 +3929,7 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: { legend: { position: 'bottom', labels: { color: 'rgba(248,248,248,0.7)', padding: 12, font: { size: 12 } } } }
                     }
                 });
@@ -3946,6 +3953,7 @@
                     options: {
                         indexAxis: 'y',
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
                             x: { beginAtZero: true, ticks: { color: 'rgba(248,248,248,0.5)', stepSize: 1 }, grid: { color: 'rgba(107,184,201,0.08)' } },
