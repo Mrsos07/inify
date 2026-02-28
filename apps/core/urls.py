@@ -88,6 +88,7 @@ urlpatterns = [
     path('api/admin/support-tickets/', views.admin_support_tickets, name='admin-support-tickets'),
     path('api/admin/support-tickets/<uuid:ticket_id>/reply/', views.admin_support_ticket_reply, name='admin-support-ticket-reply'),
     path('api/admin/send-email/', views.admin_send_email, name='admin-send-email'),
+    path('api/admin/analytics/', views.admin_analytics, name='admin-analytics'),
     
     # Agent Stats API
     path('api/agent/<uuid:agent_id>/stats/', views.get_agent_stats, name='get-agent-stats'),

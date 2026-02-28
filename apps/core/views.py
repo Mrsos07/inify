@@ -1445,10 +1445,29 @@ def admin_login(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
     
+    # Server-side rate limiting: 4 attempts per IP, 1 hour lockout
+    from django.core.cache import cache
+    remote_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
+    if remote_ip:
+        remote_ip = remote_ip.split(',')[0].strip()
+    
+    cache_key = f'admin_login_attempts_{remote_ip}'
+    attempts = cache.get(cache_key, 0)
+    
+    if attempts >= 4:
+        logger.warning(f'[ADMIN_LOGIN] Rate limited IP: {remote_ip} ({attempts} attempts)')
+        return JsonResponse({'success': False, 'error': 'تم قفل تسجيل الدخول لمدة ساعة بسبب المحاولات الفاشلة المتكررة.', 'locked': True}, status=429)
+    
     try:
         data = json.loads(request.body)
         username = data.get('username', '')
         password = data.get('password', '')
+        recaptcha_token = data.get('recaptcha_token', '')
+        
+        # التحقق من reCAPTCHA v3
+        if not verify_recaptcha(recaptcha_token, remote_ip):
+            logger.warning(f'[ADMIN_LOGIN] reCAPTCHA failed for IP: {remote_ip}')
+            return JsonResponse({'success': False, 'error': 'فشل التحقق الأمني. يرجى تحديث الصفحة والمحاولة مجدداً.'}, status=403)
         
         # التحقق من بيانات الأدمن (من Django settings)
         from django.conf import settings as django_settings
@@ -1456,15 +1475,153 @@ def admin_login(request):
         admin_password = getattr(django_settings, 'ADMIN_PASSWORD', '')
         
         if admin_username and admin_password and username == admin_username and password == admin_password:
-            # حفظ الـ session
+            # نجاح - مسح عداد المحاولات
+            cache.delete(cache_key)
             request.session['is_admin_authenticated'] = True
             request.session['admin_username'] = username
             return JsonResponse({'success': True, 'message': 'تم تسجيل الدخول بنجاح'})
         else:
-            return JsonResponse({'success': False, 'error': 'بيانات الدخول غير صحيحة'}, status=401)
+            # فشل - زيادة عداد المحاولات (تنتهي بعد ساعة)
+            attempts += 1
+            cache.set(cache_key, attempts, 3600)
+            remaining = 4 - attempts
+            logger.warning(f'[ADMIN_LOGIN] Failed attempt {attempts}/4 from IP: {remote_ip}')
+            if remaining <= 0:
+                return JsonResponse({'success': False, 'error': 'تم قفل تسجيل الدخول لمدة ساعة بسبب المحاولات الفاشلة المتكررة.', 'locked': True}, status=429)
+            return JsonResponse({'success': False, 'error': f'بيانات الدخول غير صحيحة. المحاولات المتبقية: {remaining}', 'remaining': remaining}, status=401)
     except Exception as e:
         logger.error(f'[ADMIN_LOGIN] Error: {e}', exc_info=True)
         return JsonResponse({'success': False, 'error': 'حدث خطأ في تسجيل الدخول'}, status=500)
+
+
+def admin_analytics(request):
+    """تحليلات ورسوم بيانية للأدمن"""
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        from apps.agents.models import Agent, Subscription, TokenUsage
+        from apps.properties.models import Property
+        from django.db.models import Sum, Count
+        from django.db.models.functions import TruncDate, TruncMonth
+        from django.utils import timezone
+        import datetime
+        
+        now = timezone.now()
+        today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # === الإحصائيات العامة ===
+        total_agents = Agent.objects.count()
+        active_agents = Agent.objects.filter(is_active=True).count()
+        verified_agents = Agent.objects.filter(is_email_verified=True).count()
+        total_properties = Property.objects.count()
+        total_conversations = Agent.objects.aggregate(t=Sum('total_conversations'))['t'] or 0
+        total_leads = Agent.objects.aggregate(t=Sum('total_leads'))['t'] or 0
+        
+        # === توزيع الاشتراكات ===
+        plan_dist = Agent.objects.values('subscription_plan').annotate(count=Count('id'))
+        plan_distribution = {item['subscription_plan']: item['count'] for item in plan_dist}
+        
+        # === حالة الاشتراكات ===
+        sub_status_dist = Subscription.objects.values('status').annotate(count=Count('id'))
+        subscription_statuses = {item['status']: item['count'] for item in sub_status_dist}
+        
+        # === نمو المستخدمين (آخر 30 يوم) ===
+        thirty_days_ago = today - datetime.timedelta(days=30)
+        daily_signups = (
+            Agent.objects.filter(created_at__gte=thirty_days_ago)
+            .annotate(date=TruncDate('created_at'))
+            .values('date')
+            .annotate(count=Count('id'))
+            .order_by('date')
+        )
+        signups_by_day = [{'date': item['date'].isoformat(), 'count': item['count']} for item in daily_signups]
+        
+        # === نمو المستخدمين الشهري (آخر 12 شهر) ===
+        twelve_months_ago = today - datetime.timedelta(days=365)
+        monthly_signups = (
+            Agent.objects.filter(created_at__gte=twelve_months_ago)
+            .annotate(month=TruncMonth('created_at'))
+            .values('month')
+            .annotate(count=Count('id'))
+            .order_by('month')
+        )
+        signups_by_month = [{'month': item['month'].strftime('%Y-%m'), 'count': item['count']} for item in monthly_signups]
+        
+        # === استهلاك التوكنات (آخر 30 يوم) ===
+        daily_tokens = (
+            TokenUsage.objects.filter(created_at__gte=thirty_days_ago)
+            .annotate(date=TruncDate('created_at'))
+            .values('date')
+            .annotate(total=Sum('total_tokens'), requests=Count('id'))
+            .order_by('date')
+        )
+        tokens_by_day = [{'date': item['date'].isoformat(), 'tokens': item['total'], 'requests': item['requests']} for item in daily_tokens]
+        
+        # === توزيع مصادر التوكنات ===
+        source_dist = TokenUsage.objects.values('source').annotate(total=Sum('total_tokens'))
+        token_sources = {item['source']: item['total'] for item in source_dist}
+        
+        # === مؤشرات النمو ===
+        seven_days_ago = today - datetime.timedelta(days=7)
+        fourteen_days_ago = today - datetime.timedelta(days=14)
+        
+        this_week_signups = Agent.objects.filter(created_at__gte=seven_days_ago).count()
+        last_week_signups = Agent.objects.filter(created_at__gte=fourteen_days_ago, created_at__lt=seven_days_ago).count()
+        
+        this_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        last_month_start = (this_month_start - datetime.timedelta(days=1)).replace(day=1)
+        this_month_signups = Agent.objects.filter(created_at__gte=this_month_start).count()
+        last_month_signups = Agent.objects.filter(created_at__gte=last_month_start, created_at__lt=this_month_start).count()
+        
+        # Token growth
+        this_week_tokens = TokenUsage.objects.filter(created_at__gte=seven_days_ago).aggregate(t=Sum('total_tokens'))['t'] or 0
+        last_week_tokens = TokenUsage.objects.filter(created_at__gte=fourteen_days_ago, created_at__lt=seven_days_ago).aggregate(t=Sum('total_tokens'))['t'] or 0
+        
+        # Active subscriptions vs expired
+        active_subs = Subscription.objects.filter(status__in=['active', 'trial']).count()
+        expired_subs = Subscription.objects.filter(status='expired').count()
+        
+        # === توزيع الاستفسارات اليومية ===
+        inquiry_dist = Agent.objects.exclude(daily_inquiries='').values('daily_inquiries').annotate(count=Count('id'))
+        daily_inquiries_dist = {item['daily_inquiries']: item['count'] for item in inquiry_dist}
+        
+        # === توزيع المدن ===
+        city_dist = Agent.objects.exclude(city='').values('city').annotate(count=Count('id')).order_by('-count')[:10]
+        cities = [{'city': item['city'], 'count': item['count']} for item in city_dist]
+        
+        return JsonResponse({
+            'success': True,
+            'overview': {
+                'totalUsers': total_agents,
+                'activeUsers': active_agents,
+                'verifiedUsers': verified_agents,
+                'totalProperties': total_properties,
+                'totalConversations': total_conversations,
+                'totalLeads': total_leads,
+                'activeSubscriptions': active_subs,
+                'expiredSubscriptions': expired_subs,
+            },
+            'planDistribution': plan_distribution,
+            'subscriptionStatuses': subscription_statuses,
+            'signupsByDay': signups_by_day,
+            'signupsByMonth': signups_by_month,
+            'tokensByDay': tokens_by_day,
+            'tokenSources': token_sources,
+            'dailyInquiriesDist': daily_inquiries_dist,
+            'topCities': cities,
+            'growth': {
+                'thisWeekSignups': this_week_signups,
+                'lastWeekSignups': last_week_signups,
+                'thisMonthSignups': this_month_signups,
+                'lastMonthSignups': last_month_signups,
+                'thisWeekTokens': this_week_tokens,
+                'lastWeekTokens': last_week_tokens,
+            }
+        })
+    except Exception as e:
+        logger.error(f'[ADMIN_ANALYTICS] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 def get_all_users(request):
