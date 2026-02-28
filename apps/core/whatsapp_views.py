@@ -17,11 +17,65 @@ from apps.core.decorators import subscription_required
 
 logger = logging.getLogger(__name__)
 
+# Deadline for stuck instances (30 minutes)
+STUCK_INSTANCE_TIMEOUT_MINUTES = 30
+
+
+def _cleanup_stuck_instances():
+    """
+    تنظيف تلقائي للـ instances العالقة بحالة connecting أو qr_ready
+    لأكثر من 30 دقيقة بدون اتصال ناجح.
+    يحذفها من Evolution API وقاعدة البيانات.
+    """
+    from datetime import timedelta
+    
+    cutoff = timezone.now() - timedelta(minutes=STUCK_INSTANCE_TIMEOUT_MINUTES)
+    
+    stuck_instances = WhatsAppInstance.objects.filter(
+        status__in=['connecting', 'qr_ready'],
+        updated_at__lt=cutoff
+    )
+    
+    count = 0
+    for inst in stuck_instances:
+        try:
+            # فحص الحالة الفعلية من Evolution API قبل الحذف
+            status_result = whatsapp_service.get_instance_status(inst.instance_name)
+            if status_result.get('success'):
+                state = (
+                    status_result.get('data', {}).get('instance', {}).get('state') or
+                    status_result.get('data', {}).get('state', '')
+                )
+                if state == 'open':
+                    # متصل فعلياً — حدّث الحالة بدل الحذف
+                    inst.status = 'connected'
+                    inst.connected_at = timezone.now()
+                    inst.save()
+                    logger.info(f"[CLEANUP] ✅ {inst.instance_name} was actually connected, updated status")
+                    continue
+            
+            # حذف من Evolution API
+            whatsapp_service.delete_instance(inst.instance_name)
+            instance_name = inst.instance_name
+            inst.delete()
+            count += 1
+            logger.info(f"[CLEANUP] 🗑️ Deleted stuck instance: {instance_name} (stuck > {STUCK_INSTANCE_TIMEOUT_MINUTES} min)")
+        except Exception as e:
+            logger.error(f"[CLEANUP] Error cleaning {inst.instance_name}: {e}")
+    
+    if count > 0:
+        logger.info(f"[CLEANUP] Cleaned up {count} stuck instance(s)")
+    
+    return count
+
 
 @login_required
 @csrf_exempt
 def whatsapp_status(request):
     """الحصول على حالة ربط الواتساب للمستخدم الحالي"""
+    # تنظيف الـ instances العالقة تلقائياً
+    _cleanup_stuck_instances()
+    
     try:
         agent = request.user.agent_profile
     except Agent.DoesNotExist:
@@ -379,23 +433,55 @@ def whatsapp_webhook(request, instance_name):
     if event_type == 'connection':
         # تحديث حالة الاتصال
         state = parsed.get('state')
-        status_reason = parsed.get('raw', {}).get('statusReason')
+        raw_data = parsed.get('raw', {})
+        status_reason = raw_data.get('statusReason')
+        disconnect_reason = raw_data.get('reason') or raw_data.get('lastDisconnect', {}).get('error', {}).get('output', {}).get('payload', {}).get('error', '')
+        
         if state == 'open':
             instance.status = 'connected'
             instance.connected_at = timezone.now()
+            # مسح عداد إعادة الاتصال عند النجاح
+            from django.core.cache import cache as _cache
+            _cache.delete(f'wa_reconnect_count:{instance_name}')
+            _cache.delete(f'wa_conflict:{instance_name}')
         elif state == 'close':
-            # statusReason=401 = تسجيل خروج حقيقي → يحتاج QR جديد
-            # غير ذلك = انقطاع مؤقت (إعادة تشغيل الجوال) → إعادة الاتصال تلقائياً
+            from django.core.cache import cache as _cache
+            
+            # الحالة 1: تسجيل خروج حقيقي (401) → يحتاج QR جديد
             if status_reason == 401:
                 instance.status = 'qr_ready'
+                logger.info(f"[WEBHOOK] {instance_name}: Logged out (401), needs new QR")
+            
+            # الحالة 2: conflict / replaced → إيقاف فوري، لا إعادة اتصال
+            elif str(disconnect_reason).lower() in ('conflict', 'replaced') or status_reason == 440:
+                instance.status = 'disconnected'
+                _cache.set(f'wa_conflict:{instance_name}', True, 300)  # حظر 5 دقائق
+                logger.warning(f"[WEBHOOK] ⚠️ {instance_name}: CONFLICT/REPLACED detected — stopping reconnect to prevent loop")
+            
+            # الحالة 3: انقطاع مؤقت → إعادة اتصال مع حماية من loop
             else:
-                instance.status = 'connecting'
-                import threading
-                threading.Thread(
-                    target=_auto_reconnect_whatsapp,
-                    args=(instance_name,),
-                    daemon=True
-                ).start()
+                # حماية من loop: أقصى 3 محاولات خلال 5 دقائق
+                reconnect_key = f'wa_reconnect_count:{instance_name}'
+                conflict_key = f'wa_conflict:{instance_name}'
+                
+                if _cache.get(conflict_key):
+                    instance.status = 'disconnected'
+                    logger.warning(f"[WEBHOOK] {instance_name}: Reconnect blocked (recent conflict)")
+                else:
+                    attempt_count = _cache.get(reconnect_key) or 0
+                    if attempt_count >= 3:
+                        instance.status = 'disconnected'
+                        logger.warning(f"[WEBHOOK] {instance_name}: Reconnect limit reached ({attempt_count}/3), stopping")
+                    else:
+                        _cache.set(reconnect_key, attempt_count + 1, 300)  # 5 دقائق
+                        instance.status = 'connecting'
+                        logger.info(f"[WEBHOOK] {instance_name}: Reconnect attempt {attempt_count + 1}/3")
+                        import threading
+                        threading.Thread(
+                            target=_auto_reconnect_whatsapp,
+                            args=(instance_name,),
+                            daemon=True
+                        ).start()
         instance.save()
         
     elif event_type == 'qrcode':
@@ -898,15 +984,32 @@ def _auto_reconnect_whatsapp(instance_name: str):
     """
     إعادة الاتصال التلقائي بعد انقطاع مؤقت (إعادة تشغيل الجوال)
     تعمل في خيط خلفي - تنتظر ثم تعيد الاتصال باستخدام الجلسة المحفوظة
-    لا تحتاج QR جديد إلا في حال statusReason=401 (تسجيل خروج حقيقي)
+    
+    حماية من loop:
+    - تتحقق من وجود conflict قبل أي محاولة
+    - أقصى محاولتين (restart + retry)
+    - إذا فشلت → تتوقف نهائياً
     """
     import time
+    from django.core.cache import cache as _cache
     
     try:
         logger.info(f"[AUTO-RECONNECT] Starting reconnect for: {instance_name}")
         
+        # فحص conflict قبل البدء
+        if _cache.get(f'wa_conflict:{instance_name}'):
+            logger.warning(f"[AUTO-RECONNECT] ❌ Blocked — recent conflict for: {instance_name}")
+            WhatsAppInstance.objects.filter(instance_name=instance_name).update(status='disconnected')
+            return
+        
         # انتظار 8 ثوانٍ ليستعيد الجوال الاتصال بالإنترنت
         time.sleep(8)
+        
+        # فحص conflict مرة أخرى بعد الانتظار (قد يأتي webhook جديد)
+        if _cache.get(f'wa_conflict:{instance_name}'):
+            logger.warning(f"[AUTO-RECONNECT] ❌ Conflict detected during wait for: {instance_name}")
+            WhatsAppInstance.objects.filter(instance_name=instance_name).update(status='disconnected')
+            return
         
         # التحقق من الحالة — ربما تمت إعادة الاتصال تلقائياً بدون تدخل
         status_result = whatsapp_service.get_instance_status(instance_name)
@@ -920,6 +1023,7 @@ def _auto_reconnect_whatsapp(instance_name: str):
                 WhatsAppInstance.objects.filter(instance_name=instance_name).update(
                     status='connected'
                 )
+                _cache.delete(f'wa_reconnect_count:{instance_name}')
                 return
         
         # إعادة تشغيل الـ instance لإجبار Baileys على إعادة الاتصال بالجلسة المحفوظة
@@ -934,6 +1038,13 @@ def _auto_reconnect_whatsapp(instance_name: str):
         else:
             logger.warning(f"[AUTO-RECONNECT] ⚠️ Restart failed, retrying in 15s: {instance_name}")
             time.sleep(15)
+            
+            # فحص conflict قبل إعادة المحاولة
+            if _cache.get(f'wa_conflict:{instance_name}'):
+                logger.warning(f"[AUTO-RECONNECT] ❌ Conflict detected before retry for: {instance_name}")
+                WhatsAppInstance.objects.filter(instance_name=instance_name).update(status='disconnected')
+                return
+            
             retry_result = whatsapp_service.restart_instance(instance_name)
             if retry_result.get('success'):
                 logger.info(f"[AUTO-RECONNECT] ✅ Retry succeeded for: {instance_name}")
