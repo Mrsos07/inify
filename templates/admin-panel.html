@@ -918,6 +918,305 @@
             background: rgba(107,184,201,0.2) !important;
             border-color: var(--cyan) !important;
         }
+
+        /* ============ Premium Analytics Styles ============ */
+        .an-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .an-section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(107,184,201,0.3), transparent);
+        }
+
+        .an-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 32px;
+        }
+
+        .an-stat {
+            position: relative;
+            background: linear-gradient(145deg, rgba(30,58,95,0.6), rgba(10,22,40,0.8));
+            border: 1px solid rgba(107,184,201,0.12);
+            border-radius: 18px;
+            padding: 24px;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(12px);
+        }
+        .an-stat::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 18px 18px 0 0;
+            opacity: 0.8;
+        }
+        .an-stat:hover {
+            transform: translateY(-4px);
+            border-color: rgba(107,184,201,0.3);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 30px rgba(107,184,201,0.08);
+        }
+        .an-stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .an-stat-icon::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 18px;
+            opacity: 0.15;
+        }
+        .an-stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+        .an-stat-label {
+            font-size: 13px;
+            color: rgba(248,248,248,0.5);
+            font-weight: 500;
+        }
+        .an-stat-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Color themes for stat cards */
+        .an-stat.cyan::before { background: linear-gradient(90deg, #6BB8C9, #4A90A4); }
+        .an-stat.cyan .an-stat-icon { background: linear-gradient(135deg, rgba(107,184,201,0.2), rgba(74,144,164,0.1)); }
+        .an-stat.cyan .an-stat-icon::after { background: linear-gradient(135deg, #6BB8C9, #4A90A4); }
+        .an-stat.cyan .an-stat-value { color: #B8E6F0; }
+
+        .an-stat.green::before { background: linear-gradient(90deg, #22c55e, #16a34a); }
+        .an-stat.green .an-stat-icon { background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(22,163,74,0.1)); }
+        .an-stat.green .an-stat-icon::after { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .an-stat.green .an-stat-value { color: #86EFAC; }
+
+        .an-stat.amber::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .an-stat.amber .an-stat-icon { background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(217,119,6,0.1)); }
+        .an-stat.amber .an-stat-icon::after { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .an-stat.amber .an-stat-value { color: #FCD34D; }
+
+        .an-stat.purple::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+        .an-stat.purple .an-stat-icon { background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(124,58,237,0.1)); }
+        .an-stat.purple .an-stat-icon::after { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .an-stat.purple .an-stat-value { color: #C4B5FD; }
+
+        .an-stat.teal::before { background: linear-gradient(90deg, #06b6d4, #0891b2); }
+        .an-stat.teal .an-stat-icon { background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(8,145,178,0.1)); }
+        .an-stat.teal .an-stat-icon::after { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .an-stat.teal .an-stat-value { color: #67E8F9; }
+
+        .an-stat.pink::before { background: linear-gradient(90deg, #ec4899, #db2777); }
+        .an-stat.pink .an-stat-icon { background: linear-gradient(135deg, rgba(236,72,153,0.2), rgba(219,39,119,0.1)); }
+        .an-stat.pink .an-stat-icon::after { background: linear-gradient(135deg, #ec4899, #db2777); }
+        .an-stat.pink .an-stat-value { color: #F9A8D4; }
+
+        .an-stat.emerald::before { background: linear-gradient(90deg, #10b981, #059669); }
+        .an-stat.emerald .an-stat-icon { background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.1)); }
+        .an-stat.emerald .an-stat-icon::after { background: linear-gradient(135deg, #10b981, #059669); }
+        .an-stat.emerald .an-stat-value { color: #6EE7B7; }
+
+        .an-stat.red::before { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .an-stat.red .an-stat-icon { background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.1)); }
+        .an-stat.red .an-stat-icon::after { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .an-stat.red .an-stat-value { color: #FCA5A5; }
+
+        /* Growth KPI cards */
+        .an-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 32px;
+        }
+        .an-kpi {
+            background: linear-gradient(145deg, rgba(30,58,95,0.5), rgba(10,22,40,0.7));
+            border: 1px solid rgba(107,184,201,0.1);
+            border-radius: 18px;
+            padding: 24px 28px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .an-kpi:hover {
+            border-color: rgba(107,184,201,0.25);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .an-kpi::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            opacity: 0.04;
+            transform: translate(30%, -30%);
+        }
+        .an-kpi.kpi-users::before { background: #6BB8C9; }
+        .an-kpi.kpi-month::before { background: #8b5cf6; }
+        .an-kpi.kpi-tokens::before { background: #f59e0b; }
+
+        .an-kpi-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(248,248,248,0.45);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+        .an-kpi-row {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            margin-bottom: 8px;
+        }
+        .an-kpi-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            letter-spacing: -1px;
+        }
+        .an-kpi-badge {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 5px 14px;
+            border-radius: 24px;
+            letter-spacing: 0.3px;
+        }
+        .an-kpi-sub {
+            font-size: 12px;
+            color: rgba(248,248,248,0.35);
+            margin-top: 2px;
+        }
+        .an-kpi-bar {
+            margin-top: 16px;
+            height: 4px;
+            border-radius: 4px;
+            background: rgba(248,248,248,0.06);
+            overflow: hidden;
+        }
+        .an-kpi-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        /* Chart containers */
+        .an-chart-grid-2 {
+            display: grid;
+            grid-template-columns: 5fr 3fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .an-chart-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .an-chart-box {
+            background: linear-gradient(145deg, rgba(30,58,95,0.45), rgba(10,22,40,0.65));
+            border: 1px solid rgba(107,184,201,0.1);
+            border-radius: 20px;
+            padding: 28px;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .an-chart-box:hover {
+            border-color: rgba(107,184,201,0.22);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+        .an-chart-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(107,184,201,0.2), transparent);
+        }
+        .an-chart-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: rgba(248,248,248,0.85);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .an-chart-title span {
+            font-size: 18px;
+        }
+        .an-chart-full {
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            .an-stat-grid { grid-template-columns: repeat(2, 1fr); }
+            .an-kpi-grid { grid-template-columns: 1fr; }
+            .an-chart-grid-2 { grid-template-columns: 1fr; }
+            .an-chart-grid-3 { grid-template-columns: 1fr; }
+        }
+
+        /* Loading animation */
+        .an-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            gap: 20px;
+        }
+        .an-loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(107,184,201,0.15);
+            border-top-color: #6BB8C9;
+            border-radius: 50%;
+            animation: an-spin 0.8s linear infinite;
+        }
+        @keyframes an-spin {
+            to { transform: rotate(360deg); }
+        }
+        .an-loading-text {
+            font-size: 14px;
+            color: rgba(248,248,248,0.4);
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -1568,146 +1867,138 @@
 
             <!-- Analytics Tab -->
             <div class="admin-tab-content" id="analyticsTab">
-                <div id="analyticsLoading" style="text-align:center;padding:60px;color:var(--text-muted);">⏳ جاري تحميل التحليلات...</div>
+                <div class="an-loading" id="analyticsLoading">
+                    <div class="an-loading-spinner"></div>
+                    <div class="an-loading-text">جاري تحميل التحليلات...</div>
+                </div>
                 <div id="analyticsContent" style="display:none;">
 
-                    <!-- Growth Indicators -->
-                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;">
-                        <div class="stat-card" style="position:relative;overflow:hidden;">
-                            <div class="stat-icon" style="background:linear-gradient(135deg,#6BB8C9,#4A90A4);">👥</div>
-                            <div class="stat-info">
-                                <h3 id="anTotalUsers">0</h3>
-                                <p>إجمالي المستخدمين</p>
-                            </div>
-                            <div id="anWeekGrowth" style="position:absolute;top:12px;left:12px;font-size:12px;padding:4px 10px;border-radius:20px;font-weight:700;"></div>
+                    <!-- Section: Overview -->
+                    <div class="an-section-title">نظرة عامة</div>
+                    <div class="an-stat-grid">
+                        <div class="an-stat cyan">
+                            <div class="an-stat-badge" id="anWeekGrowth"></div>
+                            <div class="an-stat-icon">👥</div>
+                            <div class="an-stat-value" id="anTotalUsers">0</div>
+                            <div class="an-stat-label">إجمالي المستخدمين</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a);">✅</div>
-                            <div class="stat-info">
-                                <h3 id="anActiveUsers">0</h3>
-                                <p>مستخدمون نشطون</p>
-                            </div>
+                        <div class="an-stat green">
+                            <div class="an-stat-icon">✅</div>
+                            <div class="an-stat-value" id="anActiveUsers">0</div>
+                            <div class="an-stat-label">مستخدمون نشطون</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">💳</div>
-                            <div class="stat-info">
-                                <h3 id="anActiveSubs">0</h3>
-                                <p>اشتراكات فعالة</p>
-                            </div>
+                        <div class="an-stat amber">
+                            <div class="an-stat-icon">💳</div>
+                            <div class="an-stat-value" id="anActiveSubs">0</div>
+                            <div class="an-stat-label">اشتراكات فعالة</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">🏠</div>
-                            <div class="stat-info">
-                                <h3 id="anTotalProps">0</h3>
-                                <p>إجمالي العقارات</p>
-                            </div>
+                        <div class="an-stat purple">
+                            <div class="an-stat-icon">🏠</div>
+                            <div class="an-stat-value" id="anTotalProps">0</div>
+                            <div class="an-stat-label">إجمالي العقارات</div>
                         </div>
                     </div>
 
-                    <!-- Second Row Stats -->
-                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;">
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">💬</div>
-                            <div class="stat-info">
-                                <h3 id="anTotalConvos">0</h3>
-                                <p>إجمالي المحادثات</p>
-                            </div>
+                    <div class="an-stat-grid">
+                        <div class="an-stat teal">
+                            <div class="an-stat-icon">💬</div>
+                            <div class="an-stat-value" id="anTotalConvos">0</div>
+                            <div class="an-stat-label">إجمالي المحادثات</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background:linear-gradient(135deg,#ec4899,#db2777);">🎯</div>
-                            <div class="stat-info">
-                                <h3 id="anTotalLeads">0</h3>
-                                <p>إجمالي العملاء المحتملين</p>
-                            </div>
+                        <div class="an-stat pink">
+                            <div class="an-stat-icon">🎯</div>
+                            <div class="an-stat-value" id="anTotalLeads">0</div>
+                            <div class="an-stat-label">العملاء المحتملين</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669);">📧</div>
-                            <div class="stat-info">
-                                <h3 id="anVerifiedUsers">0</h3>
-                                <p>بريد إلكتروني موثق</p>
-                            </div>
+                        <div class="an-stat emerald">
+                            <div class="an-stat-icon">📧</div>
+                            <div class="an-stat-value" id="anVerifiedUsers">0</div>
+                            <div class="an-stat-label">بريد إلكتروني موثق</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626);">⛔</div>
-                            <div class="stat-info">
-                                <h3 id="anExpiredSubs">0</h3>
-                                <p>اشتراكات منتهية</p>
-                            </div>
+                        <div class="an-stat red">
+                            <div class="an-stat-icon">⛔</div>
+                            <div class="an-stat-value" id="anExpiredSubs">0</div>
+                            <div class="an-stat-label">اشتراكات منتهية</div>
                         </div>
                     </div>
 
-                    <!-- Growth Indicator Cards -->
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;">
-                        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:20px;">
-                            <div style="color:var(--text-muted);font-size:13px;margin-bottom:8px;">📈 نمو المستخدمين (أسبوعي)</div>
-                            <div style="display:flex;align-items:center;gap:12px;">
-                                <span id="anWeekSignups" style="font-size:28px;font-weight:700;color:var(--pearl);">0</span>
-                                <span id="anWeekGrowthPct" style="font-size:14px;font-weight:600;padding:4px 10px;border-radius:20px;"></span>
+                    <!-- Section: Growth KPIs -->
+                    <div class="an-section-title">مؤشرات النمو</div>
+                    <div class="an-kpi-grid">
+                        <div class="an-kpi kpi-users">
+                            <div class="an-kpi-title">📈 النمو الأسبوعي — المستخدمين</div>
+                            <div class="an-kpi-row">
+                                <div class="an-kpi-value" id="anWeekSignups">0</div>
+                                <div class="an-kpi-badge" id="anWeekGrowthPct"></div>
                             </div>
-                            <div style="color:var(--text-muted);font-size:12px;margin-top:4px;">مقارنة بـ <span id="anLastWeekSignups">0</span> الأسبوع الماضي</div>
+                            <div class="an-kpi-sub">مقارنة بـ <span id="anLastWeekSignups">0</span> الأسبوع الماضي</div>
+                            <div class="an-kpi-bar"><div class="an-kpi-bar-fill" id="anWeekBar" style="width:0%;background:linear-gradient(90deg,#6BB8C9,#4A90A4);"></div></div>
                         </div>
-                        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:20px;">
-                            <div style="color:var(--text-muted);font-size:13px;margin-bottom:8px;">📈 نمو المستخدمين (شهري)</div>
-                            <div style="display:flex;align-items:center;gap:12px;">
-                                <span id="anMonthSignups" style="font-size:28px;font-weight:700;color:var(--pearl);">0</span>
-                                <span id="anMonthGrowthPct" style="font-size:14px;font-weight:600;padding:4px 10px;border-radius:20px;"></span>
+                        <div class="an-kpi kpi-month">
+                            <div class="an-kpi-title">📊 النمو الشهري — المستخدمين</div>
+                            <div class="an-kpi-row">
+                                <div class="an-kpi-value" id="anMonthSignups">0</div>
+                                <div class="an-kpi-badge" id="anMonthGrowthPct"></div>
                             </div>
-                            <div style="color:var(--text-muted);font-size:12px;margin-top:4px;">مقارنة بـ <span id="anLastMonthSignups">0</span> الشهر الماضي</div>
+                            <div class="an-kpi-sub">مقارنة بـ <span id="anLastMonthSignups">0</span> الشهر الماضي</div>
+                            <div class="an-kpi-bar"><div class="an-kpi-bar-fill" id="anMonthBar" style="width:0%;background:linear-gradient(90deg,#8b5cf6,#7c3aed);"></div></div>
                         </div>
-                        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:20px;">
-                            <div style="color:var(--text-muted);font-size:13px;margin-bottom:8px;">⚡ التوكنات (أسبوعي)</div>
-                            <div style="display:flex;align-items:center;gap:12px;">
-                                <span id="anWeekTokens" style="font-size:28px;font-weight:700;color:var(--pearl);">0</span>
-                                <span id="anTokenGrowthPct" style="font-size:14px;font-weight:600;padding:4px 10px;border-radius:20px;"></span>
+                        <div class="an-kpi kpi-tokens">
+                            <div class="an-kpi-title">⚡ التوكنات — أسبوعي</div>
+                            <div class="an-kpi-row">
+                                <div class="an-kpi-value" id="anWeekTokens">0</div>
+                                <div class="an-kpi-badge" id="anTokenGrowthPct"></div>
                             </div>
-                            <div style="color:var(--text-muted);font-size:12px;margin-top:4px;">مقارنة بـ <span id="anLastWeekTokens">0</span> الأسبوع الماضي</div>
+                            <div class="an-kpi-sub">مقارنة بـ <span id="anLastWeekTokens">0</span> الأسبوع الماضي</div>
+                            <div class="an-kpi-bar"><div class="an-kpi-bar-fill" id="anTokenBar" style="width:0%;background:linear-gradient(90deg,#f59e0b,#d97706);"></div></div>
                         </div>
                     </div>
 
-                    <!-- Charts Row 1 -->
-                    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:28px;">
-                        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;">
-                            <h3 style="margin-bottom:16px;font-size:16px;color:var(--pearl);">📈 نمو المستخدمين (آخر 30 يوم)</h3>
-                            <canvas id="chartSignups" height="250"></canvas>
+                    <!-- Section: Charts -->
+                    <div class="an-section-title">الرسوم البيانية</div>
+
+                    <div class="an-chart-grid-2">
+                        <div class="an-chart-box">
+                            <div class="an-chart-title"><span>📈</span> نمو المستخدمين — آخر 30 يوم</div>
+                            <canvas id="chartSignups" height="260"></canvas>
                         </div>
-                        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;">
-                            <h3 style="margin-bottom:16px;font-size:16px;color:var(--pearl);">🥧 توزيع الاشتراكات</h3>
-                            <canvas id="chartPlans" height="250"></canvas>
+                        <div class="an-chart-box">
+                            <div class="an-chart-title"><span>🥧</span> توزيع خطط الاشتراك</div>
+                            <canvas id="chartPlans" height="260"></canvas>
                         </div>
                     </div>
 
-                    <!-- Charts Row 2 -->
-                    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:28px;">
-                        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;">
-                            <h3 style="margin-bottom:16px;font-size:16px;color:var(--pearl);">⚡ استهلاك التوكنات (آخر 30 يوم)</h3>
-                            <canvas id="chartTokens" height="250"></canvas>
+                    <div class="an-chart-grid-2">
+                        <div class="an-chart-box">
+                            <div class="an-chart-title"><span>⚡</span> استهلاك التوكنات — آخر 30 يوم</div>
+                            <canvas id="chartTokens" height="260"></canvas>
                         </div>
-                        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;">
-                            <h3 style="margin-bottom:16px;font-size:16px;color:var(--pearl);">📊 حالة الاشتراكات</h3>
-                            <canvas id="chartSubStatus" height="250"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Charts Row 3 -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:28px;">
-                        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;">
-                            <h3 style="margin-bottom:16px;font-size:16px;color:var(--pearl);">📅 التسجيل الشهري (12 شهر)</h3>
-                            <canvas id="chartMonthly" height="220"></canvas>
-                        </div>
-                        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;">
-                            <h3 style="margin-bottom:16px;font-size:16px;color:var(--pearl);">📱 مصادر التوكنات</h3>
-                            <canvas id="chartSources" height="220"></canvas>
-                        </div>
-                        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;">
-                            <h3 style="margin-bottom:16px;font-size:16px;color:var(--pearl);">💬 استفسارات الواتساب اليومية</h3>
-                            <canvas id="chartInquiries" height="220"></canvas>
+                        <div class="an-chart-box">
+                            <div class="an-chart-title"><span>📊</span> حالة الاشتراكات</div>
+                            <canvas id="chartSubStatus" height="260"></canvas>
                         </div>
                     </div>
 
-                    <!-- Top Cities -->
-                    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:28px;">
-                        <h3 style="margin-bottom:16px;font-size:16px;color:var(--pearl);">🏙️ أكثر المدن تسجيلاً</h3>
-                        <canvas id="chartCities" height="160"></canvas>
+                    <div class="an-chart-grid-3">
+                        <div class="an-chart-box">
+                            <div class="an-chart-title"><span>📅</span> التسجيل الشهري — 12 شهر</div>
+                            <canvas id="chartMonthly" height="240"></canvas>
+                        </div>
+                        <div class="an-chart-box">
+                            <div class="an-chart-title"><span>📱</span> مصادر التوكنات</div>
+                            <canvas id="chartSources" height="240"></canvas>
+                        </div>
+                        <div class="an-chart-box">
+                            <div class="an-chart-title"><span>💬</span> استفسارات الواتساب</div>
+                            <canvas id="chartInquiries" height="240"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="an-chart-full">
+                        <div class="an-chart-box">
+                            <div class="an-chart-title"><span>🏙️</span> أكثر المدن تسجيلاً</div>
+                            <canvas id="chartCities" height="180"></canvas>
+                        </div>
                     </div>
 
                 </div>
@@ -3428,7 +3719,7 @@
         };
 
         async function loadAnalytics() {
-            document.getElementById('analyticsLoading').style.display = 'block';
+            document.getElementById('analyticsLoading').style.display = 'flex';
             document.getElementById('analyticsContent').style.display = 'none';
             destroyCharts();
 
@@ -3463,6 +3754,16 @@
                 document.getElementById('anWeekTokens').textContent = fmtNum(gr.thisWeekTokens);
                 document.getElementById('anLastWeekTokens').textContent = fmtNum(gr.lastWeekTokens);
                 setGrowthEl('anTokenGrowthPct', gr.thisWeekTokens, gr.lastWeekTokens);
+
+                // KPI progress bars (animate after reveal)
+                setTimeout(function() {
+                    var wPct = gr.lastWeekSignups > 0 ? Math.min(100, Math.round((gr.thisWeekSignups / gr.lastWeekSignups) * 100)) : (gr.thisWeekSignups > 0 ? 100 : 0);
+                    var mPct = gr.lastMonthSignups > 0 ? Math.min(100, Math.round((gr.thisMonthSignups / gr.lastMonthSignups) * 100)) : (gr.thisMonthSignups > 0 ? 100 : 0);
+                    var tPct = gr.lastWeekTokens > 0 ? Math.min(100, Math.round((gr.thisWeekTokens / gr.lastWeekTokens) * 100)) : (gr.thisWeekTokens > 0 ? 100 : 0);
+                    document.getElementById('anWeekBar').style.width = wPct + '%';
+                    document.getElementById('anMonthBar').style.width = mPct + '%';
+                    document.getElementById('anTokenBar').style.width = tPct + '%';
+                }, 300);
 
                 // === Chart 1: Daily Signups (Line) ===
                 var signupLabels = data.signupsByDay.map(function(d) { return d.date.slice(5); });
@@ -3658,7 +3959,7 @@
 
             } catch (err) {
                 console.error('Analytics error:', err);
-                document.getElementById('analyticsLoading').innerHTML = '<div style="color:var(--danger);">❌ خطأ في تحميل التحليلات: ' + (err.message || '') + '</div>';
+                document.getElementById('analyticsLoading').innerHTML = '<div style="color:#ef4444;font-size:15px;">❌ خطأ في تحميل التحليلات</div><div style="color:rgba(248,248,248,0.3);font-size:12px;margin-top:8px;">' + (err.message || '') + '</div>';
             }
         }
 
