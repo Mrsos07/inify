@@ -3076,6 +3076,35 @@ html.light-mode body .social-btn:hover {
     border-color: #4A90A4 !important;
 }
 
+/* WhatsApp Inquiry Options - Light Mode */
+body.light-mode .inquiry-option,
+html.light-mode body .inquiry-option {
+    background: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+body.light-mode .inquiry-option:hover,
+html.light-mode body .inquiry-option:hover {
+    background: #F3F4F6 !important;
+    border-color: #D1D5DB !important;
+}
+
+body.light-mode .inquiry-option:has(input:checked),
+html.light-mode body .inquiry-option:has(input:checked) {
+    background: rgba(37, 99, 235, 0.06) !important;
+    border-color: #4A90A4 !important;
+}
+
+body.light-mode .inquiry-label,
+html.light-mode body .inquiry-label {
+    color: #374151 !important;
+}
+
+body.light-mode .inquiry-option:has(input:checked) .inquiry-label,
+html.light-mode body .inquiry-option:has(input:checked) .inquiry-label {
+    color: #1F2937 !important;
+}
+
 /* Smooth Transition */
 body {
     transition: background-color 0.3s ease, color 0.3s ease;
