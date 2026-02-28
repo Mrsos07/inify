@@ -939,6 +939,7 @@
                 <button class="admin-tab active" onclick="switchAdminTab('users')">👥 إدارة المستخدمين</button>
                 <button class="admin-tab" onclick="switchAdminTab('subscriptions')">💳 إدارة الاشتراكات</button>
                 <button class="admin-tab" onclick="switchAdminTab('ai')">🤖 إعدادات Inify</button>
+                <button class="admin-tab" onclick="switchAdminTab('email')">📧 إرسال إيميل</button>
             </div>
 
             <!-- Users Tab -->
@@ -1222,6 +1223,73 @@
                             💾 حفظ إعدادات Inify
                         </button>
                         <p class="save-hint">سيتم تطبيق التغييرات على جميع المستخدمين</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Email Tab -->
+            <div class="admin-tab-content" id="emailTab">
+                <div class="ai-settings-container">
+                    <div class="settings-section">
+                        <h3 class="section-title">📧 إرسال إيميل</h3>
+                        <p class="section-desc">أرسل إيميل لمستخدم محدد أو لجميع المستخدمين عبر Resend</p>
+
+                        <!-- Target Selection -->
+                        <div class="form-group">
+                            <label>المستلم</label>
+                            <select id="emailTarget" onchange="toggleUserSelect()">
+                                <option value="single">مستخدم محدد</option>
+                                <option value="all">جميع المستخدمين</option>
+                            </select>
+                        </div>
+
+                        <!-- User Select (shown when single) -->
+                        <div class="form-group" id="userSelectGroup">
+                            <label>اختر المستخدم</label>
+                            <select id="emailUserId">
+                                <option value="">-- اختر مستخدم --</option>
+                            </select>
+                        </div>
+
+                        <!-- Subject -->
+                        <div class="form-group">
+                            <label>الموضوع</label>
+                            <input type="text" id="emailSubject" placeholder="موضوع الإيميل...">
+                        </div>
+
+                        <!-- Body -->
+                        <div class="form-group">
+                            <label>محتوى الرسالة</label>
+                            <textarea id="emailBody" class="large-textarea" placeholder="اكتب محتوى الإيميل هنا..."></textarea>
+                        </div>
+
+                        <!-- Attachment -->
+                        <div class="form-group">
+                            <label>مرفق (اختياري)</label>
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <input type="file" id="emailAttachment" onchange="handleFileSelect(this)" style="display:none;">
+                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('emailAttachment').click()" style="width:100%;padding:16px;border-style:dashed;">
+                                    📎 اختر ملف للإرفاق
+                                </button>
+                                <div id="selectedFileName" style="display:none;margin-top:10px;padding:12px;background:rgba(107,184,201,0.1);border-radius:8px;display:none;">
+                                    <span id="fileNameText" style="color:var(--cyan);"></span>
+                                    <button onclick="clearAttachment()" style="background:none;border:none;color:var(--danger);cursor:pointer;margin-right:10px;font-size:16px;">✕</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Send Button -->
+                    <div class="save-section">
+                        <button class="btn btn-primary btn-large" id="sendEmailBtn" onclick="sendAdminEmail()">
+                            📤 إرسال الإيميل
+                        </button>
+                        <p class="save-hint" id="emailStatus"></p>
+                    </div>
+
+                    <!-- Email Log -->
+                    <div class="settings-section" id="emailLogSection" style="display:none;">
+                        <h3 class="section-title">📋 نتيجة الإرسال</h3>
+                        <div id="emailLogContent"></div>
                     </div>
                 </div>
             </div>
@@ -2229,6 +2297,8 @@
                 loadAISettings();
             } else if (tab === 'subscriptions') {
                 loadSubscriptions();
+            } else if (tab === 'email') {
+                loadEmailUserList();
             }
         }
 
@@ -2359,6 +2429,140 @@
             }
         }
         
+        // ============ Email Sending Functions ============
+
+        // Toggle user select dropdown visibility
+        function toggleUserSelect() {
+            const target = document.getElementById('emailTarget').value;
+            const group = document.getElementById('userSelectGroup');
+            group.style.display = target === 'single' ? 'block' : 'none';
+        }
+
+        // Populate user dropdown when email tab is opened
+        function loadEmailUserList() {
+            const select = document.getElementById('emailUserId');
+            select.innerHTML = '<option value="">-- اختر مستخدم --</option>';
+            allUsers.forEach(user => {
+                select.innerHTML += `<option value="${user.id}">${user.name || 'بدون اسم'} (${user.email})</option>`;
+            });
+        }
+
+        // Handle file selection
+        function handleFileSelect(input) {
+            const fileNameDiv = document.getElementById('selectedFileName');
+            const fileNameText = document.getElementById('fileNameText');
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                fileNameText.textContent = `📄 ${file.name} (${sizeMB} MB)`;
+                fileNameDiv.style.display = 'flex';
+                fileNameDiv.style.alignItems = 'center';
+                fileNameDiv.style.justifyContent = 'space-between';
+            }
+        }
+
+        // Clear attachment
+        function clearAttachment() {
+            document.getElementById('emailAttachment').value = '';
+            document.getElementById('selectedFileName').style.display = 'none';
+        }
+
+        // Send email
+        async function sendAdminEmail() {
+            const target = document.getElementById('emailTarget').value;
+            const userId = document.getElementById('emailUserId').value;
+            const subject = document.getElementById('emailSubject').value.trim();
+            const body = document.getElementById('emailBody').value.trim();
+            const fileInput = document.getElementById('emailAttachment');
+            const btn = document.getElementById('sendEmailBtn');
+            const statusEl = document.getElementById('emailStatus');
+
+            // Validation
+            if (!subject) { alert('يرجى كتابة موضوع الإيميل'); return; }
+            if (!body) { alert('يرجى كتابة محتوى الرسالة'); return; }
+            if (target === 'single' && !userId) { alert('يرجى اختيار المستخدم'); return; }
+
+            // Confirm for bulk
+            if (target === 'all') {
+                if (!confirm(`⚠️ سيتم إرسال الإيميل إلى جميع المستخدمين (${allUsers.length} مستخدم).\n\nهل تريد المتابعة؟`)) return;
+            }
+
+            // Disable button & show loading
+            btn.disabled = true;
+            btn.innerHTML = '⏳ جاري الإرسال...';
+            statusEl.textContent = 'جاري إرسال الإيميلات...';
+            statusEl.style.color = 'var(--cyan)';
+
+            try {
+                const formData = new FormData();
+                formData.append('target', target);
+                formData.append('subject', subject);
+                formData.append('body', body);
+                if (target === 'single') formData.append('userId', userId);
+                if (fileInput.files && fileInput.files[0]) {
+                    formData.append('attachment', fileInput.files[0]);
+                }
+
+                const response = await fetch('/api/admin/send-email/', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                // Show results
+                const logSection = document.getElementById('emailLogSection');
+                const logContent = document.getElementById('emailLogContent');
+                logSection.style.display = 'block';
+
+                if (data.success) {
+                    statusEl.textContent = `✅ تم الإرسال بنجاح!`;
+                    statusEl.style.color = 'var(--success)';
+
+                    let html = `
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:15px;">
+                            <div style="background:rgba(34,197,94,0.15);padding:16px;border-radius:12px;text-align:center;">
+                                <div style="font-size:24px;font-weight:bold;color:#22c55e;">${data.sent}</div>
+                                <div style="color:var(--text-muted);font-size:13px;">تم الإرسال</div>
+                            </div>
+                            <div style="background:rgba(239,68,68,0.15);padding:16px;border-radius:12px;text-align:center;">
+                                <div style="font-size:24px;font-weight:bold;color:#ef4444;">${data.failed}</div>
+                                <div style="color:var(--text-muted);font-size:13px;">فشل</div>
+                            </div>
+                            <div style="background:rgba(107,184,201,0.15);padding:16px;border-radius:12px;text-align:center;">
+                                <div style="font-size:24px;font-weight:bold;color:var(--cyan);">${data.total}</div>
+                                <div style="color:var(--text-muted);font-size:13px;">الإجمالي</div>
+                            </div>
+                        </div>`;
+
+                    if (data.errors && data.errors.length > 0) {
+                        html += `<div style="background:rgba(239,68,68,0.1);padding:12px;border-radius:8px;margin-top:10px;">
+                            <p style="color:var(--danger);margin-bottom:8px;font-weight:bold;">أخطاء:</p>
+                            ${data.errors.map(e => `<p style="color:var(--text-muted);font-size:13px;margin:4px 0;">${e}</p>`).join('')}
+                        </div>`;
+                    }
+                    logContent.innerHTML = html;
+
+                    // Clear form on success
+                    document.getElementById('emailSubject').value = '';
+                    document.getElementById('emailBody').value = '';
+                    clearAttachment();
+                } else {
+                    statusEl.textContent = '❌ فشل الإرسال';
+                    statusEl.style.color = 'var(--danger)';
+                    logContent.innerHTML = `<p style="color:var(--danger);">${data.error || 'خطأ غير معروف'}</p>`;
+                }
+            } catch (error) {
+                console.error('Email send error:', error);
+                statusEl.textContent = '❌ خطأ في الاتصال بالخادم';
+                statusEl.style.color = 'var(--danger)';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '📤 إرسال الإيميل';
+            }
+        }
+
         // Check if already logged in - must be at the end after all functions are defined
         const adminSession = sessionStorage.getItem('newra_admin_session');
         if (adminSession === 'authenticated') {

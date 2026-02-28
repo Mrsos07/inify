@@ -898,6 +898,19 @@
                 flex-wrap: wrap;
             }
         }
+
+        /* Email Editor */
+        #emailBody[contenteditable]:empty:before,
+        #emailBody[contenteditable].is-empty:before {
+            content: attr(data-placeholder);
+            color: rgba(248,248,248,0.3);
+            pointer-events: none;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(107,184,201,0.2) !important;
+            border-color: var(--cyan) !important;
+        }
     </style>
 </head>
 <body>
@@ -942,6 +955,7 @@
                 <button class="admin-tab" onclick="switchAdminTab('apikeys')">🔑 مفاتيح API</button>
                 <button class="admin-tab" onclick="switchAdminTab('ai')">🤖 إعدادات Inify</button>
                 <button class="admin-tab" onclick="switchAdminTab('support')">🎫 الدعم الفني <span id="supportBadge" style="display:none;background:#ef4444;color:white;border-radius:50%;width:20px;height:20px;font-size:11px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;">0</span></button>
+                <button class="admin-tab" onclick="switchAdminTab('email')">📧 إرسال إيميل</button>
             </div>
 
             <!-- Users Tab -->
@@ -1414,6 +1428,132 @@
                             <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">جاري التحميل...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Email Tab -->
+            <div class="admin-tab-content" id="emailTab">
+                <div class="ai-settings-container">
+                    <div class="settings-section">
+                        <h3 class="section-title">📧 إرسال إيميل</h3>
+                        <p class="section-desc">أرسل إيميل لمستخدم محدد أو لجميع المستخدمين عبر Resend</p>
+
+                        <div class="form-group">
+                            <label>المستلم</label>
+                            <select id="emailTarget" onchange="onEmailTargetChange()">
+                                <option value="single">مستخدم محدد</option>
+                                <option value="all">جميع المستخدمين</option>
+                                <option value="expiring">⏰ ينتهي اشتراكهم قريباً (7 أيام)</option>
+                                <option value="expired">❌ منتهي اشتراكهم</option>
+                                <option value="agency">🏢 المؤسسات العقارية</option>
+                                <option value="marketer">💼 المسوقين العقاريين</option>
+                            </select>
+                        </div>
+
+                        <!-- Filter match count -->
+                        <div id="emailFilterInfo" style="display:none;margin-bottom:16px;padding:12px 16px;background:rgba(107,184,201,0.1);border:1px solid rgba(107,184,201,0.2);border-radius:10px;">
+                            <span style="color:var(--cyan);font-weight:600;" id="emailFilterCount">0</span>
+                            <span style="color:var(--text-muted);"> مستخدم يطابق الفلتر</span>
+                        </div>
+
+                        <div class="form-group" id="userSelectGroup">
+                            <label>اختر المستخدم</label>
+                            <select id="emailUserId">
+                                <option value="">-- اختر مستخدم --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>الموضوع</label>
+                            <input type="text" id="emailSubject" placeholder="موضوع الإيميل...">
+                        </div>
+
+                        <div class="form-group">
+                            <label>محتوى الرسالة</label>
+                            <!-- Rich Text Toolbar -->
+                            <div class="email-editor-wrapper" style="border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+                                <div class="email-toolbar" style="display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px;background:rgba(10,22,40,0.6);border-bottom:1px solid var(--border);align-items:center;">
+                                    <!-- Font Size -->
+                                    <select onchange="emailExecCmd('fontSize',this.value);this.selectedIndex=0;" title="حجم الخط" style="padding:6px 8px;background:rgba(10,22,40,0.8);border:1px solid var(--border);border-radius:6px;color:var(--pearl);font-size:13px;cursor:pointer;">
+                                        <option value="" disabled selected>حجم</option>
+                                        <option value="1">صغير</option>
+                                        <option value="3">عادي</option>
+                                        <option value="5">كبير</option>
+                                        <option value="7">كبير جداً</option>
+                                    </select>
+                                    <!-- Heading -->
+                                    <select onchange="emailFormatBlock(this.value);this.selectedIndex=0;" title="نوع العنصر" style="padding:6px 8px;background:rgba(10,22,40,0.8);border:1px solid var(--border);border-radius:6px;color:var(--pearl);font-size:13px;cursor:pointer;">
+                                        <option value="" disabled selected>عنوان</option>
+                                        <option value="h1">عنوان رئيسي H1</option>
+                                        <option value="h2">عنوان فرعي H2</option>
+                                        <option value="h3">عنوان H3</option>
+                                        <option value="p">فقرة عادية</option>
+                                    </select>
+                                    <div style="width:1px;height:24px;background:var(--border);margin:0 4px;"></div>
+                                    <!-- Bold -->
+                                    <button type="button" onclick="emailExecCmd('bold')" title="عريض" class="toolbar-btn" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--pearl);cursor:pointer;font-weight:bold;font-size:14px;">B</button>
+                                    <!-- Italic -->
+                                    <button type="button" onclick="emailExecCmd('italic')" title="مائل" class="toolbar-btn" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--pearl);cursor:pointer;font-style:italic;font-size:14px;">I</button>
+                                    <!-- Underline -->
+                                    <button type="button" onclick="emailExecCmd('underline')" title="تحته خط" class="toolbar-btn" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--pearl);cursor:pointer;text-decoration:underline;font-size:14px;">U</button>
+                                    <!-- Strikethrough -->
+                                    <button type="button" onclick="emailExecCmd('strikeThrough')" title="يتوسطه خط" class="toolbar-btn" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--pearl);cursor:pointer;text-decoration:line-through;font-size:14px;">S</button>
+                                    <div style="width:1px;height:24px;background:var(--border);margin:0 4px;"></div>
+                                    <!-- Text Color -->
+                                    <label title="لون النص" style="position:relative;cursor:pointer;padding:4px 8px;border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:4px;">
+                                        <span style="font-size:14px;color:var(--pearl);">A</span>
+                                        <input type="color" value="#ffffff" onchange="emailExecCmd('foreColor',this.value)" style="width:18px;height:18px;border:none;padding:0;cursor:pointer;background:transparent;">
+                                    </label>
+                                    <!-- Background Color -->
+                                    <label title="لون الخلفية" style="position:relative;cursor:pointer;padding:4px 8px;border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:4px;">
+                                        <span style="font-size:14px;background:yellow;color:#000;padding:0 3px;border-radius:2px;">A</span>
+                                        <input type="color" value="#ffff00" onchange="emailExecCmd('hiliteColor',this.value)" style="width:18px;height:18px;border:none;padding:0;cursor:pointer;background:transparent;">
+                                    </label>
+                                    <div style="width:1px;height:24px;background:var(--border);margin:0 4px;"></div>
+                                    <!-- Align -->
+                                    <button type="button" onclick="emailExecCmd('justifyRight')" title="محاذاة يمين" class="toolbar-btn" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--pearl);cursor:pointer;font-size:13px;">⫦</button>
+                                    <button type="button" onclick="emailExecCmd('justifyCenter')" title="توسيط" class="toolbar-btn" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--pearl);cursor:pointer;font-size:13px;">☰</button>
+                                    <button type="button" onclick="emailExecCmd('justifyLeft')" title="محاذاة يسار" class="toolbar-btn" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--pearl);cursor:pointer;font-size:13px;">⫤</button>
+                                    <div style="width:1px;height:24px;background:var(--border);margin:0 4px;"></div>
+                                    <!-- Lists -->
+                                    <button type="button" onclick="emailExecCmd('insertUnorderedList')" title="قائمة نقطية" class="toolbar-btn" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--pearl);cursor:pointer;font-size:13px;">•≡</button>
+                                    <button type="button" onclick="emailExecCmd('insertOrderedList')" title="قائمة مرقمة" class="toolbar-btn" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--pearl);cursor:pointer;font-size:13px;">1.</button>
+                                    <!-- Link -->
+                                    <button type="button" onclick="emailInsertLink()" title="إدراج رابط" class="toolbar-btn" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--pearl);cursor:pointer;font-size:13px;">🔗</button>
+                                    <!-- Clear Format -->
+                                    <button type="button" onclick="emailExecCmd('removeFormat')" title="إزالة التنسيق" class="toolbar-btn" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--danger);cursor:pointer;font-size:13px;">✕</button>
+                                </div>
+                                <!-- Editable Area -->
+                                <div id="emailBody" contenteditable="true" dir="rtl" style="min-height:250px;padding:20px;background:rgba(10,22,40,0.6);color:var(--pearl);font-family:inherit;font-size:15px;line-height:1.8;outline:none;overflow-y:auto;max-height:500px;" data-placeholder="اكتب محتوى الإيميل هنا..."></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>مرفق (اختياري)</label>
+                            <div>
+                                <input type="file" id="emailAttachment" onchange="handleFileSelect(this)" style="display:none;">
+                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('emailAttachment').click()" style="width:100%;padding:16px;border-style:dashed;">
+                                    📎 اختر ملف للإرفاق
+                                </button>
+                                <div id="selectedFileName" style="display:none;margin-top:10px;padding:12px;background:rgba(107,184,201,0.1);border-radius:8px;align-items:center;justify-content:space-between;">
+                                    <span id="fileNameText" style="color:var(--cyan);"></span>
+                                    <button onclick="clearAttachment()" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;">✕</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="save-section">
+                        <button class="btn btn-primary btn-large" id="sendEmailBtn" onclick="sendAdminEmail()">
+                            📤 إرسال الإيميل
+                        </button>
+                        <p class="save-hint" id="emailStatus"></p>
+                    </div>
+
+                    <div class="settings-section" id="emailLogSection" style="display:none;">
+                        <h3 class="section-title">📋 نتيجة الإرسال</h3>
+                        <div id="emailLogContent"></div>
+                    </div>
                 </div>
             </div>
 
@@ -2478,6 +2618,8 @@
                 loadApiKeys();
             } else if (tab === 'support') {
                 loadSupportTickets();
+            } else if (tab === 'email') {
+                loadEmailUserList();
             }
         }
 
@@ -3075,6 +3217,227 @@
             }
         }
         
+        // ============ Email Editor Functions ============
+
+        function emailExecCmd(cmd, val) {
+            document.getElementById('emailBody').focus();
+            document.execCommand(cmd, false, val || null);
+        }
+
+        function emailFormatBlock(tag) {
+            document.getElementById('emailBody').focus();
+            document.execCommand('formatBlock', false, '<' + tag + '>');
+        }
+
+        function emailInsertLink() {
+            var url = prompt('أدخل الرابط:', 'https://');
+            if (url) {
+                document.getElementById('emailBody').focus();
+                document.execCommand('createLink', false, url);
+            }
+        }
+
+        // Placeholder behavior for contenteditable
+        (function() {
+            var editor = document.getElementById('emailBody');
+            if (!editor) return;
+            function checkPlaceholder() {
+                if (!editor.textContent.trim()) {
+                    editor.classList.add('is-empty');
+                } else {
+                    editor.classList.remove('is-empty');
+                }
+            }
+            editor.addEventListener('focus', checkPlaceholder);
+            editor.addEventListener('blur', checkPlaceholder);
+            editor.addEventListener('input', checkPlaceholder);
+            checkPlaceholder();
+        })();
+
+        // ============ Email Sending Functions ============
+
+        function getFilteredEmailUsers(filter) {
+            const now = new Date();
+            const sevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+            switch (filter) {
+                case 'all':
+                    return allUsers.slice();
+                case 'expiring':
+                    return allUsers.filter(function(u) {
+                        if ((u.role || 'free') === 'free') return false;
+                        var exp = u.subscriptionExpires ? new Date(u.subscriptionExpires) : null;
+                        return exp && exp > now && exp <= sevenDays;
+                    });
+                case 'expired':
+                    return allUsers.filter(function(u) {
+                        if ((u.role || 'free') === 'free') return false;
+                        var exp = u.subscriptionExpires ? new Date(u.subscriptionExpires) : null;
+                        return exp && exp < now;
+                    });
+                case 'agency':
+                    return allUsers.filter(function(u) { return u.role === 'agency'; });
+                case 'marketer':
+                    return allUsers.filter(function(u) { return u.role === 'marketer'; });
+                default:
+                    return [];
+            }
+        }
+
+        function onEmailTargetChange() {
+            var target = document.getElementById('emailTarget').value;
+            var userGroup = document.getElementById('userSelectGroup');
+            var filterInfo = document.getElementById('emailFilterInfo');
+
+            if (target === 'single') {
+                userGroup.style.display = 'block';
+                filterInfo.style.display = 'none';
+                loadEmailUserList();
+            } else {
+                userGroup.style.display = 'none';
+                var filtered = getFilteredEmailUsers(target);
+                document.getElementById('emailFilterCount').textContent = filtered.length;
+                filterInfo.style.display = 'block';
+            }
+        }
+
+        function loadEmailUserList() {
+            var select = document.getElementById('emailUserId');
+            select.innerHTML = '<option value="">-- اختر مستخدم --</option>';
+            allUsers.forEach(function(user) {
+                var roleLabel = '';
+                if (user.role === 'agency') roleLabel = ' [مؤسسة]';
+                else if (user.role === 'marketer') roleLabel = ' [مسوق]';
+                else roleLabel = ' [مجاني]';
+                select.innerHTML += '<option value="' + user.id + '">' + (user.name || 'بدون اسم') + ' (' + user.email + ')' + roleLabel + '</option>';
+            });
+        }
+
+        function handleFileSelect(input) {
+            var fileNameDiv = document.getElementById('selectedFileName');
+            var fileNameText = document.getElementById('fileNameText');
+            if (input.files && input.files[0]) {
+                var file = input.files[0];
+                var sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                fileNameText.textContent = '📄 ' + file.name + ' (' + sizeMB + ' MB)';
+                fileNameDiv.style.display = 'flex';
+            }
+        }
+
+        function clearAttachment() {
+            document.getElementById('emailAttachment').value = '';
+            document.getElementById('selectedFileName').style.display = 'none';
+        }
+
+        async function sendAdminEmail() {
+            var target = document.getElementById('emailTarget').value;
+            var userId = document.getElementById('emailUserId').value;
+            var subject = document.getElementById('emailSubject').value.trim();
+            var editorEl = document.getElementById('emailBody');
+            var bodyHtml = editorEl.innerHTML.trim();
+            var bodyText = editorEl.innerText.trim();
+            var fileInput = document.getElementById('emailAttachment');
+            var btn = document.getElementById('sendEmailBtn');
+            var statusEl = document.getElementById('emailStatus');
+
+            if (!subject) { alert('يرجى كتابة موضوع الإيميل'); return; }
+            if (!bodyText) { alert('يرجى كتابة محتوى الرسالة'); return; }
+            if (target === 'single' && !userId) { alert('يرجى اختيار المستخدم'); return; }
+
+            // For filter targets, get filtered user IDs
+            var filteredIds = [];
+            if (target !== 'single') {
+                var filtered = getFilteredEmailUsers(target);
+                if (filtered.length === 0) {
+                    alert('لا يوجد مستخدمين يطابقون هذا الفلتر');
+                    return;
+                }
+                filteredIds = filtered.map(function(u) { return u.id; });
+
+                var filterLabels = {
+                    all: 'جميع المستخدمين',
+                    expiring: 'المنتهية اشتراكاتهم قريباً',
+                    expired: 'المنتهية اشتراكاتهم',
+                    agency: 'المؤسسات العقارية',
+                    marketer: 'المسوقين العقاريين'
+                };
+                if (!confirm('⚠️ سيتم إرسال الإيميل إلى ' + filtered.length + ' مستخدم (' + (filterLabels[target] || target) + ').\n\nهل تريد المتابعة؟')) return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '⏳ جاري الإرسال...';
+            statusEl.textContent = 'جاري إرسال الإيميلات...';
+            statusEl.style.color = 'var(--cyan)';
+
+            try {
+                var formData = new FormData();
+                formData.append('subject', subject);
+                formData.append('bodyHtml', bodyHtml);
+                formData.append('body', bodyText);
+                if (fileInput.files && fileInput.files[0]) {
+                    formData.append('attachment', fileInput.files[0]);
+                }
+
+                if (target === 'single') {
+                    formData.append('target', 'single');
+                    formData.append('userId', userId);
+                } else {
+                    formData.append('target', 'list');
+                    formData.append('userIds', JSON.stringify(filteredIds));
+                }
+
+                var response = await fetch('/api/admin/send-email/', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: formData
+                });
+
+                var data = await response.json();
+                var logSection = document.getElementById('emailLogSection');
+                var logContent = document.getElementById('emailLogContent');
+                logSection.style.display = 'block';
+
+                if (data.success) {
+                    statusEl.textContent = '✅ تم الإرسال بنجاح!';
+                    statusEl.style.color = 'var(--success)';
+
+                    var html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:15px;">' +
+                        '<div style="background:rgba(34,197,94,0.15);padding:16px;border-radius:12px;text-align:center;">' +
+                            '<div style="font-size:24px;font-weight:bold;color:#22c55e;">' + data.sent + '</div>' +
+                            '<div style="color:var(--text-muted);font-size:13px;">تم الإرسال</div></div>' +
+                        '<div style="background:rgba(239,68,68,0.15);padding:16px;border-radius:12px;text-align:center;">' +
+                            '<div style="font-size:24px;font-weight:bold;color:#ef4444;">' + data.failed + '</div>' +
+                            '<div style="color:var(--text-muted);font-size:13px;">فشل</div></div>' +
+                        '<div style="background:rgba(107,184,201,0.15);padding:16px;border-radius:12px;text-align:center;">' +
+                            '<div style="font-size:24px;font-weight:bold;color:var(--cyan);">' + data.total + '</div>' +
+                            '<div style="color:var(--text-muted);font-size:13px;">الإجمالي</div></div></div>';
+
+                    if (data.errors && data.errors.length > 0) {
+                        html += '<div style="background:rgba(239,68,68,0.1);padding:12px;border-radius:8px;margin-top:10px;">' +
+                            '<p style="color:var(--danger);margin-bottom:8px;font-weight:bold;">أخطاء:</p>' +
+                            data.errors.map(function(e) { return '<p style="color:var(--text-muted);font-size:13px;margin:4px 0;">' + e + '</p>'; }).join('') +
+                            '</div>';
+                    }
+                    logContent.innerHTML = html;
+
+                    document.getElementById('emailSubject').value = '';
+                    document.getElementById('emailBody').innerHTML = '';
+                    clearAttachment();
+                } else {
+                    statusEl.textContent = '❌ فشل الإرسال';
+                    statusEl.style.color = 'var(--danger)';
+                    logContent.innerHTML = '<p style="color:var(--danger);">' + (data.error || 'خطأ غير معروف') + '</p>';
+                }
+            } catch (error) {
+                console.error('Email send error:', error);
+                statusEl.textContent = '❌ خطأ في الاتصال بالخادم';
+                statusEl.style.color = 'var(--danger)';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '📤 إرسال الإيميل';
+            }
+        }
+
         // Check if already logged in - must be at the end after all functions are defined
         const adminSession = sessionStorage.getItem('newra_admin_session');
         if (adminSession === 'authenticated') {

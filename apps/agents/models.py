@@ -98,6 +98,20 @@ class Agent(models.Model):
         help_text='مثال: واتساب: 05xxxxxxxx، الموقع: www.example.com'
     )
     
+    # استبيان التسجيل
+    DAILY_INQUIRY_CHOICES = [
+        ('less_than_5', 'أقل من 5'),
+        ('5_to_15', 'من 5 إلى 15'),
+        ('15_to_30', 'من 15 إلى 30'),
+        ('more_than_30', 'أكثر من 30'),
+    ]
+    daily_inquiries = models.CharField(
+        max_length=20,
+        choices=DAILY_INQUIRY_CHOICES,
+        blank=True,
+        verbose_name='عدد الاستفسارات اليومية في الواتساب'
+    )
+    
     # التحقق من الإيميل
     is_email_verified = models.BooleanField(default=False, verbose_name='تم التحقق من الإيميل')
     

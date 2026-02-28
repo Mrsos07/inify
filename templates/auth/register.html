@@ -411,6 +411,53 @@
             display: block;
         }
 
+        /* WhatsApp Inquiry Options */
+        .inquiry-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .inquiry-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: rgba(10, 22, 40, 0.4);
+            border: 1px solid rgba(107, 184, 201, 0.12);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .inquiry-option:hover {
+            border-color: rgba(107, 184, 201, 0.3);
+            background: rgba(10, 22, 40, 0.6);
+        }
+
+        .inquiry-option:has(input:checked) {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+        }
+
+        .inquiry-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            accent-color: var(--cyan);
+            cursor: pointer;
+        }
+
+        .inquiry-label {
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .inquiry-option:has(input:checked) .inquiry-label {
+            color: var(--pearl);
+        }
+
         @media (max-width: 480px) {
             .form-row {
                 grid-template-columns: 1fr;
@@ -480,6 +527,29 @@
                 <div class="form-group">
                     <label>تأكيد كلمة المرور</label>
                     <input type="password" name="password2" placeholder="أعد إدخال كلمة المرور" required>
+                </div>
+
+                <!-- WhatsApp Daily Inquiries -->
+                <div class="form-group">
+                    <label>عدد الاستفسارات اليومية في الواتساب</label>
+                    <div class="inquiry-options">
+                        <label class="inquiry-option">
+                            <input type="radio" name="daily_inquiries" value="less_than_5" required>
+                            <span class="inquiry-label">أقل من 5</span>
+                        </label>
+                        <label class="inquiry-option">
+                            <input type="radio" name="daily_inquiries" value="5_to_15">
+                            <span class="inquiry-label">من 5 إلى 15</span>
+                        </label>
+                        <label class="inquiry-option">
+                            <input type="radio" name="daily_inquiries" value="15_to_30">
+                            <span class="inquiry-label">من 15 إلى 30</span>
+                        </label>
+                        <label class="inquiry-option">
+                            <input type="radio" name="daily_inquiries" value="more_than_30">
+                            <span class="inquiry-label">أكثر من ذلك</span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Agreements Section -->

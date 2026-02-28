@@ -87,6 +87,7 @@ urlpatterns = [
     path('api/admin/api-keys/<uuid:key_id>/disable/', views.admin_toggle_api_key, {'action': 'disable'}, name='admin-disable-api-key'),
     path('api/admin/support-tickets/', views.admin_support_tickets, name='admin-support-tickets'),
     path('api/admin/support-tickets/<uuid:ticket_id>/reply/', views.admin_support_ticket_reply, name='admin-support-ticket-reply'),
+    path('api/admin/send-email/', views.admin_send_email, name='admin-send-email'),
     
     # Agent Stats API
     path('api/agent/<uuid:agent_id>/stats/', views.get_agent_stats, name='get-agent-stats'),

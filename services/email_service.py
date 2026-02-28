@@ -46,7 +46,7 @@ class EmailService:
         elif not self.resend_available and self.smtp_available:
             logger.info("Email service initialized with Django SMTP (Resend not configured)")
     
-    def _send_via_resend(self, to_email: str, subject: str, html_content: str, plain_text: str = None) -> dict:
+    def _send_via_resend(self, to_email: str, subject: str, html_content: str, plain_text: str = None, attachments: list = None) -> dict:
         """إرسال عبر Resend API"""
         try:
             payload = {
@@ -64,6 +64,8 @@ class EmailService:
             }
             if plain_text:
                 payload["text"] = plain_text
+            if attachments:
+                payload["attachments"] = attachments
             response = resend.Emails.send(payload)
             logger.info(f"Email sent via Resend to {to_email}")
             return {'success': True, 'response': response, 'method': 'resend'}
@@ -508,6 +510,56 @@ u + #body a { color: inherit; text-decoration: none; font-size: inherit; font-fa
 </table>
 </body>
 </html>"""
+
+    def send_custom_email(self, to_email: str, subject: str, body_html: str, plain_text: str = None, attachments: list = None) -> dict:
+        """إرسال إيميل مخصص من لوحة الأدمن مع دعم المرفقات"""
+        if not self.is_available:
+            return {'success': False, 'error': 'Email service not configured'}
+
+        styles = self._get_email_base_styles()
+        header = self._get_email_header()
+        footer = self._get_email_footer("تم إرسال هذا البريد من منصة Inify.")
+
+        html_content = f"""<!DOCTYPE html>
+<html lang="ar" dir="rtl" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>{subject}</title>
+<style type="text/css">{styles}</style>
+</head>
+<body id="body" style="margin:0;padding:0;background-color:#f0f2f5;word-spacing:normal;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#f0f2f5;">
+  <tr>
+    <td class="outer-wrapper" style="padding:20px 10px;">
+      <table class="email-container" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" align="center" style="margin:0 auto;background-color:#ffffff;border-radius:12px;overflow:hidden;">
+        {header}
+        <tr>
+          <td class="content-padding" style="padding:32px 40px;direction:rtl;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#444444;line-height:1.8;text-align:right;">
+              {body_html}
+            </div>
+          </td>
+        </tr>
+        {footer}
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>"""
+
+        if self.resend_available:
+            result = self._send_via_resend(to_email, subject, html_content, plain_text, attachments)
+            if result['success']:
+                return result
+            logger.warning(f"Resend failed for custom email, trying SMTP: {result.get('error')}")
+
+        if self.smtp_available:
+            return self._send_via_smtp(to_email, subject, html_content, plain_text)
+
+        return {'success': False, 'error': 'All email sending methods failed'}
 
     def verify_token(self, token: str, token_type: str = 'email_verify') -> str:
         """التحقق من صحة التوكن وإرجاع الإيميل"""

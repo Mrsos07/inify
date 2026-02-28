@@ -323,6 +323,7 @@ def register_view(request):
             password = request.POST.get('password', '')
             accept_terms = request.POST.get('accept_terms', '')
             accept_fal = request.POST.get('accept_fal', '')
+            daily_inquiries = request.POST.get('daily_inquiries', '')
             
             # Validate required fields
             if not email or not password:
@@ -388,7 +389,8 @@ def register_view(request):
                 phone_hash=phone_hash,
                 city=city or '',
                 email=email,
-                is_email_verified=False
+                is_email_verified=False,
+                daily_inquiries=daily_inquiries or ''
             )
             
             # Auto-create 5-day trial subscription
@@ -2625,6 +2627,119 @@ def admin_support_ticket_reply(request, ticket_id):
     except Exception as e:
         logger.error(f'[SUPPORT_REPLY] Error: {e}', exc_info=True)
         return JsonResponse({'success': False, 'error': 'حدث خطأ في الرد على التذكرة'}, status=500)
+
+
+# ═══════════════════════════════════════════════════════════
+# Admin Email Sending - إرسال إيميلات من لوحة الأدمن
+# ═══════════════════════════════════════════════════════════
+
+@csrf_exempt
+def admin_send_email(request):
+    """POST /api/admin/send-email/ - إرسال إيميل لمستخدم أو لجميع المستخدمين"""
+    if not check_admin_access(request):
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    import base64
+    from services.email_service import email_service
+    from apps.agents.models import Agent
+
+    try:
+        # Support both JSON and multipart/form-data (for file uploads)
+        content_type = request.content_type or ''
+
+        if 'multipart/form-data' in content_type:
+            target = request.POST.get('target', '')
+            user_id = request.POST.get('userId', '')
+            user_ids_json = request.POST.get('userIds', '')
+            subject = request.POST.get('subject', '').strip()
+            body = request.POST.get('body', '').strip()
+            body_html_raw = request.POST.get('bodyHtml', '').strip()
+            uploaded_file = request.FILES.get('attachment')
+        else:
+            data = json.loads(request.body)
+            target = data.get('target', '')
+            user_id = data.get('userId', '')
+            user_ids_json = json.dumps(data.get('userIds', []))
+            subject = data.get('subject', '').strip()
+            body = data.get('body', '').strip()
+            body_html_raw = data.get('bodyHtml', '').strip()
+            uploaded_file = None
+
+        if not subject or not body:
+            return JsonResponse({'success': False, 'error': 'الموضوع والمحتوى مطلوبان'}, status=400)
+
+        # Use rich HTML from editor if provided, otherwise convert plain text
+        body_html = body_html_raw if body_html_raw else body.replace('\n', '<br>')
+
+        # Prepare attachment for Resend if file uploaded
+        attachments = None
+        if uploaded_file:
+            file_content = uploaded_file.read()
+            attachments = [{
+                "filename": uploaded_file.name,
+                "content": base64.b64encode(file_content).decode('utf-8'),
+            }]
+
+        # Determine recipients
+        recipients = []
+        if target == 'all':
+            agents = Agent.objects.select_related('user').filter(user__is_active=True)
+            for agent in agents:
+                if agent.user.email:
+                    recipients.append(agent.user.email)
+        elif target == 'list' and user_ids_json:
+            user_ids = json.loads(user_ids_json) if isinstance(user_ids_json, str) else user_ids_json
+            agents = Agent.objects.select_related('user').filter(id__in=user_ids, user__is_active=True)
+            for agent in agents:
+                if agent.user.email:
+                    recipients.append(agent.user.email)
+        elif target == 'single' and user_id:
+            try:
+                agent = Agent.objects.select_related('user').get(id=user_id)
+                if agent.user.email:
+                    recipients.append(agent.user.email)
+            except Agent.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'المستخدم غير موجود'}, status=404)
+        else:
+            return JsonResponse({'success': False, 'error': 'يرجى تحديد المستلم'}, status=400)
+
+        if not recipients:
+            return JsonResponse({'success': False, 'error': 'لا يوجد مستلمين'}, status=400)
+
+        # Send emails
+        sent = 0
+        failed = 0
+        errors = []
+
+        for email_addr in recipients:
+            result = email_service.send_custom_email(
+                to_email=email_addr,
+                subject=subject,
+                body_html=body_html,
+                plain_text=body,
+                attachments=attachments,
+            )
+            if result.get('success'):
+                sent += 1
+            else:
+                failed += 1
+                errors.append(f"{email_addr}: {result.get('error', 'unknown')}")
+
+        logger.info(f'[ADMIN_EMAIL] Sent: {sent}, Failed: {failed}, Target: {target}')
+
+        return JsonResponse({
+            'success': True,
+            'sent': sent,
+            'failed': failed,
+            'total': len(recipients),
+            'errors': errors[:5] if errors else [],
+        })
+
+    except Exception as e:
+        logger.error(f'[ADMIN_EMAIL] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ في إرسال الإيميل'}, status=500)
 
 
 # ═══════════════════════════════════════════════════════════
