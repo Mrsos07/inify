@@ -1557,6 +1557,7 @@ def get_all_users(request):
                 'subscriptionStart': sub_start,
                 'subscriptionEnd': sub_end,
                 'propertiesCount': properties_count,
+                'dailyInquiries': agent.daily_inquiries or '',
                 'isActive': agent.is_active,
                 'createdAt': user.date_joined.isoformat(),
                 'lastLogin': user.last_login.isoformat() if user.last_login else None,
