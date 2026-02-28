@@ -272,8 +272,8 @@ u + #body a { color: inherit; text-decoration: none; font-size: inherit; font-fa
         return """
         <tr>
           <td class="header-padding" style="background-color:#0A1628;padding:28px 40px;text-align:center;">
-            <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:2px;text-transform:lowercase;">inify</p>
-            <p style="margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6BB8C9;letter-spacing:0.5px;">منصة العقارات الذكية</p>
+            <img src="https://inify.ai/static/images/inify-icon.png" alt="Inify" width="60" height="60" style="display:block;margin:0 auto 12px;border:0;outline:none;">
+            <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px;">انيفاي عقار <span style="text-transform:lowercase;">inify</span></p>
           </td>
         </tr>
 """
