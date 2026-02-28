@@ -1443,6 +1443,7 @@
                             <select id="emailTarget" onchange="onEmailTargetChange()">
                                 <option value="single">مستخدم محدد</option>
                                 <option value="all">جميع المستخدمين</option>
+                                <option value="expiring_tomorrow">🔴 ينتهي اشتراكهم غداً (يوم واحد)</option>
                                 <option value="expiring">⏰ ينتهي اشتراكهم قريباً (7 أيام)</option>
                                 <option value="expired">❌ منتهي اشتراكهم</option>
                                 <option value="agency">🏢 المؤسسات العقارية</option>
@@ -3267,6 +3268,13 @@
             switch (filter) {
                 case 'all':
                     return allUsers.slice();
+                case 'expiring_tomorrow':
+                    var tomorrow = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
+                    return allUsers.filter(function(u) {
+                        if ((u.role || 'free') === 'free') return false;
+                        var exp = u.subscriptionExpires ? new Date(u.subscriptionExpires) : null;
+                        return exp && exp > now && exp <= tomorrow;
+                    });
                 case 'expiring':
                     return allUsers.filter(function(u) {
                         if ((u.role || 'free') === 'free') return false;
@@ -3360,6 +3368,7 @@
 
                 var filterLabels = {
                     all: 'جميع المستخدمين',
+                    expiring_tomorrow: 'ينتهي اشتراكهم غداً',
                     expiring: 'المنتهية اشتراكاتهم قريباً',
                     expired: 'المنتهية اشتراكاتهم',
                     agency: 'المؤسسات العقارية',
