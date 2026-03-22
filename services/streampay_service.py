@@ -287,7 +287,7 @@ class StreamPayService:
             signature = parts.get('v1', '')
 
             message = f"{timestamp}.{raw_body.decode()}"
-            computed = hmac.new(
+            computed = hmac.HMAC(
                 self.webhook_secret.encode(),
                 message.encode(),
                 hashlib.sha256

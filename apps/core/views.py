@@ -2301,16 +2301,23 @@ def payment_success_view(request):
             ).order_by('-created_at').first()
 
             if sub and status == 'paid':
-                # Server-side verification: fetch invoice from StreamPay API
+                # Server-side verification: MUST fetch invoice from StreamPay API
                 if invoice_id:
                     invoice_data = streampay_service.get_invoice(invoice_id)
                     if invoice_data and invoice_data.get('status') in ['COMPLETED', 'PAID']:
-                        verified = True
+                        # تحقق إضافي: المبلغ يطابق الخطة
+                        invoice_amount = float(invoice_data.get('amount', 0) or invoice_data.get('total', 0) or 0)
+                        expected_amount = float(streampay_service.PLANS.get(sub.plan_key, {}).get('price', 0))
+                        if expected_amount > 0 and invoice_amount > 0 and abs(invoice_amount - expected_amount) > 1:
+                            logger.warning(f"[SECURITY] Amount mismatch! Invoice={invoice_amount}, Expected={expected_amount}, agent={agent.id}")
+                        else:
+                            verified = True
                     else:
                         logger.warning(f"Invoice verification failed for {invoice_id}: {invoice_data}")
                 else:
-                    # No invoice_id but status=paid from redirect, trust the webhook to handle it
-                    verified = True
+                    # No invoice_id — do NOT activate here, let webhook handle it
+                    logger.info(f"Payment redirect without invoice_id for agent {agent.id}, waiting for webhook")
+                    verified = False
 
                 if verified:
                     now = tz_util.now()
@@ -2373,11 +2380,14 @@ def streampay_webhook(request):
         from services.streampay_service import streampay_service
         from apps.agents.models import Subscription, Agent
 
-        # ── Verify signature ──────────────────────────────────────
+        # ── Verify signature (REQUIRED) ─────────────────────────────
         sig = request.headers.get('X-Webhook-Signature', '')
-        if streampay_service.webhook_secret and streampay_service.webhook_secret != 'your-webhook-secret-here' and sig:
+        if streampay_service.webhook_secret and streampay_service.webhook_secret != 'your-webhook-secret-here':
+            if not sig:
+                logger.warning("[WEBHOOK SECURITY] Rejected: Missing X-Webhook-Signature header")
+                return JsonResponse({'error': 'Missing signature'}, status=401)
             if not streampay_service.verify_webhook_signature(request.body, sig):
-                logger.warning("Invalid webhook signature")
+                logger.warning("[WEBHOOK SECURITY] Rejected: Invalid webhook signature")
                 return JsonResponse({'error': 'Invalid signature'}, status=401)
 
         payload = json.loads(request.body)
@@ -2398,6 +2408,18 @@ def streampay_webhook(request):
             if agent_id:
                 try:
                     agent = Agent.objects.get(id=agent_id)
+                    
+                    # ── تحقق أمني: المبلغ يطابق الخطة ──
+                    paid_amount = float(data.get('amount', 0) or data.get('payment', {}).get('amount', 0) or 0)
+                    expected_amount = float(streampay_service.PLANS.get(plan_key, {}).get('price', 0))
+                    if expected_amount > 0 and paid_amount > 0 and abs(paid_amount - expected_amount) > 1:
+                        logger.warning(
+                            f"[SECURITY] PAYMENT_SUCCEEDED amount mismatch! "
+                            f"Paid={paid_amount}, Expected={expected_amount}, "
+                            f"agent={agent_id}, plan={plan_key}, payment_id={payment_id}"
+                        )
+                        return JsonResponse({'status': 'rejected', 'reason': 'amount_mismatch'})
+                    
                     sub = Subscription.objects.filter(
                         agent=agent, status__in=['pending', 'trial']
                     ).order_by('-created_at').first()
@@ -2409,6 +2431,7 @@ def streampay_webhook(request):
                         sub.invoice_id = invoice_id
                         sub.start_date = now
                         sub.end_date = streampay_service.get_subscription_end_date(plan_key, now)
+                        sub.amount = expected_amount
                         sub.save()
 
                         agent.subscription_plan = 'pro'
@@ -2422,7 +2445,7 @@ def streampay_webhook(request):
                         except Exception as sync_err:
                             logger.error(f"Team sync error on PAYMENT_SUCCEEDED: {sync_err}")
 
-                        logger.info(f"Webhook PAYMENT_SUCCEEDED: Activated subscription for agent {agent_id}, plan={plan_key}")
+                        logger.info(f"Webhook PAYMENT_SUCCEEDED: Activated subscription for agent {agent_id}, plan={plan_key}, amount={expected_amount}")
                     else:
                         logger.warning(f"Webhook PAYMENT_SUCCEEDED: No pending/trial sub found for agent {agent_id}")
                 except Agent.DoesNotExist:
