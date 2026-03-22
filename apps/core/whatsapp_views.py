@@ -21,6 +21,40 @@ logger = logging.getLogger(__name__)
 STUCK_INSTANCE_TIMEOUT_MINUTES = 30
 
 
+def _check_agent_subscription(agent):
+    """
+    فحص اشتراك الوكيل — هل لديه اشتراك/تجربة نشطة؟
+    يُستخدم في webhook و auto_reconnect حيث لا يوجد request.
+    Returns: (is_active: bool, subscription_or_None)
+    """
+    from apps.agents.models import Subscription
+    sub = Subscription.objects.filter(agent=agent).order_by('-created_at').first()
+    if sub and sub.is_active:
+        return True, sub
+    return False, sub
+
+
+def _disconnect_expired_instance(instance, reason='subscription_expired'):
+    """
+    فصل instance من Evolution API وتحديث الحالة في قاعدة البيانات
+    عند انتهاء الاشتراك أو التجربة.
+    """
+    try:
+        whatsapp_service.disconnect_instance(instance.instance_name)
+        logger.info(f"[SUBSCRIPTION] Disconnected {instance.instance_name}: {reason}")
+    except Exception as e:
+        logger.error(f"[SUBSCRIPTION] Error disconnecting {instance.instance_name}: {e}")
+    
+    try:
+        whatsapp_service.delete_instance(instance.instance_name)
+        logger.info(f"[SUBSCRIPTION] Deleted instance from Evolution API: {instance.instance_name}")
+    except Exception as e:
+        logger.error(f"[SUBSCRIPTION] Error deleting {instance.instance_name} from Evolution: {e}")
+    
+    instance.status = 'disconnected'
+    instance.save(update_fields=['status'])
+
+
 def _cleanup_stuck_instances():
     """
     تنظيف تلقائي للـ instances العالقة بحالة connecting أو qr_ready
@@ -92,6 +126,20 @@ def whatsapp_status(request):
     # البحث عن instance موجود
     try:
         instance = agent.whatsapp_instance
+        
+        # ── فحص الاشتراك: إذا منتهي → فصل الـ instance تلقائياً ──
+        is_sub_active, _ = _check_agent_subscription(agent)
+        if not is_sub_active and instance.status in ['connected', 'connecting', 'qr_ready']:
+            logger.info(f"[SUBSCRIPTION] Auto-disconnecting {instance.instance_name}: subscription/trial expired")
+            _disconnect_expired_instance(instance, reason='subscription_expired_on_status_check')
+            return JsonResponse({
+                'success': True,
+                'connected': False,
+                'status': 'disconnected',
+                'subscription_expired': True,
+                'message': 'تم فصل الواتساب — انتهى اشتراكك. جدّد الاشتراك لإعادة الربط.',
+                'service_available': True
+            })
         
         # تحديث الحالة من Evolution API
         status_result = whatsapp_service.get_instance_status(instance.instance_name)
@@ -495,6 +543,14 @@ def whatsapp_webhook(request, instance_name):
     elif event_type == 'message':
         # رسالة واردة - معالجة بواسطة الوكيل الذكي
         instance.increment_received()
+        
+        # ── فحص الاشتراك قبل الرد التلقائي ──
+        is_sub_active, _ = _check_agent_subscription(instance.agent)
+        if not is_sub_active:
+            # الاشتراك منتهي → لا يرد + فصل الـ instance
+            logger.info(f"[SUBSCRIPTION] Blocking auto-reply for {instance.instance_name}: subscription expired")
+            _disconnect_expired_instance(instance, reason='subscription_expired_on_message')
+            return JsonResponse({'status': 'subscription_expired'})
         
         if instance.auto_reply and instance.is_active:
             # استخدام الوكيل الذكي للرد
@@ -995,6 +1051,19 @@ def _auto_reconnect_whatsapp(instance_name: str):
     
     try:
         logger.info(f"[AUTO-RECONNECT] Starting reconnect for: {instance_name}")
+        
+        # ── فحص الاشتراك قبل إعادة الاتصال ──
+        try:
+            inst_obj = WhatsAppInstance.objects.select_related('agent').get(instance_name=instance_name)
+            is_sub_active, _ = _check_agent_subscription(inst_obj.agent)
+            if not is_sub_active:
+                logger.info(f"[AUTO-RECONNECT] ❌ Blocked — subscription expired for: {instance_name}")
+                inst_obj.status = 'disconnected'
+                inst_obj.save(update_fields=['status'])
+                return
+        except WhatsAppInstance.DoesNotExist:
+            logger.warning(f"[AUTO-RECONNECT] Instance not found: {instance_name}")
+            return
         
         # فحص conflict قبل البدء
         if _cache.get(f'wa_conflict:{instance_name}'):

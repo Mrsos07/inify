@@ -11,6 +11,7 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
+import json
 from unittest.mock import patch, MagicMock
 from datetime import timedelta
 from django.test import TestCase, RequestFactory, override_settings
@@ -36,6 +37,16 @@ class BaseWhatsAppTest(TestCase):
             user=self.user,
             company_name='Test Company',
             subscription_plan='basic'
+        )
+        # Create active subscription so existing tests pass with subscription checks
+        from apps.agents.models import Subscription
+        Subscription.objects.create(
+            agent=self.agent,
+            plan_key='monthly',
+            status='active',
+            amount=199,
+            start_date=timezone.now() - timedelta(days=1),
+            end_date=timezone.now() + timedelta(days=29),
         )
 
     def _create_instance(self, name='test_instance_001', status='connected', **kwargs):
@@ -505,3 +516,195 @@ class TestAutoReconnectConflictCheck(BaseWhatsAppTest):
         self.assertEqual(instance.status, 'connected')
         mock_ws.restart_instance.assert_not_called()
         print("  ✅ PASS: reconnect finds already open → connected")
+
+
+class TestSubscriptionWhatsAppIntegration(BaseWhatsAppTest):
+    """Test 8: Subscription/trial expiry disconnects WhatsApp"""
+
+    def setUp(self):
+        super().setUp()
+        # Clear the default active subscription from BaseWhatsAppTest
+        from apps.agents.models import Subscription
+        Subscription.objects.filter(agent=self.agent).delete()
+
+    def _create_subscription(self, status='trial', trial_days_left=5, active_days_left=30):
+        from apps.agents.models import Subscription
+        now = timezone.now()
+        if status == 'trial':
+            return Subscription.objects.create(
+                agent=self.agent,
+                plan_key='monthly',
+                status='trial',
+                amount=0,
+                trial_start=now - timedelta(days=1),
+                trial_end=now + timedelta(days=trial_days_left),
+            )
+        elif status == 'active':
+            return Subscription.objects.create(
+                agent=self.agent,
+                plan_key='monthly',
+                status='active',
+                amount=199,
+                start_date=now - timedelta(days=1),
+                end_date=now + timedelta(days=active_days_left),
+            )
+        else:
+            return Subscription.objects.create(
+                agent=self.agent,
+                plan_key='monthly',
+                status=status,
+                amount=0,
+                trial_start=now - timedelta(days=10),
+                trial_end=now - timedelta(days=5),
+            )
+
+    @patch('apps.core.whatsapp_views.whatsapp_service')
+    def test_status_check_disconnects_expired_trial(self, mock_ws):
+        """whatsapp_status: expired trial → auto-disconnect"""
+        from apps.core.whatsapp_views import whatsapp_status
+        instance = self._create_instance(status='connected')
+        self._create_subscription(status='trial', trial_days_left=-1)  # expired
+
+        mock_ws.is_available = True
+
+        request = self.factory.get('/api/whatsapp/status/')
+        request.user = self.user
+
+        response = whatsapp_status(request)
+        data = json.loads(response.content)
+
+        self.assertFalse(data['connected'])
+        self.assertEqual(data['status'], 'disconnected')
+        self.assertTrue(data.get('subscription_expired'))
+        instance.refresh_from_db()
+        self.assertEqual(instance.status, 'disconnected')
+        print("  ✅ PASS: expired trial → auto-disconnect on status check")
+
+    @patch('apps.core.whatsapp_views.whatsapp_service')
+    def test_status_check_keeps_active_trial(self, mock_ws):
+        """whatsapp_status: active trial → stays connected"""
+        from apps.core.whatsapp_views import whatsapp_status
+        instance = self._create_instance(status='connected')
+        self._create_subscription(status='trial', trial_days_left=3)  # still active
+
+        mock_ws.is_available = True
+        mock_ws.get_instance_status.return_value = {
+            'success': True,
+            'data': {'instance': {'state': 'open'}}
+        }
+        mock_ws.get_qr_code.return_value = {'success': False}
+
+        request = self.factory.get('/api/whatsapp/status/')
+        request.user = self.user
+
+        response = whatsapp_status(request)
+        data = json.loads(response.content)
+
+        self.assertTrue(data['connected'])
+        self.assertEqual(data['status'], 'connected')
+        mock_ws.disconnect_instance.assert_not_called()
+        print("  ✅ PASS: active trial → stays connected")
+
+    @patch('apps.core.whatsapp_views.whatsapp_service')
+    def test_message_blocked_expired_subscription(self, mock_ws):
+        """webhook message: expired subscription → no auto-reply + disconnect"""
+        from apps.core.whatsapp_views import whatsapp_webhook
+        instance = self._create_instance(status='connected')
+        self._create_subscription(status='expired')
+
+        mock_ws.parse_webhook_message.return_value = {
+            'event': 'message',
+            'instance': instance.instance_name,
+            'phone': '966500000000',
+            'sender_name': 'Test',
+            'text': 'Hello',
+            'is_group': False,
+            'message_id': 'msg456',
+            'timestamp': '2025-01-01T00:00:00',
+            'raw': {}
+        }
+
+        request = self.factory.post(
+            f'/webhooks/whatsapp/{instance.instance_name}/',
+            data=json.dumps({'event': 'MESSAGES_UPSERT'}),
+            content_type='application/json'
+        )
+        response = whatsapp_webhook(request, instance.instance_name)
+        data = json.loads(response.content)
+
+        self.assertEqual(data['status'], 'subscription_expired')
+        instance.refresh_from_db()
+        self.assertEqual(instance.status, 'disconnected')
+        print("  ✅ PASS: expired subscription → message blocked + disconnect")
+
+    @patch('apps.core.whatsapp_views.whatsapp_service')
+    def test_message_allowed_active_subscription(self, mock_ws):
+        """webhook message: active subscription → message processed normally"""
+        from apps.core.whatsapp_views import whatsapp_webhook
+        instance = self._create_instance(status='connected')
+        instance.auto_reply = False  # disable to avoid _process_whatsapp_message
+        instance.save()
+        self._create_subscription(status='active', active_days_left=20)
+
+        mock_ws.parse_webhook_message.return_value = {
+            'event': 'message',
+            'instance': instance.instance_name,
+            'phone': '966500000000',
+            'sender_name': 'Test',
+            'text': 'Hello',
+            'is_group': False,
+            'message_id': 'msg789',
+            'timestamp': '2025-01-01T00:00:00',
+            'raw': {}
+        }
+
+        request = self.factory.post(
+            f'/webhooks/whatsapp/{instance.instance_name}/',
+            data=json.dumps({'event': 'MESSAGES_UPSERT'}),
+            content_type='application/json'
+        )
+        response = whatsapp_webhook(request, instance.instance_name)
+        data = json.loads(response.content)
+
+        self.assertEqual(data['status'], 'ok')
+        instance.refresh_from_db()
+        self.assertEqual(instance.messages_received, 1)
+        self.assertEqual(instance.status, 'connected')
+        mock_ws.disconnect_instance.assert_not_called()
+        print("  ✅ PASS: active subscription → message processed normally")
+
+    @patch('apps.core.whatsapp_views.whatsapp_service')
+    def test_reconnect_blocked_expired_subscription(self, mock_ws):
+        """_auto_reconnect: expired subscription → blocked"""
+        from apps.core.whatsapp_views import _auto_reconnect_whatsapp
+        instance = self._create_instance(status='connecting')
+        self._create_subscription(status='expired')
+
+        with patch('time.sleep', return_value=None):
+            _auto_reconnect_whatsapp(instance.instance_name)
+
+        instance.refresh_from_db()
+        self.assertEqual(instance.status, 'disconnected')
+        mock_ws.restart_instance.assert_not_called()
+        print("  ✅ PASS: expired subscription → reconnect blocked")
+
+    @patch('apps.core.whatsapp_views.whatsapp_service')
+    def test_no_subscription_at_all_disconnects(self, mock_ws):
+        """whatsapp_status: no subscription → auto-disconnect"""
+        from apps.core.whatsapp_views import whatsapp_status
+        instance = self._create_instance(status='connected')
+        # No subscription created
+
+        mock_ws.is_available = True
+
+        request = self.factory.get('/api/whatsapp/status/')
+        request.user = self.user
+
+        response = whatsapp_status(request)
+        data = json.loads(response.content)
+
+        self.assertFalse(data['connected'])
+        self.assertTrue(data.get('subscription_expired'))
+        instance.refresh_from_db()
+        self.assertEqual(instance.status, 'disconnected')
+        print("  ✅ PASS: no subscription → auto-disconnect")
