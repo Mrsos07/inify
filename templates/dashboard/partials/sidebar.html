@@ -1,35 +1,35 @@
-<aside class="sidebar" id="sidebar">
-    <a href="/dashboard/" class="sidebar-logo" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
+<aside class="sidebar" id="sidebar" aria-label="القائمة الجانبية">
+    <a href="/dashboard/" class="sidebar-logo" aria-label="Inify — الصفحة الرئيسية" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
         <img src="/static/images/newra-logo.png" alt="Newra" style="height: 28px; filter: brightness(0) invert(1);">
         <img src="/static/images/inify-logo.png" alt="Inify" style="height: 28px;">
     </a>
 
-    <nav>
+    <nav aria-label="تنقل لوحة التحكم">
         <div class="nav-section">
             <div class="nav-section-title">القائمة الرئيسية</div>
-            <a href="/dashboard/" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a href="/dashboard/" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}" {% if active_page == 'dashboard' %}aria-current="page"{% endif %}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
                     <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
                 </svg>
                 لوحة التحكم
             </a>
-            <a href="/dashboard/properties/" class="nav-item {% if active_page == 'properties' %}active{% endif %}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a href="/dashboard/properties/" class="nav-item {% if active_page == 'properties' %}active{% endif %}" {% if active_page == 'properties' %}aria-current="page"{% endif %}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                     <polyline points="9 22 9 12 15 12 15 22"/>
                 </svg>
                 العقارات
             </a>
-            <a href="/dashboard/leads/" class="nav-item {% if active_page == 'leads' %}active{% endif %}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a href="/dashboard/leads/" class="nav-item {% if active_page == 'leads' %}active{% endif %}" {% if active_page == 'leads' %}aria-current="page"{% endif %}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                     <circle cx="9" cy="7" r="4"/>
                 </svg>
                 العملاء
             </a>
-            <a href="/dashboard/conversations/" class="nav-item {% if active_page == 'conversations' %}active{% endif %}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a href="/dashboard/conversations/" class="nav-item {% if active_page == 'conversations' %}active{% endif %}" {% if active_page == 'conversations' %}aria-current="page"{% endif %}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
                 المحادثات
@@ -39,28 +39,28 @@
         {% if subscription_plan == 'enterprise' %}
         <div class="nav-section">
             <div class="nav-section-title">المؤسسات</div>
-            <a href="/dashboard/analytics/" class="nav-item {% if active_page == 'analytics' %}active{% endif %}" style="color: #FFD700;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a href="/dashboard/analytics/" class="nav-item {% if active_page == 'analytics' %}active{% endif %}" {% if active_page == 'analytics' %}aria-current="page"{% endif %} style="color: #FFD700;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
                     <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
                 </svg>
                 تحليلات
                 <span style="font-size:10px;background:#FFD70030;color:#FFD700;padding:2px 6px;border-radius:10px;margin-right:auto;">جديد</span>
             </a>
-            <a href="/dashboard/api-docs/" class="nav-item {% if active_page == 'api_docs' %}active{% endif %}" style="color: #FFD700;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a href="/dashboard/api-docs/" class="nav-item {% if active_page == 'api_docs' %}active{% endif %}" {% if active_page == 'api_docs' %}aria-current="page"{% endif %} style="color: #FFD700;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
                 </svg>
                 API للمؤسسات
             </a>
-            <a href="/dashboard/webhooks/" class="nav-item {% if active_page == 'webhooks' %}active{% endif %}" style="color: #FFD700;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a href="/dashboard/webhooks/" class="nav-item {% if active_page == 'webhooks' %}active{% endif %}" {% if active_page == 'webhooks' %}aria-current="page"{% endif %} style="color: #FFD700;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
                 </svg>
                 Webhooks
             </a>
-            <a href="/dashboard/team/" class="nav-item {% if active_page == 'team' %}active{% endif %}" style="color: #FFD700;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a href="/dashboard/team/" class="nav-item {% if active_page == 'team' %}active{% endif %}" {% if active_page == 'team' %}aria-current="page"{% endif %} style="color: #FFD700;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                     <circle cx="9" cy="7" r="4"/>
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -73,34 +73,30 @@
         {% endif %}
 
         <div class="nav-section">
-            <div class="nav-section-title">الاشتراك</div>
-            <a href="/subscription/" class="nav-item {% if active_page == 'subscription' %}active{% endif %}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                    <line x1="1" y1="10" x2="23" y2="10"/>
-                </svg>
-                إدارة الاشتراك
-            </a>
-        </div>
-
-        <div class="nav-section">
             <div class="nav-section-title">الإعدادات</div>
-            <a href="/dashboard/bot-settings/" class="nav-item {% if active_page == 'bot_settings' %}active{% endif %}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a href="/dashboard/bot-settings/" class="nav-item {% if active_page == 'bot_settings' %}active{% endif %}" {% if active_page == 'bot_settings' %}aria-current="page"{% endif %}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73v.27h1a7 7 0 0 1 7 7h.27c.34-.6.99-1 1.73-1a2 2 0 1 1 0 4c-.74 0-1.39-.4-1.73-1H20a7 7 0 0 1-7 7v.27c.6.34 1 .99 1 1.73a2 2 0 1 1-4 0c0-.74.4-1.39 1-1.73V20a7 7 0 0 1-7-7h-.27c-.34.6-.99 1-1.73 1a2 2 0 1 1 0-4c.74 0 1.39.4 1.73 1H4a7 7 0 0 1 7-7v-.27c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
                     <circle cx="12" cy="12" r="3"/>
                 </svg>
                 إعدادات الوكيل
             </a>
-            <a href="/profile/" class="nav-item {% if active_page == 'profile' %}active{% endif %}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a href="/profile/" class="nav-item {% if active_page == 'profile' %}active{% endif %}" {% if active_page == 'profile' %}aria-current="page"{% endif %}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                     <circle cx="12" cy="7" r="4"/>
                 </svg>
                 الملف الشخصي
             </a>
-            <a href="/auth/logout/" class="nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a href="/subscription/" class="nav-item {% if active_page == 'subscription' %}active{% endif %}" {% if active_page == 'subscription' %}aria-current="page"{% endif %}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                    <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+                إدارة الاشتراك
+            </a>
+            <a href="/auth/logout/" class="nav-item" style="color: rgba(239,68,68,0.85);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                     <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
                 </svg>
@@ -110,32 +106,35 @@
     </nav>
 
     <div class="sidebar-footer">
-        <button id="themeToggleBtn" onclick="toggleTheme()" style="width:100%;padding:10px 16px;margin-bottom:12px;background:rgba(107,184,201,.1);border:1px solid rgba(107,184,201,.2);border-radius:8px;color:var(--cyan);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .3s ease;font-family:inherit;" onmouseover="this.style.background='rgba(107,184,201,.2)'" onmouseout="this.style.background='rgba(107,184,201,.1)'">☀️ الوضع الفاتح</button>
+        <button id="themeToggleBtn" onclick="toggleTheme()" aria-label="تبديل الوضع الفاتح والداكن" title="تبديل الوضع الفاتح / الداكن" style="width:100%;padding:9px 14px;margin-bottom:12px;background:rgba(107,184,201,.1);border:1px solid rgba(107,184,201,.2);border-radius:8px;color:var(--cyan);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s ease;font-family:inherit;" onmouseover="this.style.background='rgba(107,184,201,.2)'" onmouseout="this.style.background='rgba(107,184,201,.1)'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            <span>تبديل الوضع</span>
+        </button>
         <div class="user-info">
-            <div class="user-avatar" id="userAvatar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <div class="user-avatar" id="userAvatar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             <div class="user-details">
                 <h4 id="userName">{{ user_name|default:"المستخدم" }}</h4>
                 <p id="userRole">{% if subscription_plan == 'enterprise' %}مؤسسة عقارية{% elif subscription_plan == 'pro' %}مسوق عقاري{% else %}الباقة المجانية{% endif %}</p>
             </div>
         </div>
         <!-- Tour Button -->
-        <button onclick="startTourFromSidebar()" style="display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 16px; background: rgba(107, 184, 201, 0.08); border: 1px solid rgba(107, 184, 201, 0.2); border-radius: 10px; color: #6bb8c9; font-size: 14px; transition: all 0.3s ease; width: 100%; cursor: pointer; font-family: inherit;" onmouseover="this.style.background='rgba(107,184,201,0.15)'" onmouseout="this.style.background='rgba(107,184,201,0.08)'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; flex-shrink:0;">
+        <button onclick="startTourFromSidebar()" aria-label="بدء جولة تعريفية" style="display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 14px; background: rgba(107, 184, 201, 0.08); border: 1px solid rgba(107, 184, 201, 0.2); border-radius: 10px; color: #6bb8c9; font-size: 13px; transition: all 0.2s ease; width: 100%; cursor: pointer; font-family: inherit;" onmouseover="this.style.background='rgba(107,184,201,0.15)'" onmouseout="this.style.background='rgba(107,184,201,0.08)'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; flex-shrink:0;" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"/>
                 <polyline points="12 8 12 12 14 14"/>
             </svg>
             جولة تعريفية
         </button>
 
-        <a href="/support/" class="support-link {% if active_page == 'support' %}active{% endif %}" style="display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 16px; background: rgba(107, 184, 201, 0.1); border-radius: 10px; color: #6bb8c9; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+        <a href="/support/" class="support-link {% if active_page == 'support' %}active{% endif %}" style="display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px 14px; background: rgba(107, 184, 201, 0.1); border-radius: 10px; color: #6bb8c9; text-decoration: none; font-size: 13px; transition: all 0.2s ease;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
                 <line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
             الدعم الفني
         </a>
-        <div style="text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(107, 184, 201, 0.15); font-size: 12px; color: rgba(248, 248, 248, 0.5);">
+        <div style="text-align: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(107, 184, 201, 0.15); font-size: 11px; color: rgba(248, 248, 248, 0.5);">
             © 2025 Inify Core LLC
         </div>
     </div>

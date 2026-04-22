@@ -324,6 +324,10 @@ def register_view(request):
             accept_terms = request.POST.get('accept_terms', '')
             accept_fal = request.POST.get('accept_fal', '')
             daily_inquiries = request.POST.get('daily_inquiries', '')
+            # خطة الاشتراك المختارة (للتجربة المجانية 5 أيام ثم الدفع)
+            plan_key = request.POST.get('plan_key', 'monthly')
+            if plan_key not in ('monthly', 'quarterly', 'semi', 'annual'):
+                plan_key = 'monthly'
             
             # Validate required fields
             if not email or not password:
@@ -393,43 +397,66 @@ def register_view(request):
                 daily_inquiries=daily_inquiries or ''
             )
             
-            # Auto-create 5-day trial subscription
+            # ═══ إنشاء اشتراك pending + رابط دفع StreamPay فوراً ═══
+            # سياسة: دفع فوري عند التسجيل + ضمان استرجاع كامل خلال 5 أيام
             from services.streampay_service import streampay_service
             now = tz_util.now()
-            trial_end = streampay_service.get_trial_end_date(now)
-            Subscription.objects.create(
+
+            # 1) إنشاء Subscription محلي بحالة pending
+            plan_info = streampay_service.PLANS.get(plan_key, streampay_service.PLANS['monthly'])
+            subscription = Subscription.objects.create(
                 agent=agent,
-                plan_key='monthly',
-                status='trial',
-                amount=0,
-                trial_start=now,
-                trial_end=trial_end,
+                plan_key=plan_key,
+                status='pending',
+                amount=plan_info['price'],
             )
-            agent.subscription_plan = 'pro'
-            agent.subscription_start = now
-            agent.subscription_expires = trial_end
-            agent.save(update_fields=['subscription_plan', 'subscription_start', 'subscription_expires'])
-            
-            # Send verification email
+
+            # 2) تسجيل دخول تلقائي — ضروري ليتمكن المستخدم من الوصول إلى
+            #    /payment/success/ (login_required) بعد العودة من StreamPay
+            try:
+                from django.contrib.auth import login as _auth_login
+                _auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            except Exception as login_err:
+                logger.warning(f"[REGISTER] Auto-login failed for user {user.id}: {login_err}")
+
+            # 3) إنشاء رابط الدفع على StreamPay
+            payment_result = streampay_service.create_payment_link(
+                agent=agent,
+                plan_key=plan_key,
+                is_trial=False,
+            )
+
+            # 4) إرسال بريد التفعيل (بالتوازي، لا يؤثر على تدفق الدفع)
             from services.email_service import email_service
-            email_result = email_service.send_verification_email(email, first_name or username)
-            
-            if email_result.get('success'):
-                # Don't login - require email verification
+            try:
+                email_service.send_verification_email(email, first_name or username)
+            except Exception as email_err:
+                logger.error(f"Failed to send verification email: {email_err}")
+
+            # 5) معالجة نتيجة إنشاء رابط الدفع
+            if payment_result.get('success'):
+                subscription.payment_link_id = payment_result.get('payment_link_id', '')
+                subscription.save(update_fields=['payment_link_id', 'updated_at'])
+
                 return JsonResponse({
-                    'success': True, 
-                    'message': 'تم إنشاء الحساب بنجاح! تحقق من بريدك الإلكتروني لتفعيل الحساب.',
-                    'require_verification': True
+                    'success': True,
+                    'redirect_to_payment': True,
+                    'payment_url': payment_result['url'],
+                    'amount': payment_result.get('amount', plan_info['price']),
+                    'plan_label': plan_info['label'],
+                    'message': 'تم إنشاء حسابك. سيتم تحويلك الآن لإتمام الدفع.',
                 })
             else:
-                # Email failed but still require verification - don't auto-login
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Failed to send verification email: {email_result.get('error')}")
+                # فشل إنشاء رابط الدفع: نُعلم المستخدم ونوجهه لصفحة الاشتراك يدوياً
+                logger.error(f"[REGISTER] Payment link creation failed: {payment_result.get('error')}")
                 return JsonResponse({
-                    'success': True, 
-                    'message': 'تم إنشاء الحساب! فشل إرسال بريد التفعيل. يمكنك طلب إعادة الإرسال من صفحة تسجيل الدخول.',
-                    'require_verification': True
+                    'success': True,
+                    'require_verification': True,
+                    'payment_failed': True,
+                    'message': (
+                        'تم إنشاء الحساب بنجاح. تعذّر إنشاء رابط الدفع تلقائياً — '
+                        'سجّل الدخول ثم اضغط "اشترك الآن" من صفحة الاشتراك.'
+                    ),
                 })
         except Exception as e:
             logger.error(f'[REGISTER] Registration error: {e}', exc_info=True)
@@ -2136,6 +2163,21 @@ def subscription_status_api(request):
             'pro': 'باقة المسوق العقاري',
             'enterprise': 'باقة المؤسسات والشركات',
         }
+        # نافذة الاسترجاع: 5 أيام من تاريخ الدفع (start_date) أو من الإنشاء
+        from datetime import timedelta
+        now = tz_util.now()
+        paid_at = sub.start_date or sub.created_at
+        within_refund_window = False
+        refund_days_remaining = 0
+        if sub.status == 'active' and paid_at:
+            elapsed = now - paid_at
+            if elapsed < timedelta(days=streampay_service.TRIAL_DAYS):
+                within_refund_window = True
+                refund_days_remaining = max(
+                    0,
+                    int((timedelta(days=streampay_service.TRIAL_DAYS) - elapsed).total_seconds() // 86400) + 1
+                )
+
         return JsonResponse({
             'success': True,
             'has_subscription': True,
@@ -2149,8 +2191,12 @@ def subscription_status_api(request):
             'is_trial_active': sub.is_trial_active,
             'days_remaining': sub.days_remaining,
             'trial_end': sub.trial_end.isoformat() if sub.trial_end else None,
+            'start_date': sub.start_date.isoformat() if sub.start_date else None,
             'end_date': sub.end_date.isoformat() if sub.end_date else None,
             'amount': str(sub.amount),
+            # نافذة الاسترجاع (للسياسة الجديدة: دفع فوري + استرجاع 5 أيام)
+            'within_refund_window': within_refund_window,
+            'refund_days_remaining': refund_days_remaining,
         })
     except Exception as e:
         logger.error(f'[SUB_STATUS] Error: {e}', exc_info=True)
@@ -2272,6 +2318,160 @@ def subscribe_api(request):
     except Exception as e:
         logger.error(f'[SUBSCRIBE] Error: {e}', exc_info=True)
         return JsonResponse({'success': False, 'error': 'حدث خطأ في عملية الاشتراك'})
+
+
+@login_required
+@csrf_exempt
+def cancel_subscription_api(request):
+    """
+    API - إلغاء الاشتراك الحالي مع دعم الاسترجاع خلال نافذة 5 أيام.
+
+    منطق العمل (سياسة: دفع فوري + ضمان استرجاع 5 أيام):
+    1. الاشتراك الحالي pending/trial  → إلغاء محلي فقط (لا دفع حصل).
+    2. الاشتراك active وكان الدفع قبل < 5 أيام → إلغاء اشتراك StreamPay + استرجاع كامل المبلغ.
+    3. الاشتراك active وكان الدفع قبل >= 5 أيام → إلغاء التجديد فقط، الوصول مستمر حتى نهاية الفترة.
+    """
+    from datetime import timedelta
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    try:
+        agent = request.user.agent_profile
+        from apps.agents.models import Subscription
+        from services.streampay_service import streampay_service
+
+        # ابحث عن أحدث اشتراك فعّال
+        sub = (
+            Subscription.objects
+            .filter(agent=agent, status__in=['trial', 'pending', 'active'])
+            .order_by('-created_at')
+            .first()
+        )
+        if not sub:
+            return JsonResponse({
+                'success': False,
+                'error': 'لا يوجد اشتراك نشط لإلغائه.'
+            })
+
+        now = tz_util.now()
+        refund_window_days = streampay_service.TRIAL_DAYS  # 5 أيام
+        streampay_cancel_ok = True
+        streampay_cancel_err = ''
+        refund_issued = False
+        refund_error = ''
+        refund_amount = 0
+
+        # ── 1) الحالات غير المدفوعة: pending / trial ──
+        if sub.status in ('trial', 'pending'):
+            sub.status = 'cancelled'
+            sub.save(update_fields=['status', 'updated_at'])
+            try:
+                agent.subscription_auto_renew = False
+                agent.save(update_fields=['subscription_auto_renew'])
+            except Exception:
+                pass
+            return JsonResponse({
+                'success': True,
+                'refund_issued': False,
+                'message': 'تم إلغاء الاشتراك. لم يتم خصم أي مبلغ منك.',
+            })
+
+        # ── 2) الحالة المدفوعة (active) ──
+        # إلغاء التجديد في StreamPay (إن وُجد subscription_id)
+        if sub.subscription_id:
+            cancel_result = streampay_service.cancel_subscription(sub.subscription_id)
+            streampay_cancel_ok = bool(cancel_result.get('success'))
+            streampay_cancel_err = cancel_result.get('error', '')
+            if not streampay_cancel_ok:
+                logger.warning(
+                    f"[CANCEL] StreamPay subscription cancel failed for sub={sub.id}: "
+                    f"{streampay_cancel_err}"
+                )
+
+        # فحص نافذة الاسترجاع: هل الدفع تم قبل < 5 أيام؟
+        within_refund_window = False
+        paid_at = sub.start_date or sub.created_at
+        if paid_at and (now - paid_at) < timedelta(days=refund_window_days):
+            within_refund_window = True
+
+        if within_refund_window and sub.payment_id:
+            # استرجاع كامل المبلغ
+            refund_result = streampay_service.refund_payment(
+                payment_id=sub.payment_id,
+                reason='REQUESTED_BY_CUSTOMER',
+                note='Cancelled within 5-day refund guarantee window',
+            )
+            if refund_result.get('success'):
+                refund_issued = True
+                refund_amount = float(sub.amount or 0)
+                logger.info(
+                    f"[CANCEL+REFUND] Agent {agent.id} cancelled within {refund_window_days}d — "
+                    f"refunded {refund_amount} SAR (payment_id={sub.payment_id})"
+                )
+            else:
+                refund_error = refund_result.get('error', 'فشل الاسترجاع')
+                logger.error(
+                    f"[CANCEL+REFUND] Refund failed for agent {agent.id}, sub={sub.id}: "
+                    f"{refund_error} | detail={refund_result.get('detail', '')}"
+                )
+
+        # تحديث حالة الاشتراك محلياً
+        if refund_issued:
+            # تم الاسترجاع: إنهاء الوصول فوراً
+            sub.status = 'cancelled'
+            sub.end_date = now
+            sub.save(update_fields=['status', 'end_date', 'updated_at'])
+            try:
+                agent.subscription_plan = 'free'
+                agent.subscription_expires = now
+                agent.subscription_auto_renew = False
+                agent.save(update_fields=[
+                    'subscription_plan', 'subscription_expires', 'subscription_auto_renew'
+                ])
+            except Exception:
+                pass
+
+            message = (
+                f'تم إلغاء الاشتراك واسترجاع {refund_amount:.0f} ريال كاملاً. '
+                'سيصل المبلغ لبطاقتك خلال 5-14 يوم عمل حسب البنك.'
+            )
+        else:
+            # لا استرجاع: إلغاء التجديد فقط والوصول يستمر حتى end_date
+            sub.status = 'cancelled'
+            sub.save(update_fields=['status', 'updated_at'])
+            try:
+                agent.subscription_auto_renew = False
+                agent.save(update_fields=['subscription_auto_renew'])
+            except Exception:
+                pass
+
+            if within_refund_window and refund_error:
+                message = (
+                    f'تم إلغاء التجديد، لكن تعذّر الاسترجاع التلقائي ({refund_error}). '
+                    'تواصل مع الدعم لإتمام الاسترجاع يدوياً.'
+                )
+            else:
+                end_txt = sub.end_date.strftime('%Y-%m-%d') if sub.end_date else ''
+                message = (
+                    'تم إلغاء التجديد التلقائي. يستمر وصولك للخدمة حتى '
+                    f'{end_txt}.' if end_txt else
+                    'تم إلغاء التجديد التلقائي. يستمر وصولك حتى نهاية الفترة الحالية.'
+                )
+
+        return JsonResponse({
+            'success': True,
+            'refund_issued': refund_issued,
+            'refund_amount': refund_amount,
+            'refund_error': refund_error,
+            'within_refund_window': within_refund_window,
+            'streampay_cancel_ok': streampay_cancel_ok,
+            'streampay_cancel_error': streampay_cancel_err,
+            'message': message,
+        })
+
+    except Exception as e:
+        logger.error(f'[CANCEL] Error: {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء إلغاء الاشتراك'})
 
 
 @login_required

@@ -117,11 +117,155 @@
 
         #subscriptionContent { display: none; }
 
+        /* ═══ Trial Highlight + Cancel Section ═══ */
+        .trial-highlight {
+            background: linear-gradient(135deg, rgba(74,222,128,0.1), rgba(74,222,128,0.04));
+            border: 1px solid rgba(74,222,128,0.3);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-top: 18px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .trial-highlight svg { color: #4ade80; flex-shrink: 0; margin-top: 2px; }
+        .trial-highlight .tt { color: rgba(248,248,248,0.85); font-size: 13.5px; line-height: 1.65; }
+        .trial-highlight strong { color: #4ade80; font-weight: 700; }
+
+        .action-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        .cancel-btn {
+            padding: 11px 22px;
+            background: transparent;
+            border: 1px solid rgba(248,113,113,0.3);
+            border-radius: 10px;
+            color: #f87171;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cancel-btn:hover {
+            background: rgba(248,113,113,0.1);
+            border-color: #f87171;
+        }
+        .cancel-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Cancel Modal */
+        .cancel-modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .cancel-modal-overlay.show { display: flex; }
+        .cancel-modal {
+            background: linear-gradient(180deg, #0d1b2a, #0f2234);
+            border: 1px solid rgba(248,113,113,0.25);
+            border-radius: 20px;
+            max-width: 460px;
+            width: 100%;
+            padding: 32px 28px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+        .cancel-modal h3 {
+            color: #f87171;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .cancel-modal p {
+            color: rgba(248,248,248,0.75);
+            font-size: 14px;
+            line-height: 1.7;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .cancel-modal .benefits-lost {
+            background: rgba(248,113,113,0.06);
+            border: 1px solid rgba(248,113,113,0.15);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 22px;
+        }
+        .cancel-modal .benefits-lost div {
+            color: rgba(248,248,248,0.75);
+            font-size: 13px;
+            padding: 4px 0;
+        }
+        .cancel-modal-actions { display: flex; gap: 10px; }
+        .cancel-modal-actions button {
+            flex: 1;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-keep {
+            background: linear-gradient(135deg, var(--blue-mid), var(--cyan));
+            border: none;
+            color: var(--midnight);
+        }
+        .btn-keep:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(107,184,201,0.3); }
+        .btn-confirm-cancel {
+            background: transparent;
+            border: 1px solid rgba(248,113,113,0.4);
+            color: #f87171;
+        }
+        .btn-confirm-cancel:hover { background: rgba(248,113,113,0.12); }
+        .btn-confirm-cancel:disabled { opacity: 0.6; cursor: wait; }
+
+        /* Light mode */
+        body.light-mode .trial-highlight {
+            background: linear-gradient(135deg, #ECFDF5, #F0FDF4);
+            border-color: #86EFAC;
+        }
+        body.light-mode .trial-highlight .tt { color: #374151; }
+        body.light-mode .cancel-btn {
+            border-color: #FCA5A5;
+            color: #DC2626;
+        }
+        body.light-mode .cancel-btn:hover { background: #FEF2F2; border-color: #DC2626; }
+        body.light-mode .cancel-modal {
+            background: #FFFFFF;
+            border-color: #FECACA;
+        }
+        body.light-mode .cancel-modal h3 { color: #B91C1C; }
+        body.light-mode .cancel-modal p { color: #374151; }
+        body.light-mode .cancel-modal .benefits-lost {
+            background: #FEF2F2;
+            border-color: #FECACA;
+        }
+        body.light-mode .cancel-modal .benefits-lost div { color: #374151; }
+        body.light-mode .btn-confirm-cancel { color: #B91C1C; border-color: #FCA5A5; }
+
         @media (max-width: 600px) {
             .header { padding: 16px 20px; }
             .main { padding: 20px 16px; }
             .page-title { font-size: 24px; }
             .plans-grid { grid-template-columns: repeat(2, 1fr); }
+            .action-row { flex-direction: column; align-items: stretch; }
+            .cancel-btn { width: 100%; justify-content: center; }
         }
     </style>
 </head>
@@ -150,6 +294,62 @@
                     <span class="status-badge" id="statusBadge"></span>
                 </div>
                 <div class="status-info" id="statusInfo"></div>
+
+                <!-- Trial Highlight (visible during trial) -->
+                <div class="trial-highlight" id="trialHighlight" style="display:none;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <polyline points="9 12 11 14 15 10"/>
+                    </svg>
+                    <div class="tt">
+                        أنت الآن في <strong>الفترة التجريبية المجانية</strong>. لن يتم خصم أي مبلغ قبل انتهائها، ويمكنك <strong>إلغاء الاشتراك بضغطة زر</strong> دون أي التزام.
+                    </div>
+                </div>
+
+                <!-- Action Row: Cancel (visible for trial/active) -->
+                <div class="action-row" id="actionRow" style="display:none;">
+                    <div style="color: var(--text-muted); font-size: 13px;" id="actionRowHint">
+                        تغيّر رأيك؟ يمكنك إلغاء الاشتراك في أي وقت.
+                    </div>
+                    <button class="cancel-btn" id="openCancelBtn" onclick="openCancelModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
+                        </svg>
+                        إلغاء الاشتراك
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cancel Confirmation Modal -->
+            <div class="cancel-modal-overlay" id="cancelModalOverlay" onclick="if(event.target===this)closeCancelModal()">
+                <div class="cancel-modal">
+                    <h3 id="cancelModalTitle">تأكيد إلغاء الاشتراك</h3>
+
+                    <!-- شارة نافذة الاسترجاع (تظهر فقط داخل 5 أيام) -->
+                    <div id="refundBadge" style="display:none; background:linear-gradient(135deg,rgba(74,222,128,0.15),rgba(74,222,128,0.05)); border:1px solid rgba(74,222,128,0.35); border-radius:12px; padding:12px 14px; margin-bottom:16px; text-align:center;">
+                        <div style="color:#4ade80; font-size:13.5px; font-weight:700; margin-bottom:4px;">
+                            ✓ أنت داخل نافذة الاسترجاع (5 أيام)
+                        </div>
+                        <div style="color:rgba(248,248,248,0.75); font-size:12.5px;">
+                            سيتم استرجاع <strong id="refundAmountText" style="color:#4ade80;">—</strong> ريال كاملة إلى بطاقتك خلال 5-14 يوم عمل.
+                        </div>
+                    </div>
+
+                    <p id="cancelModalBody">
+                        هل أنت متأكد من رغبتك في إلغاء الاشتراك؟
+                    </p>
+                    <div class="benefits-lost">
+                        <div>❌ سيتم إيقاف الوكيل الذكي</div>
+                        <div>❌ سيتم فصل الواتساب المربوط</div>
+                        <div>❌ لن تستطيع إضافة عقارات أو استقبال عملاء جدد</div>
+                    </div>
+                    <div class="cancel-modal-actions">
+                        <button class="btn-keep" onclick="closeCancelModal()">متابعة الاشتراك</button>
+                        <button class="btn-confirm-cancel" id="confirmCancelBtn" onclick="confirmCancel()">نعم، إلغاء الاشتراك</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Plans -->
@@ -208,6 +408,9 @@
                 const res = await fetch('/api/subscription/status/');
                 const data = await res.json();
 
+                // حفظ البيانات لاستخدامها في modal الإلغاء
+                _lastSubData = data;
+
                 document.getElementById('loadingState').style.display = 'none';
                 document.getElementById('subscriptionContent').style.display = 'block';
 
@@ -216,6 +419,13 @@
                 const trialSection = document.getElementById('trialSection');
                 const plansSection = document.getElementById('plansSection');
                 const btn = document.getElementById('subscribeBtn');
+
+                const trialHighlight = document.getElementById('trialHighlight');
+                const actionRow = document.getElementById('actionRow');
+                const actionRowHint = document.getElementById('actionRowHint');
+                // إخفاء افتراضي
+                trialHighlight.style.display = 'none';
+                actionRow.style.display = 'none';
 
                 if (!data.has_subscription) {
                     badge.textContent = 'لا يوجد اشتراك';
@@ -235,7 +445,11 @@
                         <div class="info-item"><div class="info-label">الأيام المتبقية</div><div class="info-value" style="color: #fbbf24;">${data.days_remaining} يوم</div></div>
                     `;
                     trialSection.style.display = 'none';
-                    btn.textContent = 'اشترك الآن - لا يتم السحب إلا بعد انتهاء التجربة';
+                    btn.textContent = 'تأكيد الاشتراك — لن يتم السحب إلا بعد انتهاء التجربة';
+                    // عرض banner التجربة + زر إلغاء خلال الفترة المجانية
+                    trialHighlight.style.display = 'flex';
+                    actionRow.style.display = 'flex';
+                    actionRowHint.textContent = 'خلال التجربة: يمكنك إلغاء الاشتراك فوراً دون أي خصم.';
                 } else if (data.status === 'active') {
                     badge.textContent = '✅ نشط';
                     badge.className = 'status-badge badge-active';
@@ -246,6 +460,27 @@
                         <div class="info-item"><div class="info-label">المبلغ</div><div class="info-value">${data.amount} ريال</div></div>
                     `;
                     plansSection.style.display = 'none';
+                    // عرض زر إلغاء الاشتراك المدفوع
+                    actionRow.style.display = 'flex';
+
+                    // بانر نافذة الاسترجاع (داخل 5 أيام من الدفع)
+                    if (data.within_refund_window) {
+                        trialHighlight.style.display = 'flex';
+                        trialHighlight.innerHTML = `
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <polyline points="9 12 11 14 15 10"/>
+                            </svg>
+                            <div class="tt">
+                                <strong>ضمان استرجاع كامل المبلغ ساري</strong> — متبقّي
+                                <strong style="color:#4ade80;">${data.refund_days_remaining} أيام</strong>
+                                لإلغاء الاشتراك واسترجاع ${data.amount} ريال كاملة بدون أي سؤال.
+                            </div>
+                        `;
+                        actionRowHint.textContent = 'داخل نافذة الاسترجاع: سيتم استرجاع كامل المبلغ فوراً عند الإلغاء.';
+                    } else {
+                        actionRowHint.textContent = 'انتهت نافذة الاسترجاع. عند الإلغاء: يستمر وصولك للخدمة حتى نهاية الفترة المدفوعة.';
+                    }
                 } else {
                     badge.textContent = 'منتهي';
                     badge.className = 'status-badge badge-expired';
@@ -255,6 +490,85 @@
                 }
             } catch (e) {
                 document.getElementById('loadingState').textContent = 'حدث خطأ في التحميل';
+            }
+        }
+
+        // نحتفظ بآخر بيانات الاشتراك المحمّلة لحساب نافذة الاسترجاع
+        let _lastSubData = null;
+
+        function openCancelModal() {
+            const modal = document.getElementById('cancelModalOverlay');
+            const refundBadge = document.getElementById('refundBadge');
+            const refundAmountText = document.getElementById('refundAmountText');
+            const body = document.getElementById('cancelModalBody');
+            const confirmBtn = document.getElementById('confirmCancelBtn');
+
+            // تحديد: هل المستخدم داخل نافذة الاسترجاع 5 أيام؟
+            let withinRefundWindow = false;
+            let daysSincePaid = null;
+            try {
+                const d = _lastSubData;
+                if (d && d.status === 'active' && d.start_date) {
+                    const paidAt = new Date(d.start_date);
+                    const now = new Date();
+                    daysSincePaid = (now - paidAt) / (1000 * 60 * 60 * 24);
+                    withinRefundWindow = daysSincePaid < 5;
+                }
+            } catch (_) {}
+
+            if (withinRefundWindow && _lastSubData) {
+                refundBadge.style.display = 'block';
+                refundAmountText.textContent = Number(_lastSubData.amount || 0).toLocaleString('ar-SA');
+                body.textContent = 'سيتم إلغاء اشتراكك فوراً واسترجاع كامل المبلغ إلى بطاقتك تلقائياً.';
+                confirmBtn.textContent = 'نعم، إلغاء مع استرجاع المبلغ';
+            } else {
+                refundBadge.style.display = 'none';
+                if (_lastSubData && _lastSubData.status === 'active') {
+                    body.textContent = 'انتهت نافذة الاسترجاع (5 أيام). سيتم إلغاء التجديد فقط، ويستمر وصولك للخدمة حتى نهاية الفترة المدفوعة.';
+                    confirmBtn.textContent = 'نعم، إلغاء التجديد';
+                } else {
+                    body.textContent = 'هل أنت متأكد من رغبتك في إلغاء الاشتراك؟ لن يتم خصم أي مبلغ منك.';
+                    confirmBtn.textContent = 'نعم، إلغاء الاشتراك';
+                }
+            }
+
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeCancelModal() {
+            const modal = document.getElementById('cancelModalOverlay');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        async function confirmCancel() {
+            const btn = document.getElementById('confirmCancelBtn');
+            btn.disabled = true;
+            btn.textContent = 'جاري الإلغاء...';
+            try {
+                const csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+                const res = await fetch('/api/subscription/cancel/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrf,
+                    },
+                    credentials: 'include',
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeCancelModal();
+                    alert(data.message || 'تم إلغاء الاشتراك بنجاح');
+                    loadSubscription();
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'نعم، إلغاء الاشتراك';
+                    alert(data.error || 'تعذر إلغاء الاشتراك. حاول مجدداً.');
+                }
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = 'نعم، إلغاء الاشتراك';
+                alert('حدث خطأ في الاتصال');
             }
         }
 

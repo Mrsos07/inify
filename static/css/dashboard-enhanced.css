@@ -1,0 +1,991 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Inify / Newra — Dashboard Enhanced Layer
+   Loaded AFTER dashboard.css + theme.css + per-page <style> blocks.
+   Purpose: unify typography, colors, motion, accessibility & CTAs
+   across all 11 dashboard pages without touching JS functionality.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Design Tokens (شامل للوضعين) ──────────────────────────────── */
+:root {
+    --inify-radius-sm: 8px;
+    --inify-radius-md: 12px;
+    --inify-radius-lg: 16px;
+    --inify-radius-xl: 20px;
+
+    --inify-gap-xs: 8px;
+    --inify-gap-sm: 12px;
+    --inify-gap-md: 16px;
+    --inify-gap-lg: 24px;
+    --inify-gap-xl: 32px;
+
+    --inify-success: #22c55e;
+    --inify-warning: #f59e0b;
+    --inify-danger: #ef4444;
+    --inify-info: #6BB8C9;
+    --inify-gold: #FFD700;
+
+    --inify-focus-ring: 0 0 0 3px rgba(107, 184, 201, 0.4);
+
+    --inify-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --inify-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── 2. توحيد ترويسة الصفحة (Page Header) ────────────────────────── */
+html body .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--inify-gap-md);
+    margin-bottom: var(--inify-gap-lg);
+    padding-bottom: var(--inify-gap-md);
+    border-bottom: 1px solid rgba(107, 184, 201, 0.08);
+}
+
+html body .page-header h1 {
+    font-size: 24px !important;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 6px 0;
+}
+
+html body .page-header h1 svg {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    stroke: var(--cyan, #6BB8C9);
+    vertical-align: middle;
+}
+
+html body .page-header p {
+    color: rgba(248, 248, 248, 0.6);
+    font-size: 13px !important;
+    margin: 0 !important;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    html body .page-header h1 { font-size: 20px !important; }
+    html body .page-header { padding-bottom: 12px; margin-bottom: 18px; }
+}
+
+/* ── 3. السايدبار: تحسين هيكل روابط المؤسسات ─────────────────────── */
+/* الذهبي الصارخ للجميع -> استبدال بهوية هادئة + Pro Badge */
+.sidebar .nav-item[style*="FFD700"],
+.sidebar .nav-item[style*="color: #FFD700"] {
+    color: var(--text-secondary, rgba(248,248,248,.6)) !important;
+    position: relative;
+}
+
+.sidebar .nav-item[style*="FFD700"]:hover {
+    color: var(--text-primary, #F8F8F8) !important;
+    background: rgba(255, 215, 0, 0.06);
+}
+
+.sidebar .nav-item[style*="FFD700"].active {
+    color: var(--bg-primary, #0A1628) !important;
+    background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+}
+
+/* شارات "جديد" و "Pro" الموحّدة */
+.sidebar .nav-item span[style*="FFD70030"],
+.sidebar .nav-item > span:last-child[style*="background"] {
+    font-size: 9px !important;
+    font-weight: 700;
+    padding: 2px 7px !important;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.15)) !important;
+    color: #FFD700 !important;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    letter-spacing: 0.3px;
+    margin-inline-start: auto;
+}
+
+/* أيقونات ثابتة الحجم داخل السايدبار */
+.sidebar .nav-item svg {
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0;
+}
+
+/* عنوان الأقسام: تباعد أوضح */
+.sidebar .nav-section-title {
+    font-size: 10px;
+    font-weight: 600;
+    opacity: 0.55;
+    margin: 8px 4px 10px;
+    letter-spacing: 1px;
+}
+
+/* ── 4. زرّ تبديل الثيم الصغير المضغوط ───────────────────────────── */
+.sidebar #themeToggleBtn,
+.sidebar-footer #themeToggleBtn,
+.sidebar-footer #langToggleBtn {
+    padding: 9px 14px !important;
+    font-size: 12px !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: var(--inify-radius-sm) !important;
+}
+
+/* ── 5. الأزرار: نظام موحّد ──────────────────────────────────────── */
+.btn-primary {
+    font-weight: 600;
+    letter-spacing: 0.1px;
+    transition: transform .2s var(--inify-ease-smooth),
+                box-shadow .2s var(--inify-ease-smooth),
+                background .2s;
+}
+
+.btn-gold {
+    background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+    color: #0A1628 !important;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--inify-radius-sm);
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: transform .2s var(--inify-ease-smooth), box-shadow .2s;
+}
+.btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,215,0,.28); }
+.btn-gold:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+.btn-outline {
+    background: rgba(107, 184, 201, 0.1);
+    color: var(--cyan, #6BB8C9);
+    border: 1px solid rgba(107, 184, 201, 0.2);
+    padding: 8px 14px;
+    border-radius: var(--inify-radius-sm);
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: all .2s;
+}
+.btn-outline:hover { background: rgba(107, 184, 201, 0.2); border-color: rgba(107, 184, 201, 0.4); }
+
+/* حالة التركيز للوحة المفاتيح (Accessibility) */
+.btn:focus-visible,
+.btn-primary:focus-visible,
+.btn-gold:focus-visible,
+.btn-outline:focus-visible,
+.btn-secondary:focus-visible,
+.nav-item:focus-visible,
+button:focus-visible,
+a:focus-visible {
+    outline: none;
+    box-shadow: var(--inify-focus-ring);
+    border-radius: var(--inify-radius-sm);
+}
+
+/* ── 6. تقليل الحركة عند الحاجة (prefers-reduced-motion) ─────────── */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .orb, .orb-1, .orb-2, .orb-3 { display: none !important; }
+    .premium-bg { animation: none !important; background: #0A1628 !important; }
+}
+
+/* خفض عدد الـ orbs على الأجهزة الضعيفة / الشاشات الصغيرة */
+@media (max-width: 768px) {
+    .orb-3 { display: none; }
+    .orb-1, .orb-2 { opacity: 0.25 !important; filter: blur(100px) !important; }
+}
+
+/* ── 7. الحالات الفارغة (Empty States) ───────────────────────────── */
+.empty-state {
+    text-align: center;
+    padding: 48px 24px !important;
+    color: var(--text-secondary, rgba(248,248,248,.6));
+}
+.empty-state::before {
+    content: "";
+    display: block;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: rgba(107, 184, 201, 0.08);
+    border: 1px dashed rgba(107, 184, 201, 0.25);
+}
+.empty-state p {
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: var(--text-primary, #F8F8F8);
+    font-weight: 600;
+}
+.empty-state .btn { margin-top: 16px; }
+
+/* ── 8. بطاقات KPI متناسقة ────────────────────────────────────────── */
+.kpi-card,
+.stat-card {
+    transition: transform .25s var(--inify-ease-out),
+                border-color .25s,
+                box-shadow .25s;
+}
+.kpi-card:hover,
+.stat-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(107, 184, 201, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* تنسيق أرقام KPI بخط احترافي */
+.kpi-val,
+.stat-value {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    letter-spacing: -0.5px;
+}
+
+/* ── 9. الجداول: قابلية قراءة أفضل ───────────────────────────────── */
+.section-card table,
+table.prop-table {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── 10. Badges موحّدة ──────────────────────────────────────────── */
+.badge, .b-on, .b-off {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ── 11. Skeleton Loader للاستخدام مع JS ─────────────────────────── */
+.skeleton {
+    background: linear-gradient(90deg,
+        rgba(107, 184, 201, 0.05) 0%,
+        rgba(107, 184, 201, 0.12) 50%,
+        rgba(107, 184, 201, 0.05) 100%);
+    background-size: 200% 100%;
+    border-radius: var(--inify-radius-sm);
+    animation: inify-skeleton 1.4s ease-in-out infinite;
+    display: block;
+    min-height: 14px;
+}
+@keyframes inify-skeleton {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── 12. تحسينات الوصولية (A11Y) ─────────────────────────────────── */
+/* زر الدائرة للأيقونات (مثال: close modal) */
+.modal-close:focus-visible,
+.chat-popup-close:focus-visible {
+    outline: 2px solid var(--cyan, #6BB8C9);
+    outline-offset: 2px;
+}
+
+/* روابط داخل محتوى النصوص */
+.main-content a:not(.btn):not(.nav-item):not(.sidebar-logo):focus-visible {
+    outline: 2px solid var(--cyan, #6BB8C9);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ── 13. شريط علوي ثابت للإشعارات (Banner) ──────────────────────── */
+.subscription-warning {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+/* ── 14. زر العودة للأعلى للصفحات الطويلة ────────────────────────── */
+.back-to-top {
+    position: fixed;
+    bottom: 24px;
+    inset-inline-end: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent, linear-gradient(135deg, #4A90A4, #6BB8C9));
+    color: #0A1628;
+    border: none;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(107, 184, 201, 0.35);
+    z-index: 98;
+    transition: transform .2s var(--inify-ease-smooth), box-shadow .2s;
+}
+.back-to-top.show { display: inline-flex; }
+.back-to-top:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(107, 184, 201, 0.5); }
+
+@media (max-width: 768px) {
+    .back-to-top { bottom: 90px; width: 40px; height: 40px; }
+}
+
+/* ── 15. تحسينات نصية للقراءة على خلفيات شفافة ───────────────────── */
+html body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* لا تحرم المستخدم من النص المحدد */
+::selection {
+    background: rgba(107, 184, 201, 0.35);
+    color: #F8F8F8;
+}
+
+/* ── 16. تأكيد وضوح العناصر النشطة في السايدبار ─────────────────── */
+.sidebar .nav-item.active {
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(74, 144, 164, 0.2);
+}
+
+/* ── 17. تحسين Mobile Menu Button ─────────────────────────────────── */
+.mobile-menu-btn {
+    font-size: 20px !important;
+    box-shadow: 0 6px 20px rgba(107, 184, 201, 0.45) !important;
+    transition: transform .2s var(--inify-ease-smooth);
+}
+.mobile-menu-btn:active { transform: scale(0.95); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   18. Light-Mode — غطاء شامل لكل التحسينات أعلاه
+   يطبَّق عبر `body.light-mode` و `html.light-mode body`
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* --- 18.1 ترويسة الصفحة --- */
+body.light-mode .page-header,
+html.light-mode body .page-header {
+    border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+body.light-mode .page-header h1,
+html.light-mode body .page-header h1 {
+    color: #1E293B !important;
+}
+body.light-mode .page-header h1 svg,
+html.light-mode body .page-header h1 svg {
+    stroke: #4A90A4 !important;
+}
+body.light-mode .page-header p,
+html.light-mode body .page-header p {
+    color: #6B7280 !important;
+}
+
+/* --- 18.2 السايدبار: خلفية + حدود + نصوص + عناصر التنقل --- */
+body.light-mode .sidebar,
+html.light-mode body .sidebar {
+    background: #FFFFFF !important;
+    border-left-color: #E5E7EB !important;
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.04);
+}
+body.light-mode .sidebar-logo img[alt="Newra"],
+html.light-mode body .sidebar-logo img[alt="Newra"] {
+    filter: none !important;
+}
+body.light-mode .sidebar .nav-section-title,
+html.light-mode body .sidebar .nav-section-title {
+    color: #9CA3AF !important;
+    opacity: 1 !important;
+}
+body.light-mode .sidebar .nav-item,
+html.light-mode body .sidebar .nav-item {
+    color: #4B5563 !important;
+}
+body.light-mode .sidebar .nav-item:hover,
+html.light-mode body .sidebar .nav-item:hover {
+    background: #F3F4F6 !important;
+    color: #1F2937 !important;
+}
+body.light-mode .sidebar .nav-item.active,
+html.light-mode body .sidebar .nav-item.active {
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(74, 144, 164, 0.25) !important;
+}
+body.light-mode .sidebar .nav-item.active svg,
+html.light-mode body .sidebar .nav-item.active svg {
+    stroke: #FFFFFF !important;
+}
+
+/* عناصر المؤسسات الذهبية في الوضع الفاتح: لون كهرماني داكن قابل للقراءة */
+body.light-mode .sidebar .nav-item[style*="FFD700"],
+html.light-mode body .sidebar .nav-item[style*="FFD700"] {
+    color: #B45309 !important;
+}
+body.light-mode .sidebar .nav-item[style*="FFD700"]:hover,
+html.light-mode body .sidebar .nav-item[style*="FFD700"]:hover {
+    background: #FFFBEB !important;
+    color: #92400E !important;
+}
+body.light-mode .sidebar .nav-item[style*="FFD700"].active,
+html.light-mode body .sidebar .nav-item[style*="FFD700"].active {
+    background: linear-gradient(135deg, #F59E0B, #D97706) !important;
+    color: #FFFFFF !important;
+}
+body.light-mode .sidebar .nav-item > span[style*="FFD70030"],
+html.light-mode body .sidebar .nav-item > span[style*="FFD70030"] {
+    background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(217,119,6,0.08)) !important;
+    color: #B45309 !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+/* تسجيل الخروج (الأحمر) في الوضع الفاتح */
+body.light-mode .sidebar .nav-item[style*="239,68,68"],
+html.light-mode body .sidebar .nav-item[style*="239,68,68"] {
+    color: #B91C1C !important;
+}
+body.light-mode .sidebar .nav-item[style*="239,68,68"]:hover,
+html.light-mode body .sidebar .nav-item[style*="239,68,68"]:hover {
+    background: #FEF2F2 !important;
+    color: #991B1B !important;
+}
+
+/* --- 18.3 Footer السايدبار: الأزرار والمستخدم --- */
+body.light-mode .sidebar-footer,
+html.light-mode body .sidebar-footer {
+    border-top-color: #E5E7EB !important;
+}
+body.light-mode .sidebar-footer #themeToggleBtn,
+html.light-mode body .sidebar-footer #themeToggleBtn,
+body.light-mode .sidebar-footer button[onclick*="startTourFromSidebar"],
+html.light-mode body .sidebar-footer button[onclick*="startTourFromSidebar"],
+body.light-mode .sidebar-footer .support-link,
+html.light-mode body .sidebar-footer .support-link {
+    background: #F9FAFB !important;
+    border-color: #E5E7EB !important;
+    color: #4A90A4 !important;
+}
+body.light-mode .sidebar-footer #themeToggleBtn:hover,
+html.light-mode body .sidebar-footer #themeToggleBtn:hover,
+body.light-mode .sidebar-footer button[onclick*="startTourFromSidebar"]:hover,
+html.light-mode body .sidebar-footer button[onclick*="startTourFromSidebar"]:hover,
+body.light-mode .sidebar-footer .support-link:hover,
+html.light-mode body .sidebar-footer .support-link:hover {
+    background: rgba(74, 144, 164, 0.08) !important;
+    border-color: #4A90A4 !important;
+}
+body.light-mode .sidebar .user-info,
+html.light-mode body .sidebar .user-info {
+    background: #F9FAFB !important;
+    border-radius: 10px;
+    padding: 10px;
+}
+body.light-mode .sidebar .user-avatar,
+html.light-mode body .sidebar .user-avatar {
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9) !important;
+    color: #FFFFFF !important;
+}
+body.light-mode .sidebar .user-avatar svg,
+html.light-mode body .sidebar .user-avatar svg {
+    stroke: #FFFFFF !important;
+}
+body.light-mode .sidebar .user-details h4,
+html.light-mode body .sidebar .user-details h4 {
+    color: #1F2937 !important;
+}
+body.light-mode .sidebar .user-details p,
+html.light-mode body .sidebar .user-details p {
+    color: #6B7280 !important;
+}
+body.light-mode .sidebar-footer > div[style*="© 2025"],
+html.light-mode body .sidebar-footer > div[style*="© 2025"] {
+    color: #9CA3AF !important;
+    border-top-color: #E5E7EB !important;
+}
+
+/* --- 18.4 Empty States --- */
+body.light-mode .empty-state,
+html.light-mode body .empty-state {
+    color: #6B7280 !important;
+}
+body.light-mode .empty-state p,
+html.light-mode body .empty-state p {
+    color: #1F2937 !important;
+}
+body.light-mode .empty-state::before,
+html.light-mode body .empty-state::before {
+    background: rgba(74, 144, 164, 0.08) !important;
+    border-color: rgba(74, 144, 164, 0.3) !important;
+}
+
+/* --- 18.5 Skeleton --- */
+body.light-mode .skeleton,
+html.light-mode body .skeleton {
+    background: linear-gradient(90deg, #EEF2F7 0%, #F8FAFC 50%, #EEF2F7 100%) !important;
+    background-size: 200% 100% !important;
+}
+
+/* --- 18.6 KPI / Stat Cards hover --- */
+body.light-mode .kpi-card:hover,
+html.light-mode body .kpi-card:hover,
+body.light-mode .stat-card:hover,
+html.light-mode body .stat-card:hover {
+    border-color: #4A90A4 !important;
+    box-shadow: 0 8px 24px rgba(74, 144, 164, 0.15) !important;
+}
+
+/* --- 18.7 الأزرار الموحّدة --- */
+body.light-mode .btn-outline,
+html.light-mode body .btn-outline {
+    background: #FFFFFF !important;
+    color: #4A90A4 !important;
+    border-color: #E5E7EB !important;
+}
+body.light-mode .btn-outline:hover,
+html.light-mode body .btn-outline:hover {
+    background: rgba(74, 144, 164, 0.08) !important;
+    border-color: #4A90A4 !important;
+}
+body.light-mode .btn-gold,
+html.light-mode body .btn-gold {
+    /* أصفر دافئ قابل للقراءة على خلفيات فاتحة */
+    background: linear-gradient(135deg, #F59E0B, #D97706) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25);
+}
+body.light-mode .btn-gold:hover,
+html.light-mode body .btn-gold:hover {
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35) !important;
+}
+
+/* --- 18.8 Focus Ring أوضح في الوضع الفاتح --- */
+body.light-mode .btn:focus-visible,
+body.light-mode .btn-primary:focus-visible,
+body.light-mode .btn-gold:focus-visible,
+body.light-mode .btn-outline:focus-visible,
+body.light-mode .btn-secondary:focus-visible,
+body.light-mode .nav-item:focus-visible,
+body.light-mode button:focus-visible,
+body.light-mode a:focus-visible,
+html.light-mode body .btn:focus-visible,
+html.light-mode body button:focus-visible,
+html.light-mode body a:focus-visible {
+    box-shadow: 0 0 0 3px rgba(74, 144, 164, 0.35) !important;
+}
+
+/* --- 18.9 التحديد (Selection) --- */
+body.light-mode ::selection,
+html.light-mode body ::selection {
+    background: rgba(74, 144, 164, 0.25) !important;
+    color: #1F2937 !important;
+}
+
+/* --- 18.10 Back-to-top --- */
+body.light-mode .back-to-top,
+html.light-mode body .back-to-top {
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 6px 20px rgba(74, 144, 164, 0.3) !important;
+}
+body.light-mode .back-to-top:hover,
+html.light-mode body .back-to-top:hover {
+    box-shadow: 0 8px 24px rgba(74, 144, 164, 0.45) !important;
+}
+
+/* --- 18.11 Mobile Menu Button --- */
+body.light-mode .mobile-menu-btn,
+html.light-mode body .mobile-menu-btn {
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 6px 20px rgba(74, 144, 164, 0.35) !important;
+}
+
+/* --- 18.12 Subscription Warning Banner --- */
+body.light-mode .subscription-warning,
+html.light-mode body .subscription-warning {
+    background: linear-gradient(135deg, #FFFBEB, #FEF3C7) !important;
+    border: 1px solid #FDE68A !important;
+    backdrop-filter: blur(14px);
+}
+body.light-mode .subscription-warning-text,
+html.light-mode body .subscription-warning-text {
+    color: #92400E !important;
+}
+body.light-mode .subscription-warning .btn-renew,
+html.light-mode body .subscription-warning .btn-renew {
+    background: linear-gradient(135deg, #F59E0B, #D97706) !important;
+    color: #FFFFFF !important;
+}
+
+/* --- 18.13 Badges (active / new) --- */
+body.light-mode .sidebar .nav-item > span[style*="background"],
+html.light-mode body .sidebar .nav-item > span[style*="background"] {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* --- 18.14 Sidebar Overlay (الموبايل) --- */
+body.light-mode .sidebar-overlay,
+html.light-mode body .sidebar-overlay {
+    background: rgba(31, 41, 55, 0.4) !important;
+}
+
+/* --- 18.15 إصلاح الخلفية البنكية للعناصر مع inline styles قاتمة --- */
+body.light-mode [style*="background:rgba(30,58,95"],
+html.light-mode body [style*="background:rgba(30,58,95"],
+body.light-mode [style*="background: rgba(30, 58, 95"],
+html.light-mode body [style*="background: rgba(30, 58, 95"] {
+    background: #FFFFFF !important;
+    border-color: #E5E7EB !important;
+    color: #1F2937 !important;
+}
+body.light-mode [style*="background:rgba(10,22,40"],
+html.light-mode body [style*="background:rgba(10,22,40"],
+body.light-mode [style*="background: rgba(10, 22, 40"],
+html.light-mode body [style*="background: rgba(10, 22, 40"] {
+    background: #F9FAFB !important;
+    border-color: #E5E7EB !important;
+    color: #1F2937 !important;
+}
+
+/* --- 18.16 خلفية البريميوم + الشبكة + الـ orbs (ضمان) --- */
+body.light-mode .premium-bg,
+html.light-mode body .premium-bg {
+    background: #FAFBFC !important;
+    animation: none !important;
+}
+body.light-mode .orb,
+body.light-mode .orb-1,
+body.light-mode .orb-2,
+body.light-mode .orb-3,
+html.light-mode body .orb,
+html.light-mode body .orb-1,
+html.light-mode body .orb-2,
+html.light-mode body .orb-3 {
+    display: none !important;
+}
+body.light-mode .grid-pattern,
+html.light-mode body .grid-pattern {
+    opacity: 0.4 !important;
+    background-image:
+        linear-gradient(rgba(74,144,164,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74,144,164,0.05) 1px, transparent 1px) !important;
+}
+body.light-mode .vignette,
+html.light-mode body .vignette {
+    display: none !important;
+}
+
+/* --- 18.17 صفحة الإعدادات (settings.html hub) فاتحاً --- */
+body.light-mode .settings-card,
+html.light-mode body .settings-card {
+    background: #FFFFFF !important;
+    border-color: #E5E7EB !important;
+    color: #1E293B !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+body.light-mode .settings-card:hover,
+html.light-mode body .settings-card:hover {
+    border-color: #4A90A4 !important;
+    box-shadow: 0 10px 30px rgba(74, 144, 164, 0.12) !important;
+}
+body.light-mode .settings-card h3,
+html.light-mode body .settings-card h3 {
+    color: #1E293B !important;
+}
+body.light-mode .settings-card p,
+html.light-mode body .settings-card p {
+    color: #6B7280 !important;
+}
+body.light-mode .settings-card .ico,
+html.light-mode body .settings-card .ico {
+    background: rgba(74, 144, 164, 0.12) !important;
+    color: #4A90A4 !important;
+}
+body.light-mode .settings-card .arrow,
+html.light-mode body .settings-card .arrow {
+    color: #4A90A4 !important;
+}
+
+/* --- 18.18 الجسم العام: لون النص الأساسي --- */
+body.light-mode,
+html.light-mode body {
+    color: #1F2937 !important;
+}
+
+/* --- 18.19 مربّعات KPI ملوّنة (analytics) في الوضع الفاتح --- */
+body.light-mode .kpi-card,
+html.light-mode body .kpi-card {
+    background: #FFFFFF !important;
+    border-color: #E5E7EB !important;
+    color: #1F2937 !important;
+}
+body.light-mode .kpi-val,
+html.light-mode body .kpi-val,
+body.light-mode .stat-value,
+html.light-mode body .stat-value {
+    color: #1E293B !important;
+}
+body.light-mode .kpi-label,
+html.light-mode body .kpi-label,
+body.light-mode .stat-label,
+html.light-mode body .stat-label {
+    color: #6B7280 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   19. Subscription Gate Popup (subscription_gate.html) — Light Mode
+   كل كلاسات .exp-* المستخدمة في نافذة "انتهت فترة الاشتراك"
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* خلفية شفافة فاتحة بدل السواد */
+body.light-mode .exp-popup-overlay,
+html.light-mode body .exp-popup-overlay {
+    background: rgba(31, 41, 55, 0.55) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+/* الصندوق الرئيسي */
+body.light-mode .exp-popup-container,
+html.light-mode body .exp-popup-container {
+    background: linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%) !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(74, 144, 164, 0.06) !important;
+    color: #1F2937 !important;
+}
+
+body.light-mode .exp-popup-glow,
+html.light-mode body .exp-popup-glow {
+    background: linear-gradient(90deg, transparent, #4A90A4, transparent) !important;
+}
+
+/* العناوين والنصوص */
+body.light-mode .exp-title,
+html.light-mode body .exp-title {
+    color: #1E293B !important;
+}
+body.light-mode .exp-subtitle,
+html.light-mode body .exp-subtitle {
+    color: #6B7280 !important;
+}
+
+/* الرنين حول الأيقونة */
+body.light-mode .exp-icon-ring,
+html.light-mode body .exp-icon-ring {
+    border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+/* شريط "الخدمات المتوقفة" */
+body.light-mode .exp-locked-bar,
+html.light-mode body .exp-locked-bar {
+    background: #FEF2F2 !important;
+    border-color: #FECACA !important;
+}
+body.light-mode .exp-locked-title,
+html.light-mode body .exp-locked-title {
+    color: #B91C1C !important;
+}
+body.light-mode .exp-locked-chip,
+html.light-mode body .exp-locked-chip {
+    background: #FFFFFF !important;
+    border: 1px solid #FECACA !important;
+    color: #7F1D1D !important;
+}
+
+/* بطاقات الخطط */
+body.light-mode .exp-plan-card,
+html.light-mode body .exp-plan-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+body.light-mode .exp-plan-card:hover,
+html.light-mode body .exp-plan-card:hover {
+    border-color: #4A90A4 !important;
+    background: #F0F9FB !important;
+    box-shadow: 0 8px 24px rgba(74, 144, 164, 0.12) !important;
+}
+body.light-mode .exp-plan-card.best,
+html.light-mode body .exp-plan-card.best {
+    border-color: #4A90A4 !important;
+    background: linear-gradient(180deg, #F0F9FB 0%, #FFFFFF 100%) !important;
+    box-shadow: 0 8px 30px rgba(74, 144, 164, 0.18) !important;
+}
+
+body.light-mode .exp-plan-name,
+html.light-mode body .exp-plan-name {
+    color: #1F2937 !important;
+}
+body.light-mode .exp-amount,
+html.light-mode body .exp-amount {
+    color: #4A90A4 !important;
+}
+body.light-mode .exp-unit,
+html.light-mode body .exp-unit {
+    color: #6B7280 !important;
+}
+body.light-mode .exp-plan-per,
+html.light-mode body .exp-plan-per {
+    color: #4A90A4 !important;
+    opacity: 0.85;
+}
+
+/* السعر المشطوب (inline color) */
+body.light-mode .exp-plan-card div[style*="text-decoration:line-through"],
+html.light-mode body .exp-plan-card div[style*="text-decoration:line-through"] {
+    color: #9CA3AF !important;
+}
+
+/* أزرار الخطط */
+body.light-mode .exp-plan-btn,
+html.light-mode body .exp-plan-btn {
+    background: rgba(74, 144, 164, 0.08) !important;
+    border-color: rgba(74, 144, 164, 0.25) !important;
+    color: #4A90A4 !important;
+}
+body.light-mode .exp-plan-btn:hover,
+html.light-mode body .exp-plan-btn:hover {
+    background: rgba(74, 144, 164, 0.15) !important;
+    border-color: #4A90A4 !important;
+}
+body.light-mode .exp-plan-btn.best-btn,
+html.light-mode body .exp-plan-btn.best-btn {
+    background: linear-gradient(135deg, #4A90A4, #2E5A8B) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+}
+
+/* شارة "وفّر ...%" */
+body.light-mode .exp-plan-save,
+html.light-mode body .exp-plan-save {
+    background: linear-gradient(135deg, #F59E0B, #D97706) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25);
+}
+body.light-mode .exp-plan-save.best-save,
+html.light-mode body .exp-plan-save.best-save {
+    background: linear-gradient(135deg, #4A90A4, #2E5A8B) !important;
+}
+
+/* المزايا (✅) */
+body.light-mode .exp-features,
+html.light-mode body .exp-features {
+    background: #F9FAFB !important;
+    border-color: #E5E7EB !important;
+}
+body.light-mode .exp-feat,
+html.light-mode body .exp-feat {
+    color: #374151 !important;
+}
+
+/* التذييل */
+body.light-mode .exp-footer p,
+html.light-mode body .exp-footer p {
+    color: #9CA3AF !important;
+}
+body.light-mode .exp-logout-row,
+html.light-mode body .exp-logout-row {
+    border-top-color: #E5E7EB !important;
+}
+body.light-mode .exp-logout-btn,
+html.light-mode body .exp-logout-btn {
+    border-color: #E5E7EB !important;
+    color: #6B7280 !important;
+    background: #FFFFFF !important;
+}
+body.light-mode .exp-logout-btn:hover,
+html.light-mode body .exp-logout-btn:hover {
+    border-color: #FCA5A5 !important;
+    color: #B91C1C !important;
+    background: #FEF2F2 !important;
+}
+
+/* متغيّر Trial (يستخدم إطار عنبر) */
+body.light-mode .exp-plan-trial,
+html.light-mode body .exp-plan-trial {
+    border-color: rgba(217, 119, 6, 0.4) !important;
+}
+body.light-mode .exp-plan-trial:hover,
+html.light-mode body .exp-plan-trial:hover {
+    border-color: #D97706 !important;
+    background: #FFFBEB !important;
+}
+body.light-mode .exp-trial-btn,
+html.light-mode body .exp-trial-btn {
+    border-color: rgba(217, 119, 6, 0.4) !important;
+    color: #B45309 !important;
+    background: #FFFBEB !important;
+}
+body.light-mode .exp-trial-btn:hover,
+html.light-mode body .exp-trial-btn:hover {
+    background: #FEF3C7 !important;
+    border-color: #D97706 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   20. صفحة subscription_expired.html (صفحة كاملة وليست popup)
+   ═══════════════════════════════════════════════════════════════════ */
+
+body.light-mode .expired-container,
+html.light-mode body .expired-container {
+    background: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08) !important;
+    color: #1F2937 !important;
+}
+body.light-mode .expired-container h1,
+html.light-mode body .expired-container h1 {
+    color: #1E293B !important;
+}
+body.light-mode .expired-container p,
+html.light-mode body .expired-container p {
+    color: #6B7280 !important;
+}
+body.light-mode .expired-container .highlight,
+html.light-mode body .expired-container .highlight {
+    color: #4A90A4 !important;
+}
+body.light-mode .expired-container .pricing-box,
+html.light-mode body .expired-container .pricing-box {
+    background: #F0F9FB !important;
+    border-color: rgba(74, 144, 164, 0.25) !important;
+}
+body.light-mode .expired-container .pricing-box .price,
+html.light-mode body .expired-container .pricing-box .price {
+    color: #4A90A4 !important;
+}
+body.light-mode .expired-container .pricing-box .price span,
+html.light-mode body .expired-container .pricing-box .price span {
+    color: #9CA3AF !important;
+}
+body.light-mode .expired-container .pricing-box .features li,
+html.light-mode body .expired-container .pricing-box .features li {
+    color: #374151 !important;
+}
+body.light-mode .btn-subscribe,
+html.light-mode body .btn-subscribe {
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 14px rgba(74, 144, 164, 0.25);
+}
+body.light-mode .btn-logout,
+html.light-mode body .btn-logout {
+    color: #6B7280 !important;
+    border-color: #E5E7EB !important;
+}
+body.light-mode .btn-logout:hover,
+html.light-mode body .btn-logout:hover {
+    border-color: #D1D5DB !important;
+    color: #374151 !important;
+}
+
+/* body الصفحة كاملة — إلغاء التدرّج الداكن في صفحات anti-pattern */
+html.light-mode body,
+body.light-mode {
+    background: #FAFBFC !important;
+    background-image: none !important;
+}
+body.light-mode[style*="linear-gradient"],
+html.light-mode body[style*="linear-gradient"] {
+    background: #FAFBFC !important;
+    background-image: none !important;
+}

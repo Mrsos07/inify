@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الإعدادات العامة - Inify</title>
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<link rel="stylesheet" href="/static/css/theme.css">
+<script src="/static/js/theme.js"></script>
+<style>
+:root{--midnight:#0A1628;--dark-blue:#1E3A5F;--cyan:#6BB8C9;--pearl:#F8F8F8;--text-muted:rgba(248,248,248,.6);--card-bg:rgba(30,58,95,.4);--border:rgba(107,184,201,.15)}
+.layout{display:flex;min-height:100vh}
+.main-content{flex:1;padding:28px;overflow-y:auto;margin-right:240px}
+@media(max-width:768px){.main-content{margin-right:0;padding:16px}}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:8px}
+.settings-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:22px;text-decoration:none;color:var(--pearl);display:flex;flex-direction:column;gap:10px;transition:transform .25s cubic-bezier(.16,1,.3,1),border-color .25s,box-shadow .25s}
+.settings-card:hover{transform:translateY(-3px);border-color:rgba(107,184,201,.35);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.settings-card .ico{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(74,144,164,.25),rgba(107,184,201,.15));display:flex;align-items:center;justify-content:center;color:var(--cyan)}
+.settings-card h3{font-size:15px;font-weight:700;margin:0}
+.settings-card p{font-size:12px;color:var(--text-muted);line-height:1.55;margin:0}
+.settings-card .arrow{margin-top:auto;font-size:12px;color:var(--cyan);opacity:.85}
+body.light-mode .settings-card{background:#FFFFFF!important;border-color:#E5E7EB!important;color:#1E293B!important;box-shadow:0 1px 3px rgba(0,0,0,.06)!important}
+body.light-mode .settings-card p{color:#6B7280!important}
+body.light-mode .settings-card .ico{background:rgba(74,144,164,.12)!important;color:#4A90A4!important}
+</style>
+<link rel="stylesheet" href="/static/css/dashboard-enhanced.css">
+</head>
+<body>
+<div class="premium-bg"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="grid-pattern"></div>
+<div class="vignette"></div>
+
+<button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('show');" id="mobileMenuBtn">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="document.getElementById('sidebar').classList.remove('open');this.classList.remove('show');"></div>
+
+<div class="layout">
+{% include 'dashboard/partials/sidebar.html' %}
+
+<div class="main-content">
+    <div class="page-header">
+        <div>
+            <h1>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                </svg>
+                الإعدادات العامة
+            </h1>
+            <p>إدارة كل ما يخص حسابك، الوكيل الذكي، الاشتراك، والأمان من مكان واحد.</p>
+        </div>
+    </div>
+
+    <div class="settings-grid">
+        <a href="/dashboard/bot-settings/" class="settings-card" aria-label="إعدادات الوكيل الذكي">
+            <div class="ico">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/></svg>
+            </div>
+            <h3>إعدادات الوكيل الذكي</h3>
+            <p>الاسم، النبرة، سياق الشركة، تعليمات الرد، والقيود اللغوية.</p>
+            <span class="arrow">إدارة الآن ←</span>
+        </a>
+
+        <a href="/profile/" class="settings-card" aria-label="الملف الشخصي">
+            <div class="ico">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3>الملف الشخصي</h3>
+            <p>الاسم، البريد، رقم الجوال، كلمة المرور وصورة الحساب.</p>
+            <span class="arrow">تعديل ←</span>
+        </a>
+
+        <a href="/subscription/" class="settings-card" aria-label="إدارة الاشتراك">
+            <div class="ico">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <h3>الاشتراك والفوترة</h3>
+            <p>ترقية الباقة، طرق الدفع، الفواتير، وتاريخ التجديد.</p>
+            <span class="arrow">إدارة الاشتراك ←</span>
+        </a>
+
+        {% if subscription_plan == 'enterprise' %}
+        <a href="/dashboard/team/" class="settings-card" aria-label="فريق العمل">
+            <div class="ico">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            </div>
+            <h3>فريق العمل</h3>
+            <p>أضف أو عطّل أعضاء الفريق، حدّد الصلاحيات وأدوار الوصول.</p>
+            <span class="arrow">إدارة الفريق ←</span>
+        </a>
+
+        <a href="/dashboard/api-docs/" class="settings-card" aria-label="API للمؤسسات">
+            <div class="ico">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <h3>مفاتيح API</h3>
+            <p>إنشاء/إبطال مفاتيح API وربط أنظمة CRM الخاصة بك.</p>
+            <span class="arrow">إدارة المفاتيح ←</span>
+        </a>
+
+        <a href="/dashboard/webhooks/" class="settings-card" aria-label="Webhooks">
+            <div class="ico">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            </div>
+            <h3>Webhooks والإشعارات</h3>
+            <p>استقبال إشعارات فورية عند حدوث أي نشاط في النظام.</p>
+            <span class="arrow">ضبط Webhooks ←</span>
+        </a>
+        {% endif %}
+
+        <a href="/support/" class="settings-card" aria-label="الدعم الفني">
+            <div class="ico">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <h3>الدعم الفني</h3>
+            <p>تواصل معنا عبر قنوات الدعم، أو راجع الأسئلة الشائعة.</p>
+            <span class="arrow">فتح الدعم ←</span>
+        </a>
+
+        <a href="/auth/logout/" class="settings-card" style="border-color:rgba(239,68,68,.25)" aria-label="تسجيل الخروج">
+            <div class="ico" style="background:linear-gradient(135deg,rgba(239,68,68,.2),rgba(239,68,68,.08));color:#ef4444">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </div>
+            <h3 style="color:#ef4444">تسجيل الخروج</h3>
+            <p>إنهاء الجلسة الحالية على هذا الجهاز.</p>
+            <span class="arrow" style="color:#ef4444">خروج ←</span>
+        </a>
+    </div>
+</div>
+</div>
+</body>
+</html>

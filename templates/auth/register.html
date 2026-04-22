@@ -85,50 +85,206 @@
             color: var(--cyan);
         }
 
+        /* ═══ Layout: Wide 2-Column Grid ═══ */
+        body {
+            align-items: stretch;
+            padding: 40px 24px;
+        }
+
         .auth-container {
             width: 100%;
-            max-width: 440px;
+            max-width: 1160px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+            gap: 32px;
+            align-items: start;
         }
 
-        .auth-header {
-            text-align: center;
-            margin-bottom: 35px;
+        /* ─── Left panel: Brand + Benefits ─── */
+        .auth-side {
+            position: sticky;
+            top: 32px;
+            padding: 32px 28px;
+            border-radius: 24px;
+            background:
+                radial-gradient(circle at 20% 0%, rgba(107, 184, 201, 0.18), transparent 55%),
+                radial-gradient(circle at 100% 100%, rgba(34, 197, 94, 0.12), transparent 55%),
+                linear-gradient(160deg, rgba(30, 58, 95, 0.45), rgba(10, 22, 40, 0.55));
+            border: 1px solid rgba(107, 184, 201, 0.18);
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            color: var(--pearl);
         }
-
-        .logo {
-            margin: 0 auto 20px;
+        .auth-side .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+        .auth-side .brand img { height: 56px; }
+        .auth-side .brand .tag {
+            font-size: 12px;
+            color: rgba(107, 184, 201, 0.85);
+            background: rgba(107, 184, 201, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            border: 1px solid rgba(107, 184, 201, 0.22);
+        }
+        .auth-side h1 {
+            font-size: 26px;
+            font-weight: 800;
+            line-height: 1.35;
+            letter-spacing: -0.3px;
+            margin-bottom: 10px;
+            color: var(--pearl);
+        }
+        .auth-side h1 .accent {
+            background: linear-gradient(135deg, #6BB8C9, #4ade80);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .auth-side > p.lead {
+            color: rgba(248, 248, 248, 0.72);
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 26px;
+        }
+        .bullet-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px; }
+        .bullet-item { display: flex; gap: 12px; align-items: flex-start; }
+        .bullet-item .tick {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(34, 197, 94, 0.08));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #4ade80;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
-        .logo img {
-            height: 80px;
-            width: auto;
-        }
-
-        .auth-header h1 {
-            color: var(--pearl);
-            font-size: 28px;
+        .bullet-item .b-text h4 {
+            font-size: 14px;
             font-weight: 700;
-            margin-bottom: 8px;
+            color: var(--pearl);
+            margin-bottom: 2px;
+        }
+        .bullet-item .b-text p {
+            font-size: 12.5px;
+            color: rgba(248, 248, 248, 0.6);
+            line-height: 1.55;
+        }
+        .trust-strip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: rgba(10, 22, 40, 0.5);
+            border: 1px solid rgba(107, 184, 201, 0.15);
+            border-radius: 14px;
+            font-size: 12.5px;
+            color: rgba(248, 248, 248, 0.7);
+        }
+        .trust-strip svg { color: #4ade80; flex-shrink: 0; }
+
+        /* ─── Right column: Form card ─── */
+        .auth-main { width: 100%; }
+
+        .auth-main-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .auth-main-header h2 {
+            color: var(--pearl);
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+            margin-bottom: 6px;
+        }
+        .auth-main-header p {
+            color: var(--text-muted);
+            font-size: 13.5px;
         }
 
-        .auth-header p {
-            color: var(--text-muted);
-            font-size: 15px;
+        /* legacy anchors kept for compatibility (old .auth-header block inside right column) */
+        .auth-header {
+            text-align: center;
+            margin-bottom: 20px;
+            display: none; /* replaced by .auth-main-header */
         }
+        .logo { display: flex; align-items: center; justify-content: center; }
+        .logo img { height: 80px; width: auto; }
+        .auth-header h1 { color: var(--pearl); font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .auth-header p { color: var(--text-muted); font-size: 15px; }
 
         .auth-card {
             background: rgba(30, 58, 95, 0.4);
             backdrop-filter: blur(20px);
             border-radius: 24px;
-            padding: 35px;
+            padding: 28px 30px;
             border: 1px solid rgba(107, 184, 201, 0.15);
         }
 
+        /* ─── Responsive: stack on <960 ─── */
+        @media (max-width: 960px) {
+            body { padding: 24px 16px; }
+            .auth-container { grid-template-columns: 1fr; gap: 20px; }
+            .auth-side { position: static; padding: 28px 24px; }
+            .auth-side h1 { font-size: 22px; }
+        }
+
+        /* ─── Light mode ─── */
+        body.light-mode .auth-side {
+            background:
+                radial-gradient(circle at 20% 0%, rgba(74, 144, 164, 0.10), transparent 55%),
+                radial-gradient(circle at 100% 100%, rgba(5, 150, 105, 0.08), transparent 55%),
+                #FFFFFF;
+            border-color: #E5E7EB;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            color: #1F2937;
+        }
+        body.light-mode .auth-side .brand .tag {
+            background: #F0F9FB;
+            color: #4A90A4;
+            border-color: #CFE7EC;
+        }
+        body.light-mode .auth-side h1 { color: #1E293B; }
+        body.light-mode .auth-side > p.lead { color: #6B7280; }
+        body.light-mode .bullet-item .tick {
+            background: linear-gradient(135deg, rgba(5, 150, 105, 0.15), rgba(5, 150, 105, 0.05));
+            border-color: rgba(5, 150, 105, 0.25);
+            color: #059669;
+        }
+        body.light-mode .bullet-item .b-text h4 { color: #1F2937; }
+        body.light-mode .bullet-item .b-text p { color: #6B7280; }
+        body.light-mode .trust-strip {
+            background: #F9FAFB;
+            border-color: #E5E7EB;
+            color: #6B7280;
+        }
+        body.light-mode .trust-strip svg { color: #059669; }
+        body.light-mode .auth-main-header h2 { color: #1E293B; }
+        body.light-mode .auth-main-header p { color: #6B7280; }
+        body.light-mode .auth-card {
+            background: #FFFFFF;
+            border-color: #E5E7EB;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+        }
+        /* فاصل خفيف بين المجموعات المنطقية */
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(107,184,201,0.15), transparent);
+            margin: 22px 0 18px;
+        }
+        body.light-mode .section-divider {
+            background: linear-gradient(90deg, transparent, #E5E7EB, transparent);
         }
 
         .form-group label {
@@ -464,9 +620,228 @@
             }
             
             .auth-card {
-                padding: 28px 22px;
+                padding: 24px 18px;
             }
+            .auth-main-header h2 { font-size: 20px; }
         }
+
+        /* ═══ Trial Banner ═══ */
+        .trial-banner {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(34, 197, 94, 0.04));
+            border: 1px solid rgba(34, 197, 94, 0.35);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .trial-banner .icon {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .trial-banner .icon svg { width: 18px; height: 18px; }
+        .trial-banner .text h4 {
+            color: #4ade80;
+            font-size: 13.5px;
+            font-weight: 700;
+            margin-bottom: 2px;
+            line-height: 1.4;
+        }
+        .trial-banner .text p {
+            color: rgba(248, 248, 248, 0.75);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+        .trial-banner .text strong {
+            color: #4ade80;
+            font-weight: 700;
+        }
+
+        /* ═══ Plan Picker ═══ */
+        .plan-picker-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--pearl);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .plan-picker-label .required {
+            color: #f87171;
+            font-size: 12px;
+        }
+        .plan-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 8px;
+            margin-top: 14px; /* مساحة لشارة "الأفضل قيمة" */
+        }
+        @media (max-width: 720px) {
+            .plan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        }
+        .plan-card {
+            position: relative;
+            background: rgba(10, 22, 40, 0.55);
+            border: 1.5px solid rgba(107, 184, 201, 0.18);
+            border-radius: 12px;
+            padding: 14px 10px 12px;
+            cursor: pointer;
+            transition: transform .22s cubic-bezier(0.16,1,0.3,1), border-color .22s, background .22s, box-shadow .22s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 4px;
+            min-height: 118px;
+        }
+        .plan-card:hover {
+            border-color: rgba(107, 184, 201, 0.45);
+            background: rgba(107, 184, 201, 0.05);
+            transform: translateY(-1px);
+        }
+        .plan-card.selected {
+            border-color: var(--cyan);
+            background: rgba(107, 184, 201, 0.1);
+            box-shadow: 0 4px 16px rgba(107, 184, 201, 0.2);
+        }
+        .plan-card.popular::before {
+            content: "الأفضل قيمة";
+            position: absolute;
+            top: -11px;
+            right: 50%;
+            transform: translateX(50%);
+            background: linear-gradient(135deg, #6bb8c9, #2E5A8B);
+            color: #fff;
+            font-size: 9.5px;
+            font-weight: 800;
+            padding: 3px 12px;
+            border-radius: 20px;
+            white-space: nowrap;
+            letter-spacing: 0.2px;
+            box-shadow: 0 4px 10px rgba(46, 90, 139, 0.35);
+        }
+        /* Slot ثابت لشارة "وفّر" لتوحيد ارتفاع البطاقات */
+        .plan-card .plan-save-slot {
+            min-height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .plan-card .plan-save {
+            display: inline-block;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.2px;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25);
+        }
+        .plan-card .plan-save.is-placeholder {
+            visibility: hidden;
+        }
+        .plan-card .plan-name {
+            color: var(--pearl);
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: -0.1px;
+        }
+        .plan-card .plan-price {
+            font-size: 19px;
+            font-weight: 800;
+            color: var(--cyan);
+            line-height: 1;
+            letter-spacing: -0.4px;
+            font-variant-numeric: tabular-nums;
+        }
+        .plan-card .plan-price span {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-inline-start: 2px;
+        }
+        .plan-card .plan-per {
+            font-size: 10px;
+            color: rgba(107, 184, 201, 0.7);
+            min-height: 14px;
+        }
+        .plan-card:hover {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+        }
+        .plan-card.selected {
+            box-shadow: 0 6px 22px rgba(107, 184, 201, 0.22);
+        }
+        .plan-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .plan-note {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 10px;
+            line-height: 1.55;
+            padding: 8px 12px;
+            background: rgba(107, 184, 201, 0.04);
+            border: 1px dashed rgba(107, 184, 201, 0.18);
+            border-radius: 10px;
+        }
+        body.light-mode .plan-note {
+            background: #F9FAFB;
+            border-color: #E5E7EB;
+        }
+        .plan-note svg {
+            vertical-align: -3px;
+            margin-left: 4px;
+        }
+        @media (max-width: 480px) {
+            .plan-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .plan-card { padding: 14px 10px 12px; min-height: 110px; }
+            .plan-card .plan-price { font-size: 17px; }
+        }
+
+        /* Light mode */
+        body.light-mode .trial-banner {
+            background: linear-gradient(135deg, #ECFDF5, #F0FDF4);
+            border-color: #86EFAC;
+        }
+        body.light-mode .trial-banner .text h4 { color: #059669; }
+        body.light-mode .trial-banner .text p { color: #374151; }
+        body.light-mode .trial-banner .text strong { color: #059669; }
+        body.light-mode .plan-picker-label { color: #1E293B; }
+        body.light-mode .plan-card {
+            background: #FFFFFF;
+            border-color: #E5E7EB;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        body.light-mode .plan-card:hover {
+            border-color: #4A90A4;
+            background: #F0F9FB;
+        }
+        body.light-mode .plan-card.selected {
+            border-color: #4A90A4;
+            background: #F0F9FB;
+            box-shadow: 0 4px 16px rgba(74,144,164,0.18);
+        }
+        body.light-mode .plan-card .plan-name { color: #1E293B; }
+        body.light-mode .plan-card .plan-price { color: #4A90A4; }
+        body.light-mode .plan-card .plan-price span { color: #6B7280; }
+        body.light-mode .plan-card .plan-per { color: #4A90A4; }
+        body.light-mode .plan-note { color: #6B7280; }
     </style>
 </head>
 <body>
@@ -478,13 +853,83 @@
     </a>
 
     <div class="auth-container">
-        <div class="auth-header">
-            <div class="logo">
-                <img src="/static/images/inify-icon.png" alt="Inify" style="height: 100px;">
+
+        <!-- ═══ Left Panel: Brand + Benefits ═══ -->
+        <aside class="auth-side">
+            <div class="brand">
+                <img src="/static/images/inify-icon.png" alt="Inify">
+                <span class="tag">Inify Estate</span>
             </div>
-            <h1>إنشاء حساب جديد</h1>
-            <p>ابدأ رحلتك مع Inify اليوم</p>
-        </div>
+            <h1>
+                انضمّ إلى <span class="accent">Inify</span> مع <span class="accent">ضمان استرجاع</span> 5 أيام
+            </h1>
+            <p class="lead">
+                وكيل عقاري ذكي يعمل 24/7 — يردّ على العملاء، يفرز الجادين، ويقترح العقار المناسب تلقائياً. جرّبه باطمئنان — لو ما عجبك خلال 5 أيام، نسترجع لك المبلغ كاملاً.
+            </p>
+
+            <div class="bullet-list">
+                <div class="bullet-item">
+                    <div class="tick">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="b-text">
+                        <h4>ضمان استرجاع 5 أيام</h4>
+                        <p>لو ما عجبك النظام لأي سبب — نسترجع كامل المبلغ فوراً وبدون أي أسئلة.</p>
+                    </div>
+                </div>
+                <div class="bullet-item">
+                    <div class="tick">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="b-text">
+                        <h4>ربط واتساب تلقائي</h4>
+                        <p>استقبل رسائل العملاء وأتمتة الردود مباشرة من رقم واتساب خاص بك.</p>
+                    </div>
+                </div>
+                <div class="bullet-item">
+                    <div class="tick">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="b-text">
+                        <h4>إلغاء بضغطة زر</h4>
+                        <p>ألغِ الاشتراك في أي وقت، بدون أي التزامات أو شروط جزائية.</p>
+                    </div>
+                </div>
+                <div class="bullet-item">
+                    <div class="tick">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="b-text">
+                        <h4>عقارات وعملاء بدون حدود</h4>
+                        <p>أضف أي عدد من العقارات، وتابع العملاء، والحجوزات في مكان واحد.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trust-strip">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="10" rx="2"/>
+                    <circle cx="12" cy="16" r="1"/>
+                    <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                </svg>
+                <span>دفع آمن عبر <strong>StreamPay</strong> — معتمد من البنك المركزي السعودي.</span>
+            </div>
+        </aside>
+
+        <!-- ═══ Right Panel: Registration Form ═══ -->
+        <div class="auth-main">
+            <div class="auth-main-header">
+                <h2>إنشاء حساب جديد</h2>
+                <p>املأ البيانات أدناه لبدء تجربتك المجانية</p>
+            </div>
+
+            <div class="auth-header" aria-hidden="true">
+                <div class="logo">
+                    <img src="/static/images/inify-icon.png" alt="Inify" style="height: 100px;">
+                </div>
+                <h1>إنشاء حساب جديد</h1>
+                <p>ابدأ رحلتك مع Inify اليوم</p>
+            </div>
 
         <div class="auth-card">
             <div class="success-message" id="successMessage">
@@ -493,8 +938,78 @@
                 <div class="redirect-text">جاري التحويل لصفحة تسجيل الدخول...</div>
             </div>
             
+            <!-- Refund Guarantee Banner -->
+            <div class="trial-banner">
+                <div class="icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <polyline points="9 12 11 14 15 10"/>
+                    </svg>
+                </div>
+                <div class="text">
+                    <h4>ضمان استرجاع كامل خلال <strong>5 أيام</strong> — دون أي سؤال</h4>
+                    <p>
+                        جرّب النظام بكامل مزاياه، وإذا لم يعجبك خلال <strong>5 أيام</strong> من تاريخ الاشتراك — نسترجع <strong>كامل المبلغ</strong> ويتم إلغاء الاشتراك فوراً.
+                    </p>
+                </div>
+            </div>
+
             <form id="registerForm">
                 <div class="general-error" id="generalError"></div>
+
+                <!-- Plan Picker -->
+                <div class="form-group">
+                    <label class="plan-picker-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                        </svg>
+                        اختر خطة الاشتراك <span class="required">*</span>
+                    </label>
+                    <div class="plan-grid" id="planGrid">
+                        <label class="plan-card" data-plan="monthly">
+                            <input type="radio" name="plan_key" value="monthly">
+                            <div class="plan-save-slot"><span class="plan-save is-placeholder">—</span></div>
+                            <div class="plan-name">شهري</div>
+                            <div class="plan-price">199<span> ريال</span></div>
+                            <div class="plan-per">شهرياً</div>
+                        </label>
+
+                        <label class="plan-card" data-plan="quarterly">
+                            <input type="radio" name="plan_key" value="quarterly">
+                            <div class="plan-save-slot"><span class="plan-save">وفّر 10%</span></div>
+                            <div class="plan-name">3 أشهر</div>
+                            <div class="plan-price">537<span> ريال</span></div>
+                            <div class="plan-per">179 ريال/شهر</div>
+                        </label>
+
+                        <label class="plan-card popular selected" data-plan="semi">
+                            <input type="radio" name="plan_key" value="semi" checked>
+                            <div class="plan-save-slot"><span class="plan-save">وفّر 15%</span></div>
+                            <div class="plan-name">6 أشهر</div>
+                            <div class="plan-price">1,015<span> ريال</span></div>
+                            <div class="plan-per">169 ريال/شهر</div>
+                        </label>
+
+                        <label class="plan-card" data-plan="annual">
+                            <input type="radio" name="plan_key" value="annual">
+                            <div class="plan-save-slot"><span class="plan-save">وفّر 25%</span></div>
+                            <div class="plan-name">سنوي</div>
+                            <div class="plan-price">1,791<span> ريال</span></div>
+                            <div class="plan-per">149 ريال/شهر</div>
+                        </label>
+                    </div>
+                    <div class="plan-note">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="10" rx="2"/>
+                            <circle cx="12" cy="16" r="1"/>
+                            <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                        </svg>
+                        دفع آمن عبر <strong>StreamPay</strong> — بطاقة ائتمانية أو مدى • استرجاع كامل خلال 5 أيام
+                    </div>
+                </div>
+
+                <div class="section-divider" aria-hidden="true"></div>
 
                 <div class="form-row">
                     <div class="form-group">
@@ -569,10 +1084,13 @@
                 </div>
 
                 <input type="hidden" name="recaptcha_token" id="recaptchaToken">
-                <button type="submit" class="submit-btn" id="submitBtn" disabled>إنشاء الحساب</button>
+                <button type="submit" class="submit-btn" id="submitBtn" disabled>إنشاء الحساب والمتابعة للدفع</button>
 
-                <!-- Google Sign-Up -->
-                <div class="google-section disabled" id="googleSection">
+                <!-- Google Sign-Up — مُخفى عمداً في صفحة التسجيل:
+                     تدفّق Google يتجاوز register_view ولا يُنشئ Subscription ولا payment_link،
+                     فيفوّت على المستخدم اختيار الخطة والدفع. التسجيل يجب أن يمر بالنموذج الكامل.
+                     (يبقى Google متاحاً في /auth/login/ للمستخدمين الموجودين فقط) -->
+                <div class="google-section disabled" id="googleSection" style="display:none !important;" aria-hidden="true">
                     <div class="divider">
                         <span>أو</span>
                     </div>
@@ -594,6 +1112,7 @@
         <div class="auth-footer">
             لديك حساب بالفعل؟ <a href="/login">تسجيل الدخول</a>
         </div>
+        </div><!-- /.auth-main -->
     </div>
 
     <script>
@@ -674,7 +1193,7 @@
                 );
                 document.getElementById('recaptchaToken').value = token;
 
-                submitBtn.textContent = 'جاري إنشاء الحساب...';
+                submitBtn.textContent = 'جاري إنشاء الحساب وتحضير الدفع...';
                 const formData = new FormData(form);
                 formData.set('recaptcha_token', token);
                 const response = await fetch('/auth/register/', {
@@ -686,7 +1205,27 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    if (data.require_verification) {
+                    // مسار 1: تحويل فوري لصفحة دفع StreamPay (الحالة العادية)
+                    if (data.redirect_to_payment && data.payment_url) {
+                        form.style.display = 'none';
+                        successText.innerHTML =
+                            'تم إنشاء حسابك ✅<br>' +
+                            '<span style="font-size:14px;color:rgba(248,248,248,0.75);">' +
+                            'جاري تحويلك إلى بوابة الدفع الآمنة — ' +
+                            (data.plan_label || '') + ' (' + (data.amount || '') + ' ريال)</span>';
+                        successDiv.classList.add('show');
+                        // تحويل فوري لـ StreamPay
+                        setTimeout(() => { window.location.href = data.payment_url; }, 1200);
+                    }
+                    // مسار 2: فشل إنشاء رابط الدفع → التحويل لصفحة تسجيل الدخول
+                    else if (data.payment_failed) {
+                        form.style.display = 'none';
+                        successText.textContent = data.message || 'تم إنشاء الحساب. سجّل دخولك لإكمال الدفع.';
+                        successDiv.classList.add('show');
+                        setTimeout(() => { window.location.href = '/auth/login/'; }, 5000);
+                    }
+                    // مسار 3: (احتياطي) require_verification التقليدي
+                    else if (data.require_verification) {
                         form.style.display = 'none';
                         successText.textContent = data.message || 'تحقق من بريدك الإلكتروني لتفعيل الحساب';
                         successDiv.classList.add('show');
@@ -697,7 +1236,7 @@
                 } else {
                     showFieldError(data.field || 'general', data.error || 'حدث خطأ في التسجيل');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'إنشاء الحساب';
+                    submitBtn.textContent = 'إنشاء الحساب والمتابعة للدفع';
                 }
             } catch (error) {
                 showFieldError('general', 'حدث خطأ في الاتصال، يرجى المحاولة مجدداً');
@@ -717,6 +1256,37 @@
             if (el) { el.textContent = ''; el.classList.remove('show'); }
             this.classList.remove('input-error');
         });
+
+        // ═══ Plan Selection Handler ═══
+        (function initPlanPicker() {
+            const grid = document.getElementById('planGrid');
+            if (!grid) return;
+            const cards = grid.querySelectorAll('.plan-card');
+            cards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // Let the native radio handle itself, but also update visual state
+                    cards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    const radio = card.querySelector('input[type="radio"]');
+                    if (radio) radio.checked = true;
+                });
+                // Keyboard support
+                card.setAttribute('tabindex', '0');
+                card.setAttribute('role', 'radio');
+                card.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        card.click();
+                    }
+                });
+            });
+            // Sync on initial radio state
+            const checked = grid.querySelector('input[type="radio"]:checked');
+            if (checked) {
+                cards.forEach(c => c.classList.remove('selected'));
+                checked.closest('.plan-card').classList.add('selected');
+            }
+        })();
     </script>
     
     <!-- Theme Toggle Script -->

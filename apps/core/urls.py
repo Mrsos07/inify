@@ -107,6 +107,7 @@ urlpatterns = [
     path('api/subscription/status/', views.subscription_status_api, name='subscription-status'),
     path('api/subscription/start-trial/', views.start_trial_api, name='start-trial'),
     path('api/subscription/subscribe/', views.subscribe_api, name='subscribe'),
+    path('api/subscription/cancel/', views.cancel_subscription_api, name='subscription-cancel'),
     path('payment/success/', views.payment_success_view, name='payment-success'),
     path('payment/failure/', views.payment_failure_view, name='payment-failure'),
     path('webhooks/streampay/', views.streampay_webhook, name='streampay-webhook'),

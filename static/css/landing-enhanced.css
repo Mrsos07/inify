@@ -1,0 +1,400 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Inify / Newra — Landing Pages Enhanced Layer
+   Additive improvements for index.html (Estate) & company_home.html
+   Loaded after inline <style> so it wins cascade.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Design Tokens (مشتركة) ─────────────────────────────────── */
+:root {
+    --inify-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --inify-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --inify-focus-ring-dark: 0 0 0 3px rgba(107, 184, 201, 0.45);
+    --inify-focus-ring-light: 0 0 0 3px rgba(74, 144, 164, 0.35);
+}
+
+/* ── 2. Skip to Content (A11Y) ─────────────────────────────────── */
+.skip-to-content {
+    position: absolute;
+    top: -100px;
+    inset-inline-start: 16px;
+    background: var(--cyan, #6BB8C9);
+    color: #0A1628;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    z-index: 99999;
+    transition: top .2s var(--inify-ease-smooth);
+    font-family: inherit;
+}
+.skip-to-content:focus,
+.skip-to-content:focus-visible {
+    top: 16px;
+    outline: none;
+    box-shadow: var(--inify-focus-ring-dark);
+}
+body.light-mode .skip-to-content,
+html.light-mode body .skip-to-content {
+    background: #4A90A4 !important;
+    color: #FFFFFF !important;
+}
+body.light-mode .skip-to-content:focus,
+html.light-mode body .skip-to-content:focus {
+    box-shadow: var(--inify-focus-ring-light) !important;
+}
+
+/* ── 3. Focus Rings على كل العناصر التفاعلية ──────────────────── */
+html body .header a:focus-visible,
+html body .nav-link-btn:focus-visible,
+html body .header-btn:focus-visible,
+html body .theme-toggle-btn:focus-visible,
+html body #langToggleBtn:focus-visible,
+html body .btn-primary:focus-visible,
+html body .btn-hero-cta:focus-visible,
+html body .pricing-btn:focus-visible,
+html body .faq-question:focus-visible,
+html body .feature-card:focus-visible,
+html body .footer a:focus-visible {
+    outline: none !important;
+    box-shadow: var(--inify-focus-ring-dark) !important;
+    border-radius: 10px;
+}
+body.light-mode .header a:focus-visible,
+body.light-mode .nav-link-btn:focus-visible,
+body.light-mode .header-btn:focus-visible,
+body.light-mode .theme-toggle-btn:focus-visible,
+body.light-mode #langToggleBtn:focus-visible,
+body.light-mode .btn-primary:focus-visible,
+body.light-mode .btn-hero-cta:focus-visible,
+body.light-mode .pricing-btn:focus-visible,
+body.light-mode .faq-question:focus-visible,
+html.light-mode body .btn-primary:focus-visible,
+html.light-mode body a:focus-visible,
+html.light-mode body button:focus-visible {
+    box-shadow: var(--inify-focus-ring-light) !important;
+}
+
+/* ── 4. أزرار الـ Header: تحسينات بصرية فقط (بدون إعادة حجم الزر) ── */
+/* ملاحظة: تم تجنّب override الخصائص الأساسية حتى لا تُكسر الـ responsive */
+html body .theme-toggle-btn {
+    transition: transform .18s var(--inify-ease-smooth),
+                background .18s,
+                border-color .18s;
+    align-items: center;
+    justify-content: center;
+}
+html body .theme-toggle-btn:hover {
+    transform: translateY(-1px);
+}
+
+html body #langToggleBtn {
+    transition: transform .18s var(--inify-ease-smooth), background .18s;
+}
+html body #langToggleBtn:hover {
+    transform: translateY(-1px);
+}
+
+/* ── 5. Hero: أرقام مقروءة أكثر + ارتفاع سطر أنسب ─────────────── */
+html body .hero h1 {
+    line-height: 1.2 !important;
+    letter-spacing: -0.4px;
+    text-wrap: balance;
+}
+html body .hero-subtitle {
+    line-height: 1.75 !important;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+    text-wrap: pretty;
+}
+html body .hero-innovation-tag {
+    transition: transform .2s var(--inify-ease-smooth);
+}
+html body .hero-innovation-tag:hover { transform: translateY(-1px); }
+
+/* ── 6. البطاقات: رفع ناعم + Hover موحّد ─────────────────────── */
+html body .feature-card,
+html body .service-card,
+html body .solution-card,
+html body .pricing-card {
+    transition: transform .3s var(--inify-ease-out),
+                border-color .3s,
+                box-shadow .3s,
+                background .3s !important;
+    will-change: transform;
+}
+html body .feature-card:hover,
+html body .service-card:hover,
+html body .solution-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(107, 184, 201, 0.4) !important;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22), 0 0 18px rgba(107, 184, 201, 0.08) !important;
+}
+html body .pricing-card:hover {
+    transform: translateY(-3px);
+}
+
+/* ── 7. Pricing: أرقام بـ tabular numerals + تباعد محسّن ───────── */
+html body .pricing-card .price,
+html body .pricing-card [class*="price"] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    letter-spacing: -0.5px;
+}
+
+/* السعر المشطوب: لون باهت بدون تشديد */
+html body .pricing-card [style*="line-through"],
+html body .pricing-card del {
+    opacity: 0.55;
+    font-weight: 500 !important;
+}
+
+/* أزرار الاشتراك: wait-state واضح */
+html body .pricing-btn:disabled,
+html body .pricing-btn[aria-busy="true"] {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* ── 8. FAQ: Polish + مؤشرات بصرية ──────────────────────────── */
+html body .faq-question {
+    transition: background .2s, color .2s;
+    cursor: pointer;
+}
+html body .faq-item .faq-icon svg {
+    transition: transform .3s var(--inify-ease-smooth);
+}
+html body .faq-item.active .faq-icon svg,
+html body .faq-item[aria-expanded="true"] .faq-icon svg {
+    transform: rotate(45deg);
+}
+
+/* ── 9. زر العودة للأعلى (يُضاف JS-side) ───────────────────── */
+.back-to-top-landing {
+    position: fixed;
+    bottom: 24px;
+    inset-inline-end: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9);
+    color: #0A1628;
+    border: none;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 22px rgba(107, 184, 201, 0.4);
+    z-index: 90;
+    transition: transform .2s var(--inify-ease-smooth), box-shadow .2s;
+}
+.back-to-top-landing.show { display: inline-flex; }
+.back-to-top-landing:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(107, 184, 201, 0.55); }
+@media (max-width: 768px) {
+    .back-to-top-landing { bottom: 84px; width: 42px; height: 42px; }
+}
+
+/* ── 10. تحسينات النص والانتقاء ──────────────────────────── */
+html body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+::selection {
+    background: rgba(107, 184, 201, 0.35);
+    color: #F8F8F8;
+}
+body.light-mode ::selection,
+html.light-mode body ::selection {
+    background: rgba(74, 144, 164, 0.25) !important;
+    color: #1F2937 !important;
+}
+
+/* ── 11. Scroll سلس + مساحة للـ sticky header ─────────────── */
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 96px;
+}
+
+/* ── 12. prefers-reduced-motion: احترام تفضيل المستخدم ───── */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    .feature-card:hover,
+    .service-card:hover,
+    .solution-card:hover,
+    .pricing-card:hover {
+        transform: none !important;
+    }
+}
+
+/* ── 13. الفوتر: روابط أوضح وتباعد محكم ──────────────────── */
+html body .footer a {
+    transition: color .18s, opacity .18s;
+}
+html body .footer a:hover {
+    color: var(--cyan, #6BB8C9);
+}
+
+/* ── 14. صور responsive بشكل افتراضي ─────────────────── */
+html body .hero-icon img,
+html body .feature-card img,
+html body .service-card img,
+html body .pricing-card img,
+html body .project-image img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ── 15. روابط الهيدر: ترك الـ hover الأصلي كما هو (لتفادي تضارب ::after) */
+html body .header-center a {
+    transition: color .18s, background .18s;
+}
+
+/* ── 16. زر CTA الأساسي: نبض خفيف عند التحميل الأول ──────── */
+html body .btn-primary,
+html body .btn-hero-cta {
+    position: relative;
+    overflow: hidden;
+}
+html body .btn-primary::before,
+html body .btn-hero-cta::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform .6s var(--inify-ease-smooth);
+    pointer-events: none;
+}
+html body .btn-primary:hover::before,
+html body .btn-hero-cta:hover::before {
+    transform: translateX(100%);
+}
+@media (prefers-reduced-motion: reduce) {
+    html body .btn-primary::before,
+    html body .btn-hero-cta::before { display: none; }
+}
+
+/* ── 17. Mobile menu icon: تحسين اللمسة فقط عند الظهور ─────── */
+/* لا نَغيّر خاصية display حتى لا نكسر منطق الإظهار عند max-width:768 */
+html body .menu-icon {
+    cursor: pointer;
+    transition: background .2s, transform .15s;
+    border-radius: 10px;
+    padding: 8px;
+}
+html body .menu-icon:hover {
+    background: rgba(107, 184, 201, 0.12);
+}
+html body .menu-icon:active {
+    transform: scale(0.92);
+}
+body.light-mode .menu-icon:hover,
+html.light-mode body .menu-icon:hover {
+    background: rgba(74, 144, 164, 0.1) !important;
+}
+
+/* ── 18. تحسين تباعد الأقسام على الموبايل ────────────────── */
+@media (max-width: 768px) {
+    html body .section-header { margin-bottom: 28px; }
+    html body .section-title { line-height: 1.25 !important; }
+    html body .hero h1 { letter-spacing: -0.2px; }
+}
+
+/* ── 19. Light-mode overrides شاملة ─────────────────────── */
+body.light-mode .theme-toggle-btn,
+html.light-mode body .theme-toggle-btn {
+    background: rgba(74, 144, 164, 0.08) !important;
+    border-color: rgba(74, 144, 164, 0.25) !important;
+    color: #4A90A4 !important;
+}
+body.light-mode .theme-toggle-btn:hover,
+html.light-mode body .theme-toggle-btn:hover {
+    background: rgba(74, 144, 164, 0.16) !important;
+    border-color: #4A90A4 !important;
+}
+body.light-mode #langToggleBtn,
+html.light-mode body #langToggleBtn {
+    background: rgba(74, 144, 164, 0.08) !important;
+    border-color: rgba(74, 144, 164, 0.25) !important;
+    color: #4A90A4 !important;
+}
+body.light-mode #langToggleBtn:hover,
+html.light-mode body #langToggleBtn:hover {
+    background: rgba(74, 144, 164, 0.16) !important;
+    border-color: #4A90A4 !important;
+}
+
+/* بطاقات light-mode: ظل ناعم بدل الظلام */
+body.light-mode .feature-card:hover,
+html.light-mode body .feature-card:hover,
+body.light-mode .service-card:hover,
+html.light-mode body .service-card:hover,
+body.light-mode .solution-card:hover,
+html.light-mode body .solution-card:hover {
+    border-color: #4A90A4 !important;
+    box-shadow: 0 10px 30px rgba(74, 144, 164, 0.15), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+body.light-mode .pricing-card:hover,
+html.light-mode body .pricing-card:hover {
+    box-shadow: 0 12px 36px rgba(74, 144, 164, 0.18) !important;
+    border-color: #4A90A4 !important;
+}
+
+/* زر Back-to-top في الوضع الفاتح */
+body.light-mode .back-to-top-landing,
+html.light-mode body .back-to-top-landing {
+    background: linear-gradient(135deg, #4A90A4, #6BB8C9) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 6px 20px rgba(74, 144, 164, 0.3) !important;
+}
+body.light-mode .back-to-top-landing:hover,
+html.light-mode body .back-to-top-landing:hover {
+    box-shadow: 0 10px 28px rgba(74, 144, 164, 0.45) !important;
+}
+
+/* زر CTA الأساسي: shine أخف في الوضع الفاتح */
+body.light-mode .btn-primary::before,
+html.light-mode body .btn-primary::before,
+body.light-mode .btn-hero-cta::before,
+html.light-mode body .btn-hero-cta::before {
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%) !important;
+}
+
+/* ── 20. تضييق pulse/blink animations على الأجهزة الضعيفة ── */
+@media (max-width: 768px) {
+    html body .hero-tag-dot { animation-duration: 3s !important; }
+}
+
+/* ── 21. حد أدنى للمساحة اللمسية للأزرار الكبيرة فقط ──────── */
+/* لا نطبّق على nav-link-btn / header-btn حتى لا نُفسد الهيدر */
+html body .btn-primary,
+html body .btn-hero-cta,
+html body .pricing-btn,
+html body .btn-primary-mobile {
+    min-height: 44px;
+}
+
+/* ── 22. إصلاح overflow على العناوين الطويلة بالعربية ──── */
+html body .feature-card h3,
+html body .service-card h3,
+html body .solution-card h3,
+html body .pricing-card h3,
+html body .faq-question-text {
+    word-break: normal;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+/* ── 23. شعار ‎inify‎ النصي: وضوح الـ gradient عند كسره ─── */
+html body .logo-text.en {
+    background-clip: text;
+    -webkit-background-clip: text;
+    display: inline-block;
+}

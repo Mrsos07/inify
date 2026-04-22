@@ -226,6 +226,53 @@ class StreamPayService:
             logger.error(f"Cancel subscription request error: {e}")
             return {'success': False, 'error': 'تعذر الاتصال ببوابة الدفع'}
 
+    # ─── API: Refund Payment ──────────────────────────────────────────
+
+    def refund_payment(self, payment_id, reason='REQUESTED_BY_CUSTOMER', note=None,
+                       allow_refund_multiple_related_payments=True):
+        """
+        استرجاع دفعة عبر StreamPay (خلال نافذة 5 أيام من الاشتراك).
+
+        Args:
+            payment_id: StreamPay payment UUID
+            reason: REQUESTED_BY_CUSTOMER | DUPLICATE | FRAUDULENT | OTHER
+            note: optional explanation string
+            allow_refund_multiple_related_payments: في حال ارتباط عدة مدفوعات بنفس المعاملة.
+
+        Returns:
+            dict with 'success' and 'data' أو 'error'
+        """
+        if not payment_id:
+            return {'success': False, 'error': 'payment_id مطلوب'}
+
+        payload = {
+            'refund_reason': reason,
+            'allow_refund_multiple_related_payments': allow_refund_multiple_related_payments,
+        }
+        if note:
+            payload['refund_note'] = note
+
+        try:
+            response = requests.post(
+                f'{STREAMPAY_BASE_URL}/payments/{payment_id}/refund',
+                json=payload,
+                headers=self._get_headers(),
+                timeout=30,
+            )
+            if response.status_code == 200:
+                logger.info(f"Payment {payment_id} refunded successfully")
+                return {'success': True, 'data': response.json()}
+            else:
+                logger.error(f"Refund payment error: {response.status_code} - {response.text}")
+                return {
+                    'success': False,
+                    'error': f'فشل الاسترجاع ({response.status_code})',
+                    'detail': response.text,
+                }
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Refund payment request error: {e}")
+            return {'success': False, 'error': 'تعذر الاتصال ببوابة الدفع'}
+
     # ─── API: Create Consumer ─────────────────────────────────────────
 
     def create_or_get_consumer(self, agent):
