@@ -4,20 +4,12 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     
-    <!-- Homepage (Company) -->
+    <!-- Homepage (Real Estate AI Agent product) -->
     <url>
         <loc>https://inify.ai/</loc>
-        <lastmod>2025-02-15</lastmod>
+        <lastmod>2026-11-03</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
-    </url>
-    
-    <!-- Estate Product Page -->
-    <url>
-        <loc>https://inify.ai/estate/</loc>
-        <lastmod>2025-02-15</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.95</priority>
     </url>
     
     <!-- Pricing Page -->

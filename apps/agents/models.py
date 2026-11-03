@@ -3,6 +3,7 @@
 Agent Models - نماذج المسوقين العقاريين
 """
 
+import os
 import uuid
 from datetime import timedelta
 from django.db import models
@@ -522,6 +523,14 @@ class WhatsAppInstance(models.Model):
         help_text='رسالة ترسل خارج أوقات العمل'
     )
     
+    # سر عشوائي يُضمَّن في رابط الـ webhook لإثبات أن الحدث قادم من Evolution API
+    webhook_token = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        verbose_name='رمز التحقق من الـ Webhook'
+    )
+    
     # إحصائيات
     messages_received = models.PositiveIntegerField(default=0, verbose_name='الرسائل المستلمة')
     messages_sent = models.PositiveIntegerField(default=0, verbose_name='الرسائل المرسلة')
@@ -538,15 +547,35 @@ class WhatsAppInstance(models.Model):
     def __str__(self):
         return f"WhatsApp - {self.agent.company_name or self.agent.user.email}"
     
-    def get_webhook_url(self):
-        """الحصول على رابط الـ webhook"""
-        from django.conf import settings
+    @staticmethod
+    def generate_webhook_token():
+        import secrets
+        return secrets.token_urlsafe(32)
+
+    @staticmethod
+    def build_webhook_url(instance_name, token=''):
+        """رابط الـ webhook؛ يتضمن الرمز السري إن وُجد"""
         evolution_url = os.getenv('EVOLUTION_API_URL', '')
         if 'localhost' in evolution_url or '127.0.0.1' in evolution_url:
             # Evolution API في Docker - استخدم host.docker.internal
-            return f"http://host.docker.internal:8000/webhooks/whatsapp/{self.instance_name}/"
-        site_url = os.getenv('SITE_URL', 'https://inify.ai')
-        return f"{site_url}/webhooks/whatsapp/{self.instance_name}/"
+            base = 'http://host.docker.internal:8000'
+        else:
+            base = os.getenv('SITE_URL', 'https://inify.ai').rstrip('/')
+        url = f"{base}/webhooks/whatsapp/{instance_name}/"
+        return f"{url}{token}/" if token else url
+
+    def get_webhook_url(self):
+        """الحصول على رابط الـ webhook"""
+        return self.build_webhook_url(self.instance_name, self.webhook_token)
+
+    def is_webhook_request_authorized(self, token):
+        """التحقق من رمز الـ webhook (مقارنة ثابتة الزمن)"""
+        import hmac
+        from django.conf import settings
+        if self.webhook_token:
+            return bool(token) and hmac.compare_digest(str(token), self.webhook_token)
+        # Instance قديم لم يُسجَّل له رمز بعد: يُسمح بالرابط القديم فقط أثناء فترة الانتقال
+        return not token and getattr(settings, 'WHATSAPP_WEBHOOK_LEGACY_ALLOWED', True)
     
     def increment_received(self):
         """زيادة عداد الرسائل المستلمة"""
@@ -570,7 +599,12 @@ class APIKey(models.Model):
         verbose_name='المسوق'
     )
     name = models.CharField(max_length=100, verbose_name='اسم المفتاح')
-    key = models.CharField(max_length=64, unique=True, verbose_name='المفتاح')
+    # قديم: نص المفتاح. المفاتيح الجديدة لا تُخزن نصاً (يبقى فارغاً) ويُخزن الـ hash فقط.
+    key = models.CharField(max_length=64, unique=True, null=True, blank=True, verbose_name='المفتاح (قديم)')
+    key_hash = models.CharField(max_length=64, unique=True, null=True, blank=True, verbose_name='Hash المفتاح')
+    key_prefix = models.CharField(max_length=12, blank=True, verbose_name='بداية المفتاح')
+    scopes = models.JSONField(default=list, blank=True, verbose_name='الصلاحيات')
+    expires_at = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ الانتهاء')
     is_active = models.BooleanField(default=True, verbose_name='نشط')
     last_used = models.DateTimeField(null=True, blank=True, verbose_name='آخر استخدام')
     requests_count = models.PositiveIntegerField(default=0, verbose_name='عدد الطلبات')
@@ -584,10 +618,54 @@ class APIKey(models.Model):
     def __str__(self):
         return f"{self.agent} - {self.name}"
 
+    ALL_SCOPES = ('properties:read', 'properties:write')
+
     @classmethod
     def generate_key(cls):
         import secrets
         return secrets.token_hex(32)
+
+    @staticmethod
+    def hash_key(raw_key):
+        import hashlib
+        return hashlib.sha256(str(raw_key).encode('utf-8')).hexdigest()
+
+    @classmethod
+    def create_for_agent(cls, agent, name, scopes=None):
+        """ينشئ مفتاحاً ويعيد (obj, raw_key). النص الكامل يُعرض مرة واحدة ولا يُخزن."""
+        raw = cls.generate_key()
+        obj = cls.objects.create(
+            agent=agent, name=name, key=None, key_hash=cls.hash_key(raw), key_prefix=raw[:8],
+            scopes=list(scopes) if scopes is not None else list(cls.ALL_SCOPES),
+        )
+        return obj, raw
+
+    @classmethod
+    def authenticate(cls, raw_key):
+        """يبحث بالـ hash أولاً ثم بالنص للمفاتيح القديمة (ويرحّلها إلى hash تلقائياً)."""
+        if not raw_key:
+            return None
+        key_hash = cls.hash_key(raw_key)
+        obj = cls.objects.select_related('agent').filter(key_hash=key_hash, is_active=True).first()
+        if obj is None:
+            obj = cls.objects.select_related('agent').filter(key=raw_key, is_active=True).first()
+            if obj is not None:
+                obj.key_hash = key_hash
+                obj.key_prefix = obj.key_prefix or raw_key[:8]
+                obj.save(update_fields=['key_hash', 'key_prefix'])
+        if obj is None or (obj.expires_at and obj.expires_at <= timezone.now()):
+            return None
+        return obj
+
+    def has_scope(self, scope):
+        # المفاتيح القديمة بلا scopes محددة تحتفظ بصلاحياتها السابقة (توافق خلفي)
+        return not self.scopes or scope in self.scopes
+
+    @property
+    def preview(self):
+        prefix = self.key_prefix or (self.key[:8] if self.key else '')
+        suffix = self.key[-4:] if self.key else ''
+        return f"{prefix}...{suffix}"
 
     def record_use(self):
         from django.utils import timezone
@@ -617,6 +695,15 @@ class TokenUsage(models.Model):
     total_tokens = models.PositiveIntegerField(default=0, verbose_name='إجمالي التوكنات')
     model = models.CharField(max_length=50, default='gpt-4.1-mini', verbose_name='النموذج')
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='web_chat', verbose_name='المصدر')
+    # حقول القياس الموحد لكل استدعاء LLM (بدون PII أو أسرار)
+    provider = models.CharField(max_length=30, default='openai', verbose_name='المزود')
+    purpose = models.CharField(max_length=50, blank=True, verbose_name='الغرض')
+    conversation_id = models.UUIDField(null=True, blank=True, verbose_name='المحادثة')
+    prompt_version = models.CharField(max_length=50, blank=True, verbose_name='إصدار الـ Prompt')
+    latency_ms = models.PositiveIntegerField(default=0, verbose_name='زمن الاستجابة (ms)')
+    status = models.CharField(max_length=20, default='success', verbose_name='الحالة')
+    cost_estimate = models.DecimalField(max_digits=12, decimal_places=6, default=0, verbose_name='التكلفة التقديرية (USD)')
+    trace_id = models.CharField(max_length=64, blank=True, verbose_name='Trace ID')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='التاريخ')
 
     class Meta:
@@ -631,8 +718,10 @@ class TokenUsage(models.Model):
         return f"{self.agent} - {self.total_tokens} tokens ({self.created_at.date()})"
 
     @classmethod
-    def log(cls, agent, prompt_tokens, completion_tokens, model='gpt-4.1-mini', source='web_chat'):
+    def log(cls, agent, prompt_tokens, completion_tokens, model='gpt-4.1-mini', source='web_chat', **extra):
         """تسجيل استهلاك التوكنات"""
+        allowed = {'provider', 'purpose', 'conversation_id', 'prompt_version', 'latency_ms',
+                   'status', 'cost_estimate', 'trace_id'}
         return cls.objects.create(
             agent=agent,
             prompt_tokens=prompt_tokens,
@@ -640,6 +729,7 @@ class TokenUsage(models.Model):
             total_tokens=prompt_tokens + completion_tokens,
             model=model,
             source=source,
+            **{k: v for k, v in extra.items() if k in allowed and v is not None},
         )
 
     @classmethod
@@ -1057,3 +1147,112 @@ class TeamMember(models.Model):
             return hasattr(member_agent, 'whatsapp_instance') and member_agent.whatsapp_instance.status == 'connected'
         except (Agent.DoesNotExist, WhatsAppInstance.DoesNotExist):
             return False
+
+
+class InboundWebhookEvent(models.Model):
+    """
+    Inbox: سجل دائم للأحداث الواردة (دفع، واتساب...) لمنع معالجة الحدث نفسه مرتين.
+    القيد الفريد (provider, external_event_id) يضمن أثراً واحداً حتى مع إعادة الإرسال.
+    """
+
+    STATUS_CHOICES = [
+        ('received', 'مستلم'),
+        ('processing', 'قيد المعالجة'),
+        ('completed', 'مكتمل'),
+        ('failed', 'فشل'),
+    ]
+
+    id = models.BigAutoField(primary_key=True)
+    provider = models.CharField(max_length=30, verbose_name='المزود')
+    external_event_id = models.CharField(max_length=255, verbose_name='معرف الحدث لدى المزود')
+    event_type = models.CharField(max_length=100, blank=True, verbose_name='نوع الحدث')
+    agent = models.ForeignKey(
+        Agent, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='inbound_events', verbose_name='المستأجر'
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='received', verbose_name='الحالة')
+    attempts = models.PositiveIntegerField(default=0, verbose_name='عدد المحاولات')
+    last_error = models.TextField(blank=True, verbose_name='آخر خطأ')
+    received_at = models.DateTimeField(auto_now_add=True, verbose_name='وقت الاستلام')
+    processed_at = models.DateTimeField(null=True, blank=True, verbose_name='وقت المعالجة')
+
+    class Meta:
+        verbose_name = 'حدث وارد'
+        verbose_name_plural = 'الأحداث الواردة'
+        ordering = ['-received_at']
+        constraints = [
+            models.UniqueConstraint(fields=['provider', 'external_event_id'], name='uniq_inbound_provider_event'),
+        ]
+
+    def __str__(self):
+        return f"{self.provider}:{self.external_event_id} ({self.status})"
+
+    @classmethod
+    def record_once(cls, provider, external_event_id, agent=None, event_type=''):
+        """
+        يسجل الحدث ويعيد True إن كانت هذه أول مرة يُستلم فيها، وFalse إن كان مكرراً.
+        """
+        from django.db import IntegrityError, transaction
+        try:
+            with transaction.atomic():
+                cls.objects.create(
+                    provider=provider,
+                    external_event_id=str(external_event_id)[:255],
+                    agent=agent,
+                    event_type=event_type[:100],
+                )
+            return True
+        except IntegrityError:
+            return False
+
+    @classmethod
+    def mark(cls, provider, external_event_id, status, error=''):
+        cls.objects.filter(provider=provider, external_event_id=str(external_event_id)[:255]).update(
+            status=status,
+            last_error=error[:2000],
+            processed_at=timezone.now(),
+            attempts=models.F('attempts') + 1,
+        )
+
+
+class OutboxEvent(models.Model):
+    """
+    Outbox: أحداث يجب تنفيذها/إرسالها بشكل موثوق (Webhooks خارجية، إشعارات...).
+    تُحفظ في قاعدة البيانات أولاً ثم ينفذها عامل مستقل مع إعادة المحاولة وDLQ.
+    """
+
+    STATUS_CHOICES = [
+        ('pending', 'بانتظار التنفيذ'),
+        ('processing', 'قيد التنفيذ'),
+        ('completed', 'مكتمل'),
+        ('dead', 'فشل نهائي (DLQ)'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    agent = models.ForeignKey(
+        Agent, null=True, blank=True, on_delete=models.CASCADE,
+        related_name='outbox_events', verbose_name='المستأجر'
+    )
+    topic = models.CharField(max_length=100, verbose_name='نوع المهمة')
+    queue = models.CharField(max_length=30, default='integrations', verbose_name='الطابور')
+    payload = models.JSONField(default=dict, verbose_name='البيانات')
+    dedup_key = models.CharField(max_length=255, null=True, blank=True, unique=True, verbose_name='مفتاح منع التكرار')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True, verbose_name='الحالة')
+    attempts = models.PositiveIntegerField(default=0, verbose_name='عدد المحاولات')
+    max_attempts = models.PositiveIntegerField(default=6, verbose_name='الحد الأقصى للمحاولات')
+    next_attempt_at = models.DateTimeField(default=timezone.now, db_index=True, verbose_name='موعد المحاولة التالية')
+    locked_until = models.DateTimeField(null=True, blank=True, verbose_name='محجوز حتى')
+    last_error = models.TextField(blank=True, verbose_name='آخر خطأ')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ الاكتمال')
+
+    class Meta:
+        verbose_name = 'مهمة Outbox'
+        verbose_name_plural = 'مهام Outbox'
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['status', 'next_attempt_at'], name='outbox_due_idx'),
+        ]
+
+    def __str__(self):
+        return f"{self.topic} ({self.status}, attempts={self.attempts})"

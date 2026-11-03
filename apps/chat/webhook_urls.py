@@ -15,4 +15,5 @@ urlpatterns = [
     path('whatsapp/status/<uuid:agent_id>/', WhatsAppStatusView.as_view(), name='whatsapp-status'),
     path('whatsapp/', WhatsAppWebhookView.as_view(), {'instance_name': None}, name='webhook-whatsapp-global'),
     path('whatsapp/<str:instance_name>/', WhatsAppWebhookView.as_view(), name='webhook-whatsapp'),
+    path('whatsapp/<str:instance_name>/<str:token>/', WhatsAppWebhookView.as_view(), name='webhook-whatsapp-secure'),
 ]

@@ -312,26 +312,98 @@ class StreamPayService:
             logger.error(f"Create consumer request error: {e}")
             return {'success': False, 'error': 'تعذر الاتصال ببوابة الدفع'}
 
+    # ─── API: Fetch Payment ───────────────────────────────────────────
+
+    def get_payment(self, payment_id):
+        """Fetch a payment from StreamPay (source of truth for its status/amount)."""
+        try:
+            response = requests.get(
+                f'{STREAMPAY_BASE_URL}/payments/{payment_id}',
+                headers=self._get_headers(),
+                timeout=30,
+            )
+            if response.status_code == 200:
+                return response.json()
+            logger.error(f"Get payment error: {response.status_code}")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Get payment request error: {e}")
+            return None
+
+    # ─── Server-side payment verification ────────────────────────────
+
+    PAID_STATUSES = {'SUCCEEDED', 'PAID', 'COMPLETED'}
+    CURRENCY = 'SAR'
+
+    @staticmethod
+    def _decimal_field(obj, names):
+        from decimal import Decimal, InvalidOperation
+        for name in names:
+            value = obj.get(name) if isinstance(obj, dict) else None
+            if value in (None, ''):
+                continue
+            if isinstance(value, dict):  # e.g. {"amount": "199.00", "currency": "SAR"}
+                value = value.get('amount') or value.get('value')
+            try:
+                return Decimal(str(value))
+            except (InvalidOperation, ValueError, TypeError):
+                continue
+        return None
+
+    def verify_paid_object(self, obj, expected_amount, agent_id=None):
+        """
+        Validate a fetched payment/invoice object. Returns (ok: bool, reason: str).
+        Paying more than the plan price (e.g. VAT-inclusive totals) is accepted; less is not.
+        """
+        from decimal import Decimal
+        if not isinstance(obj, dict):
+            return False, 'unavailable'
+        status = str(obj.get('status', '')).upper()
+        if status not in self.PAID_STATUSES:
+            return False, f'status_{status or "missing"}'
+        amount = self._decimal_field(obj, ['amount', 'total_amount', 'amount_paid', 'total'])
+        if amount is None:
+            return False, 'amount_missing'
+        if amount + Decimal('0.01') < Decimal(str(expected_amount)):
+            return False, 'amount_mismatch'
+        currency = str(obj.get('currency', '') or '').upper()
+        if currency and currency != self.CURRENCY:
+            return False, 'currency_mismatch'
+        metadata = obj.get('custom_metadata') or obj.get('metadata') or {}
+        if agent_id and isinstance(metadata, dict) and metadata.get('agent_id') \
+                and str(metadata.get('agent_id')) != str(agent_id):
+            return False, 'agent_mismatch'
+        return True, ''
+
     # ─── Webhook Verification ────────────────────────────────────────
 
-    def verify_webhook_signature(self, raw_body, signature_header):
+    PLACEHOLDER_SECRETS = {'', 'your-webhook-secret-here', 'change-me'}
+
+    @property
+    def webhook_secret_configured(self):
+        return self.webhook_secret not in self.PLACEHOLDER_SECRETS
+
+    def verify_webhook_signature(self, raw_body, signature_header, tolerance_seconds=None):
         """
-        Verify StreamPay webhook signature.
+        Verify StreamPay webhook signature and freshness.
         
         Args:
             raw_body: raw request body bytes
             signature_header: X-Webhook-Signature header value (t=TIMESTAMP,v1=SIGNATURE)
+            tolerance_seconds: reject signatures older/newer than this (replay window)
         
         Returns:
             bool
         """
-        if not self.webhook_secret or not signature_header:
+        if not self.webhook_secret_configured or not signature_header:
             return False
 
         try:
-            parts = dict(x.split('=', 1) for x in signature_header.split(','))
+            parts = dict(x.strip().split('=', 1) for x in signature_header.split(','))
             timestamp = parts.get('t', '')
             signature = parts.get('v1', '')
+            if not timestamp or not signature:
+                return False
 
             message = f"{timestamp}.{raw_body.decode()}"
             computed = hmac.HMAC(
@@ -340,7 +412,18 @@ class StreamPayService:
                 hashlib.sha256
             ).hexdigest()
 
-            return hmac.compare_digest(computed, signature)
+            if not hmac.compare_digest(computed, signature):
+                return False
+
+            if tolerance_seconds is not None:
+                ts = float(timestamp)
+                if ts > 1e12:  # milliseconds
+                    ts /= 1000.0
+                import time
+                if abs(time.time() - ts) > tolerance_seconds:
+                    logger.warning("[WEBHOOK SECURITY] StreamPay signature outside replay window")
+                    return False
+            return True
         except Exception as e:
             logger.error(f"Webhook signature verification error: {e}")
             return False

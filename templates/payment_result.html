@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% if success %}تم الدفع بنجاح{% else %}فشل الدفع{% endif %} - Inify</title>
+    <title>{% if success %}تم الدفع بنجاح{% elif pending_confirmation %}جاري تأكيد الدفع{% else %}فشل الدفع{% endif %} - Inify</title>
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/css/theme.css">
     <style>
@@ -68,6 +68,15 @@
         <h1 class="result-title">تم الدفع بنجاح!</h1>
         <p class="result-desc">
             تم تفعيل اشتراكك بنجاح. يمكنك الآن الاستمتاع بجميع مميزات المنصة.
+        </p>
+        <a href="/dashboard/" class="result-btn">الذهاب للوحة التحكم</a>
+    </div>
+    {% elif pending_confirmation %}
+    <div class="result-card success-card">
+        <div class="result-icon">⏳</div>
+        <h1 class="result-title">جاري تأكيد الدفع</h1>
+        <p class="result-desc">
+            استلمنا عملية الدفع ونقوم بتأكيدها مع بوابة الدفع. سيتم تفعيل اشتراكك تلقائياً خلال لحظات.
         </p>
         <a href="/dashboard/" class="result-btn">الذهاب للوحة التحكم</a>
     </div>

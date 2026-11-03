@@ -149,18 +149,11 @@ def whatsapp_status(request):
             # Evolution API v2.x يرجع state مباشرة أو في instance
             state = data.get('state') or data.get('instance', {}).get('state', 'disconnected')
             if state == 'open':
-                # إذا تم الاتصال للتو، تأكد من تسجيل webhook
-                if instance.status != 'connected':
-                    import os
-                    evolution_url = os.getenv('EVOLUTION_API_URL', '')
-                    if 'localhost' in evolution_url or '127.0.0.1' in evolution_url:
-                        webhook_url = f"http://host.docker.internal:8000/webhooks/whatsapp/{instance.instance_name}/"
-                    else:
-                        site_url = os.getenv('SITE_URL', 'https://inify.ai')
-                        webhook_url = f"{site_url}/webhooks/whatsapp/{instance.instance_name}/"
-                    
-                    whatsapp_service.set_webhook(instance.instance_name, webhook_url)
-                    logger.info(f"✅ Webhook registered on connection: {instance.instance_name}")
+                # إذا تم الاتصال للتو (أو Instance قديم بلا رمز)، سجّل webhook محمي برمز سري
+                if instance.status != 'connected' or not instance.webhook_token:
+                    from services.whatsapp_service import register_secure_webhook
+                    if register_secure_webhook(instance).get('success'):
+                        logger.info(f"✅ Secure webhook registered: {instance.instance_name}")
                 
                 instance.status = 'connected'
                 instance.connected_at = instance.connected_at or timezone.now()
@@ -255,19 +248,11 @@ def whatsapp_connect(request):
         whatsapp_service.delete_instance(existing_instance.instance_name)
         existing_instance.delete()
     
-    # الخطوة 1: إنشاء Instance جديد في Evolution API مع Webhook
-    # استخدام host.docker.internal إذا كان Evolution API يعمل في Docker محلياً
-    evolution_url = os.getenv('EVOLUTION_API_URL', '')
-    if 'localhost' in evolution_url or '127.0.0.1' in evolution_url:
-        # Evolution API في Docker - استخدم host.docker.internal للوصول للـ host
-        webhook_url = f"http://host.docker.internal:8000/webhooks/whatsapp/{instance_name}/"
-    else:
-        # Evolution API على سيرفر خارجي
-        site_url = os.getenv('SITE_URL', 'https://inify.ai')
-        webhook_url = f"{site_url}/webhooks/whatsapp/{instance_name}/"
+    # الخطوة 1: إنشاء Instance جديد في Evolution API مع Webhook محمي برمز سري
+    webhook_token = WhatsAppInstance.generate_webhook_token()
+    webhook_url = WhatsAppInstance.build_webhook_url(instance_name, webhook_token)
     
-    logger.info(f"Creating WhatsApp instance: {instance_name} for user: {user_name}")
-    logger.info(f"Webhook URL: {webhook_url}")
+    logger.info(f"Creating WhatsApp instance: {instance_name}")
     
     create_result = whatsapp_service.create_instance(instance_name, webhook_url=webhook_url)
     
@@ -282,6 +267,7 @@ def whatsapp_connect(request):
     instance = WhatsAppInstance.objects.create(
         agent=agent,
         instance_name=instance_name,
+        webhook_token=webhook_token,
         status='connecting'
     )
     logger.info(f"Instance saved to database: {instance_name}")

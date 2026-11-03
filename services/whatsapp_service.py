@@ -89,10 +89,12 @@ class WhatsAppService:
                 }
         
         # إنشاء instance جديد
+        import secrets
         data = {
             'instanceName': instance_name,
             'integration': 'WHATSAPP-BAILEYS',
-            'token': instance_name,
+            # رمز الـ instance في Evolution يمنح صلاحيات عليه؛ لا يجوز أن يساوي الاسم المتوقع
+            'token': secrets.token_hex(24),
             'qrcode': True
         }
         
@@ -584,3 +586,21 @@ class WhatsAppService:
 
 # Singleton instance
 whatsapp_service = WhatsAppService()
+
+
+def register_secure_webhook(instance, rotate=False) -> dict:
+    """
+    تسجيل رابط webhook يحتوي رمزاً سرياً للـ instance في Evolution API.
+    لا يُحفظ الرمز الجديد إلا بعد نجاح التسجيل، حتى لا يُقفل الـ instance عن استقبال الأحداث.
+    """
+    token = instance.webhook_token
+    if rotate or not token:
+        token = instance.generate_webhook_token()
+    result = whatsapp_service.set_webhook(
+        instance.instance_name,
+        instance.build_webhook_url(instance.instance_name, token),
+    )
+    if result.get('success') and token != instance.webhook_token:
+        instance.webhook_token = token
+        instance.save(update_fields=['webhook_token'])
+    return result

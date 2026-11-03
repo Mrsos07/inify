@@ -7,6 +7,21 @@ from rest_framework import serializers
 from .models import Lead, LeadActivity, ViewingAppointment, PropertyCalendar, CalendarBlockedDate
 
 
+def ensure_same_tenant(serializer, data, fields):
+    """
+    يمنع ربط كائنات تخص مستأجراً آخر (IDOR/BOLA): كل علاقة مكتوبة يجب أن تتبع
+    حساب المستخدم الحالي. الرسالة موحدة حتى لا تكشف وجود الكائن.
+    """
+    request = serializer.context.get('request')
+    agent = getattr(getattr(request, 'user', None), 'agent_profile', None) if request else None
+    for field in fields:
+        obj = data.get(field)
+        if obj is None:
+            continue
+        if agent is None or getattr(obj, 'agent_id', None) != agent.id:
+            raise serializers.ValidationError({field: 'العنصر غير موجود'})
+
+
 class LeadActivitySerializer(serializers.ModelSerializer):
     """محول بيانات نشاط العميل"""
     
@@ -232,7 +247,7 @@ class LeadCreateSerializer(serializers.ModelSerializer):
         
         if property_ids:
             from apps.properties.models import Property
-            properties = Property.objects.filter(id__in=property_ids)
+            properties = Property.objects.filter(id__in=property_ids, agent_id=lead.agent_id)
             lead.interested_properties.set(properties)
         
         return lead
@@ -273,6 +288,10 @@ class ViewingAppointmentSerializer(serializers.ModelSerializer):
         mapping = {'agent': 'المسوق', 'ai_agent': 'الوكيل الذكي', 'client': 'العميل'}
         return mapping.get(obj.booked_by, obj.booked_by)
 
+    def validate(self, data):
+        ensure_same_tenant(self, data, ('lead', 'property'))
+        return data
+
 
 class ViewingAppointmentCreateSerializer(serializers.ModelSerializer):
     """محول إنشاء موعد معاينة"""
@@ -285,7 +304,8 @@ class ViewingAppointmentCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """التحقق من توفر الموعد"""
+        """التحقق من الملكية ثم من توفر الموعد"""
+        ensure_same_tenant(self, data, ('lead', 'property'))
         property_obj = data.get('property')
         date = data.get('scheduled_date')
         time = data.get('scheduled_time')
@@ -334,6 +354,10 @@ class PropertyCalendarSerializer(serializers.ModelSerializer):
             'slot_duration', 'working_days', 'allow_ai_booking', 'max_bookings_per_day',
             'min_advance_hours', 'max_advance_days', 'blocked_dates', 'created_at', 'updated_at'
         ]
+
+    def validate(self, data):
+        ensure_same_tenant(self, data, ('property',))
+        return data
 
 
 class PropertyCalendarUpdateSerializer(serializers.ModelSerializer):

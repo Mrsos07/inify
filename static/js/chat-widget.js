@@ -26,6 +26,7 @@
         constructor(config) {
             this.config = { ...DEFAULT_CONFIG, ...config };
             this.conversationId = null;
+            this.sessionToken = null;
             this.clientId = this.getClientId();
             this.isOpen = false;
             this.isTyping = false;
@@ -393,6 +394,7 @@
                         agent_id: this.config.agentId,
                         message: message,
                         conversation_id: this.conversationId,
+                        session_token: this.sessionToken,
                         client_id: this.clientId,
                         language: this.config.language
                     })
@@ -402,6 +404,7 @@
                 
                 if (response.ok) {
                     this.conversationId = data.conversation_id;
+                    this.sessionToken = data.session_token || null;
                     this.addMessage(data.response, 'bot', data.suggested_properties, data.show_media);
                 } else {
                     this.addMessage('عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.', 'bot');

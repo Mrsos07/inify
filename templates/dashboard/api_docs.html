@@ -127,7 +127,7 @@ body.light-mode .bc{background:#FFFFFF!important;color:#4A90A4!important;border-
     {% for key in api_keys %}
     <div class="key-row" id="key-row-{{ key.id }}">
       <span class="key-name">{{ key.name }}</span>
-      <span class="key-preview">{{ key.key|slice:":8" }}...{{ key.key|slice:"-4:" }}</span>
+      <span class="key-preview">{{ key.preview }}</span>
       <span class="key-stats">{{ key.requests_count }} طلب</span>
       <span class="key-date">{{ key.created_at|date:"Y/m/d" }}</span>
       <button class="btn-del" onclick="deleteKey('{{ key.id }}')">حذف</button>

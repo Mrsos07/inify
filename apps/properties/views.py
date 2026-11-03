@@ -12,7 +12,13 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 import json
+import logging
+
+from services.rate_limit import rate_limit, ip_and_agent_key
+
+logger = logging.getLogger(__name__)
 
 from .models import Property, PropertyImage, PropertyAmenity, PropertyVideo, PropertyViewingSlot, PropertyViewingCalendar
 from .serializers import (
@@ -152,19 +158,19 @@ from django.views.decorators.csrf import csrf_exempt
 @login_required
 def save_property(request):
     """حفظ أو تحديث عقار"""
-    print(f"=== save_property called ===")
-    print(f"Method: {request.method}")
-    print(f"User: {request.user}")
-    print(f"Is authenticated: {request.user.is_authenticated}")
+    logger.debug(f"=== save_property called ===")
+    logger.debug(f"Method: {request.method}")
+    logger.debug(f"User: {request.user}")
+    logger.debug(f"Is authenticated: {request.user.is_authenticated}")
     
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
     
     try:
         agent = request.user.agent_profile
-        print(f"Agent found: {agent}")
+        logger.debug(f"Agent found: {agent}")
     except Exception as e:
-        print(f"Agent error: {e}")
+        logger.debug(f"Agent error: {e}")
         return JsonResponse({'success': False, 'error': 'لا يوجد حساب مسوق'}, status=400)
     
     try:
@@ -248,7 +254,7 @@ def save_property(request):
         # حفظ المميزات والخدمات (Amenities)
         # ═══════════════════════════════════════════════════════════
         amenities = request.POST.getlist('amenities')
-        print(f"Amenities received: {amenities}")
+        logger.debug(f"Amenities received: {amenities}")
         
         # حذف المميزات القديمة وإضافة الجديدة
         property_obj.amenities.all().delete()
@@ -258,7 +264,7 @@ def save_property(request):
                     property=property_obj,
                     amenity=amenity_code
                 )
-        print(f"Amenities saved: {property_obj.amenities.count()}")
+        logger.debug(f"Amenities saved: {property_obj.amenities.count()}")
         
         # حذف الصور المحذوفة
         deleted_image_ids = request.POST.getlist('deleted_images')
@@ -291,9 +297,9 @@ def save_property(request):
     
     except Exception as e:
         import traceback
-        print(f"Save property error: {e}")
-        print(traceback.format_exc())
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.debug(f"Save property error: {e}")
+        logger.exception('Unhandled error')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 @login_required
@@ -346,7 +352,8 @@ def get_property(request, property_id):
     except Property.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.exception('Unhandled error')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 @csrf_exempt
@@ -364,7 +371,8 @@ def delete_property(request, property_id):
     except Property.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.exception('Unhandled error')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 @csrf_exempt
@@ -452,9 +460,9 @@ def list_properties(request):
         return JsonResponse({'success': True, 'properties': [], 'count': 0, 'message': 'لا يوجد حساب وكيل'})
     except Exception as e:
         import traceback
-        print(f"list_properties error: {e}")
-        print(traceback.format_exc())
-        return JsonResponse({'success': False, 'error': str(e), 'properties': []}, status=500)
+        logger.debug(f"list_properties error: {e}")
+        logger.exception('Unhandled error')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي', 'properties': []}, status=500)
 
 
 @csrf_exempt
@@ -526,11 +534,12 @@ def save_property_json(request):
     
     except Exception as e:
         import traceback
-        print(f"Save property JSON error: {e}")
-        print(traceback.format_exc())
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.debug(f"Save property JSON error: {e}")
+        logger.exception('Unhandled error')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
+@rate_limit('public_agent_properties', limit=600, window=3600, key_func=ip_and_agent_key)
 def get_agent_properties(request, agent_id):
     """الحصول على عقارات وكيل معين (للشات)"""
     try:
@@ -585,7 +594,8 @@ def get_agent_properties(request, agent_id):
             'phone': agent.phone or '',
             'email': agent.email or '',
             'welcomeMessage': agent.bot_welcome_message or f"أهلاً وسهلاً! 👋 معك {agent.bot_name or 'المساعد'} من {agent.company_name or 'فريقنا'}. كيف أقدر أساعدك اليوم؟",
-            'systemPrompt': agent.bot_system_prompt or '',
+            # تعليمات النظام (System Prompt) لا تُكشف للعامة — تُبنى في الخادم فقط
+            'systemPrompt': '',
             'collectLeads': agent.bot_collect_leads,
             'language': agent.bot_language or 'ar',
             'color': agent.bot_color or '#000000',
@@ -599,15 +609,18 @@ def get_agent_properties(request, agent_id):
         }
         
         return JsonResponse({'success': True, 'properties': data, 'agent': agent_data})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e), 'properties': []}, status=500)
+    except (Agent.DoesNotExist, ValueError, ValidationError):
+        return JsonResponse({'success': False, 'error': 'الوكيل غير موجود', 'properties': []}, status=404)
+    except Exception:
+        logger.exception('get_agent_properties failed')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي', 'properties': []}, status=500)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # تقويم المعاينة APIs
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@csrf_exempt
+@rate_limit('public_viewing_calendar', limit=300, window=3600, key_func=ip_and_agent_key)
 def get_property_viewing_calendar(request, property_id):
     """
     الحصول على تقويم المعاينة لعقار معين
@@ -692,10 +705,12 @@ def get_property_viewing_calendar(request, property_id):
     except Property.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.exception('Unhandled error')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 @csrf_exempt
+@rate_limit('public_property_booking', limit=20, window=3600, key_func=ip_and_agent_key)
 def book_property_viewing(request, property_id):
     """
     حجز موعد معاينة لعقار
@@ -839,7 +854,7 @@ def book_property_viewing(request, property_id):
     except Exception as e:
         import logging
         logging.error(f"Error booking viewing: {e}")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 @csrf_exempt
@@ -911,19 +926,25 @@ def manage_viewing_slots(request, property_id):
     except Property.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.exception('Unhandled error')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
-@csrf_exempt
 def get_property_appointments(request, property_id):
     """
-    الحصول على مواعيد المعاينة لعقار معين
+    الحصول على مواعيد المعاينة لعقار معين (لمالك العقار فقط)
     GET /api/properties/<property_id>/appointments/
     """
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'يرجى تسجيل الدخول'}, status=401)
+
     try:
         from apps.leads.models import ViewingAppointment
         
-        property_obj = Property.objects.get(id=property_id)
+        agent = getattr(request.user, 'agent_profile', None)
+        if agent is None:
+            return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
+        property_obj = Property.objects.get(id=property_id, agent=agent)
         
         appointments = ViewingAppointment.objects.filter(
             property=property_obj
@@ -958,8 +979,10 @@ def get_property_appointments(request, property_id):
         
     except Property.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'العقار غير موجود'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception('get_property_appointments failed')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 # ═══════════════════════════════════════════════════════════
@@ -991,7 +1014,7 @@ def download_excel_template(request):
         
     except Exception as e:
         logger.error(f"Error generating Excel template: {str(e)}", exc_info=True)
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 @login_required

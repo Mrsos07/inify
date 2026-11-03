@@ -21,6 +21,16 @@ def _check_plan(agent):
     return agent and agent.subscription_plan == 'enterprise'
 
 
+def _url_error(url):
+    """None إذا كان الرابط آمناً، وإلا رسالة الخطأ (حماية SSRF)"""
+    from services.url_safety import validate_outbound_url, UnsafeURLError
+    try:
+        validate_outbound_url(url)
+        return None
+    except UnsafeURLError as exc:
+        return str(exc)
+
+
 @login_required
 def webhook_list_create(request):
     """
@@ -49,14 +59,19 @@ def webhook_list_create(request):
         except Exception:
             return JsonResponse({'error': 'JSON غير صالح'}, status=400)
 
-        name = body.get('name', '').strip()
-        url = body.get('url', '').strip()
+        if not isinstance(body, dict):
+            return JsonResponse({'error': 'JSON غير صالح'}, status=400)
+        name = str(body.get('name', '')).strip()
+        url = str(body.get('url', '')).strip()
         events = body.get('events', [])
 
         if not name:
             return JsonResponse({'error': 'اسم الـ Webhook مطلوب'}, status=400)
-        if not url or not url.startswith(('http://', 'https://')):
-            return JsonResponse({'error': 'رابط الاستقبال غير صالح (يجب أن يبدأ بـ http أو https)'}, status=400)
+        url_error = _url_error(url)
+        if url_error:
+            return JsonResponse({'error': f'رابط الاستقبال غير صالح: {url_error}'}, status=400)
+        if not isinstance(events, list):
+            return JsonResponse({'error': 'events يجب أن تكون قائمة'}, status=400)
         if not events:
             return JsonResponse({'error': 'اختر حدثاً واحداً على الأقل'}, status=400)
         if Webhook.objects.filter(agent=agent).count() >= 10:
@@ -109,11 +124,14 @@ def webhook_detail(request, webhook_id):
         if 'name' in body:
             hook.name = body['name'].strip()
         if 'url' in body:
-            url = body['url'].strip()
-            if not url.startswith(('http://', 'https://')):
-                return JsonResponse({'error': 'رابط غير صالح'}, status=400)
+            url = str(body['url']).strip()
+            url_error = _url_error(url)
+            if url_error:
+                return JsonResponse({'error': f'رابط غير صالح: {url_error}'}, status=400)
             hook.url = url
         if 'events' in body:
+            if not isinstance(body['events'], list):
+                return JsonResponse({'error': 'events يجب أن تكون قائمة'}, status=400)
             valid_events = [v for v, _ in Webhook.EVENT_CHOICES]
             invalid = [e for e in body['events'] if e not in valid_events]
             if invalid:
@@ -155,21 +173,15 @@ def webhook_test(request, webhook_id):
         'agent': agent.company_name or agent.user.get_full_name(),
     })
 
-    import threading
+    # إرسال متزامن (المهلة محدودة داخل _send_single) — لا خيوط داخل الـ web worker
     result = {}
-
-    def _run():
-        _send_single(hook, 'webhook.test', test_payload)
-        last_log = hook.logs.filter(event='webhook.test').order_by('-created_at').first()
-        if last_log:
-            result['status'] = last_log.status
-            result['response_status'] = last_log.response_status
-            result['duration_ms'] = last_log.duration_ms
-            result['error'] = last_log.error_message
-
-    t = threading.Thread(target=_run)
-    t.start()
-    t.join(timeout=12)
+    _send_single(hook, 'webhook.test', test_payload)
+    last_log = hook.logs.filter(event='webhook.test').order_by('-created_at').first()
+    if last_log:
+        result['status'] = last_log.status
+        result['response_status'] = last_log.response_status
+        result['duration_ms'] = last_log.duration_ms
+        result['error'] = last_log.error_message
 
     return JsonResponse({
         'success': result.get('status') == 'success',

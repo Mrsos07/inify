@@ -24,6 +24,35 @@ from services.rag_service import RAGService
 
 logger = logging.getLogger(__name__)
 
+PUBLIC_CHAT_TOKEN_SALT = 'inify.public_chat.v1'
+
+
+def issue_public_chat_token(conversation):
+    """Signed, time-stamped proof that the caller owns this public conversation."""
+    from django.core import signing
+    return signing.dumps(
+        {'c': str(conversation.id), 'a': str(conversation.agent_id)},
+        salt=PUBLIC_CHAT_TOKEN_SALT,
+    )
+
+
+def resolve_public_chat_conversation(token, agent):
+    """Return the conversation bound to a valid token for this agent, else None."""
+    if not token or not isinstance(token, str):
+        return None
+    from django.core import signing
+    try:
+        data = signing.loads(
+            token,
+            salt=PUBLIC_CHAT_TOKEN_SALT,
+            max_age=getattr(settings, 'PUBLIC_CHAT_TOKEN_MAX_AGE', 7 * 24 * 3600),
+        )
+    except signing.BadSignature:
+        return None
+    if not isinstance(data, dict) or data.get('a') != str(agent.id):
+        return None
+    return Conversation.objects.filter(id=data.get('c'), agent=agent).first()
+
 
 def is_time_allowed(time_str, agent=None):
     """
@@ -768,7 +797,7 @@ class PublicChatView(View):
             data = json.loads(request.body)
             message = data.get('message', '')
             agent_id = data.get('agent_id')
-            conversation_id = data.get('conversation_id')
+            session_token = data.get('session_token')
             
             if not message:
                 return JsonResponse({'success': False, 'error': 'الرسالة مطلوبة'}, status=400)
@@ -777,10 +806,11 @@ class PublicChatView(View):
                 return JsonResponse({'success': False, 'error': 'معرف الوكيل مطلوب'}, status=400)
             
             from apps.agents.models import Agent
+            from django.core.exceptions import ValidationError
             
             try:
                 agent = Agent.objects.get(id=agent_id)
-            except Agent.DoesNotExist:
+            except (Agent.DoesNotExist, ValidationError, ValueError):
                 return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
             
             # التحقق من صلاحية الاشتراك
@@ -791,13 +821,9 @@ class PublicChatView(View):
                     'subscription_expired': True
                 }, status=403)
             
-            # الحصول على أو إنشاء محادثة
-            if conversation_id:
-                try:
-                    conversation = Conversation.objects.get(id=conversation_id)
-                except Conversation.DoesNotExist:
-                    conversation = Conversation.objects.create(agent=agent)
-            else:
+            # الحصول على المحادثة عبر رمز الجلسة الموقّع فقط؛ conversation_id وحده لا يثبت الملكية
+            conversation = resolve_public_chat_conversation(session_token, agent)
+            if conversation is None:
                 conversation = Conversation.objects.create(agent=agent)
             
             # حفظ رسالة المستخدم
@@ -822,6 +848,7 @@ class PublicChatView(View):
             return JsonResponse({
                 'success': True,
                 'conversation_id': str(conversation.id),
+                'session_token': issue_public_chat_token(conversation),
                 'response': response.get('content', '')
             })
             
@@ -1549,7 +1576,7 @@ class EmbedChatAPI(View):
             return JsonResponse({'success': False, 'error': 'بيانات غير صالحة'}, status=400)
         except Exception as e:
             logger.error(f"Embed chat error: {e}")
-            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+            return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
     
     def _build_properties_context(self, properties):
         """بناء سياق العقارات الكامل مع جميع التفاصيل والمميزات والصور"""

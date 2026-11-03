@@ -21,6 +21,9 @@ from .serializers import (
 )
 from services.lead_service import LeadService
 from apps.core.decorators import HasActiveSubscription
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -513,11 +516,25 @@ class PropertyCalendarViewSet(viewsets.ModelViewSet):
 # API للوكيل الذكي (AI Agent)
 # ============================================
 
+def _public_conflicts(conflicts):
+    """التعارضات للعرض العام: أوقات فقط بدون أسماء العملاء"""
+    return [{'time': c.get('time'), 'end_time': c.get('end_time')} for c in conflicts]
+
+
 class AIAgentCalendarAPI(APIView):
     """API للوكيل الذكي للتحقق من التوفر وحجز المواعيد"""
     
     authentication_classes = []  # بدون authentication
     permission_classes = [AllowAny]  # سيتم التحقق من agent_id
+    
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        from rest_framework.exceptions import Throttled
+        from services.rate_limit import hit_rate_limit, client_ip
+        limit = 120 if request.method == 'GET' else 20
+        if hit_rate_limit(f'ai_calendar_{request.method}', f"{client_ip(request)}:{kwargs.get('agent_id')}",
+                          limit=limit, window=3600):
+            raise Throttled()
     
     def get(self, request, agent_id):
         """
@@ -548,10 +565,14 @@ class AIAgentCalendarAPI(APIView):
         
         try:
             property_obj = Property.objects.get(id=property_id, agent=agent)
-        except Property.DoesNotExist:
+        except (Property.DoesNotExist, ValueError, ValidationError):
             return Response({'error': 'العقار غير موجود'}, status=404)
         
-        target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        try:
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            target_time = datetime.strptime(time_str, '%H:%M').time() if time_str else None
+        except ValueError:
+            return Response({'error': 'صيغة التاريخ أو الوقت غير صحيحة'}, status=400)
         
         # الحصول على تقويم العقار أو إنشاء واحد افتراضي
         calendar, created = PropertyCalendar.objects.get_or_create(property=property_obj)
@@ -583,8 +604,7 @@ class AIAgentCalendarAPI(APIView):
             })
         
         # إذا تم تحديد وقت معين، التحقق من توفره
-        if time_str:
-            target_time = datetime.strptime(time_str, '%H:%M').time()
+        if target_time is not None:
             availability = ViewingAppointment.check_availability(
                 property_id=property_id,
                 date=target_date,
@@ -595,7 +615,7 @@ class AIAgentCalendarAPI(APIView):
             return Response({
                 'available': availability['available'],
                 'requested_time': time_str,
-                'conflicts': availability['conflicts'] if not availability['available'] else [],
+                'conflicts': _public_conflicts(availability['conflicts']) if not availability['available'] else [],
                 'message': 'الموعد متاح' if availability['available'] else 'الموعد غير متاح'
             })
         
@@ -664,7 +684,7 @@ class AIAgentCalendarAPI(APIView):
             return Response({
                 'success': False,
                 'message': 'الموعد غير متاح',
-                'conflicts': availability['conflicts']
+                'conflicts': _public_conflicts(availability['conflicts'])
             })
         
         # الحصول على العميل أو إنشاء واحد جديد
@@ -738,7 +758,9 @@ class AIAgentCalendarAPI(APIView):
 # API لحفظ العميل من الشات (بدون تسجيل دخول)
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.core.exceptions import ValidationError
 from apps.agents.models import Agent
+from services.rate_limit import rate_limit, ip_and_agent_key
 import json
 
 
@@ -844,9 +866,9 @@ def list_leads(request):
         return JsonResponse({'success': True, 'leads': [], 'count': 0, 'message': 'لا يوجد حساب وكيل'})
     except Exception as e:
         import traceback
-        print(f"list_leads error: {e}")
-        print(traceback.format_exc())
-        return JsonResponse({'success': False, 'error': str(e), 'leads': []}, status=500)
+        logger.debug(f"list_leads error: {e}")
+        logger.exception('Unhandled error')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي', 'leads': []}, status=500)
 
 
 def leads_stats(request):
@@ -869,10 +891,12 @@ def leads_stats(request):
         }
         return JsonResponse({'success': True, 'stats': stats})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.exception('Unhandled error')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 @csrf_exempt
+@rate_limit('public_save_lead', limit=30, window=3600, key_func=ip_and_agent_key)
 def save_lead_from_chat(request, agent_id):
     """حفظ عميل من الشات المضمن"""
     from apps.properties.models import Property
@@ -933,13 +957,13 @@ def save_lead_from_chat(request, agent_id):
                 prop_id = prop_data.get('id')
                 if prop_id:
                     try:
-                        prop = Property.objects.get(id=prop_id)
+                        prop = Property.objects.get(id=prop_id, agent=agent)
                         if not lead.interested_properties.filter(id=prop.id).exists():
                             lead.interested_properties.add(prop)
                             prop.interested_count += 1
                             prop.save(update_fields=['interested_count'])
                             added_any = True
-                    except Property.DoesNotExist:
+                    except (Property.DoesNotExist, ValueError, ValidationError):
                         pass
             # تحديث حالة العميل إلى مهتم (إذا لم يكن في حالة أعلى)
             if added_any and lead.status in ('new', 'interested'):
@@ -958,16 +982,16 @@ def save_lead_from_chat(request, agent_id):
             'message': 'تم حفظ بيانات العميل بنجاح'
         })
         
-    except Agent.DoesNotExist:
+    except (Agent.DoesNotExist, ValidationError, ValueError):
         return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
-    except Exception as e:
-        import traceback
-        print(f"Save lead error: {e}")
-        print(traceback.format_exc())
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception('save_lead_from_chat failed')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
 @csrf_exempt
+@rate_limit('public_book_viewing', limit=20, window=3600, key_func=ip_and_agent_key)
 def book_viewing_from_chat(request, agent_id):
     """
     حجز موعد معاينة من الشات بوت
@@ -1032,8 +1056,8 @@ def book_viewing_from_chat(request, agent_id):
         property_obj = None
         if property_id:
             try:
-                property_obj = Property.objects.get(id=property_id)
-            except Property.DoesNotExist:
+                property_obj = Property.objects.get(id=property_id, agent=agent, is_active=True)
+            except (Property.DoesNotExist, ValueError, ValidationError):
                 pass
         
         # If no property_id but property_title, try to find it
@@ -1139,10 +1163,9 @@ def book_viewing_from_chat(request, agent_id):
             }
         })
         
-    except Agent.DoesNotExist:
+    except (Agent.DoesNotExist, ValidationError, ValueError):
         return JsonResponse({'success': False, 'error': 'الوكيل غير موجود'}, status=404)
-    except Exception as e:
-        import traceback
-        print(f"Book viewing error: {e}")
-        print(traceback.format_exc())
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception('book_viewing_from_chat failed')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)

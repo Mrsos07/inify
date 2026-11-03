@@ -69,6 +69,33 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 # Site URL (used for absolute URLs in production)
 SITE_URL = os.getenv('SITE_URL', 'https://inify.ai')
 
+# Public chat: lifetime of the signed session token that proves conversation ownership
+PUBLIC_CHAT_TOKEN_MAX_AGE = int(os.getenv('PUBLIC_CHAT_TOKEN_MAX_AGE', str(7 * 24 * 3600)))
+
+# Rate limiting / client IP. Behind Render (or one reverse proxy) TRUSTED_PROXY_COUNT=1.
+RATE_LIMIT_ENABLED = os.getenv('RATE_LIMIT_ENABLED', 'True').lower() == 'true'
+TRUSTED_PROXY_COUNT = int(os.getenv('TRUSTED_PROXY_COUNT', '0' if DEBUG else '1'))
+
+# Request size limits (DoS protection)
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', str(10 * 1024 * 1024)))
+FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', str(10 * 1024 * 1024)))
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
+
+# Outbound webhooks (SSRF policy): HTTPS only unless explicitly allowed
+OUTBOUND_WEBHOOK_ALLOW_HTTP = os.getenv('OUTBOUND_WEBHOOK_ALLOW_HTTP', 'True' if DEBUG else 'False').lower() == 'true'
+OUTBOUND_WEBHOOK_TIMEOUT = int(os.getenv('OUTBOUND_WEBHOOK_TIMEOUT', '10'))
+
+# Durable outbox: also try jobs immediately in a background thread (the worker retries failures)
+OUTBOX_INLINE_DISPATCH = os.getenv('OUTBOX_INLINE_DISPATCH', 'True').lower() == 'true'
+
+# StreamPay webhook replay window (seconds). StreamPay retries for ~20.6h (5m, 30m, 2h, 6h, 12h),
+# so the window covers that schedule; replays of already-processed events are blocked by the Inbox.
+STREAMPAY_WEBHOOK_TOLERANCE_SECONDS = int(os.getenv('STREAMPAY_WEBHOOK_TOLERANCE_SECONDS', '86400'))
+
+# WhatsApp (Evolution) webhooks: accept legacy token-less URLs only for instances that have no token yet.
+# Set to False after running `python manage.py secure_whatsapp_webhooks`.
+WHATSAPP_WEBHOOK_LEGACY_ALLOWED = os.getenv('WHATSAPP_WEBHOOK_LEGACY_ALLOWED', 'True').lower() == 'true'
+
 # Application definition
 INSTALLED_APPS = [
     'daphne',  # يجب أن يكون أول INSTALLED_APPS لدعم WebSocket
@@ -327,6 +354,7 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'logs' / 'newra.log',
+            'encoding': 'utf-8',
             'formatter': 'verbose',
         },
         'console': {

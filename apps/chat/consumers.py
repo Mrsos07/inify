@@ -19,9 +19,19 @@ class WhatsAppConversationConsumer(AsyncWebsocketConsumer):
     """
     
     async def connect(self):
-        """الاتصال بالـ WebSocket"""
+        """الاتصال بالـ WebSocket (لمالك الحساب فقط)"""
         self.agent_id = self.scope['url_route']['kwargs']['agent_id']
         self.room_group_name = f'whatsapp_agent_{self.agent_id}'
+
+        user = self.scope.get('user')
+        if user is None or not user.is_authenticated:
+            await self.close(code=4401)
+            return
+        owned_agent_id = await self.get_user_agent_id(user)
+        if owned_agent_id is None or owned_agent_id != str(self.agent_id):
+            logger.warning(f"WebSocket rejected: user {user.pk} is not owner of agent {self.agent_id}")
+            await self.close(code=4403)
+            return
         
         # الانضمام إلى المجموعة
         await self.channel_layer.group_add(
@@ -84,7 +94,7 @@ class WhatsAppConversationConsumer(AsyncWebsocketConsumer):
             logger.error(f"WebSocket receive error: {e}")
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': str(e)
+                'message': 'حدث خطأ في معالجة الطلب'
             }))
     
     async def new_message(self, event):
@@ -108,6 +118,13 @@ class WhatsAppConversationConsumer(AsyncWebsocketConsumer):
             'data': event.get('data', {})
         }))
     
+    @database_sync_to_async
+    def get_user_agent_id(self, user):
+        """معرف حساب المسوق المملوك للمستخدم أو None"""
+        from apps.agents.models import Agent
+        agent_id = Agent.objects.filter(user=user).values_list('id', flat=True).first()
+        return str(agent_id) if agent_id else None
+
     @database_sync_to_async
     def get_active_sessions(self):
         """الحصول على الجلسات النشطة"""
@@ -139,7 +156,7 @@ class WhatsAppConversationConsumer(AsyncWebsocketConsumer):
         from apps.chat.models import Conversation, Message
         
         try:
-            conversation = Conversation.objects.get(id=conversation_id)
+            conversation = Conversation.objects.get(id=conversation_id, agent_id=self.agent_id)
             messages = conversation.messages.order_by('created_at')[:50]
             
             return {
@@ -166,7 +183,10 @@ class WhatsAppConversationConsumer(AsyncWebsocketConsumer):
         from apps.agents.models import WhatsAppInstance
         
         try:
-            conversation = Conversation.objects.get(id=conversation_id)
+            if not message or not str(message).strip():
+                return {'success': False, 'message': 'الرسالة فارغة'}
+
+            conversation = Conversation.objects.get(id=conversation_id, agent_id=self.agent_id)
             
             # حفظ الرسالة
             Message.objects.create(
@@ -189,4 +209,4 @@ class WhatsAppConversationConsumer(AsyncWebsocketConsumer):
             }
         except Exception as e:
             logger.error(f"Error sending manager message: {e}")
-            return {'success': False, 'message': str(e)}
+            return {'success': False, 'message': 'فشل الإرسال'}

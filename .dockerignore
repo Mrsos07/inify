@@ -39,8 +39,8 @@ htmlcov/
 *.sqlite3
 db.sqlite3
 .env
-.env.local
-.env.development
+.env.*
+qr_response.json
 
 # Static/Media (will be collected in container)
 staticfiles/

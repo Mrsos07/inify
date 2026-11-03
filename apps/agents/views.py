@@ -35,8 +35,9 @@ class AgentViewSet(viewsets.ModelViewSet):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    @action(detail=False, methods=['get', 'put', 'patch'])
-    def settings(self, request):
+    # الاسم agent_settings: تسمية الدالة "settings" كانت تحجب APIView.settings الداخلية في DRF
+    @action(detail=False, methods=['get', 'put', 'patch'], url_path='settings', url_name='settings')
+    def agent_settings(self, request):
         """إدارة إعدادات المسوق"""
         if not hasattr(request.user, 'agent_profile'):
             return Response(

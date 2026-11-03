@@ -4,21 +4,39 @@ Webhook Service — إرسال أحداث تلقائية لأنظمة CRM الخ
 الاستخدام:
     from apps.agents.webhook_service import dispatch_webhook
     dispatch_webhook(agent, 'lead.created', payload_dict)
+
+التسليم موثوق: يُحفظ كل إرسال في Outbox (قاعدة البيانات) ويُعاد تلقائياً عند الفشل
+(backoff + jitter) ثم يُنقل إلى DLQ بعد استنفاد المحاولات.
+
+التوقيع:
+- X-Inify-Signature:    sha256=<HMAC(secret, body)>                     (قديم، للتوافق)
+- X-Inify-Signature-V2: t=<unix>,v1=<HMAC(secret, "<t>.<body>")>         (يحمي من إعادة الإرسال)
+- X-Inify-Event-Id:     معرف ثابت للحدث لاستخدامه في منع التكرار لدى المستقبل
 """
 
 import json
 import hmac
 import hashlib
 import logging
-import threading
 import time
-from urllib.request import urlopen, Request
+import uuid
+from urllib.request import Request, build_opener, HTTPRedirectHandler
 from urllib.error import URLError, HTTPError
+
+from services import outbox
 
 logger = logging.getLogger(__name__)
 
-TIMEOUT_SECONDS = 10
 MAX_RESPONSE_BYTES = 4096
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    """لا نتبع التحويلات (قد تُستخدم لتجاوز حماية SSRF)"""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+_opener = build_opener(_NoRedirect)
 
 
 def _build_payload(event: str, data: dict) -> dict:
@@ -26,6 +44,7 @@ def _build_payload(event: str, data: dict) -> dict:
     from django.utils import timezone
     return {
         'event': event,
+        'event_id': str(uuid.uuid4()),
         'timestamp': timezone.now().isoformat(),
         'data': data,
     }
@@ -36,20 +55,31 @@ def _sign_payload(secret: str, body: bytes) -> str:
     return 'sha256=' + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
 
 
-def _send_single(webhook, event: str, payload: dict):
-    """إرسال حدث واحد لـ webhook واحد وتسجيل النتيجة"""
+def _sign_payload_v2(secret: str, body: bytes, timestamp: int) -> str:
+    signed = f'{timestamp}.'.encode() + body
+    return f't={timestamp},v1=' + hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
+
+
+def _send_single(webhook, event: str, payload: dict) -> bool:
+    """إرسال حدث واحد لـ webhook واحد وتسجيل النتيجة. يعيد True عند النجاح."""
     from apps.agents.models import WebhookLog
+    from django.conf import settings
     from django.utils import timezone
+    from services.url_safety import validate_outbound_url, UnsafeURLError
 
     body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+    ts = int(time.time())
     headers = {
         'Content-Type': 'application/json; charset=utf-8',
-        'User-Agent': 'Inify-Webhook/1.0',
+        'User-Agent': 'Inify-Webhook/1.1',
         'X-Inify-Event': event,
+        'X-Inify-Event-Id': str(payload.get('event_id', '')),
+        'X-Inify-Timestamp': str(ts),
         'X-Inify-Webhook-Id': str(webhook.id),
     }
     if webhook.secret:
         headers['X-Inify-Signature'] = _sign_payload(webhook.secret, body)
+        headers['X-Inify-Signature-V2'] = _sign_payload_v2(webhook.secret, body, ts)
 
     log = WebhookLog.objects.create(
         webhook=webhook,
@@ -59,54 +89,69 @@ def _send_single(webhook, event: str, payload: dict):
     )
 
     start = time.time()
+
+    def _fail(message, response_status=None, response_body=''):
+        log.status = 'failed'
+        log.response_status = response_status
+        log.response_body = response_body[:2000]
+        log.error_message = message[:500]
+        log.duration_ms = int((time.time() - start) * 1000)
+        log.save(update_fields=['status', 'response_status', 'response_body', 'error_message', 'duration_ms'])
+        webhook.total_failed += 1
+        webhook.last_triggered_at = timezone.now()
+        webhook.save(update_fields=['total_failed', 'last_triggered_at'])
+        return False
+
+    # إعادة التحقق عند كل إرسال (قد يتغير DNS بعد الحفظ)
+    try:
+        validate_outbound_url(webhook.url)
+    except UnsafeURLError as exc:
+        logger.warning(f'Webhook {webhook.id} blocked by SSRF policy: {exc}')
+        return _fail(f'blocked: {exc}')
+
     try:
         req = Request(webhook.url, data=body, headers=headers, method='POST')
-        with urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
-            duration_ms = int((time.time() - start) * 1000)
+        with _opener.open(req, timeout=getattr(settings, 'OUTBOUND_WEBHOOK_TIMEOUT', 10)) as resp:
             resp_body = resp.read(MAX_RESPONSE_BYTES).decode('utf-8', errors='replace')
+            if not (200 <= resp.status < 300):
+                return _fail(f'HTTP {resp.status}', resp.status, resp_body)
             log.status = 'success'
             log.response_status = resp.status
             log.response_body = resp_body[:2000]
-            log.duration_ms = duration_ms
+            log.duration_ms = int((time.time() - start) * 1000)
             log.save(update_fields=['status', 'response_status', 'response_body', 'duration_ms'])
 
             webhook.total_sent += 1
             webhook.last_triggered_at = timezone.now()
             webhook.last_success_at = timezone.now()
             webhook.save(update_fields=['total_sent', 'last_triggered_at', 'last_success_at'])
+            return True
 
     except HTTPError as e:
-        duration_ms = int((time.time() - start) * 1000)
-        resp_body = e.read(MAX_RESPONSE_BYTES).decode('utf-8', errors='replace')
-        log.status = 'failed'
-        log.response_status = e.code
-        log.response_body = resp_body[:2000]
-        log.error_message = f'HTTP {e.code}: {e.reason}'
-        log.duration_ms = duration_ms
-        log.save(update_fields=['status', 'response_status', 'response_body', 'error_message', 'duration_ms'])
-
-        webhook.total_failed += 1
-        webhook.last_triggered_at = timezone.now()
-        webhook.save(update_fields=['total_failed', 'last_triggered_at'])
+        resp_body = e.read(MAX_RESPONSE_BYTES).decode('utf-8', errors='replace') if e.fp else ''
         logger.warning(f'Webhook {webhook.id} HTTP error {e.code} for event {event}')
+        return _fail(f'HTTP {e.code}: {e.reason}', e.code, resp_body)
 
     except (URLError, Exception) as e:
-        duration_ms = int((time.time() - start) * 1000)
-        log.status = 'failed'
-        log.error_message = str(e)[:500]
-        log.duration_ms = duration_ms
-        log.save(update_fields=['status', 'error_message', 'duration_ms'])
-
-        webhook.total_failed += 1
-        webhook.last_triggered_at = timezone.now()
-        webhook.save(update_fields=['total_failed', 'last_triggered_at'])
         logger.warning(f'Webhook {webhook.id} connection error for event {event}: {e}')
+        return _fail(str(e))
+
+
+@outbox.register('webhook.deliver')
+def _deliver_from_outbox(payload, event):
+    """Handler للـ Outbox: يرفع استثناء عند الفشل ليُعاد لاحقاً."""
+    from apps.agents.models import Webhook
+
+    webhook = Webhook.objects.filter(id=payload.get('webhook_id'), is_active=True).first()
+    if webhook is None:
+        return  # حُذف أو عُطّل — لا شيء لإرساله
+    if not _send_single(webhook, payload['event'], payload['body']):
+        raise RuntimeError(f'delivery to webhook {webhook.id} failed')
 
 
 def dispatch_webhook(agent, event: str, data: dict):
     """
-    إرسال حدث لجميع Webhooks النشطة المشتركة في هذا الحدث.
-    يُرسل في thread منفصل لعدم تأخير الطلب الأصلي.
+    إرسال حدث لجميع Webhooks النشطة المشتركة في هذا الحدث عبر Outbox دائم.
     """
     from apps.agents.models import Webhook
 
@@ -118,15 +163,14 @@ def dispatch_webhook(agent, event: str, data: dict):
 
     payload = _build_payload(event, data)
 
-    def _fire():
-        for wh in active:
-            try:
-                _send_single(wh, event, payload)
-            except Exception as exc:
-                logger.error(f'Unexpected error dispatching webhook {wh.id}: {exc}')
-
-    t = threading.Thread(target=_fire, daemon=True)
-    t.start()
+    for wh in active:
+        outbox.enqueue(
+            'webhook.deliver',
+            {'webhook_id': str(wh.id), 'event': event, 'body': payload},
+            agent=agent,
+            queue='integrations',
+            dedup_key=f"webhook:{wh.id}:{payload['event_id']}",
+        )
 
 
 # ── Payload builders ────────────────────────────────────────────────────────

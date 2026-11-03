@@ -10,7 +10,6 @@ Disallow: /auth/
 Disallow: /static/admin/
 
 # Allow search engines to crawl important pages
-Allow: /estate/
 Allow: /pricing/
 Allow: /register/
 Allow: /embed/
