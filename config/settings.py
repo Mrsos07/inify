@@ -98,6 +98,9 @@ OUTBOX_INLINE_DISPATCH = os.getenv('OUTBOX_INLINE_DISPATCH', 'True').lower() == 
 # so the window covers that schedule; replays of already-processed events are blocked by the Inbox.
 STREAMPAY_WEBHOOK_TOLERANCE_SECONDS = int(os.getenv('STREAMPAY_WEBHOOK_TOLERANCE_SECONDS', '86400'))
 
+# WhatsApp: generate the AI reply in a durable Outbox job; the webhook ACKs immediately (no LLM wait).
+WHATSAPP_ASYNC_PROCESSING = os.getenv('WHATSAPP_ASYNC_PROCESSING', 'True').lower() == 'true'
+
 # WhatsApp (Evolution) webhooks: accept legacy token-less URLs only for instances that have no token yet.
 # Set to False after running `python manage.py secure_whatsapp_webhooks`.
 WHATSAPP_WEBHOOK_LEGACY_ALLOWED = os.getenv('WHATSAPP_WEBHOOK_LEGACY_ALLOWED', 'True').lower() == 'true'

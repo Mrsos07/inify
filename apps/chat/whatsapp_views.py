@@ -17,9 +17,14 @@ from django.conf import settings
 from services.whatsapp_service import whatsapp_service
 from services.whatsapp_session_manager import whatsapp_session_manager
 from services.ai_service import NewraAIService
+from services import outbox
 from .models import Conversation, Message
 
 logger = logging.getLogger(__name__)
+
+
+class WhatsAppConversationBusy(Exception):
+    """المحادثة قيد المعالجة حالياً — تُعاد المهمة لاحقاً."""
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -181,107 +186,130 @@ class WhatsAppWebhookView(View):
                     return JsonResponse({'status': 'auto_reply_disabled'})
                 
                 # ═══════════════════════════════════════════════════════════
-                # إدارة الجلسة - منع التداخل بين المحادثات
+                # المعالجة (LLM + الرد) تتم في مهمة Outbox دائمة — الـ webhook يرد فوراً بعد الحفظ
                 # ═══════════════════════════════════════════════════════════
-                
-                # محاولة الحصول على قفل المعالجة
-                if not whatsapp_session_manager.acquire_lock(instance_name, phone):
-                    logger.warning(f"⏳ Message from {phone} is already being processed, skipping...")
-                    return JsonResponse({'status': 'processing_locked'})
-                
-                try:
-                    # إنشاء أو تحديث الجلسة
-                    session = whatsapp_session_manager.create_or_get_session(
-                        instance_name=instance_name,
-                        phone=phone,
-                        sender_name=sender_name
+                from django.conf import settings as dj_settings
+                if getattr(dj_settings, 'WHATSAPP_ASYNC_PROCESSING', True):
+                    from services import outbox
+                    outbox.enqueue(
+                        'whatsapp.inbound_message',
+                        {
+                            'instance_id': str(wa_instance.id),
+                            'phone': phone,
+                            'sender_name': sender_name,
+                            'message_text': message_text,
+                        },
+                        agent=wa_instance.agent,
+                        queue='messaging',
+                        dedup_key=f"wa_msg:{instance_name}:{message_id}" if message_id else None,
+                        max_attempts=5,
                     )
-                    
-                    logger.info(f"🔄 Session info: msg #{session['message_count']}, conv_id: {session.get('conversation_id')}")
-                    
-                    # معالجة الرسالة والرد
-                    response_data = self._process_message(
-                        wa_instance=wa_instance,
-                        phone=phone,
-                        sender_name=sender_name,
-                        message_text=message_text,
-                        session=session
-                    )
-                    
-                    # استخراج النص والعقارات من الرد
-                    if isinstance(response_data, dict):
-                        response_text = response_data.get('text', '')
-                        properties_to_show = response_data.get('properties_to_show', [])
-                    else:
-                        response_text = response_data
-                        properties_to_show = []
-                    
-                    # استخراج روابط الصور من النص وإزالتها
-                    response_text, image_urls = self._extract_and_remove_image_urls(response_text)
-                    
-                    # إرسال الرد
-                    if response_text:
-                        logger.info(f"[REPLY] Sending reply via instance {instance_name}")
-                        
-                        # تأخير 1 ثانية لجعل الرد أكثر طبيعية
-                        import time
-                        time.sleep(1)
-                        
-                        result = whatsapp_service.send_text_message(
-                            instance_name=instance_name,
-                            phone_number=phone,
-                            message=response_text
-                        )
-                        
-                        if result.get('success'):
-                            wa_instance.increment_sent()
-                            logger.info(f"[REPLY] ✅ Sent via {instance_name}")
-                        else:
-                            logger.warning(f"[REPLY] ❌ Failed via {instance_name}: status={result.get('status_code')}")
-                        
-                        # ═══════════════════════════════════════════════════════════
-                        # إرسال الصور المستخرجة من رد الوكيل كميديا
-                        # ═══════════════════════════════════════════════════════════
-                        if image_urls:
-                            self._send_extracted_images(
-                                instance_name=instance_name,
-                                phone=phone,
-                                image_urls=image_urls,
-                                wa_instance=wa_instance
-                            )
-                        
-                        # ═══════════════════════════════════════════════════════════
-                        # إرسال صور العقارات بعد الرد النصي
-                        # ═══════════════════════════════════════════════════════════
-                        if properties_to_show:
-                            self._send_property_images(
-                                instance_name=instance_name,
-                                phone=phone,
-                                properties=properties_to_show,
-                                wa_instance=wa_instance
-                            )
-                    
-                    return JsonResponse({
-                        'status': 'processed',
-                        'replied': bool(response_text),
-                        'session_id': session.get('conversation_id'),
-                        'message_number': session['message_count']
-                    })
-                    
-                finally:
-                    # تحرير القفل دائماً
-                    whatsapp_session_manager.release_lock(instance_name, phone)
+                    return JsonResponse({'status': 'queued'})
+
+                result = self.reply_to_message(wa_instance, phone, sender_name, message_text)
+                return JsonResponse(result)
             
             return JsonResponse({'status': 'unknown_event'})
             
         except json.JSONDecodeError as je:
             logger.error(f"WhatsApp webhook JSON error: {je}")
-            logger.error(f"Raw body: {request.body[:500]}")
-            return JsonResponse({'error': 'Invalid JSON', 'details': str(je)}, status=400)
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
         except Exception as e:
             logger.error(f"WhatsApp webhook error: {e}", exc_info=True)
             return JsonResponse({'error': 'حدث خطأ داخلي'}, status=500)
     
+    def reply_to_message(self, wa_instance, phone, sender_name, message_text):
+        """
+        توليد الرد وإرساله لرسالة واردة (يُستدعى من مهمة Outbox أو مباشرة).
+        يرفع WhatsAppConversationBusy إن كانت المحادثة قيد المعالجة ليُعاد لاحقاً بدل إسقاط الرسالة.
+        """
+        instance_name = wa_instance.instance_name
+
+        # ═══════════════════════════════════════════════════════════
+        # إدارة الجلسة - منع التداخل بين المحادثات
+        # ═══════════════════════════════════════════════════════════
+        if not whatsapp_session_manager.acquire_lock(instance_name, phone):
+            raise WhatsAppConversationBusy(f'conversation busy on {instance_name}')
+
+        try:
+            # إنشاء أو تحديث الجلسة
+            session = whatsapp_session_manager.create_or_get_session(
+                instance_name=instance_name,
+                phone=phone,
+                sender_name=sender_name
+            )
+
+            logger.info(f"🔄 Session info: msg #{session['message_count']}, conv_id: {session.get('conversation_id')}")
+
+            # معالجة الرسالة والرد
+            response_data = self._process_message(
+                wa_instance=wa_instance,
+                phone=phone,
+                sender_name=sender_name,
+                message_text=message_text,
+                session=session
+            )
+
+            # استخراج النص والعقارات من الرد
+            if isinstance(response_data, dict):
+                response_text = response_data.get('text', '')
+                properties_to_show = response_data.get('properties_to_show', [])
+            else:
+                response_text = response_data
+                properties_to_show = []
+
+            # استخراج روابط الصور من النص وإزالتها
+            response_text, image_urls = self._extract_and_remove_image_urls(response_text)
+
+            # إرسال الرد
+            if response_text:
+                logger.info(f"[REPLY] Sending reply via instance {instance_name}")
+
+                # تأخير 1 ثانية لجعل الرد أكثر طبيعية
+                import time
+                time.sleep(1)
+
+                result = whatsapp_service.send_text_message(
+                    instance_name=instance_name,
+                    phone_number=phone,
+                    message=response_text
+                )
+
+                if result.get('success'):
+                    wa_instance.increment_sent()
+                    logger.info(f"[REPLY] ✅ Sent via {instance_name}")
+                else:
+                    logger.warning(f"[REPLY] ❌ Failed via {instance_name}: status={result.get('status_code')}")
+
+                # إرسال الصور المستخرجة من رد الوكيل كميديا
+                if image_urls:
+                    self._send_extracted_images(
+                        instance_name=instance_name,
+                        phone=phone,
+                        image_urls=image_urls,
+                        wa_instance=wa_instance
+                    )
+
+                # إرسال صور العقارات بعد الرد النصي
+                if properties_to_show:
+                    self._send_property_images(
+                        instance_name=instance_name,
+                        phone=phone,
+                        properties=properties_to_show,
+                        wa_instance=wa_instance
+                    )
+
+            return {
+                'status': 'processed',
+                'replied': bool(response_text),
+                'session_id': session.get('conversation_id'),
+                'message_number': session['message_count']
+            }
+
+        finally:
+            # تحرير القفل دائماً
+            whatsapp_session_manager.release_lock(instance_name, phone)
+
     def _process_message(self, wa_instance, phone: str, sender_name: str, 
                         message_text: str, session: dict) -> str:
         """
@@ -1080,3 +1108,17 @@ class WhatsAppStatusView(View):
                 'messages_sent': wa_instance.messages_sent
             }
         })
+
+
+@outbox.register('whatsapp.inbound_message')
+def _process_inbound_whatsapp_message(payload, event):
+    """مهمة Outbox: الرد على رسالة واتساب واردة (تعاد تلقائياً عند الفشل)."""
+    from apps.agents.models import WhatsAppInstance
+    wa_instance = WhatsAppInstance.objects.select_related('agent').filter(
+        id=payload.get('instance_id'), is_active=True
+    ).first()
+    if wa_instance is None or not wa_instance.auto_reply:
+        return
+    WhatsAppWebhookView().reply_to_message(
+        wa_instance, payload['phone'], payload.get('sender_name', ''), payload['message_text']
+    )

@@ -12,5 +12,6 @@ class ChatConfig(AppConfig):
     verbose_name = 'المحادثات'
     
     def ready(self):
-        """تحميل الإشارات عند تشغيل التطبيق"""
+        """تحميل الإشارات ومعالجات الـ Outbox عند تشغيل التطبيق (web و worker)"""
         import apps.chat.signals
+        import apps.chat.whatsapp_views  # noqa: F401 — يسجل مهمة whatsapp.inbound_message
