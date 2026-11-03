@@ -630,6 +630,8 @@ class WebhookView(View):
         """معالجة طلب Webhook"""
         try:
             data = json.loads(request.body)
+            if not isinstance(data, dict):
+                return JsonResponse({'error': 'بيانات JSON غير صالحة'}, status=400)
             
             # التحقق من المفتاح السري
             secret = request.headers.get('X-Webhook-Secret')
@@ -641,15 +643,18 @@ class WebhookView(View):
                 }, status=400)
             
             from apps.agents.models import Agent
+            from django.core.exceptions import ValidationError
+            import hmac as _hmac
+            agent = None
             try:
                 agent = Agent.objects.get(id=agent_id, is_active=True)
-            except Agent.DoesNotExist:
-                return JsonResponse({
-                    'error': 'المسوق غير موجود'
-                }, status=404)
+            except (Agent.DoesNotExist, ValidationError, ValueError):
+                pass
             
-            # التحقق من المفتاح
-            if agent.webhook_secret and agent.webhook_secret != secret:
+            # التحقق من المفتاح: مطلوب دائماً (لا يُقبل أي طلب لوكيل بلا مفتاح مهيأ) ومقارنة ثابتة الزمن.
+            # نفس الرد لعدم وجود الوكيل أو المفتاح الخاطئ حتى لا نكشف المعرفات الصحيحة.
+            if agent is None or not agent.webhook_secret or not secret or \
+                    not _hmac.compare_digest(str(secret).encode(), agent.webhook_secret.encode()):
                 return JsonResponse({
                     'error': 'مفتاح غير صالح'
                 }, status=403)

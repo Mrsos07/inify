@@ -35,7 +35,7 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
 class LeadViewSet(viewsets.ModelViewSet):
     """ViewSet للعملاء المحتملين"""
     
-    authentication_classes = [CsrfExemptSessionAuthentication]
+    authentication_classes = [SessionAuthentication]
     permission_classes = [IsAuthenticated, HasActiveSubscription]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'source', 'urgency', 'looking_for']
@@ -179,7 +179,7 @@ class LeadViewSet(viewsets.ModelViewSet):
 class ViewingAppointmentViewSet(viewsets.ModelViewSet):
     """ViewSet لمواعيد المعاينة"""
     
-    authentication_classes = [CsrfExemptSessionAuthentication]
+    authentication_classes = [SessionAuthentication]
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['status', 'scheduled_date', 'property']
@@ -398,7 +398,7 @@ class ViewingAppointmentViewSet(viewsets.ModelViewSet):
 class PropertyCalendarViewSet(viewsets.ModelViewSet):
     """ViewSet لتقويم العقار"""
     
-    authentication_classes = [CsrfExemptSessionAuthentication]
+    authentication_classes = [SessionAuthentication]
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):

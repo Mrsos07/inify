@@ -46,6 +46,11 @@ if not ADMIN_SECRET_KEY:
     raise ValueError("ADMIN_SECRET_KEY must be set in environment variables")
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', '')
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
+# Static X-Admin-Key header is legacy and disabled by default (use Django superuser / platform_admin group)
+ADMIN_LEGACY_KEY_ENABLED = os.getenv('ADMIN_LEGACY_KEY_ENABLED', 'False').lower() == 'true'
+# Optional admin MFA: base32 TOTP secret (e.g. from `python manage.py admin_totp_setup`)
+ADMIN_TOTP_SECRET = os.getenv('ADMIN_TOTP_SECRET', '')
+ADMIN_SESSION_MAX_AGE = int(os.getenv('ADMIN_SESSION_MAX_AGE', str(8 * 3600)))
 
 # Encryption Key for sensitive data (should be in .env)
 FIELD_ENCRYPTION_KEY = os.getenv('FIELD_ENCRYPTION_KEY', '')
@@ -65,6 +70,7 @@ CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', ','.join([
     'https://*.onrender.com',
 ])).split(',')
 CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_FAILURE_VIEW = 'apps.core.views.csrf_failure'
 
 # Site URL (used for absolute URLs in production)
 SITE_URL = os.getenv('SITE_URL', 'https://inify.ai')
@@ -136,11 +142,13 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'middleware.csrf_cookie_middleware.EnsureCsrfCookieMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'middleware.subscription_middleware.SubscriptionMiddleware',
+    'middleware.role_permission_middleware.RolePermissionMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -383,7 +391,7 @@ AUTHENTICATION_BACKENDS = [
 
 # Allauth Settings (Updated for v0.61+)
 ACCOUNT_LOGIN_ON_GET = True
-ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_LOGOUT_ON_GET = False  # allauth logout requires POST (the app's own /auth/logout/ is unchanged)
 ACCOUNT_LOGIN_METHODS = {'email'}  # استخدام البريد للتسجيل
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # البريد مطلوب، اسم المستخدم غير مطلوب
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # تعطيل التحقق من البريد

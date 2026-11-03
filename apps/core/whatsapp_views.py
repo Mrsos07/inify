@@ -104,7 +104,6 @@ def _cleanup_stuck_instances():
 
 
 @login_required
-@csrf_exempt
 def whatsapp_status(request):
     """الحصول على حالة ربط الواتساب للمستخدم الحالي"""
     # تنظيف الـ instances العالقة تلقائياً
@@ -196,7 +195,6 @@ def whatsapp_status(request):
 
 
 @login_required
-@csrf_exempt
 @subscription_required
 def whatsapp_connect(request):
     """
@@ -366,7 +364,6 @@ def whatsapp_get_qr(request):
 
 
 @login_required
-@csrf_exempt
 @subscription_required
 def whatsapp_disconnect(request):
     """حذف ربط الواتساب بالكامل"""
@@ -399,7 +396,6 @@ def whatsapp_disconnect(request):
 
 
 @login_required
-@csrf_exempt
 @subscription_required
 def whatsapp_settings(request):
     """تحديث إعدادات الواتساب"""
@@ -862,7 +858,6 @@ def _extract_date_time(message, conversation_history):
 
 
 @login_required
-@csrf_exempt
 @subscription_required
 def whatsapp_send_message(request):
     """إرسال رسالة واتساب"""

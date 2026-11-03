@@ -219,7 +219,6 @@ def privacy_view(request):
     return render(request, 'privacy.html')
 
 
-@csrf_exempt
 def login_view(request):
     """صفحة تسجيل الدخول"""
     if request.user.is_authenticated:
@@ -297,7 +296,6 @@ def login_view(request):
     return render(request, 'auth/login.html')
 
 
-@csrf_exempt
 def register_view(request):
     """صفحة التسجيل"""
     if request.user.is_authenticated:
@@ -580,7 +578,6 @@ def google_auth_callback(request):
         return JsonResponse({'success': False, 'error': 'حدث خطأ في تسجيل الدخول'}, status=500)
 
 
-@csrf_exempt
 def resend_verification_email(request):
     """إعادة إرسال رابط التفعيل"""
     if request.method != 'POST':
@@ -662,7 +659,6 @@ def verify_email_view(request):
         return render(request, 'auth/verify-email.html', {'error': 'الرابط منتهي الصلاحية أو غير صالح'})
 
 
-@csrf_exempt
 def forgot_password_view(request):
     """صفحة نسيت كلمة المرور"""
     import logging
@@ -703,7 +699,6 @@ def forgot_password_view(request):
     return render(request, 'auth/forgot-password.html')
 
 
-@csrf_exempt
 def reset_password_view(request):
     """صفحة إعادة تعيين كلمة المرور"""
     token = request.GET.get('token', '')
@@ -875,7 +870,6 @@ def dashboard_view(request):
 
 
 @login_required(login_url='/auth/login/')
-@csrf_exempt
 def tour_complete_api(request):
     """تعليم التور كمكتمل"""
     if request.method == 'POST':
@@ -1396,7 +1390,6 @@ def get_global_settings(request):
         return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
-@csrf_exempt
 def save_global_settings(request):
     """حفظ إعدادات النظام العامة (للأدمن فقط)"""
     from apps.agents.models import GlobalSettings
@@ -1448,36 +1441,42 @@ def save_global_settings(request):
 
 
 def check_admin_access(request):
-    """التحقق من صلاحية الأدمن"""
-    # التحقق من session الأدمن أولاً
-    if request.session.get('is_admin_authenticated'):
-        return True
-    
-    from django.conf import settings as django_settings
-    expected_key = getattr(django_settings, 'ADMIN_SECRET_KEY', '')
-    
-    if not expected_key:
-        logger.error('[ADMIN] ADMIN_SECRET_KEY not configured')
-        return False
-    
-    # التحقق من المفتاح في Headers فقط (لا query params لأسباب أمنية)
-    admin_key = request.META.get('HTTP_X_ADMIN_KEY', '')
-    
-    return admin_key == expected_key
+    """التحقق من صلاحية الأدمن (هوية Django أولاً، ثم جلسة أدمن صالحة، ثم المفتاح القديم إن كان مفعلاً)"""
+    from services.admin_auth import is_platform_admin, has_admin_session, legacy_header_key_valid
+    return (
+        is_platform_admin(getattr(request, 'user', None))
+        or has_admin_session(request)
+        or legacy_header_key_valid(request)
+    )
 
 
-@csrf_exempt
+def _audit(request, action, target='', **metadata):
+    """تسجيل حدث إداري في سجل التدقيق (لا يُفشل الطلب عند تعذر التسجيل)"""
+    try:
+        from apps.agents.models import AuditEvent
+        from services.admin_auth import admin_identity
+        from services.rate_limit import client_ip
+        AuditEvent.record(
+            actor=admin_identity(request) or (request.user.get_username() if request.user.is_authenticated else ''),
+            action=action, target=str(target), ip=client_ip(request), metadata=metadata,
+        )
+    except Exception:
+        logger.exception('Audit log write failed')
+
+
 def admin_login(request):
     """تسجيل دخول الأدمن وحفظ الـ session"""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
     
-    # Server-side rate limiting: 4 attempts per IP, 1 hour lockout
     from django.core.cache import cache
-    remote_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
-    if remote_ip:
-        remote_ip = remote_ip.split(',')[0].strip()
+    from django.contrib.auth import authenticate
+    from services.admin_auth import (is_platform_admin, constant_time_equals, mfa_required,
+                                     verify_totp, mark_admin_session)
+    from services.rate_limit import client_ip
     
+    # Server-side rate limiting: 4 attempts per IP, 1 hour lockout (IP غير قابل للتزوير عبر X-Forwarded-For)
+    remote_ip = client_ip(request)
     cache_key = f'admin_login_attempts_{remote_ip}'
     attempts = cache.get(cache_key, 0)
     
@@ -1486,26 +1485,48 @@ def admin_login(request):
         return JsonResponse({'success': False, 'error': 'تم قفل تسجيل الدخول لمدة ساعة بسبب المحاولات الفاشلة المتكررة.', 'locked': True}, status=429)
     
     try:
-        data = json.loads(request.body)
-        username = data.get('username', '')
-        password = data.get('password', '')
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return JsonResponse({'success': False, 'error': 'بيانات غير صالحة'}, status=400)
+        if not isinstance(data, dict):
+            return JsonResponse({'success': False, 'error': 'بيانات غير صالحة'}, status=400)
+        username = str(data.get('username', ''))
+        password = str(data.get('password', ''))
         recaptcha_token = data.get('recaptcha_token', '')
+        otp = str(data.get('otp', '') or '')
         
         # التحقق من reCAPTCHA v3
         if not verify_recaptcha(recaptcha_token, remote_ip):
             logger.warning(f'[ADMIN_LOGIN] reCAPTCHA failed for IP: {remote_ip}')
             return JsonResponse({'success': False, 'error': 'فشل التحقق الأمني. يرجى تحديث الصفحة والمحاولة مجدداً.'}, status=403)
         
-        # التحقق من بيانات الأدمن (من Django settings)
         from django.conf import settings as django_settings
-        admin_username = getattr(django_settings, 'ADMIN_USERNAME', '')
-        admin_password = getattr(django_settings, 'ADMIN_PASSWORD', '')
+        identity = None
+        # 1) هوية Django (superuser أو مجموعة platform_admin) — مفضلة لأنها فردية وقابلة للتدقيق
+        user = authenticate(request, username=username, password=password) if username and password else None
+        if is_platform_admin(user):
+            identity = user.get_username()
+        else:
+            # 2) بيانات الأدمن القديمة من البيئة (مقارنة ثابتة الزمن) — للانتقال فقط
+            admin_username = getattr(django_settings, 'ADMIN_USERNAME', '')
+            admin_password = getattr(django_settings, 'ADMIN_PASSWORD', '')
+            if admin_username and admin_password and \
+                    constant_time_equals(username, admin_username) & constant_time_equals(password, admin_password):
+                identity = admin_username
         
-        if admin_username and admin_password and username == admin_username and password == admin_password:
+        if identity and mfa_required():
+            if not otp:
+                return JsonResponse({'success': False, 'otp_required': True,
+                                     'error': 'أدخل رمز التحقق الثنائي (6 أرقام)'}, status=401)
+            if not verify_totp(django_settings.ADMIN_TOTP_SECRET, otp):
+                identity = None
+        
+        if identity:
             # نجاح - مسح عداد المحاولات
             cache.delete(cache_key)
-            request.session['is_admin_authenticated'] = True
-            request.session['admin_username'] = username
+            mark_admin_session(request, identity)
+            _audit(request, 'admin.login.success', identity)
             return JsonResponse({'success': True, 'message': 'تم تسجيل الدخول بنجاح'})
         else:
             # فشل - زيادة عداد المحاولات (تنتهي بعد ساعة)
@@ -1513,12 +1534,38 @@ def admin_login(request):
             cache.set(cache_key, attempts, 3600)
             remaining = 4 - attempts
             logger.warning(f'[ADMIN_LOGIN] Failed attempt {attempts}/4 from IP: {remote_ip}')
+            _audit(request, 'admin.login.failed', username[:150], attempt=attempts)
             if remaining <= 0:
                 return JsonResponse({'success': False, 'error': 'تم قفل تسجيل الدخول لمدة ساعة بسبب المحاولات الفاشلة المتكررة.', 'locked': True}, status=429)
             return JsonResponse({'success': False, 'error': f'بيانات الدخول غير صحيحة. المحاولات المتبقية: {remaining}', 'remaining': remaining}, status=401)
     except Exception as e:
         logger.error(f'[ADMIN_LOGIN] Error: {e}', exc_info=True)
         return JsonResponse({'success': False, 'error': 'حدث خطأ في تسجيل الدخول'}, status=500)
+
+
+def csrf_failure(request, reason=''):
+    """فشل التحقق من CSRF: JSON لطلبات الـ API/fetch، وصفحة Django الافتراضية لغيرها"""
+    wants_json = (request.path.startswith('/api/') or 'application/json' in request.headers.get('Accept', '')
+                  or request.content_type == 'application/json'
+                  or request.headers.get('X-Requested-With') == 'XMLHttpRequest')
+    if wants_json:
+        return JsonResponse({
+            'success': False,
+            'error': 'انتهت صلاحية الجلسة أو رمز الحماية. يرجى تحديث الصفحة والمحاولة مرة أخرى.',
+            'code': 'csrf_failed',
+        }, status=403)
+    from django.views.csrf import csrf_failure as default_csrf_failure
+    return default_csrf_failure(request, reason=reason)
+
+
+def admin_logout(request):
+    """POST /api/admin/logout/ — إنهاء جلسة الأدمن"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    from services.admin_auth import clear_admin_session
+    _audit(request, 'admin.logout')
+    clear_admin_session(request)
+    return JsonResponse({'success': True})
 
 
 def admin_analytics(request):
@@ -1767,7 +1814,6 @@ def get_all_users(request):
         return JsonResponse({'success': False, 'error': 'حدث خطأ في جلب البيانات'}, status=500)
 
 
-@csrf_exempt
 def update_user_plan(request):
     """تحديث باقة المستخدم (للأدمن) - مع إنشاء/تحديث Subscription"""
     from apps.agents.models import Agent, Subscription
@@ -1877,7 +1923,6 @@ def update_user_plan(request):
         return JsonResponse({'success': False, 'error': 'حدث خطأ في تحديث الباقة'}, status=500)
 
 
-@csrf_exempt
 def admin_expire_subscriptions(request):
     """API - فحص وتحديث الاشتراكات المنتهية (للأدمن)"""
     if request.method != 'POST':
@@ -1923,7 +1968,6 @@ def admin_expire_subscriptions(request):
         return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
-@csrf_exempt
 def delete_user(request, user_id):
     """حذف مستخدم (للأدمن فقط)"""
     from apps.agents.models import Agent
@@ -2043,7 +2087,6 @@ def get_agent_stats(request, agent_id):
 # ═══════════════════════════════════════════════════════════════════
 
 @login_required
-@csrf_exempt
 def profile_update_api(request):
     """API - تحديث الملف الشخصي"""
     if request.method != 'POST':
@@ -2073,7 +2116,6 @@ def profile_update_api(request):
 
 
 @login_required
-@csrf_exempt
 def change_password_api(request):
     """API - تغيير كلمة المرور"""
     if request.method != 'POST':
@@ -2204,7 +2246,6 @@ def subscription_status_api(request):
 
 
 @login_required
-@csrf_exempt
 def start_trial_api(request):
     """API - بدء الفترة التجريبية (5 أيام)"""
     if request.method != 'POST':
@@ -2252,7 +2293,6 @@ def start_trial_api(request):
 
 
 @login_required
-@csrf_exempt
 def subscribe_api(request):
     """API - إنشاء رابط دفع للاشتراك"""
     if request.method != 'POST':
@@ -2321,7 +2361,6 @@ def subscribe_api(request):
 
 
 @login_required
-@csrf_exempt
 def cancel_subscription_api(request):
     """
     API - إلغاء الاشتراك الحالي مع دعم الاسترجاع خلال نافذة 5 أيام.
@@ -2841,7 +2880,6 @@ def admin_get_api_keys(request):
     return JsonResponse({'success': True, 'keys': keys_data})
 
 
-@csrf_exempt
 def admin_create_api_key(request):
     """POST /api/admin/api-keys/create/ — إنشاء مفتاح API لأي agent من لوحة الإدارة"""
     if not check_admin_access(request):
@@ -2880,7 +2918,6 @@ def admin_create_api_key(request):
     }, status=201)
 
 
-@csrf_exempt
 def admin_toggle_api_key(request, key_id, action):
     """POST /api/admin/api-keys/<id>/enable|disable/"""
     if not check_admin_access(request):
@@ -2898,7 +2935,6 @@ def admin_toggle_api_key(request, key_id, action):
         return JsonResponse({'success': False, 'error': 'المفتاح غير موجود'}, status=404)
 
 
-@csrf_exempt
 def admin_delete_api_key(request, key_id):
     """DELETE /api/admin/api-keys/<id>/delete/"""
     if not check_admin_access(request):
@@ -2919,7 +2955,6 @@ def admin_delete_api_key(request, key_id):
 # Admin Support Tickets API
 # ═══════════════════════════════════════════════════════════
 
-@csrf_exempt
 def admin_support_tickets(request):
     """GET /api/admin/support-tickets/ - جلب جميع التذاكر"""
     if not check_admin_access(request):
@@ -2979,7 +3014,6 @@ def admin_support_tickets(request):
     return JsonResponse({'success': True, 'tickets': tickets_data, 'stats': stats})
 
 
-@csrf_exempt
 def admin_support_ticket_reply(request, ticket_id):
     """POST /api/admin/support-tickets/<id>/reply/ - الرد على تذكرة"""
     if not check_admin_access(request):
@@ -3015,7 +3049,6 @@ def admin_support_ticket_reply(request, ticket_id):
 # Admin Email Sending - إرسال إيميلات من لوحة الأدمن
 # ═══════════════════════════════════════════════════════════
 
-@csrf_exempt
 def admin_send_email(request):
     """POST /api/admin/send-email/ - إرسال إيميل لمستخدم أو لجميع المستخدمين"""
     if not check_admin_access(request):
@@ -3213,7 +3246,6 @@ def team_view(request):
 
 
 @login_required(login_url='/auth/login/')
-@csrf_exempt
 def team_add_member(request):
     """إضافة عضو جديد للفريق"""
     if request.method != 'POST':
@@ -3323,7 +3355,6 @@ def team_add_member(request):
 
 
 @login_required(login_url='/auth/login/')
-@csrf_exempt
 def team_toggle_member(request, member_id):
     """تفعيل/تعطيل عضو في الفريق"""
     if request.method != 'POST':
@@ -3355,7 +3386,6 @@ def team_toggle_member(request, member_id):
 
 
 @login_required(login_url='/auth/login/')
-@csrf_exempt
 def team_delete_member(request, member_id):
     """حذف عضو من الفريق"""
     if request.method != 'DELETE':
@@ -3385,7 +3415,6 @@ def team_delete_member(request, member_id):
 
 
 @login_required(login_url='/auth/login/')
-@csrf_exempt
 def team_update_member(request, member_id):
     """تحديث بيانات عضو في الفريق"""
     if request.method != 'PUT':
@@ -3429,3 +3458,34 @@ def team_update_member(request, member_id):
         })
     except TeamMember.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'العضو غير موجود'}, status=404)
+
+
+# ═══════════════════════════════════════════════════════════
+# Audit trail for administrative write operations
+# ═══════════════════════════════════════════════════════════
+
+def _audited(action):
+    """يسجل كل عملية كتابة إدارية ناجحة في سجل التدقيق"""
+    from functools import wraps
+
+    def _decorator(view_func):
+        @wraps(view_func)
+        def _wrapped(request, *args, **kwargs):
+            response = view_func(request, *args, **kwargs)
+            if request.method not in ('GET', 'HEAD', 'OPTIONS') and getattr(response, 'status_code', 500) < 400:
+                target = next((str(v) for k, v in kwargs.items() if k.endswith('_id')), '')
+                _audit(request, action, target, path=request.path, method=request.method)
+            return response
+        return _wrapped
+    return _decorator
+
+
+save_global_settings = _audited('admin.settings.update')(save_global_settings)
+update_user_plan = _audited('admin.user.update_plan')(update_user_plan)
+admin_expire_subscriptions = _audited('admin.subscriptions.expire')(admin_expire_subscriptions)
+delete_user = _audited('admin.user.delete')(delete_user)
+admin_create_api_key = _audited('admin.api_key.create')(admin_create_api_key)
+admin_toggle_api_key = _audited('admin.api_key.toggle')(admin_toggle_api_key)
+admin_delete_api_key = _audited('admin.api_key.delete')(admin_delete_api_key)
+admin_support_ticket_reply = _audited('admin.support.reply')(admin_support_ticket_reply)
+admin_send_email = _audited('admin.email.send')(admin_send_email)

@@ -76,6 +76,7 @@ urlpatterns = [
     
     # Admin API
     path('api/admin/login/', views.admin_login, name='admin-login'),
+    path('api/admin/logout/', views.admin_logout, name='admin-logout'),
     path('api/admin/users/', views.get_all_users, name='get-all-users'),
     path('api/admin/users/update-plan/', views.update_user_plan, name='update-user-plan'),
     path('api/admin/users/<uuid:user_id>/delete/', views.delete_user, name='delete-user'),

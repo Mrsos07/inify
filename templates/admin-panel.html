@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <script src="/static/js/csrf.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة تحكم الأدمن - Inify</title>
     
@@ -1237,6 +1238,10 @@
                     <label>كلمة المرور</label>
                     <input type="password" id="adminPassword" placeholder="أدخل كلمة المرور" required autocomplete="off">
                 </div>
+                <div class="form-group" id="adminOtpGroup" style="display:none;">
+                    <label>رمز التحقق الثنائي</label>
+                    <input type="text" id="adminOtp" placeholder="6 أرقام" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+                </div>
                 <button type="submit" class="login-btn">دخول</button>
             </form>
         </div>
@@ -2147,10 +2152,11 @@
                     { action: 'admin_login' }
                 );
                 
+                const otp = (document.getElementById('adminOtp').value || '').trim();
                 const response = await fetch('/api/admin/login/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password, recaptcha_token })
+                    body: JSON.stringify({ username, password, recaptcha_token, otp })
                 });
                 
                 const data = await response.json();
@@ -2159,6 +2165,11 @@
                     loginAttempts = 0;
                     sessionStorage.setItem('newra_admin_session', 'authenticated');
                     showAdminPanel();
+                } else if (data.otp_required) {
+                    document.getElementById('adminOtpGroup').style.display = 'block';
+                    document.getElementById('adminOtp').focus();
+                    document.getElementById('errorMsg').textContent = data.error;
+                    document.getElementById('errorMsg').style.display = 'block';
                 } else {
                     loginAttempts++;
                     if (data.locked || loginAttempts >= MAX_ATTEMPTS) {
@@ -2206,6 +2217,7 @@
         }
 
         function adminLogout() {
+            fetch('/api/admin/logout/', { method: 'POST', headers: { 'X-CSRFToken': getAdminCsrfToken() } }).catch(() => {});
             sessionStorage.removeItem('newra_admin_session');
             document.getElementById('adminPanel').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'flex';

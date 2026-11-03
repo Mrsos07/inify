@@ -278,7 +278,6 @@ def api_property_detail(request, property_id):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-@csrf_exempt
 def api_keys_manage(request):
     """
     GET  /api/v1/ext/keys/   - قائمة مفاتيح API
@@ -351,7 +350,6 @@ def api_keys_manage(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-@csrf_exempt
 def api_key_delete(request, key_id):
     """DELETE /api/v1/ext/keys/<id>/  - حذف مفتاح"""
     if not request.user.is_authenticated:

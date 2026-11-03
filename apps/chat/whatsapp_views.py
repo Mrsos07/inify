@@ -922,7 +922,6 @@ def _auto_reconnect_instance(instance_name: str):
         logger.error(f"[AUTO-RECONNECT] Error reconnecting {instance_name}: {e}", exc_info=True)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class WhatsAppConnectView(View):
     """واجهة ربط واتساب"""
     
@@ -1036,7 +1035,6 @@ class WhatsAppConnectView(View):
         return JsonResponse({'error': 'Invalid action'}, status=400)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class WhatsAppStatusView(View):
     """الحصول على حالة الاتصال"""
     

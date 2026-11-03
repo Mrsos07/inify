@@ -149,7 +149,6 @@ def webhook_detail(request, webhook_id):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-@csrf_exempt
 @login_required
 def webhook_test(request, webhook_id):
     """POST /api/v1/webhooks/<id>/test/ — إرسال حدث تجريبي"""
@@ -223,7 +222,6 @@ def webhook_logs(request, webhook_id):
     })
 
 
-@csrf_exempt
 @login_required
 def webhook_regenerate_secret(request, webhook_id):
     """POST /api/v1/webhooks/<id>/regenerate-secret/ — إعادة توليد المفتاح السري"""

@@ -1215,6 +1215,44 @@ class InboundWebhookEvent(models.Model):
         )
 
 
+class AuditEvent(models.Model):
+    """
+    سجل تدقيق للأحداث الإدارية والحساسة — للإضافة فقط (لا تعديل ولا حذف عبر الـ ORM).
+    لا يُخزَّن فيه أسرار أو كلمات مرور.
+    """
+
+    id = models.BigAutoField(primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='الوقت')
+    actor = models.CharField(max_length=150, blank=True, verbose_name='المنفّذ')
+    action = models.CharField(max_length=100, db_index=True, verbose_name='الإجراء')
+    target = models.CharField(max_length=255, blank=True, verbose_name='الهدف')
+    ip = models.CharField(max_length=64, blank=True, verbose_name='IP')
+    metadata = models.JSONField(default=dict, blank=True, verbose_name='تفاصيل')
+
+    class Meta:
+        verbose_name = 'حدث تدقيق'
+        verbose_name_plural = 'سجل التدقيق'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.created_at:%Y-%m-%d %H:%M} {self.actor} {self.action} {self.target}"
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None and AuditEvent.objects.filter(pk=self.pk).exists():
+            raise PermissionError('Audit events are append-only')
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise PermissionError('Audit events are append-only')
+
+    @classmethod
+    def record(cls, actor, action, target='', ip='', metadata=None):
+        return cls.objects.create(
+            actor=str(actor)[:150], action=str(action)[:100], target=str(target)[:255],
+            ip=str(ip)[:64], metadata=metadata or {},
+        )
+
+
 class OutboxEvent(models.Model):
     """
     Outbox: أحداث يجب تنفيذها/إرسالها بشكل موثوق (Webhooks خارجية، إشعارات...).

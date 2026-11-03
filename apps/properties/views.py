@@ -154,7 +154,6 @@ class PublicPropertyViewSet(viewsets.ReadOnlyModelViewSet):
 
 from django.views.decorators.csrf import csrf_exempt
 
-@csrf_exempt
 @login_required
 def save_property(request):
     """حفظ أو تحديث عقار"""
@@ -356,7 +355,6 @@ def get_property(request, property_id):
         return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
-@csrf_exempt
 @login_required
 def delete_property(request, property_id):
     """حذف عقار"""
@@ -375,7 +373,6 @@ def delete_property(request, property_id):
         return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
-@csrf_exempt
 @login_required
 def delete_property_image(request, image_id):
     """حذف صورة عقار"""
@@ -391,7 +388,6 @@ def delete_property_image(request, image_id):
         return JsonResponse({'success': False, 'error': 'الصورة غير موجودة'}, status=404)
 
 
-@csrf_exempt
 @login_required
 def delete_property_video(request, video_id):
     """حذف فيديو عقار"""
@@ -465,7 +461,6 @@ def list_properties(request):
         return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي', 'properties': []}, status=500)
 
 
-@csrf_exempt
 @login_required  
 def save_property_json(request):
     """حفظ عقار من JSON"""
@@ -857,7 +852,6 @@ def book_property_viewing(request, property_id):
         return JsonResponse({'success': False, 'error': 'حدث خطأ داخلي'}, status=500)
 
 
-@csrf_exempt
 @login_required
 def manage_viewing_slots(request, property_id):
     """
@@ -1018,7 +1012,6 @@ def download_excel_template(request):
 
 
 @login_required
-@csrf_exempt
 def import_excel_properties(request):
     """
     استيراد العقارات من ملف Excel
