@@ -383,4 +383,122 @@ Next phase:
 - لا تخفِ فشل اختبار؛ سجّل السبب والإصلاح أو العائق.
 - عند وجود قرار بين حل سريع وهندسة متينة، قدّم الخيارين مع أثرهما واطلب الموافقة إذا كان مؤثراً.
 
-**الخطوة الأولى المطلوبة الآن:** ابدأ بفحص المستودع وإنتاج Audit + Gap Matrix فقط، ثم اعرض خطة P0 بالملفات والاختبارات المتوقعة للحصول على الموافقة قبل التعديل.
+**الخطوة الأولى المطلوبة الآن:** ~~ابدأ بفحص المستودع وإنتاج Audit + Gap Matrix فقط~~ ✅ تم. **للاستئناف: انتقل إلى القسم 8 أدناه وابدأ من «نقطة الاستئناف».**
+
+---
+
+## 8. سجل التقدم ونقطة الاستئناف (آخر تحديث: 2026-11-03)
+
+> هذا القسم يوثّق ما نُفّذ فعلياً بشيفرة واختبارات، وأين توقف العمل. اقرأه كاملاً قبل أي تعديل جديد.
+
+### 8.1 الحالة العامة
+
+| المرحلة | الحالة |
+|---|---|
+| Audit | ✅ مكتمل — `docs/architecture/current-state-audit.md`، `docs/implementation/traceability-matrix.md`، `docs/architecture/adr/` (0001–0005) |
+| P0 Security & Tenant Isolation | ✅ مكتمل برمجياً ومختبر — يتبقى إجراءات المالك (8.5) |
+| P1 Modular Monolith + Durable Async | 🟡 جزئي (Inbox/Outbox وعامل مستقل منجز؛ الباقي في 8.4) |
+| P2 Unified Agent Runtime & AI Governance | ⬜ لم يبدأ |
+| P3 Domain Integrity & Billing | 🟡 جزئي (تحقق الدفع ومنع تكرار أثره منجز ضمن P0؛ الباقي في 8.4) |
+| P4 API, Reliability & Operations | 🟡 جزئي (CI أولي + سجل تدقيق؛ الباقي في 8.4) |
+| P5 Product Completion & Handover | ⬜ لم يبدأ |
+
+**الفرع:** `main` — آخر commit مرفوع: `d99d46e`.
+
+| Commit | المحتوى |
+|---|---|
+| `fb068c4` | P0 الأساسي: الأسرار، عزل المستأجرين، StreamPay، Evolution، مفاتيح API، SSRF، Outbox، الصفحة الرئيسية = المنتج العقاري |
+| `61ccae2` | إكمال P0: هوية الأدمن + MFA اختياري، فرض CSRF، RBAC، سجل تدقيق |
+| `d99d46e` | معالجة رسائل واتساب الواردة في مهام Outbox دائمة |
+
+**الاختبارات:** 115 اختباراً ناجحاً (`tests/` + `test_whatsapp_fixes.py`).
+
+### 8.2 ما نُفّذ (مع مكان الشيفرة والاختبار)
+
+**SEC-01 الأسرار**
+- إلغاء تتبع `.env.production` و`.env.production.secure`؛ `.gitignore` يتجاهل `.env.*` عدا `*.example`؛ `.dockerignore` يستثني `.env*`.
+- `.env.production.example` بقيم وهمية؛ `scripts/create_dev_env.py` لإنشاء `.env` محلي بمفاتيح تطوير جديدة.
+- CI: `.github/workflows/ci.yml` (Gitleaks على الشجرة والـ commits الجديدة + `check` + `makemigrations --check` + الاختبارات على Python 3.11).
+- ⚠️ تدوير الأسرار المسربة وتنظيف تاريخ Git **لم يُنفذ** (يحتاج المالك) — الخطة في `docs/architecture/adr/0003-secrets-and-leak-remediation.md`.
+
+**SEC-02 الهوية وRBAC**
+- `services/admin_auth.py` + `check_admin_access`/`admin_login`/`admin_logout` في `apps/core/views.py`: superuser أو مجموعة `platform_admin` أولاً، بيانات البيئة القديمة بمقارنة ثابتة الزمن، `X-Admin-Key` معطل افتراضياً (`ADMIN_LEGACY_KEY_ENABLED`)، TOTP اختياري (`ADMIN_TOTP_SECRET`)، انتهاء جلسة الأدمن (`ADMIN_SESSION_MAX_AGE`)، قفل المحاولات حسب IP موثوق.
+- `middleware/role_permission_middleware.py`: دور `viewer` للقراءة فقط، والعضو غير النشط ممنوع من الكتابة.
+- `docs/security/permission-matrix.md`. الاختبارات: `tests/test_rbac.py`، `tests/test_admin_csrf_bola.py`.
+
+**SEC-03 عزل المستأجرين**
+- مواعيد العقار لمالكه فقط (`get_property_appointments`) — `tests/test_appointments_access.py`.
+- رمز جلسة موقّع للدردشة العامة (`apps/chat/views.py` + `widget.html` + `chat-widget.js`) — `tests/test_public_chat_session.py`، ADR-0005.
+- WebSocket: مصادقة + تقييد بالمستأجر + `AllowedHostsOriginValidator` — `tests/test_websocket_access.py`.
+- منع BOLA في `apps/leads/serializers.py` (`ensure_same_tenant`) وفي نقاط الحجز/العملاء العامة؛ إخفاء أسماء العملاء من ردود التوفر العامة؛ إخفاء الـ System Prompt من الروابط العامة.
+
+**SEC-04 Webhooks**
+- StreamPay (`apps/core/views.py::streampay_webhook`): رفض عند غياب السر، نافذة إعادة الإرسال، Inbox على `(event_type, entity_id)`، التفعيل فقط بعد جلب الدفعة من StreamPay والتحقق من الحالة/المبلغ/العملة؛ صفحة العودة لا تعيد استخدام فاتورة — `tests/test_streampay_webhook.py`.
+- Evolution: رمز سري لكل Instance في رابط الـ webhook، أمر `secure_whatsapp_webhooks`، علم الانتقال `WHATSAPP_WEBHOOK_LEGACY_ALLOWED`؛ لا تسجيل للجسم الخام — `tests/test_whatsapp_webhook_auth.py`.
+- n8n (`WebhookView`): السر إلزامي ومقارنة ثابتة الزمن.
+
+**SEC-05 HTTP/API**
+- إزالة `csrf_exempt` من 44 مساراً جلسياً + `static/js/csrf.js` (مضمّن في 40 قالباً) + `middleware/csrf_cookie_middleware.py` + `CSRF_FAILURE_VIEW` بصيغة JSON.
+- مفاتيح API: Header فقط، تخزين hash (ترحيل تلقائي للمفاتيح القديمة)، scopes، حد طلبات، `Idempotency-Key` — `tests/test_api_keys.py`.
+- `services/rate_limit.py` (حدود على النقاط العامة)، `services/url_safety.py` (SSRF) — `tests/test_outbox_and_ssrf.py`.
+- إخفاء نص الأخطاء الداخلية عن العميل واستبدال `print` بالـ logging في views الرئيسية.
+
+**P1/P3/P4 (جزئي)**
+- Inbox: `InboundWebhookEvent`؛ Outbox: `OutboxEvent` + `services/outbox.py` + أوامر `run_outbox_worker` و`outbox_requeue` (retries + backoff/jitter + DLQ + استرداد بعد تعطل العامل). القرار: ADR-0004 الخيار C (PostgreSQL Outbox).
+- الـ webhooks الصادرة ورسائل واتساب الواردة تعمل عبر Outbox — `tests/test_whatsapp_async.py`.
+- `AuditEvent` للإضافة فقط ويسجل عمليات الأدمن.
+- حقول قياس إضافية في `TokenUsage` (provider, purpose, conversation_id, prompt_version, latency_ms, status, cost_estimate, trace_id) — **أُضيفت الحقول فقط، لم تُربط بعد بكل استدعاءات LLM**.
+
+**Migrations الجديدة:** `agents/0026_security_inbox_outbox_apikey_metering`، `agents/0027_audit_event` (إضافية فقط).
+
+**أخطاء موجودة سابقاً أُصلحت:** `/api/v1/agents/webhooks/` كان يرجع 500؛ `import os` ناقص في `apps/agents/models.py`.
+
+**تغيير منتج:** الرابط `/` يعرض صفحة المنتج العقاري (`index.html`)، و`/estate/` يحوّل 301 إلى `/`، وحُذف `company_home.html`.
+
+### 8.3 نقطة الاستئناف (ابدأ من هنا بالترتيب)
+
+1. **P1 — بقية الـ threads:** إعادة الاتصال التلقائي للواتساب ما زالت تستخدم `threading.Thread` في `apps/chat/whatsapp_views.py` (حوالي السطر 106) و`apps/core/whatsapp_views.py` (حوالي السطر 510) → حوّلها إلى مهمة Outbox `whatsapp.reconnect` على طابور `messaging`. ملاحظة: `test_whatsapp_fixes.py` يختبر `apps/core/whatsapp_views.whatsapp_webhook` (غير مربوط بـ URL).
+2. **P1 — ARC-04:** `CHANNEL_LAYERS` ما زال `InMemoryChannelLayer` (`config/settings.py` حوالي السطر 182) → استخدم `channels_redis` عند وجود `REDIS_URL`.
+3. **P1/P4 — Docker:** `Dockerfile` يشغّل gunicorn WSGI كـ root ويشغّل migrate عند كل إقلاع → multi-stage، مستخدم غير root، تشغيل ASGI (daphne/uvicorn)، migrations كخطوة منفصلة، وإضافة خدمة worker (`run_outbox_worker`) إلى `render.yaml`/compose.
+4. **P2 بالكامل:** `LLMGateway` موحد يسجل كل استدعاء في `TokenUsage` (الاستدعاءات غير المحسوبة: `services/ai_service.py` حوالي 214 و366 و403، `services/smart_agent_service.py` حوالي 163 و215)، `AgentRuntime.handle`، حدود iterations/deadline، Tool Registry مع فحص المستأجر داخل كل أداة (`services/agent_tools.py`)، فصل محتوى المستخدم عن التعليمات (`EmbedChatAPI` يقبل `history` من العميل).
+5. **P3:**
+   - DOM-01: حجز ذري (`transaction.atomic` + قفل + قيد DB) في `book_property_viewing` و`book_viewing_from_chat` و`AIAgentCalendarAPI.post` و`ViewingAppointmentCreateSerializer`.
+   - DOM-02 / F-29: تكرار العملاء — `Lead.phone` مشفّر ولا تطابق الاستعلامات عليه أبداً (مُثبت). أضف `phone_hash` (HMAC) + backfill + استخدمه في كل مواضع البحث المذكورة في التدقيق، ثم قيد فريد `(agent, phone_hash)` بعد تقرير بالمكرر.
+   - DOM-03: Entitlements وحصص صريحة للباقات.
+6. **P4:** سجلات JSON منظمة + فلتر إخفاء PII + `request_id`؛ OpenAPI للـ Partner API؛ تثبيت الاعتماديات وفصل أدوات التطوير عن `requirements.txt`؛ فحص dependencies/image في CI.
+7. **بنود صغيرة متبقية من التدقيق:**
+   - F-18: `increment_conversation` عام بلا حد طلبات.
+   - F-19: `test/add-property/` ما زال مربوطاً في `apps/core/urls.py` (حوالي السطر 71).
+   - F-21: `GlobalSettings.openai_api_key` يُخزن نصاً.
+   - F-23: `set_webhook` معرّف مرتين في `services/whatsapp_service.py`، و`update_status` مكرر في `LeadViewSet`.
+   - F-28: قيم افتراضية في `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`.
+   - خلل مكتشف: `templates/dashboard/whatsapp_live.html` يرث `dashboard/base.html` غير الموجود (الصفحة ستفشل).
+   - `print`/PII ما زالت في بعض ملفات `services/`.
+8. **P5:** وثائق `README`, `ARCHITECTURE`, `DEPLOYMENT`, `RUNBOOK`, `API`, `SECURITY`, `BACKUP_RESTORE`, `TROUBLESHOOTING` + تحديث حالة `docs/implementation/traceability-matrix.md` (أعمدة Status فيه لا تعكس كل ما أُنجز بعد).
+
+### 8.4 طريقة التشغيل والتحقق
+
+```powershell
+.\venv\Scripts\activate
+python scripts\create_dev_env.py        # مرة واحدة: ينشئ .env محلياً
+python manage.py migrate
+python manage.py runserver
+python manage.py run_outbox_worker      # عامل الخلفية (نافذة منفصلة)
+python manage.py test tests test_whatsapp_fixes   # لا تشغّل manage.py test بدون labels
+python manage.py check; python manage.py makemigrations --check --dry-run
+```
+
+> تحذير: ملفات `test_booking.py` و`test_booking_tool.py` و`test_restrictions.py` في جذر المشروع سكربتات يدوية تتصل بخادم حي — لا تُشغَّل ضمن الاختبارات.
+> قبل كل commit: فحص Gitleaks (`docker run --rm -v "${PWD}:/repo" -w /repo zricethezav/gitleaks:v8.18.4 protect --staged --source=/repo --redact`).
+
+### 8.5 إجراءات مطلوبة من المالك (لا ينفذها الوكيل)
+
+1. تدوير كل قيمة كانت في `.env.production` (`DJANGO_SECRET_KEY`, `ADMIN_*`, `DB_PASSWORD`, `RESEND_API_KEY`) — و`FIELD_ENCRYPTION_KEY` بتدوير تدريجي فقط (ADR-0003).
+2. قرار تنظيف تاريخ Git (force push) أو الاكتفاء بالتدوير.
+3. قبل أي نشر: ضبط `STREAMPAY_WEBHOOK_SECRET` و`STREAMPAY_API_KEY`/`STREAMPAY_API_SECRET` (بدونها تُرفض إشعارات الدفع عمداً)، وتشغيل عامل `run_outbox_worker` كخدمة مستقلة، وضبط `REDIS_URL`.
+4. بعد النشر: `python manage.py secure_whatsapp_webhooks` ثم `WHATSAPP_WEBHOOK_LEGACY_ALLOWED=False`.
+5. إنشاء حساب أدمن Django (`createsuperuser` أو مجموعة `platform_admin`)، واختيارياً `ADMIN_TOTP_SECRET` للتحقق الثنائي.
+
+### 8.6 متغيرات البيئة الجديدة
+
+`PUBLIC_CHAT_TOKEN_MAX_AGE`, `WHATSAPP_WEBHOOK_LEGACY_ALLOWED`, `WHATSAPP_ASYNC_PROCESSING`, `RATE_LIMIT_ENABLED`, `TRUSTED_PROXY_COUNT`, `DATA_UPLOAD_MAX_MEMORY_SIZE`, `OUTBOUND_WEBHOOK_ALLOW_HTTP`, `OUTBOUND_WEBHOOK_TIMEOUT`, `OUTBOX_INLINE_DISPATCH`, `STREAMPAY_WEBHOOK_TOLERANCE_SECONDS`, `ADMIN_LEGACY_KEY_ENABLED`, `ADMIN_TOTP_SECRET`, `ADMIN_SESSION_MAX_AGE` — كلها موثقة بقيم افتراضية آمنة في `config/settings.py`.
